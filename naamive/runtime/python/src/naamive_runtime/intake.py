@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 import shutil
 import tempfile
+from datetime import datetime, timezone
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -185,12 +186,14 @@ def materialize_project(request: ParsedRequest, repository_root: Path) -> Path:
     projects_directory.mkdir(parents=True, exist_ok=True)
     temporary_directory = Path(tempfile.mkdtemp(prefix=f".{project_id}.", dir=projects_directory))
     try:
+        registered_at = datetime.now(timezone.utc).isoformat()
         replacements = {
             "<project-title>": request.metadata.title,
             "<project-id>": project_id,
             "<request-id>": request.metadata.request_id,
             "<business-owner>": request.metadata.business_owner,
             "<gate-decision-reference>": f"REGISTER_PROJECT:{request.metadata.request_id}",
+            "<registered-at>": registered_at,
         }
         for relative_path, template in required_templates.items():
             output = temporary_directory / relative_path
@@ -201,6 +204,14 @@ def materialize_project(request: ParsedRequest, repository_root: Path) -> Path:
             if relative_path == "need/BUSINESS_NEED.md":
                 content = f"{content.rstrip()}\n\n{request.body.strip()}\n"
             output.write_text(content, encoding="utf-8")
+        (temporary_directory / "STATUS_HISTORY.md").write_text(
+            f"# Histórico de Transições — {project_id}\n\n"
+            "Registro cronológico de transições de estado. Entradas existentes não são alteradas.\n\n"
+            "| # | Quando (UTC) | De | Para | Tipo | Responsável | Justificativa | Evidência |\n"
+            "| --- | --- | --- | --- | --- | --- | --- | --- |\n"
+            f"| 1 | {registered_at} | PRE_PROJECT | ANALYSIS | HUMAN_DECISION | human-cli | Projeto registrado após aprovação da solicitação. | `REGISTER_PROJECT:{request.metadata.request_id}` |\n",
+            encoding="utf-8",
+        )
         temporary_directory.replace(destination)
     except Exception:
         shutil.rmtree(temporary_directory, ignore_errors=True)

@@ -19,6 +19,7 @@ Esta máquina existe antes de `projects/<project-id>/`. Ela administra a solicit
 ```text
 projects/<project-id>/PROJECT.md
 projects/<project-id>/STATUS.md
+projects/<project-id>/STATUS_HISTORY.md
 projects/<project-id>/need/BUSINESS_NEED.md
 ```
 

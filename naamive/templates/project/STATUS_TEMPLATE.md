@@ -1,7 +1,47 @@
+---
+format_version: 2
 scope_type: project
 project_id: <project-id>
 current_state: ANALYSIS
+state_category: active
 state_machine: naamive/orchestration/PROJECT_LIFECYCLE.md
-last_transition: REGISTER_PROJECT → ANALYSIS
+transition_sequence: 1
+last_transition_id: project-0001
+last_transition_from: PRE_PROJECT
+last_transition_to: ANALYSIS
+last_transition_at: <registered-at>
+last_transition_actor: human-cli
+last_transition_reason: Projeto registrado após aprovação da solicitação.
 last_transition_evidence: <gate-decision-reference>
 pending_gate: none
+history_path: STATUS_HISTORY.md
+---
+
+# Status do Projeto — <project-id>
+
+## Estado atual
+
+**ANALYSIS** · active
+
+## Próxima ação
+
+Executar a próxima rodada autorizada da orquestração para este projeto.
+
+## Gate pendente
+
+Nenhum
+
+## Última transição
+
+| Campo | Valor |
+| --- | --- |
+| De | `PRE_PROJECT` |
+| Para | `ANALYSIS` |
+| Quando (UTC) | `<registered-at>` |
+| Responsável | `human-cli` |
+| Justificativa | Projeto registrado após aprovação da solicitação. |
+| Evidência | `<gate-decision-reference>` |
+
+## Histórico e auditoria
+
+Consulte [STATUS_HISTORY.md](STATUS_HISTORY.md) para a sequência cronológica completa de transições.

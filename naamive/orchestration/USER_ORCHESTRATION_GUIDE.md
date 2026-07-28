@@ -61,7 +61,7 @@ Uma solicitação válida chega a `WAITING_FOR_REGISTRATION`. O usuário autoriz
 naamive decide --request <request-id> --gate REGISTER_PROJECT --decision APPROVED
 ```
 
-Somente essa decisão cria o diretório do projeto e seus três documentos mínimos. A decisão negativa ou solicitação de retrabalho não materializa projeto.
+Somente essa decisão cria o diretório do projeto e seus quatro artefatos mínimos: `PROJECT.md`, `STATUS.md`, `STATUS_HISTORY.md` e `need/BUSINESS_NEED.md`. A decisão negativa ou solicitação de retrabalho não materializa projeto.
 
 ## Cancelar projeto materializado
 
@@ -71,7 +71,23 @@ Um projeto ativo pode ser cancelado por decisão humana com justificativa:
 naamive cancel --project <project-id> --reason "<justificativa>"
 ```
 
-O comando preserva todos os documentos, atualiza o `STATUS.md` para `CANCELLED` e registra `validation/evidence/CANCELLATION.md`. Ele não apaga diretórios nem altera a solicitação original.
+O comando preserva todos os documentos, atualiza o painel `STATUS.md` para `CANCELLED`, acrescenta a transição em `STATUS_HISTORY.md` e registra `validation/evidence/CANCELLATION.md`. Ele não apaga diretórios nem altera a solicitação original.
+
+## Consultar e migrar o registro de status
+
+Todo projeto materializado possui um painel legível em `STATUS.md` e um histórico cronológico e append-only em `STATUS_HISTORY.md`. Consulte o estado estruturado pelo comando:
+
+```text
+naamive status --project <project-id>
+```
+
+Projetos criados pela versão anterior, cujo `STATUS.md` era apenas YAML, podem ser convertidos sem mudar o estado atual:
+
+```text
+naamive status --project <project-id> --migrate
+```
+
+A migração preserva o estado e a evidência conhecidos, cria a primeira entrada histórica marcada como `MIGRATED` e não executa transição de negócio.
 
 ## Regras de segurança e operação
 

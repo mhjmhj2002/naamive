@@ -2,7 +2,7 @@
 
 As regras de estado do NAAMIVE são globais e centralizadas neste diretório. Elas definem o que pode acontecer; não registram o estado de uma instância concreta.
 
-Cada projeto e cada módulo materializado registra seu estado atual em seu próprio `STATUS.md`. Esse registro deve referenciar a máquina aplicável e não pode copiar, alterar ou ampliar suas regras.
+Cada projeto e cada módulo materializado registra seu estado atual em seu próprio `STATUS.md` e a sequência de suas transições em `STATUS_HISTORY.md`. Esses registros devem referenciar a máquina aplicável e não podem copiar, alterar ou ampliar suas regras.
 
 ```text
 Regra global em naamive/orchestration/
@@ -30,7 +30,8 @@ Agente atua somente no escopo e transição autorizados
 | --- | --- |
 | Estados, transições e gates permitidos | Documentos neste diretório |
 | Escopo, autorização e entradas de uma execução | Contrato de contexto de execução |
-| Estado atual de uma instância | `projects/<project-id>/STATUS.md` ou `modules/<module-id>/STATUS.md` |
+| Estado atual e próxima ação de uma instância | `projects/<project-id>/STATUS.md` ou `modules/<module-id>/STATUS.md` |
+| Sequência cronológica de transições | `projects/<project-id>/STATUS_HISTORY.md` ou `modules/<module-id>/STATUS_HISTORY.md` |
 | Evidências produzidas | Escopo de projeto ou módulo definido pelo contexto |
 | Dependência de módulo reutilizável | Contrato de consumo no projeto consumidor; módulo permanece no projeto provedor |
 
@@ -45,5 +46,6 @@ Agente atua somente no escopo e transição autorizados
 - [Contrato de solicitação de transição](../contracts/TRANSITION_REQUEST.md)
 - [Contrato de decisão de gate](../contracts/GATE_DECISION.md)
 - [Contrato de consumo de módulo](../contracts/MODULE_CONSUMPTION.md)
+- [Contrato de registro de status](../contracts/STATUS_RECORD.md)
 - [Política de gates](../governance/GATE_POLICY.md)
 - [Guia de execução para usuários](USER_ORCHESTRATION_GUIDE.md)

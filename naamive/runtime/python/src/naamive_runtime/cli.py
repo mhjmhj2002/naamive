@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
-from .project import cancel_project, project_directory, read_project_status
+from .project import cancel_project, migrate_project_status, project_directory, read_project_status
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
@@ -98,6 +98,23 @@ def cancel(
     except IntakeError as error:
         fail(error)
     emit({"project_id": project, "state": "CANCELLED", "evidence_path": str(evidence_path)})
+
+
+@app.command()
+def status(
+    project: str = typer.Option(..., "--project"),
+    migrate: bool = typer.Option(False, "--migrate"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Show a project status summary or upgrade a legacy status record."""
+    try:
+        project_path = project_directory(repository_root(root), project)
+        if not project_path.is_dir():
+            raise IntakeError(f"project not found: {project_path}")
+        status_record = migrate_project_status(project_path) if migrate else read_project_status(project_path)
+    except IntakeError as error:
+        fail(error)
+    emit({"project_id": project, "current_state": status_record["current_state"], "state_category": status_record.get("state_category", "legacy"), "status_path": str(project_path / "STATUS.md"), "history_path": str(project_path / "STATUS_HISTORY.md")})
 
 
 @app.command()

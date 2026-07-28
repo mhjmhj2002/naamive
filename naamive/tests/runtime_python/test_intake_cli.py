@@ -53,7 +53,10 @@ def test_request_is_validated_and_approved(tmp_path: Path) -> None:
     result = runner.invoke(app, ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", "--repository-root", str(repository)])
     assert result.exit_code == 0, result.output
     assert (repository / "projects" / "customer-self-service" / "PROJECT.md").is_file()
-    assert "current_state: ANALYSIS" in (repository / "projects" / "customer-self-service" / "STATUS.md").read_text(encoding="utf-8")
+    project = repository / "projects" / "customer-self-service"
+    assert "current_state: ANALYSIS" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "# Status do Projeto" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "PRE_PROJECT" in (project / "STATUS_HISTORY.md").read_text(encoding="utf-8")
 
 
 def test_invalid_request_is_rejected_without_project(tmp_path: Path) -> None:
@@ -101,7 +104,33 @@ def test_active_project_can_be_cancelled_without_deletion(tmp_path: Path) -> Non
     project = repository / "projects" / "customer-self-service"
     assert result.exit_code == 0, result.output
     assert "CANCELLED" in (project / "STATUS.md").read_text(encoding="utf-8")
+    history = (project / "STATUS_HISTORY.md").read_text(encoding="utf-8")
+    assert "HUMAN_DECISION" in history
+    assert "CANCELLED" in history
     assert (project / "PROJECT.md").is_file()
     evidence = project / "validation" / "evidence" / "CANCELLATION.md"
     assert evidence.is_file()
     assert "did not contain sufficient business detail" in evidence.read_text(encoding="utf-8")
+
+
+def test_legacy_status_can_be_migrated_without_state_transition(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    project = repository / "projects" / "legacy-project"
+    project.mkdir()
+    (project / "STATUS.md").write_text(
+        "scope_type: project\nproject_id: legacy-project\ncurrent_state: CANCELLED\n"
+        "state_machine: naamive/orchestration/PROJECT_LIFECYCLE.md\n"
+        "last_transition: ANALYSIS → CANCELLED\n"
+        "last_transition_evidence: validation/evidence/CANCELLATION.md\n"
+        "pending_gate: none\ncancelled_at: '2026-07-28T14:25:41+00:00'\n",
+        encoding="utf-8",
+    )
+
+    result = runner.invoke(app, ["status", "--project", "legacy-project", "--migrate", "--repository-root", str(repository)])
+
+    assert result.exit_code == 0, result.output
+    status = (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "format_version: 2" in status
+    assert "current_state: CANCELLED" in status
+    assert "# Status do Projeto — legacy-project" in status
+    assert "MIGRATED" in (project / "STATUS_HISTORY.md").read_text(encoding="utf-8")
