@@ -12,7 +12,7 @@ Gates existem para reduzir risco com evidência, não para converter cada etapa 
 
 ## Decisões humanas normais
 
-1. **Autorizar descoberta:** registrar a necessidade como projeto e permitir `INTAKE → ANALYSIS`.
+1. **Registrar projeto e autorizar descoberta:** validar a solicitação pré-projeto, materializar o projeto e iniciá-lo em `ANALYSIS`.
 2. **Assumir compromisso de produto:** aprovar objetivo, escopo de alto nível, módulos candidatos, investimento e riscos relevantes para `DEFINITION → ARCHITECTURE`.
 3. **Aceitar entrega de negócio:** confirmar resultado, operação e handover para `DELIVERY → DELIVERED`.
 

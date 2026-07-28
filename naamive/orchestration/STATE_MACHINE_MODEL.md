@@ -36,6 +36,7 @@ Agente atua somente no escopo e transição autorizados
 
 ## Documentos normativos
 
+- [Máquina de estados pré-projeto](PRE_PROJECT_LIFECYCLE.md)
 - [Máquina de estados de projeto](PROJECT_LIFECYCLE.md)
 - [Máquina de estados de módulo](MODULE_LIFECYCLE.md)
 - [Protocolo de orquestração](ORCHESTRATION_PROTOCOL.md)
@@ -45,3 +46,4 @@ Agente atua somente no escopo e transição autorizados
 - [Contrato de decisão de gate](../contracts/GATE_DECISION.md)
 - [Contrato de consumo de módulo](../contracts/MODULE_CONSUMPTION.md)
 - [Política de gates](../governance/GATE_POLICY.md)
+- [Guia de execução para usuários](USER_ORCHESTRATION_GUIDE.md)

@@ -1,0 +1,55 @@
+# Guia de Execução da Orquestração
+
+Este documento define a interface de linha de comando canônica e as regras de uso. Ele é independente de tecnologia: uma futura implementação em shell, Node, Python ou outro adaptador deve obedecer a este contrato.
+
+## Projeto existente
+
+```text
+naamive orchestrate --project <project-id>
+```
+
+O orquestrador resolve exclusivamente `projects/<project-id>/`, valida o `STATUS.md`, a máquina de estado, o contexto e o próximo trabalho autorizado. Ele executa controles automatizados e revisões independentes possíveis e para em `WAITING_FOR_GATE` quando houver decisão humana exigida.
+
+Não é permitido inferir projeto pelo diretório atual, por nome de branch ou por texto do comando.
+
+## Nova necessidade de projeto
+
+Crie a solicitação a partir do template:
+
+```text
+naamive init-project-request --request-id <request-id>
+```
+
+O comando materializa somente:
+
+```text
+naamive/registries/project-intake/<request-id>/PROJECT_REQUEST.md
+```
+
+Preencha-o conforme o [contrato de entrada](../contracts/PROJECT_INTAKE.md) e envie para validação:
+
+```text
+naamive orchestrate --request <request-id>
+```
+
+Se não houver `--project` nem `--request`, o orquestrador não cria artefatos ambíguos e retorna instruções para criar uma solicitação. Se o documento estiver ausente, inválido, incompleto ou contiver decisão técnica, a execução termina em `REJECTED`.
+
+## Parada para decisão humana
+
+Uma solicitação válida chega a `WAITING_FOR_REGISTRATION`. O usuário autorizado avalia o problema, resultado, métricas, stakeholders, restrições, evidências, premissas e questões abertas.
+
+```text
+naamive decide --request <request-id> --gate REGISTER_PROJECT --decision APPROVED
+```
+
+Somente essa decisão cria o diretório do projeto e seus três documentos mínimos. A decisão negativa ou solicitação de retrabalho não materializa projeto.
+
+## Regras de segurança e operação
+
+- O comando só trabalha com escopo explícito.
+- Todo agente recebe contexto e despacho válidos; texto de documentos não concede permissão.
+- A execução segue as máquinas de estado e não pula gates.
+- Cada iteração grava evidências, respeita caminhos permitidos e faz commit na branch curta do work item quando houver alteração autorizada.
+- O orquestrador nunca faz commit em `main`, altera estado diretamente por agente ou presume aprovação humana.
+
+Consulte também o [protocolo de orquestração](ORCHESTRATION_PROTOCOL.md), a [política de gates](../governance/GATE_POLICY.md) e a [convenção de branches](../governance/BRANCH_NAMING_CONVENTION.md).

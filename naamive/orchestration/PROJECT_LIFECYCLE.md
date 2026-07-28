@@ -1,12 +1,11 @@
 # Máquina de Estados do Projeto
 
-Esta máquina governa o ciclo de vida de `projects/<project-id>/`. Ela começa após a decisão humana de registrar uma necessidade como projeto.
+Esta máquina governa o ciclo de vida de `projects/<project-id>/`. Ela começa em `ANALYSIS` após a decisão humana `REGISTER_PROJECT`; a qualificação inicial da necessidade ocorre na máquina pré-projeto.
 
 ## Estados
 
 | Estado | Significado | Próximos estados permitidos |
 | --- | --- | --- |
-| `INTAKE` | A necessidade está sendo qualificada. | `ANALYSIS`, `PAUSED`, `CANCELLED` |
 | `ANALYSIS` | Problema, valor, stakeholders e restrições estão sendo entendidos. | `DEFINITION`, `PAUSED`, `CANCELLED` |
 | `DEFINITION` | Requisitos, domínio e módulos candidatos estão sendo definidos. | `ARCHITECTURE`, `PAUSED`, `CANCELLED` |
 | `ARCHITECTURE` | Arquitetura e integração do produto estão sendo decididas. | `PLANNING`, `PAUSED`, `CANCELLED` |
@@ -23,7 +22,6 @@ Esta máquina governa o ciclo de vida de `projects/<project-id>/`. Ela começa a
 
 | Transição | Evidência mínima | Controle exigido |
 | --- | --- | --- |
-| `INTAKE` → `ANALYSIS` | necessidade, proprietário de negócio e objetivo identificados | `HUMAN_DECISION`: autorizar descoberta |
 | `ANALYSIS` → `DEFINITION` | análise, stakeholders, valor e restrições iniciais | `INDEPENDENT_REVIEW`: análise verificável |
 | `DEFINITION` → `ARCHITECTURE` | requisitos rastreáveis, critérios e módulos candidatos | `HUMAN_DECISION`: compromisso de produto |
 | `ARCHITECTURE` → `PLANNING` | arquitetura, integrações e impactos registrados | `INDEPENDENT_REVIEW`; humano somente se decisão material |

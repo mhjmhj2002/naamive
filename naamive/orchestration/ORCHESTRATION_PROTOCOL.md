@@ -1,6 +1,6 @@
 # Protocolo de Orquestração
 
-Este protocolo é a implementação canônica, independente de tecnologia, de como o NAAMIVE conduz trabalho autorizado. Ele aplica as máquinas de estado e os contratos globais; não substitui a autoridade humana, nem permite que um agente altere o próprio estado.
+Este protocolo é a implementação canônica, independente de tecnologia, de como o NAAMIVE conduz trabalho autorizado. Ele aplica as máquinas de estado e os contratos globais; não substitui a autoridade humana, nem permite que um agente altere o próprio estado. Solicitações sem projeto usam primeiro a máquina pré-projeto e o contrato de entrada.
 
 ## Fluxo obrigatório
 
@@ -23,6 +23,14 @@ Registro imutável do resultado
         ↓
 Atualização autorizada do STATUS.md ou retorno para retrabalho
 ```
+
+## Resolução inicial de comando
+
+- Com `--project <project-id>`, validar o projeto existente e iniciar o fluxo obrigatório.
+- Com `--request <request-id>`, validar a solicitação em `naamive/registries/project-intake/` pela [entrada de projeto](../contracts/PROJECT_INTAKE.md) e aplicar a [máquina pré-projeto](PRE_PROJECT_LIFECYCLE.md).
+- Sem ambos os parâmetros, não criar projeto ou documento; informar o comando `naamive init-project-request --request-id <request-id>`.
+
+Somente um gate `REGISTER_PROJECT` aprovado materializa o projeto. O detalhe da interface está no [guia de execução](USER_ORCHESTRATION_GUIDE.md).
 
 ## Procedimento
 
