@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import re
+import shutil
 from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
 
 from .intake import IntakeError, SLUG_PATTERN
+from .intake import parse_request
 
 
 STATUS_FRONT_MATTER = re.compile(r"\A---\s*\n(?P<meta>.*?)\n---\s*\n", re.DOTALL)
@@ -190,3 +192,40 @@ def cancel_project(repository_root: Path, project_id: str, reason: str) -> Path:
     (project_path / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
     append_transition_history(project_path, sequence, recorded_at, current_state, "CANCELLED", "HUMAN_DECISION", "human-cli", reason.strip(), evidence)
     return evidence_path
+
+
+def _intake_references_for_project(repository_root: Path, project_id: str) -> list[Path]:
+    intake_root = repository_root / "naamive" / "registries" / "project-intake"
+    if not intake_root.is_dir():
+        return []
+    references: list[Path] = []
+    for request_document in intake_root.glob("*/PROJECT_REQUEST.md"):
+        try:
+            request = parse_request(request_document)
+        except IntakeError:
+            if project_id in request_document.read_text(encoding="utf-8"):
+                raise IntakeError(f"cannot safely remove malformed intake reference: {request_document}")
+            continue
+        if request.metadata.proposed_project_id == project_id:
+            references.append(request_document.parent)
+    return references
+
+
+def permanently_delete_project(repository_root: Path, project_id: str) -> list[Path]:
+    """Irreversibly remove a cancelled project and its canonical intake records."""
+    project_path = project_directory(repository_root, project_id)
+    if not project_path.is_dir() or project_path.is_symlink():
+        raise IntakeError(f"project not found or unsafe to delete: {project_path}")
+    status = read_project_status(project_path)
+    if status["current_state"] != "CANCELLED":
+        raise IntakeError("project must be CANCELLED before permanent deletion")
+
+    intake_references = _intake_references_for_project(repository_root, project_id)
+    unsafe_references = [path for path in intake_references if path.is_symlink() or not path.is_dir()]
+    if unsafe_references:
+        raise IntakeError(f"unsafe intake reference to delete: {unsafe_references[0]}")
+
+    deleted_paths = [project_path, *intake_references]
+    for path in deleted_paths:
+        shutil.rmtree(path)
+    return deleted_paths

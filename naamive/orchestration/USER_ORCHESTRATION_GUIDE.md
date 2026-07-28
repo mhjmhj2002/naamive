@@ -73,6 +73,18 @@ naamive cancel --project <project-id> --reason "<justificativa>"
 
 O comando preserva todos os documentos, atualiza o painel `STATUS.md` para `CANCELLED`, acrescenta a transição em `STATUS_HISTORY.md` e registra `validation/evidence/CANCELLATION.md`. Ele não apaga diretórios nem altera a solicitação original.
 
+## Exclusão permanente de projeto cancelado
+
+Exclusão definitiva é permitida exclusivamente quando `STATUS.md` informa `current_state: CANCELLED`. Ela remove o diretório inteiro em `projects/<project-id>/` e cada solicitação de intake canônica cujo `proposed_project_id` seja o projeto removido. Não há lixeira, restauração automática ou exclusão de projeto ativo.
+
+Como proteção contra erro de alvo, a confirmação deve repetir exatamente o identificador:
+
+```text
+naamive delete-project --project <project-id> --confirm <project-id>
+```
+
+Se existir uma referência de intake malformada que mencione o projeto, a rotina falha sem apagar nada, exigindo correção humana antes de nova tentativa.
+
 ## Consultar e migrar o registro de status
 
 Todo projeto materializado possui um painel legível em `STATUS.md` e um histórico cronológico e append-only em `STATUS_HISTORY.md`. Consulte o estado estruturado pelo comando:

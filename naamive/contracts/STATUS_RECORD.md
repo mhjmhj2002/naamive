@@ -57,3 +57,7 @@ naamive status --project <project-id> --migrate
 ```
 
 Migração de formato não é uma transição de negócio, não altera o estado atual e não substitui evidências existentes.
+
+## Exclusão definitiva
+
+O estado `CANCELLED` é o único pré-requisito de status para exclusão definitiva. O runtime remove o diretório do projeto e as entradas canônicas de intake que o referenciam. A ação exige confirmação explícita repetindo o `project_id`; não produz transição nova, pois remove a própria trilha de auditoria do projeto.

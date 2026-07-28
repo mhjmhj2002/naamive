@@ -7,7 +7,7 @@ from typing import Optional
 import typer
 
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
-from .project import cancel_project, migrate_project_status, project_directory, read_project_status
+from .project import cancel_project, migrate_project_status, permanently_delete_project, project_directory, read_project_status
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
@@ -115,6 +115,22 @@ def status(
     except IntakeError as error:
         fail(error)
     emit({"project_id": project, "current_state": status_record["current_state"], "state_category": status_record.get("state_category", "legacy"), "status_path": str(project_path / "STATUS.md"), "history_path": str(project_path / "STATUS_HISTORY.md")})
+
+
+@app.command("delete-project")
+def delete_project(
+    project: str = typer.Option(..., "--project"),
+    confirm: str = typer.Option(..., "--confirm"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Permanently delete a cancelled project and its intake references."""
+    if confirm != project:
+        fail(IntakeError("confirmation must exactly match --project"))
+    try:
+        deleted_paths = permanently_delete_project(repository_root(root), project)
+    except IntakeError as error:
+        fail(error)
+    emit({"project_id": project, "state": "DELETED", "deleted_paths": [str(path) for path in deleted_paths]})
 
 
 @app.command()

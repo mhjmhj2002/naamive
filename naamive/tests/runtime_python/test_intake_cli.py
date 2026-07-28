@@ -134,3 +134,36 @@ def test_legacy_status_can_be_migrated_without_state_transition(tmp_path: Path) 
     assert "current_state: CANCELLED" in status
     assert "# Status do Projeto — legacy-project" in status
     assert "MIGRATED" in (project / "STATUS_HISTORY.md").read_text(encoding="utf-8")
+
+
+def test_only_cancelled_project_can_be_permanently_deleted_with_intake_reference(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    runner.invoke(app, ["init-project-request", "--request-id", "self-service", "--repository-root", str(repository)])
+    request = repository / "naamive" / "registries" / "project-intake" / "self-service" / "PROJECT_REQUEST.md"
+    complete_request(request)
+    runner.invoke(app, ["orchestrate", "--request", "self-service", "--repository-root", str(repository)])
+    runner.invoke(app, ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", "--repository-root", str(repository)])
+
+    blocked = runner.invoke(app, ["delete-project", "--project", "customer-self-service", "--confirm", "customer-self-service", "--repository-root", str(repository)])
+    assert blocked.exit_code == 1
+    assert "must be CANCELLED" in blocked.output
+
+    runner.invoke(app, ["cancel", "--project", "customer-self-service", "--reason", "Pilot complete.", "--repository-root", str(repository)])
+    result = runner.invoke(app, ["delete-project", "--project", "customer-self-service", "--confirm", "customer-self-service", "--repository-root", str(repository)])
+
+    assert result.exit_code == 0, result.output
+    assert "DELETED" in result.output
+    assert not (repository / "projects" / "customer-self-service").exists()
+    assert not request.parent.exists()
+
+
+def test_permanent_deletion_requires_exact_confirmation(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    project = repository / "projects" / "cancelled-project"
+    project.mkdir()
+    (project / "STATUS.md").write_text("project_id: cancelled-project\ncurrent_state: CANCELLED\n", encoding="utf-8")
+
+    result = runner.invoke(app, ["delete-project", "--project", "cancelled-project", "--confirm", "different-project", "--repository-root", str(repository)])
+
+    assert result.exit_code == 1
+    assert project.exists()
