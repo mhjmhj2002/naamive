@@ -1,6 +1,23 @@
 # Guia de Execução da Orquestração
 
-Este documento define a interface de linha de comando canônica e as regras de uso. Ele é independente de tecnologia: uma futura implementação em shell, Node, Python ou outro adaptador deve obedecer a este contrato.
+Este documento define a interface de linha de comando canônica e as regras de uso. A implementação inicial está em Python, em `naamive/runtime/python/`, e preserva este contrato.
+
+## Instalação do runtime inicial
+
+Em um ambiente Python 3.10 ou superior:
+
+```text
+python -m pip install -e naamive/runtime/python
+```
+
+Para executar os testes do runtime:
+
+```text
+python -m pip install -e "naamive/runtime/python[dev]"
+python -m pytest naamive/tests/runtime_python
+```
+
+O comando `naamive` passa então a disponibilizar o fluxo de intake. A execução de agentes em projetos já materializados ainda não faz parte desta primeira versão.
 
 ## Projeto existente
 
@@ -9,6 +26,8 @@ naamive orchestrate --project <project-id>
 ```
 
 O orquestrador resolve exclusivamente `projects/<project-id>/`, valida o `STATUS.md`, a máquina de estado, o contexto e o próximo trabalho autorizado. Ele executa controles automatizados e revisões independentes possíveis e para em `WAITING_FOR_GATE` quando houver decisão humana exigida.
+
+Na primeira versão, `--project` valida o projeto e seu estado e informa `PROJECT_EXECUTION_PENDING`; despacho de agentes de projetos materializados será a próxima fatia do runtime.
 
 Não é permitido inferir projeto pelo diretório atual, por nome de branch ou por texto do comando.
 

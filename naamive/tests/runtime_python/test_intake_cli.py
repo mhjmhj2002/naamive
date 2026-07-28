@@ -1,0 +1,77 @@
+from __future__ import annotations
+
+import shutil
+from pathlib import Path
+
+from typer.testing import CliRunner
+
+from naamive_runtime.cli import app
+
+
+runner = CliRunner()
+
+
+def create_repository(tmp_path: Path, source_root: Path) -> Path:
+    shutil.copytree(source_root / "naamive" / "templates", tmp_path / "naamive" / "templates")
+    (tmp_path / "naamive" / "registries").mkdir(parents=True)
+    (tmp_path / "projects").mkdir()
+    return tmp_path
+
+
+def complete_request(path: Path) -> None:
+    content = path.read_text(encoding="utf-8")
+    replacements = {
+        "<project-id>": "customer-self-service",
+        "<titulo-do-produto-ou-necessidade>": "Customer self service",
+        "<nome-ou-identidade>": "business-owner",
+        "Descreva o problema real a ser resolvido, sem propor tecnologia ou solução.": "Customers cannot resolve account issues without support.",
+        "Descreva o resultado observável esperado para o negócio.": "Customers resolve common account issues independently.",
+        "- Métrica ou critério mensurável:": "- Reduce support contacts for common account issues.",
+        "- Proprietário de negócio:": "- Proprietário de negócio: business-owner",
+        "- Partes afetadas:": "- Partes afetadas: customers and support team",
+        "Registre fatos, regulações ou limites. Caso não existam restrições conhecidas, declare isso explicitamente.": "No known restrictions.",
+        "- Fonte ou evidência:": "- Support contact reports.",
+        "- Premissa a validar:": "- Customers want self-service.",
+        "- Questão ou lacuna a resolver:": "- Which account issues are most frequent?",
+    }
+    for source, target in replacements.items():
+        content = content.replace(source, target)
+    path.write_text(content, encoding="utf-8")
+
+
+def test_request_is_validated_and_approved(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    result = runner.invoke(app, ["init-project-request", "--request-id", "self-service", "--repository-root", str(repository)])
+    assert result.exit_code == 0, result.output
+    request = repository / "naamive" / "registries" / "project-intake" / "self-service" / "PROJECT_REQUEST.md"
+    complete_request(request)
+
+    result = runner.invoke(app, ["orchestrate", "--request", "self-service", "--repository-root", str(repository)])
+    assert result.exit_code == 0, result.output
+    assert "WAITING_FOR_REGISTRATION" in result.output
+
+    result = runner.invoke(app, ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", "--repository-root", str(repository)])
+    assert result.exit_code == 0, result.output
+    assert (repository / "projects" / "customer-self-service" / "PROJECT.md").is_file()
+    assert "current_state: ANALYSIS" in (repository / "projects" / "customer-self-service" / "STATUS.md").read_text(encoding="utf-8")
+
+
+def test_invalid_request_is_rejected_without_project(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    result = runner.invoke(app, ["init-project-request", "--request-id", "incomplete", "--repository-root", str(repository)])
+    assert result.exit_code == 0, result.output
+
+    result = runner.invoke(app, ["orchestrate", "--request", "incomplete", "--repository-root", str(repository)])
+    assert result.exit_code == 1
+    assert "REJECTED" in result.output
+    assert not any((repository / "projects").iterdir())
+
+
+def test_missing_scope_instructs_how_to_create_a_request(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+
+    result = runner.invoke(app, ["orchestrate", "--repository-root", str(repository)])
+
+    assert result.exit_code == 1
+    assert "init-project-request --request-id" in result.output
+    assert not any((repository / "projects").iterdir())

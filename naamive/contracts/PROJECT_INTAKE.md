@@ -23,7 +23,7 @@ business_owner
 submitted_by
 ```
 
-`status` deve ser `DRAFT`, `SUBMITTED`, `VALIDATED`, `REJECTED`, `WAITING_FOR_REGISTRATION`, `REGISTERED` ou `CANCELLED`. `request_id` e `proposed_project_id` usam `kebab-case`; o identificador de projeto não pode já existir em `projects/`.
+`status` deve ser `DRAFT`, `SUBMITTED`, `REJECTED`, `WAITING_FOR_REGISTRATION`, `REGISTERED` ou `CANCELLED`. `request_id` e `proposed_project_id` usam `kebab-case`; o identificador de projeto não pode já existir em `projects/`.
 
 ## Seções obrigatórias e regras
 
