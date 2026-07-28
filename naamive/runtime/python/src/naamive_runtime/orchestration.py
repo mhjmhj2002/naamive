@@ -12,7 +12,7 @@ import yaml
 
 from .codex_executor import run_codex_agent
 from .audit_schema import validate_audit_record
-from .evidence import validate_architecture, validate_business_analysis, validate_delivery_plan, validate_module_proposal, validate_requirements, validate_review
+from .evidence import architecture_requires_material_decision, validate_architecture, validate_architecture_document, validate_business_analysis, validate_delivery_plan, validate_delivery_plan_document, validate_module_proposal, validate_requirements, validate_review
 from .intake import IntakeError, SLUG_PATTERN
 from .project import append_transition_history, migrate_project_status, render_project_status
 
@@ -177,7 +177,8 @@ def create_execution(repository_root: Path, payload: dict[str, object]) -> Path:
         if target != module_root and module_root not in target.parents:
             raise IntakeError("module execution target must be under its module")
         work_item = module / "planning" / "work-items" / f"{payload['authorized_work_item']}.md"
-        if not work_item.is_file() or work_item_status(project, module_id, str(payload["authorized_work_item"])) not in {"AUTHORIZED", "IN_PROGRESS"}:
+        needs_work_item = str(module_status["current_state"]) in {"PLANNED", "IMPLEMENTING"}
+        if needs_work_item and (not work_item.is_file() or work_item_status(project, module_id, str(payload["authorized_work_item"])) not in {"AUTHORIZED", "IN_PROGRESS"}):
             raise IntakeError("module execution requires an existing authorized work item")
     if _execution_events(repository_root, project_id, execution_id):
         raise IntakeError(f"execution already exists: {execution_id}")
@@ -331,6 +332,11 @@ def _orchestrate_architecture_planning(repository_root: Path, project: Path, pro
         error = _validate_round_evidence(repository_root, project_id, review_id, validate_review, review, review_id)
         if error:
             return {"project_id": project_id, "current_state": state, "state": "REWORK_REQUIRED", "execution_id": review_id, "error": error}
+        if architecture_requires_material_decision(architecture):
+            request = open_human_gate(repository_root, project_id, "MATERIAL_ARCHITECTURE_DECISION", "PLANNING", "Architecture declares a material decision requiring human authority.", [str(architecture.relative_to(project)), str(review.relative_to(project))], actor="governance-assurance")
+            advance_execution(repository_root, project_id, execution_id, "WAITING_FOR_GATE")
+            advance_execution(repository_root, project_id, review_id, "WAITING_FOR_GATE")
+            return {"project_id": project_id, "current_state": "ARCHITECTURE", "state": "WAITING_FOR_GATE", "gate_id": "MATERIAL_ARCHITECTURE_DECISION", "transition_request": str(request.relative_to(repository_root))}
         apply_state_transition(repository_root, project_id, "PLANNING", actor="governance-assurance", reason="Independent review approved solution architecture.", evidence=[str(architecture.relative_to(project)), str(review.relative_to(project))], control_type="INDEPENDENT_REVIEW", execution_id=review_id, expected_state="ARCHITECTURE", idempotency_key=f"architecture-planning-{execution_id}")
         advance_execution(repository_root, project_id, execution_id, "WAITING_FOR_GATE")
         advance_execution(repository_root, project_id, execution_id, "COMPLETED")
@@ -587,6 +593,111 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
     execution["state"] = "COMPLETED"
     _record_execution(repository_root, project_id, execution)
     return {"project_id": project_id, "current_state": to_state, "state": "COMPLETED", "execution_path": str(execution_path)}
+
+
+def orchestrate_module_architecture_planning(repository_root: Path, project_id: str, module_id: str, agent_runner=run_codex_agent) -> dict[str, object]:
+    """Advance one module through its Phase 5 architecture or planning round."""
+    project = repository_root / "projects" / project_id
+    module = project / "modules" / module_id
+    project_state = str(migrate_project_status(project)["current_state"])
+    module_state = str(_read_module_status(module)["current_state"])
+    rounds = {
+        "DEFINED": ("ARCHITECTURE", "solution-architecture", "define-module-architecture", "architecture", "SOLUTION_ARCHITECTURE.md", validate_architecture_document),
+        "ARCHITECTED": ("PLANNING", "delivery-planning", "plan-module-delivery", "planning", "DELIVERY_PLAN.md", validate_delivery_plan_document),
+    }
+    if module_state not in rounds:
+        raise IntakeError("module is not eligible for an architecture or planning round")
+    expected_project_state, agent, work_item, directory, filename, validator = rounds[module_state]
+    if project_state != expected_project_state:
+        raise IntakeError(f"module {module_state} round requires project state {expected_project_state}")
+    target_rel = f"modules/{module_id}/{directory}"
+    evidence_rel = f"{target_rel}/{filename}"
+    execution_id = f"execution-{uuid4().hex}"
+    context = {
+        "execution_id": execution_id, "project_id": project_id, "scope_type": "module", "module_id": module_id,
+        "state_machine": "naamive/orchestration/MODULE_LIFECYCLE.md", "current_state": module_state, "requested_transition": "evidence-only",
+        "agent_id": agent, "authorized_work_item": work_item, "target_path": target_rel,
+        "input_artifacts": [f"modules/{module_id}/MODULE.md"] if module_state == "DEFINED" else [f"modules/{module_id}/architecture/SOLUTION_ARCHITECTURE.md"], "required_evidence": [evidence_rel],
+        "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
+        "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none", "action_class": "WRITE",
+        "expected_outputs": [evidence_rel], "completion_criteria": f"Produce {evidence_rel} with complete traceability and the supplied execution_id.",
+    }
+    create_execution(repository_root, context)
+    advance_execution(repository_root, project_id, execution_id, "VALIDATING")
+    advance_execution(repository_root, project_id, execution_id, "DISPATCHED")
+    target = project / target_rel
+    target.mkdir(parents=True, exist_ok=True)
+    try:
+        inputs = [project / str(reference) for reference in context["input_artifacts"]]
+        result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
+    except IntakeError:
+        advance_execution(repository_root, project_id, execution_id, "FAILED")
+        raise
+    evidence = project / evidence_rel
+    advance_execution(repository_root, project_id, execution_id, "EVIDENCE_REVIEW", agent_result=result, produced_evidence=[evidence_rel])
+    error = _validate_round_evidence(repository_root, project_id, execution_id, validator, evidence, execution_id)
+    if error:
+        return {"project_id": project_id, "module_id": module_id, "state": "REWORK_REQUIRED", "execution_id": execution_id, "error": error}
+    review_target_rel = f"modules/{module_id}/{directory}/reviews"
+    review_rel = f"{review_target_rel}/REVIEW.md"
+    review_id = f"execution-{uuid4().hex}"
+    review_context = dict(context, execution_id=review_id, agent_id="governance-assurance", authorized_work_item=f"review-{work_item}", target_path=review_target_rel, input_artifacts=[evidence_rel], required_evidence=[review_rel], dispatch_id=f"dispatch-{uuid4().hex}", activity=f"review-{work_item}", allowed_write_paths=[review_target_rel], expected_outputs=[review_rel])
+    create_execution(repository_root, review_context)
+    advance_execution(repository_root, project_id, review_id, "VALIDATING")
+    advance_execution(repository_root, project_id, review_id, "DISPATCHED")
+    review_target = project / review_target_rel
+    review_target.mkdir(parents=True, exist_ok=True)
+    result = agent_runner(repository_root, project_id, "governance-assurance", f"review-{work_item}", review_target, [evidence], execution_context=review_context)
+    review = project / review_rel
+    advance_execution(repository_root, project_id, review_id, "EVIDENCE_REVIEW", agent_result=result, produced_evidence=[review_rel])
+    error = _validate_round_evidence(repository_root, project_id, review_id, validate_review, review, review_id)
+    if error:
+        return {"project_id": project_id, "module_id": module_id, "state": "REWORK_REQUIRED", "execution_id": review_id, "error": error}
+    if module_state == "DEFINED" and architecture_requires_material_decision(evidence):
+        request_id = f"transition-{uuid4().hex}"
+        request = _write_immutable(audit_root(repository_root, project_id) / "transition-requests" / f"{request_id}.yaml", {
+            "transition_request_id": request_id, "execution_id": review_id, "scope_type": "module", "project_id": project_id,
+            "module_id": module_id, "state_machine": "naamive/orchestration/MODULE_LIFECYCLE.md", "from_state": "DEFINED", "to_state": "ARCHITECTED",
+            "trigger": "module architecture declares a material decision", "evidence": [evidence_rel, review_rel], "required_gate": "HUMAN_DECISION", "requested_by": "governance-assurance", "requested_at": _now(),
+        }, "transition_request")
+        module_status = _read_module_status(module)
+        module_status["pending_gate"] = "MATERIAL_MODULE_ARCHITECTURE_DECISION"
+        module_status["pending_transition_request"] = str(request.relative_to(repository_root))
+        (module / "STATUS.md").write_text(_render_module_status(module_status), encoding="utf-8")
+        for identifier in (execution_id, review_id):
+            advance_execution(repository_root, project_id, identifier, "WAITING_FOR_GATE")
+        return {"project_id": project_id, "module_id": module_id, "current_state": "DEFINED", "state": "WAITING_FOR_GATE", "gate_id": "MATERIAL_MODULE_ARCHITECTURE_DECISION", "transition_request": str(request.relative_to(repository_root))}
+    destination = "ARCHITECTED" if module_state == "DEFINED" else "PLANNED"
+    apply_state_transition(repository_root, project_id, destination, scope_type="module", module_id=module_id, actor="governance-assurance", reason=f"Independent review approved module {directory}.", evidence=[evidence_rel, review_rel], control_type="INDEPENDENT_REVIEW", execution_id=review_id, expected_state=module_state, idempotency_key=f"module-{module_id}-{directory}-{execution_id}")
+    for identifier in (execution_id, review_id):
+        advance_execution(repository_root, project_id, identifier, "WAITING_FOR_GATE")
+        advance_execution(repository_root, project_id, identifier, "COMPLETED")
+    return {"project_id": project_id, "module_id": module_id, "current_state": destination, "state": "COMPLETED", "execution_id": execution_id, "review_execution": review_id}
+
+
+def resolve_module_architecture_gate(repository_root: Path, project_id: str, module_id: str, decision: str, actor: str, rationale: str) -> dict[str, object]:
+    if decision not in {"APPROVED", "REJECTED", "REWORK_REQUIRED"} or not rationale.strip():
+        raise IntakeError("valid decision and rationale are required")
+    module = repository_root / "projects" / project_id / "modules" / module_id
+    status = _read_module_status(module)
+    if status.get("pending_gate") != "MATERIAL_MODULE_ARCHITECTURE_DECISION":
+        raise IntakeError("module is not waiting for a material architecture decision")
+    reference = status.get("pending_transition_request")
+    request_path = repository_root / str(reference) if isinstance(reference, str) else None
+    request = yaml.safe_load(request_path.read_text(encoding="utf-8")) if request_path and request_path.is_file() else None
+    if not isinstance(request, dict) or request.get("from_state") != "DEFINED" or request.get("module_id") != module_id:
+        raise IntakeError("module material architecture request is invalid or obsolete")
+    decision_id = f"gate-{uuid4().hex}"
+    decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", {
+        "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": "MATERIAL_MODULE_ARCHITECTURE_DECISION", "decision": decision,
+        "control_type": "HUMAN_DECISION", "decided_by": actor, "authority_basis": "human module architecture decision", "evidence_reviewed": list(request["evidence"]), "rationale": rationale.strip(), "decided_at": _now(),
+    }, "gate_decision")
+    status.pop("pending_transition_request", None)
+    status["pending_gate"] = "none"
+    (module / "STATUS.md").write_text(_render_module_status(status), encoding="utf-8")
+    if decision == "APPROVED":
+        apply_state_transition(repository_root, project_id, "ARCHITECTED", scope_type="module", module_id=module_id, actor=actor, reason=rationale, evidence=[str(decision_path.relative_to(repository_root))], control_type="HUMAN_DECISION", expected_state="DEFINED")
+    return {"project_id": project_id, "module_id": module_id, "state": "ARCHITECTED" if decision == "APPROVED" else decision, "decision_path": str(decision_path)}
 
 
 MODULE_DIRECTORIES = (

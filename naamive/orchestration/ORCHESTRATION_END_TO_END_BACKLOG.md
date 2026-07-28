@@ -218,6 +218,8 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
 - Testes isolados cobrem criação e reutilização de branch canônica, alteração prévia fora do escopo e commit com caminho não autorizado.
 - Work items agora possuem ciclo de vida explícito (`AUTHORIZED`, `IN_PROGRESS`, `BLOCKED`, `COMPLETED`, `CANCELLED`) e dependências estáveis no formato `module-id/work-item-id`; o planejamento bloqueia o avanço enquanto qualquer predecessor não estiver `COMPLETED`.
 - O despacho `implementation` de módulo valida estado do projeto e módulo, work item autorizado, predecessores completos, escopo de escrita e evidências esperadas; ele usa a iteração Git controlada e conclui o work item somente após a evidência exigida.
+- A arquitetura declara obrigatoriamente `material_decision_required: true|false`; quando `true`, a orquestração de projeto abre `MATERIAL_ARCHITECTURE_DECISION` e aguarda autoridade humana antes de entrar em planejamento.
+- As rodadas de arquitetura e planejamento de módulo possuem despacho e revisão independente próprios, aplicando `DEFINED → ARCHITECTED` e `ARCHITECTED → PLANNED` somente após evidência válida.
 
 ### Falta implementar
 

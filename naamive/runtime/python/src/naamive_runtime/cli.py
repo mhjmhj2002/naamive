@@ -9,7 +9,7 @@ import typer
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
 from .project import cancel_project, migrate_project_status, permanently_delete_project, project_directory, read_project_status, render_project_status
 from .codex_executor import run_codex_agent
-from .orchestration import create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_project, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_product_commitment
+from .orchestration import create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_project, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
@@ -174,6 +174,11 @@ def decide(
         if decision not in {"APPROVED", "REJECTED", "REWORK_REQUIRED"}:
             raise IntakeError("decision must be APPROVED, REJECTED, or REWORK_REQUIRED")
         if project:
+            if gate == "MATERIAL_MODULE_ARCHITECTURE_DECISION":
+                if not module:
+                    raise IntakeError("module is required for MATERIAL_MODULE_ARCHITECTURE_DECISION")
+                emit(resolve_module_architecture_gate(repo, project, module, decision, "human-cli", reason))
+                return
             if gate == "PRODUCT_COMMITMENT":
                 emit(resolve_product_commitment(repo, project, decision, "human-cli", reason, module, module_title))
                 return

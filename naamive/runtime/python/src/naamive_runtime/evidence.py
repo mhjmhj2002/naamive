@@ -50,16 +50,36 @@ def validate_review(path: Path, execution_id: str) -> Path:
 
 
 def validate_architecture(project: Path, execution_id: str) -> Path:
-    return require_markdown(
-        project / "architecture" / "SOLUTION_ARCHITECTURE.md",
+    return validate_architecture_document(project / "architecture" / "SOLUTION_ARCHITECTURE.md", execution_id)
+
+
+def validate_architecture_document(path: Path, execution_id: str) -> Path:
+    validated = require_markdown(
+        path,
         ("decisões", "integrações", "impactos", "riscos", "decisões materiais") + TRACEABILITY_REQUIRED,
         execution_id,
     )
+    if not re.search(r"^material_decision_required:\s*(true|false)\s*$", validated.read_text(encoding="utf-8"), re.IGNORECASE | re.MULTILINE):
+        raise IntakeError(f"architecture evidence must declare material_decision_required: {path}")
+    return validated
+
+
+def architecture_requires_material_decision(path: Path) -> bool:
+    """Read the machine-checkable architectural escalation declaration."""
+    content = path.read_text(encoding="utf-8")
+    match = re.search(r"^material_decision_required:\s*(true|false)\s*$", content, re.IGNORECASE | re.MULTILINE)
+    if not match:
+        raise IntakeError(f"architecture evidence must declare material_decision_required: {path}")
+    return match.group(1).lower() == "true"
 
 
 def validate_delivery_plan(project: Path, execution_id: str) -> Path:
+    return validate_delivery_plan_document(project / "planning" / "DELIVERY_PLAN.md", execution_id)
+
+
+def validate_delivery_plan_document(path: Path, execution_id: str) -> Path:
     return require_markdown(
-        project / "planning" / "DELIVERY_PLAN.md",
+        path,
         ("roadmap", "releases", "riscos", "dependências", "work items", "critérios de pronto") + TRACEABILITY_REQUIRED,
         execution_id,
     )

@@ -17,6 +17,7 @@ from naamive_runtime.orchestration import (
     register_module_consumption,
     recover_interrupted_execution,
     orchestrate_project,
+    orchestrate_module_architecture_planning,
     set_work_item_status,
     unresolved_work_item_dependencies,
     resolve_product_commitment,
@@ -209,7 +210,7 @@ def test_architecture_and_planning_rounds_require_review_and_authorized_work(tmp
     def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
         trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nproject\n# Fonte\nneed\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
         if agent == "solution-architecture":
-            (target / "SOLUTION_ARCHITECTURE.md").write_text("# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nnenhuma\n" + trace, encoding="utf-8")
+            (target / "SOLUTION_ARCHITECTURE.md").write_text("material_decision_required: false\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nnenhuma\n" + trace, encoding="utf-8")
         elif agent == "delivery-planning":
             (target / "DELIVERY_PLAN.md").write_text("# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n" + trace, encoding="utf-8")
         else:
@@ -225,6 +226,26 @@ def test_architecture_and_planning_rounds_require_review_and_authorized_work(tmp
     create_work_item(project, "catalog", "catalog-rules", "Catalog rules", objective="Implement rules", write_scope=["modules/catalog/applications/rules.py"], dependencies=[], priority="HIGH", definition_of_ready=["Architecture reviewed"], expected_evidence=["modules/catalog/tests/rules.md"], authorization_reference="plan")
     planning = orchestrate_project(tmp_path, "sample", runner)
     assert planning["current_state"] == "IMPLEMENTATION"
+
+
+def test_material_architecture_declaration_opens_human_gate(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "ARCHITECTURE")
+    (project / "need").mkdir()
+    (project / "need" / "BUSINESS_NEED.md").write_text("# Need\n", encoding="utf-8")
+    (project / "analysis" / "requirements").mkdir(parents=True)
+    (project / "analysis" / "requirements" / "REQUIREMENTS.md").write_text("# Requirements\n", encoding="utf-8")
+
+    def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
+        trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nproject\n# Fonte\nneed\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+        if agent == "solution-architecture":
+            (target / "SOLUTION_ARCHITECTURE.md").write_text("material_decision_required: true\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\n# material_decisions\n- id: vendor-choice\n" + trace, encoding="utf-8")
+        else:
+            (target / "REVIEW.md").write_text("# Critérios verificados\nx\n# Resultado\nAPPROVED\n" + trace, encoding="utf-8")
+        return {}
+
+    result = orchestrate_project(tmp_path, "sample", runner)
+    assert result["state"] == "WAITING_FOR_GATE"
+    assert result["gate_id"] == "MATERIAL_ARCHITECTURE_DECISION"
 
 
 def test_conditional_human_gate_applies_only_approved_pending_transition(tmp_path: Path) -> None:
@@ -343,6 +364,26 @@ def test_module_implementation_dispatch_completes_only_with_expected_evidence(tm
     assert result["state"] == "COMPLETED"
     assert "**Status:** `COMPLETED`" in (module / "planning" / "work-items" / "catalog-rules.md").read_text(encoding="utf-8")
     assert "current_state: IMPLEMENTING" in (module / "STATUS.md").read_text(encoding="utf-8")
+
+
+def test_module_architecture_and_planning_rounds_are_independently_reviewed(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "ARCHITECTURE")
+    module = materialize_module(project, "catalog", "Catalog")
+    apply_state_transition(tmp_path, "sample", "DEFINED", scope_type="module", module_id="catalog", actor="reviewer", reason="defined", evidence=["domain"], control_type="INDEPENDENT_REVIEW")
+
+    def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
+        trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nmodule\n# Fonte\nrequirements\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+        if agent == "solution-architecture":
+            (target / "SOLUTION_ARCHITECTURE.md").write_text("material_decision_required: false\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nnenhuma\n" + trace, encoding="utf-8")
+        elif agent == "delivery-planning":
+            (target / "DELIVERY_PLAN.md").write_text("# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n" + trace, encoding="utf-8")
+        else:
+            (target / "REVIEW.md").write_text("# Critérios verificados\nx\n# Resultado\nAPPROVED\n" + trace, encoding="utf-8")
+        return {}
+
+    assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "ARCHITECTED"
+    apply_state_transition(tmp_path, "sample", "PLANNING", actor="reviewer", reason="project architecture reviewed", evidence=["architecture"], control_type="INDEPENDENT_REVIEW")
+    assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "PLANNED"
 
 
 def test_module_consumption_is_owned_by_consumer_and_cannot_authorize_provider_write(tmp_path: Path) -> None:
