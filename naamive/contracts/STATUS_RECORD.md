@@ -60,4 +60,4 @@ Migração de formato não é uma transição de negócio, não altera o estado 
 
 ## Exclusão definitiva
 
-O estado `CANCELLED` é o único pré-requisito de status para exclusão definitiva. O runtime remove o diretório do projeto e as entradas canônicas de intake que o referenciam. A ação exige confirmação explícita repetindo o `project_id`; não produz transição nova, pois remove a própria trilha de auditoria do projeto.
+O estado `CANCELLED` é o único pré-requisito de status para exclusão definitiva. O runtime remove o diretório do projeto, as entradas canônicas de intake que o referenciam e os registros centrais de orquestração em `naamive/registries/orchestration/<project-id>/`. A ação exige confirmação explícita repetindo o `project_id`; não produz transição nova, pois remove as trilhas de auditoria do projeto e da execução associada.

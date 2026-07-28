@@ -111,6 +111,9 @@ def test_active_project_can_be_cancelled_without_deletion(tmp_path: Path) -> Non
     evidence = project / "validation" / "evidence" / "CANCELLATION.md"
     assert evidence.is_file()
     assert "did not contain sufficient business detail" in evidence.read_text(encoding="utf-8")
+    audit = repository / "naamive" / "registries" / "orchestration" / "customer-self-service"
+    assert len(list((audit / "transition-requests").glob("*.yaml"))) == 1
+    assert len(list((audit / "gate-decisions").glob("*.yaml"))) == 1
 
 
 def test_legacy_status_can_be_migrated_without_state_transition(tmp_path: Path) -> None:
@@ -149,12 +152,15 @@ def test_only_cancelled_project_can_be_permanently_deleted_with_intake_reference
     assert "must be CANCELLED" in blocked.output
 
     runner.invoke(app, ["cancel", "--project", "customer-self-service", "--reason", "Pilot complete.", "--repository-root", str(repository)])
+    audit = repository / "naamive" / "registries" / "orchestration" / "customer-self-service"
+    assert audit.is_dir()
     result = runner.invoke(app, ["delete-project", "--project", "customer-self-service", "--confirm", "customer-self-service", "--repository-root", str(repository)])
 
     assert result.exit_code == 0, result.output
     assert "DELETED" in result.output
     assert not (repository / "projects" / "customer-self-service").exists()
     assert not request.parent.exists()
+    assert not audit.exists()
 
 
 def test_permanent_deletion_requires_exact_confirmation(tmp_path: Path) -> None:

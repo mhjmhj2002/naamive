@@ -17,7 +17,7 @@ python -m pip install -e "naamive/runtime/python[dev]"
 python -m pytest naamive/tests/runtime_python
 ```
 
-O comando `naamive` passa então a disponibilizar o fluxo de intake. A execução de agentes em projetos já materializados ainda não faz parte desta primeira versão.
+O comando `naamive` disponibiliza o fluxo de intake e as primeiras rodadas auditáveis de execução de projeto.
 
 ## Projeto existente
 
@@ -27,7 +27,41 @@ naamive orchestrate --project <project-id>
 
 O orquestrador resolve exclusivamente `projects/<project-id>/`, valida o `STATUS.md`, a máquina de estado, o contexto e o próximo trabalho autorizado. Ele executa controles automatizados e revisões independentes possíveis e para em `WAITING_FOR_GATE` quando houver decisão humana exigida.
 
-Na primeira versão, `--project` valida o projeto e seu estado e informa `PROJECT_EXECUTION_PENDING`; despacho de agentes de projetos materializados será a próxima fatia do runtime.
+Em `ANALYSIS`, ele despacha `business-analysis` para `analysis/business/`, exige evidência nesse caminho e, após a revisão independente automatizada, registra `ANALYSIS → DEFINITION`. Em `DEFINITION`, despacha `domain-modeling` para `analysis/domain/` e para no gate humano `PRODUCT_COMMITMENT`; não infere a decisão nem materializa módulos antes dela. Os registros da própria plataforma ficam centralizados em `naamive/registries/orchestration/<project-id>/` (execuções, solicitações e decisões); o projeto contém somente os seus artefatos de produto e estado.
+
+Após a proposta, a autoridade humana seleciona explicitamente o módulo de capacidade e registra o compromisso. A aprovação materializa o módulo em `IDENTIFIED` e avança o projeto para `ARCHITECTURE`:
+
+```text
+naamive decide --project <project-id> --gate PRODUCT_COMMITMENT --decision APPROVED --module <module-id> --module-title "<capacidade de negócio>"
+```
+
+Itens de trabalho só podem ser criados durante o planejamento de um módulo, em `planning/work-items/`, com escopo, critérios e autorização explícitos:
+
+```text
+naamive create-work-item --project <project-id> --module <module-id> --work-item <work-item-id> --title "<trabalho autorizado>" --objective "<objetivo>" --write-scope modules/<module-id>/applications/<alvo> --priority HIGH --ready-criterion "<critério>" --expected-evidence modules/<module-id>/tests/<evidência> --authorization <decisão-ou-plano>
+```
+
+O consumo de um módulo de outro projeto é registrado no módulo consumidor, por referência de contrato; esse comando nunca concede escrita no módulo provedor:
+
+```text
+naamive register-module-consumption --consumer-project <projeto-consumidor> --consumer-module <módulo-consumidor> --provider-project <projeto-provedor> --provider-module <módulo-provedor> --contract-reference modules/<módulo-provedor>/documentation/<contrato> --compatible-version "<versão>" --business-purpose "<finalidade>" --integration-owner "<responsável>" --impact-and-risk "<risco>"
+```
+
+## Despacho explícito de agente Codex
+
+O runtime usa o modelo padrão suportado pela conta autenticada no Codex CLI, com raciocínio `low`. Isso evita fixar um identificador de modelo indisponível para a forma de autenticação atual. Cada execução deve indicar projeto, agente oficial, work item e caminho relativo autorizado:
+
+```text
+naamive run-agent --project <project-id> --agent business-analysis --work-item <work-item-id> --target analysis/business
+```
+
+O adaptador entrega apenas a necessidade aprovada, instrui o agente a respeitar seus contratos e rejeita alterações novas fora de `target`. Ele não muda estado, cria módulo, aprova gate ou faz commit: essas ações continuam sendo responsabilidade da orquestração e da autoridade humana.
+
+Para uma conta com acesso a um modelo específico no Codex CLI, a substituição é explícita e não fica gravada no repositório:
+
+```text
+NAAMIVE_CODEX_MODEL=<modelo-compativel> naamive run-agent ...
+```
 
 Não é permitido inferir projeto pelo diretório atual, por nome de branch ou por texto do comando.
 

@@ -173,24 +173,21 @@ def cancel_project(repository_root: Path, project_id: str, reason: str) -> Path:
     recorded_at = datetime.now(timezone.utc).isoformat()
     evidence_path.parent.mkdir(parents=True, exist_ok=True)
     evidence_path.write_text(f"# Decisão de Cancelamento\n\n**Project ID:** `{project_id}`\n**Prior state:** `{current_state}`\n**Decision:** `CANCELLED`\n**Recorded at:** `{recorded_at}`\n\n## Justificativa\n\n{reason.strip()}\n", encoding="utf-8")
-    sequence = int(status.get("transition_sequence", 0)) + 1
     evidence = str(evidence_path.relative_to(project_path))
-    status.update({
-        "current_state": "CANCELLED",
-        "state_category": "terminal",
-        "transition_sequence": sequence,
-        "last_transition_id": f"project-{sequence:04d}",
-        "last_transition_from": current_state,
-        "last_transition_to": "CANCELLED",
-        "last_transition_at": recorded_at,
-        "last_transition_actor": "human-cli",
-        "last_transition_reason": reason.strip(),
-        "last_transition_evidence": evidence,
-        "pending_gate": "none",
-        "cancelled_at": recorded_at,
-    })
-    (project_path / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
-    append_transition_history(project_path, sequence, recorded_at, current_state, "CANCELLED", "HUMAN_DECISION", "human-cli", reason.strip(), evidence)
+    # Import lazily to avoid the project/orchestration module dependency cycle.
+    from .orchestration import apply_state_transition
+
+    apply_state_transition(
+        repository_root,
+        project_id,
+        "CANCELLED",
+        actor="human-cli",
+        reason=reason.strip(),
+        evidence=[evidence],
+        control_type="HUMAN_DECISION",
+        expected_state=current_state,
+        idempotency_key=f"cancel-{project_id}",
+    )
     return evidence_path
 
 
@@ -212,7 +209,7 @@ def _intake_references_for_project(repository_root: Path, project_id: str) -> li
 
 
 def permanently_delete_project(repository_root: Path, project_id: str) -> list[Path]:
-    """Irreversibly remove a cancelled project and its canonical intake records."""
+    """Irreversibly remove a cancelled project and all its owned runtime records."""
     project_path = project_directory(repository_root, project_id)
     if not project_path.is_dir() or project_path.is_symlink():
         raise IntakeError(f"project not found or unsafe to delete: {project_path}")
@@ -225,7 +222,13 @@ def permanently_delete_project(repository_root: Path, project_id: str) -> list[P
     if unsafe_references:
         raise IntakeError(f"unsafe intake reference to delete: {unsafe_references[0]}")
 
+    audit_path = repository_root / "naamive" / "registries" / "orchestration" / project_id
+    if audit_path.exists() and (audit_path.is_symlink() or not audit_path.is_dir()):
+        raise IntakeError(f"unsafe orchestration audit to delete: {audit_path}")
+
     deleted_paths = [project_path, *intake_references]
+    if audit_path.exists():
+        deleted_paths.append(audit_path)
     for path in deleted_paths:
         shutil.rmtree(path)
     return deleted_paths

@@ -1,0 +1,73 @@
+from __future__ import annotations
+
+import subprocess
+from pathlib import Path
+
+import pytest
+
+from naamive_runtime.codex_executor import canonical_work_branch, prepare_git_iteration, verify_git_iteration
+from naamive_runtime.intake import IntakeError
+
+
+def git(repo: Path, *args: str) -> str:
+    result = subprocess.run(["git", *args], cwd=repo, capture_output=True, text=True, check=True)
+    return result.stdout.strip()
+
+
+def repository(tmp_path: Path) -> Path:
+    git(tmp_path, "init", "-b", "main")
+    git(tmp_path, "config", "user.name", "test")
+    git(tmp_path, "config", "user.email", "test@example.invalid")
+    (tmp_path / "README.md").write_text("base\n", encoding="utf-8")
+    git(tmp_path, "add", "README.md")
+    git(tmp_path, "commit", "-m", "initial")
+    return tmp_path
+
+
+def context() -> dict[str, object]:
+    return {
+        "project_id": "sample", "module_id": "catalog", "authorized_work_item": "catalog-rules",
+        "authorized_base_ref": "main", "allowed_write_paths": ["projects/sample/modules/catalog/applications"],
+    }
+
+
+def test_derives_canonical_module_branch() -> None:
+    assert canonical_work_branch(context()) == "work/sample/catalog/catalog-rules"
+
+
+def test_git_iteration_creates_branch_and_records_scoped_commit(tmp_path: Path) -> None:
+    repo = repository(tmp_path)
+    branch, before = prepare_git_iteration(repo, context())
+    target = repo / "projects/sample/modules/catalog/applications"
+    target.mkdir(parents=True)
+    (target / "rules.py").write_text("RULE = 1\n", encoding="utf-8")
+    git(repo, "add", "projects/sample/modules/catalog/applications/rules.py")
+    git(repo, "commit", "-m", "agent(implementation): catalog rules")
+    assert verify_git_iteration(repo, context(), branch, before) == git(repo, "rev-parse", "HEAD")
+    assert git(repo, "branch", "--show-current") == "work/sample/catalog/catalog-rules"
+
+
+def test_git_iteration_switches_to_existing_canonical_branch(tmp_path: Path) -> None:
+    repo = repository(tmp_path)
+    git(repo, "switch", "-c", "work/sample/catalog/catalog-rules")
+    git(repo, "switch", "main")
+    branch, _ = prepare_git_iteration(repo, context())
+    assert branch == "work/sample/catalog/catalog-rules"
+    assert git(repo, "branch", "--show-current") == branch
+
+
+def test_git_iteration_rejects_unrelated_worktree_changes(tmp_path: Path) -> None:
+    repo = repository(tmp_path)
+    (repo / "unrelated.txt").write_text("do not touch\n", encoding="utf-8")
+    with pytest.raises(IntakeError, match="unrelated working-tree changes"):
+        prepare_git_iteration(repo, context())
+
+
+def test_git_iteration_rejects_unauthorized_committed_path(tmp_path: Path) -> None:
+    repo = repository(tmp_path)
+    branch, before = prepare_git_iteration(repo, context())
+    (repo / "outside.py").write_text("x = 1\n", encoding="utf-8")
+    git(repo, "add", "outside.py")
+    git(repo, "commit", "-m", "agent(implementation): invalid")
+    with pytest.raises(IntakeError, match="unauthorized paths"):
+        verify_git_iteration(repo, context(), branch, before)
