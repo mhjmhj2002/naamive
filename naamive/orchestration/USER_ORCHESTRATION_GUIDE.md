@@ -63,6 +63,16 @@ naamive decide --request <request-id> --gate REGISTER_PROJECT --decision APPROVE
 
 Somente essa decisão cria o diretório do projeto e seus três documentos mínimos. A decisão negativa ou solicitação de retrabalho não materializa projeto.
 
+## Cancelar projeto materializado
+
+Um projeto ativo pode ser cancelado por decisão humana com justificativa:
+
+```text
+naamive cancel --project <project-id> --reason "<justificativa>"
+```
+
+O comando preserva todos os documentos, atualiza o `STATUS.md` para `CANCELLED` e registra `validation/evidence/CANCELLATION.md`. Ele não apaga diretórios nem altera a solicitação original.
+
 ## Regras de segurança e operação
 
 - O comando só trabalha com escopo explícito.

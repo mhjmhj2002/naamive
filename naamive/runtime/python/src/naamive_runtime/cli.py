@@ -7,6 +7,7 @@ from typing import Optional
 import typer
 
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
+from .project import cancel_project, project_directory, read_project_status
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
@@ -55,10 +56,13 @@ def orchestrate(
         if project and request:
             raise IntakeError("provide only one of --project or --request")
         if project:
-            status_file = repo / "projects" / project / "STATUS.md"
-            if not status_file.is_file():
-                raise IntakeError(f"project status not found: {status_file}")
-            emit({"project_id": project, "status_path": str(status_file), "state": "PROJECT_EXECUTION_PENDING"})
+            project_path = project_directory(repo, project)
+            status = read_project_status(project_path)
+            current_state = str(status["current_state"])
+            if current_state == "CANCELLED":
+                emit({"project_id": project, "state": "CANCELLED"})
+                return
+            emit({"project_id": project, "current_state": current_state, "state": "PROJECT_EXECUTION_PENDING"})
             return
 
         path = request_path(repo, request or "")
@@ -80,6 +84,20 @@ def orchestrate(
         emit({"request_id": parsed.metadata.request_id, "state": "WAITING_FOR_REGISTRATION", "gate_id": "REGISTER_PROJECT"})
     except IntakeError as error:
         fail(error)
+
+
+@app.command()
+def cancel(
+    project: str = typer.Option(..., "--project"),
+    reason: str = typer.Option(..., "--reason"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Cancel an active project through a human decision with preserved evidence."""
+    try:
+        evidence_path = cancel_project(repository_root(root), project, reason)
+    except IntakeError as error:
+        fail(error)
+    emit({"project_id": project, "state": "CANCELLED", "evidence_path": str(evidence_path)})
 
 
 @app.command()

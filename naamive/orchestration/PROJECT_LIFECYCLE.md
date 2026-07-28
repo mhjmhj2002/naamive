@@ -32,6 +32,10 @@ Esta máquina governa o ciclo de vida de `projects/<project-id>/`. Ela começa e
 
 O retorno de `VALIDATION` para `IMPLEMENTATION` exige registro dos achados que motivaram o retrabalho. A entrada em `EVOLUTION` exige uma nova necessidade ou mudança rastreável.
 
+## Cancelamento
+
+Todo estado ativo pode transitar para `CANCELLED` por decisão humana registrada. O cancelamento preserva o projeto, sua solicitação e seus artefatos; ele exige justificativa e evidência no escopo do projeto. Não é uma exclusão de diretório.
+
 ## Relação com módulos
 
 Módulos podem ser identificados em `DEFINITION` e materializados após o compromisso de produto. Um módulo não pode iniciar `IMPLEMENTATION` enquanto o projeto não estiver em `IMPLEMENTATION`; ele não pode alcançar `DELIVERY` enquanto o projeto não estiver em `DELIVERY`.

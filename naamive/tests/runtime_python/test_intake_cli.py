@@ -75,3 +75,33 @@ def test_missing_scope_instructs_how_to_create_a_request(tmp_path: Path) -> None
     assert result.exit_code == 1
     assert "init-project-request --request-id" in result.output
     assert not any((repository / "projects").iterdir())
+
+
+def test_active_project_can_be_cancelled_without_deletion(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    runner.invoke(app, ["init-project-request", "--request-id", "self-service", "--repository-root", str(repository)])
+    request = repository / "naamive" / "registries" / "project-intake" / "self-service" / "PROJECT_REQUEST.md"
+    complete_request(request)
+    runner.invoke(app, ["orchestrate", "--request", "self-service", "--repository-root", str(repository)])
+    runner.invoke(app, ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", "--repository-root", str(repository)])
+
+    result = runner.invoke(
+        app,
+        [
+            "cancel",
+            "--project",
+            "customer-self-service",
+            "--reason",
+            "The approved request did not contain sufficient business detail.",
+            "--repository-root",
+            str(repository),
+        ],
+    )
+
+    project = repository / "projects" / "customer-self-service"
+    assert result.exit_code == 0, result.output
+    assert "CANCELLED" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert (project / "PROJECT.md").is_file()
+    evidence = project / "validation" / "evidence" / "CANCELLATION.md"
+    assert evidence.is_file()
+    assert "did not contain sufficient business detail" in evidence.read_text(encoding="utf-8")
