@@ -1,0 +1,79 @@
+# Protocolo de Orquestração
+
+Este protocolo é a implementação canônica, independente de tecnologia, de como o NAAMIVE conduz trabalho autorizado. Ele aplica as máquinas de estado e os contratos globais; não substitui a autoridade humana, nem permite que um agente altere o próprio estado.
+
+## Fluxo obrigatório
+
+```text
+Solicitação de trabalho
+        ↓
+Validação de contexto e escopo
+        ↓
+Leitura do STATUS.md e máquina aplicável
+        ↓
+Validação de transição e pré-condições
+        ↓
+Despacho para agente elegível
+        ↓
+Produção e validação de evidências
+        ↓
+Decisão de gate
+        ↓
+Registro imutável do resultado
+        ↓
+Atualização autorizada do STATUS.md ou retorno para retrabalho
+```
+
+## Procedimento
+
+1. Receber um [contexto de execução](../contracts/EXECUTION_CONTEXT.md), um [despacho de trabalho](../contracts/WORK_DISPATCH.md) e, quando houver avanço, uma [solicitação de transição](../contracts/TRANSITION_REQUEST.md).
+2. Validar identificadores, `scope_type`, `module_id`, `target_path`, item autorizado, artefatos de entrada, contexto de autoridade e capacidades concedidas (`allowed_tools`, rede, credenciais e classe de ação). Uma inconsistência encerra a execução como `REJECTED` sem alteração de estado.
+3. Ler o `STATUS.md` do alvo e confirmar que seu `current_state` coincide com o contexto recebido. Para módulo, confirmar também a elegibilidade diante do estado do projeto.
+4. Localizar a máquina de projeto ou módulo e verificar que a transição, as evidências mínimas e o gate aplicável existem. Nenhuma transição implícita é permitida.
+5. Selecionar somente um agente elegível para a atividade solicitada. O despacho define o papel, os limites de escrita e os resultados esperados; o agente não amplia esse escopo.
+6. Receber as saídas do agente e verificar sua vinculação ao `execution_id`, ao item autorizado e às evidências exigidas. Evidência ausente, incompatível ou fora do escopo impede o avanço.
+7. Criar um resultado de gate. Quando houver `HUMAN_DECISION` exigida, a orquestração permanece em `WAITING_FOR_GATE`; para controles automatizados e revisões independentes, ela aplica os critérios definidos sem presumir aceite humano.
+8. Após decisão favorável, atualizar `STATUS.md`, registrar a transição e encerrar a execução como `COMPLETED`. Uma decisão desfavorável resulta em `REWORK_REQUIRED`, `PAUSED` ou `CANCELLED`, conforme a decisão registrada.
+
+## Estados da execução de orquestração
+
+| Estado | Significado | Próximos estados permitidos |
+| --- | --- | --- |
+| `RECEIVED` | Solicitação recebida, ainda não validada. | `VALIDATING`, `REJECTED` |
+| `VALIDATING` | Contexto, escopo e transição estão sendo verificados. | `DISPATCHED`, `REJECTED` |
+| `DISPATCHED` | Agente elegível recebeu trabalho limitado ao contexto. | `EVIDENCE_REVIEW`, `FAILED` |
+| `EVIDENCE_REVIEW` | Saídas e evidências estão sendo verificadas. | `WAITING_FOR_GATE`, `REWORK_REQUIRED`, `FAILED` |
+| `WAITING_FOR_GATE` | Aguardando decisão humana ou de gate autorizado. | `COMPLETED`, `REWORK_REQUIRED`, `PAUSED`, `CANCELLED` |
+| `REWORK_REQUIRED` | Há trabalho adicional antes de novo despacho. | `DISPATCHED`, `PAUSED`, `CANCELLED` |
+| `COMPLETED` | Trabalho e, se aplicável, transição foram registrados. | nenhum |
+| `REJECTED` | Contexto ou solicitação inválidos; nenhum trabalho foi iniciado. | nenhum |
+| `FAILED` | Execução falhou sem evidência suficiente para avançar. | `REWORK_REQUIRED`, `PAUSED`, `CANCELLED` |
+| `PAUSED` | Execução interrompida por decisão registrada. | `VALIDATING`, `CANCELLED` |
+| `CANCELLED` | Execução encerrada por decisão registrada. | nenhum |
+
+## Elegibilidade de papéis
+
+| Atividade | Agente elegível primário |
+| --- | --- |
+| Qualificar necessidade | `business-intake` |
+| Analisar valor, atores e fluxos | `business-analysis` |
+| Delimitar capacidade e domínio | `domain-modeling` |
+| Especificar requisitos e aceitação | `requirements-engineering` |
+| Definir arquitetura e integrações | `solution-architecture` |
+| Planejar trabalho e entrega | `delivery-planning` |
+| Produzir implementação autorizada | `implementation` |
+| Verificar contratos e fluxos integrados | `integration-engineering` |
+| Verificar qualidade e aceitação | `quality-assurance` |
+| Verificar riscos e evidências de segurança | `security-assurance` |
+| Preparar release, operação e handover | `release-operations` |
+| Verificar gates, rastreabilidade e autoridade | `governance-assurance` |
+
+O agente de `governance-assurance` pode acompanhar qualquer execução, mas não aprova a decisão humana que verifica. A orquestração pode despachar mais de uma execução coordenada, porém cada uma possui um `execution_id`, um escopo e um agente responsável próprios.
+
+## Invariantes de segurança operacional
+
+- Um agente nunca atualiza diretamente `STATUS.md`.
+- Uma execução nunca atua fora de `target_path` e `input_artifacts` autorizados.
+- Nenhuma execução de módulo modifica artefatos de outro módulo; trabalho transversal usa escopo de projeto.
+- Falha, rejeição ou falta de gate não altera o estado do projeto ou módulo.
+- Todo resultado deve poder ser rastreado a uma solicitação, entradas, agente, evidências, decisão e transição.
