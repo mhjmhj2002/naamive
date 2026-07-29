@@ -9,6 +9,7 @@ from .intake import IntakeError
 
 BUSINESS_REQUIRED = ("problema", "valor", "stakeholders", "fluxo", "restrições", "incertezas", "métricas")
 REQUIREMENTS_REQUIRED = ("requisitos", "critérios de aceitação", "rastreabilidade")
+MODULE_DEFINITION_REQUIRED = ("módulo", "objetivo", "limites", "rastreabilidade")
 TRACEABILITY_REQUIRED = ("execution id", "escopo", "fonte", "responsável", "data", "premissas", "lacunas")
 TECHNICAL_MODULE_NAMES = {"backend", "frontend", "database", "banco de dados", "api", "web", "mobile", "common", "utils"}
 
@@ -40,6 +41,10 @@ def validate_module_proposal(project: Path, execution_id: str) -> Path:
 
 def validate_requirements(project: Path, execution_id: str) -> Path:
     return require_markdown(project / "analysis" / "requirements" / "REQUIREMENTS.md", REQUIREMENTS_REQUIRED + TRACEABILITY_REQUIRED, execution_id)
+
+
+def validate_module_definition_document(path: Path, execution_id: str) -> Path:
+    return require_markdown(path, MODULE_DEFINITION_REQUIRED + TRACEABILITY_REQUIRED, execution_id)
 
 
 def validate_review(path: Path, execution_id: str) -> Path:
@@ -78,8 +83,43 @@ def validate_delivery_plan(project: Path, execution_id: str) -> Path:
 
 
 def validate_delivery_plan_document(path: Path, execution_id: str) -> Path:
-    return require_markdown(
+    validated = require_markdown(
         path,
         ("roadmap", "releases", "riscos", "dependências", "work items", "critérios de pronto") + TRACEABILITY_REQUIRED,
         execution_id,
     )
+    content = validated.read_text(encoding="utf-8")
+    if not re.search(r"^risks_resolved:\s*true\s*$", content, re.IGNORECASE | re.MULTILINE) or not re.search(r"^dependencies_resolved:\s*true\s*$", content, re.IGNORECASE | re.MULTILINE) or not re.search(r"^unresolved_risks:\s*\[\s*\]\s*$", content, re.MULTILINE):
+        raise IntakeError(f"delivery plan has unresolved risks or dependencies: {path}")
+    return validated
+
+
+def validate_integration_report(project: Path, execution_id: str) -> Path:
+    return require_markdown(project / "integration" / "INTEGRATION_REPORT.md", ("contratos", "fluxos", "sistemas externos", "incompatibilidades", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+
+
+def validate_quality_report(project: Path, execution_id: str) -> Path:
+    return require_markdown(project / "validation" / "QUALITY_REPORT.md", ("requisitos", "critérios de aceitação", "testes", "achados", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+
+
+def validate_security_assessment(project: Path, execution_id: str) -> Path:
+    validated = require_markdown(project / "validation" / "security" / "SECURITY_ASSESSMENT.md", ("riscos", "impacto", "mitigação", "exceções", "risco residual", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+    _require_gate_marker(validated, "residual_risk_acceptance_required")
+    return validated
+
+
+def validate_delivery_package(project: Path, execution_id: str) -> Path:
+    validated = require_markdown(project / "delivery" / "DELIVERY_PACKAGE.md", ("release", "implantação", "reversão", "operação", "observabilidade", "handover", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+    _require_gate_marker(validated, "release_authorization_required")
+    return validated
+
+
+def _require_gate_marker(path: Path, marker: str) -> None:
+    if not re.search(rf"^{re.escape(marker)}:\s*(true|false)\s*$", path.read_text(encoding="utf-8"), re.IGNORECASE | re.MULTILINE):
+        raise IntakeError(f"evidence must declare {marker}: true|false: {path}")
+
+
+def report_requires_human_gate(path: Path, marker: str) -> bool:
+    """Read an explicit boolean escalation marker from a validated report."""
+    match = re.search(rf"^{re.escape(marker)}:\s*(true|false)\s*$", path.read_text(encoding="utf-8"), re.IGNORECASE | re.MULTILINE)
+    return bool(match and match.group(1).lower() == "true")

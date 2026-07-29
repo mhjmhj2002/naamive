@@ -5,6 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 import pytest
 import yaml
+import naamive_runtime.orchestration as orchestration
 
 from naamive_runtime.intake import IntakeError
 from naamive_runtime.orchestration import (
@@ -22,6 +23,7 @@ from naamive_runtime.orchestration import (
     unresolved_work_item_dependencies,
     resolve_product_commitment,
     open_human_gate,
+    return_to_implementation_for_finding,
     resolve_human_gate,
 )
 from naamive_runtime.project import render_project_status
@@ -93,6 +95,19 @@ def test_execution_events_are_append_only_and_recoverable(tmp_path: Path) -> Non
 
     assert recovered.is_file()
     assert len(list((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "executions" / "execution-sample" / "events").glob("*.yaml"))) == 5
+
+
+def test_unexpected_agent_failure_is_audited_as_failed(tmp_path: Path) -> None:
+    make_project(tmp_path)
+
+    def broken_runner(*args: object, **kwargs: object) -> dict[str, object]:
+        raise RuntimeError("transport disconnected")
+
+    with pytest.raises(IntakeError, match="agent dispatch failed: transport disconnected"):
+        orchestrate_project(tmp_path, "sample", broken_runner)
+
+    events = list((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "executions").glob("*/events/*.yaml"))
+    assert any(yaml.safe_load(event.read_text(encoding="utf-8"))["state"] == "FAILED" for event in events)
 
 
 def test_transition_is_idempotent_and_detects_stale_state(tmp_path: Path) -> None:
@@ -212,7 +227,7 @@ def test_architecture_and_planning_rounds_require_review_and_authorized_work(tmp
         if agent == "solution-architecture":
             (target / "SOLUTION_ARCHITECTURE.md").write_text("material_decision_required: false\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nnenhuma\n" + trace, encoding="utf-8")
         elif agent == "delivery-planning":
-            (target / "DELIVERY_PLAN.md").write_text("# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n" + trace, encoding="utf-8")
+            (target / "DELIVERY_PLAN.md").write_text("risks_resolved: true\ndependencies_resolved: true\nunresolved_risks: []\n# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n" + trace, encoding="utf-8")
         else:
             (target / "REVIEW.md").write_text("# Critérios verificados\nx\n# Resultado\nAPPROVED\n" + trace, encoding="utf-8")
         return {}
@@ -260,6 +275,7 @@ def test_conditional_human_gate_applies_only_approved_pending_transition(tmp_pat
 @pytest.mark.parametrize("gate,state,target,decision", [
     ("MATERIAL_ARCHITECTURE_DECISION", "ARCHITECTURE", "PLANNING", "REJECTED"),
     ("RESIDUAL_RISK_ACCEPTANCE", "VALIDATION", "DELIVERY", "REWORK_REQUIRED"),
+    ("RELEASE_AUTHORIZATION", "DELIVERY", "DELIVERY", "REJECTED"),
     ("DELIVERY_ACCEPTANCE", "DELIVERY", "DELIVERED", "REJECTED"),
     ("PAUSE", "IMPLEMENTATION", "PAUSED", "REWORK_REQUIRED"),
 ])
@@ -366,21 +382,183 @@ def test_module_implementation_dispatch_completes_only_with_expected_evidence(tm
     assert "current_state: IMPLEMENTING" in (module / "STATUS.md").read_text(encoding="utf-8")
 
 
+def test_phase6_orchestrates_integration_validation_and_accepted_delivery(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "IMPLEMENTATION")
+    module = materialize_module(project, "catalog", "Catalog")
+    for state, control in (("DEFINED", "INDEPENDENT_REVIEW"), ("ARCHITECTED", "INDEPENDENT_REVIEW"), ("PLANNED", "INDEPENDENT_REVIEW"), ("IMPLEMENTING", "AUTOMATED_EVIDENCE")):
+        apply_state_transition(tmp_path, "sample", state, scope_type="module", module_id="catalog", actor="test", reason=state, evidence=["evidence"], control_type=control)
+    (project / "architecture").mkdir()
+    (project / "architecture" / "SOLUTION_ARCHITECTURE.md").write_text("# Architecture\n", encoding="utf-8")
+
+    def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
+        trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nproject\n# Fonte\ntest\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+        documents = {
+            "integration-engineering": ("INTEGRATION_REPORT.md", "# Contratos\nx\n# Fluxos\nx\n# Sistemas externos\nx\n# Incompatibilidades\nnenhuma\n# Resultado\nAPPROVED\n"),
+            "quality-assurance": ("QUALITY_REPORT.md", "# Requisitos\nx\n# Critérios de aceitação\nx\n# Testes\nx\n# Achados\nnenhum\n# Resultado\nAPPROVED\n"),
+            "security-assurance": ("SECURITY_ASSESSMENT.md", "residual_risk_acceptance_required: false\n# Riscos\nx\n# Impacto\nx\n# Mitigação\nx\n# Exceções\nnenhuma\n# Risco residual\nnenhum\n# Resultado\nAPPROVED\n"),
+            "release-operations": ("DELIVERY_PACKAGE.md", "release_authorization_required: false\n# Release\nx\n# Implantação\nx\n# Reversão\nx\n# Operação\nx\n# Observabilidade\nx\n# Handover\nx\n# Resultado\nREADY\n"),
+            "governance-assurance": ("REVIEW.md", "# Critérios verificados\nx\n# Resultado\nAPPROVED\n"),
+        }
+        filename, content = documents[agent]
+        (target / filename).write_text(content + trace, encoding="utf-8")
+        return {}
+
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "VALIDATION"
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "DELIVERY"
+    waiting = orchestrate_project(tmp_path, "sample", runner)
+    assert waiting["gate_id"] == "DELIVERY_ACCEPTANCE"
+    assert resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "human", "accepted")["state"] == "DELIVERED"
+    assert "current_state: DELIVERED" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "current_state: DELIVERED" in (module / "STATUS.md").read_text(encoding="utf-8")
+
+
+def test_release_authorization_binds_delivery_acceptance_to_one_immutable_package(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "DELIVERY")
+    module = materialize_module(project, "catalog", "Catalog")
+    for state, control in (("DEFINED", "INDEPENDENT_REVIEW"), ("ARCHITECTED", "INDEPENDENT_REVIEW"), ("PLANNED", "INDEPENDENT_REVIEW"), ("IMPLEMENTING", "AUTOMATED_EVIDENCE"), ("INTEGRATING", "AUTOMATED_EVIDENCE"), ("VALIDATING", "AUTOMATED_EVIDENCE"), ("READY_FOR_DELIVERY", "INDEPENDENT_REVIEW")):
+        apply_state_transition(tmp_path, "sample", state, scope_type="module", module_id="catalog", actor="test", reason=state, evidence=["evidence"], control_type=control)
+    (project / "validation" / "security").mkdir(parents=True)
+    (project / "validation" / "QUALITY_REPORT.md").write_text("# quality\n", encoding="utf-8")
+    (project / "validation" / "security" / "SECURITY_ASSESSMENT.md").write_text("# security\n", encoding="utf-8")
+    dispatched: list[str] = []
+
+    def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
+        dispatched.append(agent)
+        trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nproject\n# Fonte\ntest\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+        (target / "DELIVERY_PACKAGE.md").write_text("release_authorization_required: true\n# Release\nx\n# Implantação\nx\n# Reversão\nx\n# Operação\nx\n# Observabilidade\nx\n# Handover\nx\n# Resultado\nREADY\n" + trace, encoding="utf-8")
+        return {}
+
+    waiting = orchestrate_project(tmp_path, "sample", runner)
+    assert waiting["gate_id"] == "RELEASE_AUTHORIZATION"
+    authorization = resolve_human_gate(tmp_path, "sample", "RELEASE_AUTHORIZATION", "APPROVED", "operations", "approved")
+    assert authorization["state"] == "WAITING_FOR_GATE"
+    assert dispatched == ["release-operations"]
+    request = yaml.safe_load((tmp_path / authorization["transition_request"]).read_text(encoding="utf-8"))
+    record_path = tmp_path / request["release_package_record"]
+    record = yaml.safe_load(record_path.read_text(encoding="utf-8"))
+    assert request["evidence"][0] == record["package_path"] == "delivery/DELIVERY_PACKAGE.md"
+    assert resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "business", "accepted")["state"] == "DELIVERED"
+    assert dispatched == ["release-operations"]
+
+
+def test_changed_authorized_package_blocks_delivery_acceptance_and_requires_rework(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "DELIVERY")
+    module = materialize_module(project, "catalog", "Catalog")
+    for state, control in (("DEFINED", "INDEPENDENT_REVIEW"), ("ARCHITECTED", "INDEPENDENT_REVIEW"), ("PLANNED", "INDEPENDENT_REVIEW"), ("IMPLEMENTING", "AUTOMATED_EVIDENCE"), ("INTEGRATING", "AUTOMATED_EVIDENCE"), ("VALIDATING", "AUTOMATED_EVIDENCE"), ("READY_FOR_DELIVERY", "INDEPENDENT_REVIEW")):
+        apply_state_transition(tmp_path, "sample", state, scope_type="module", module_id="catalog", actor="test", reason=state, evidence=["evidence"], control_type=control)
+    (project / "validation" / "security").mkdir(parents=True)
+    (project / "validation" / "QUALITY_REPORT.md").write_text("# quality\n", encoding="utf-8")
+    (project / "validation" / "security" / "SECURITY_ASSESSMENT.md").write_text("# security\n", encoding="utf-8")
+
+    def runner(_root, _project_id, _agent, _work_item, target, _inputs, **kwargs):
+        trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nproject\n# Fonte\ntest\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+        (target / "DELIVERY_PACKAGE.md").write_text("release_authorization_required: true\n# Release\nx\n# Implantação\nx\n# Reversão\nx\n# Operação\nx\n# Observabilidade\nx\n# Handover\nx\n# Resultado\nREADY\n" + trace, encoding="utf-8")
+        return {}
+
+    orchestrate_project(tmp_path, "sample", runner)
+    resolve_human_gate(tmp_path, "sample", "RELEASE_AUTHORIZATION", "APPROVED", "operations", "approved")
+    package = project / "delivery" / "DELIVERY_PACKAGE.md"
+    package.write_text(package.read_text(encoding="utf-8") + "\nchanged", encoding="utf-8")
+    result = resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "business", "accepted")
+    assert result["state"] == "REWORK_REQUIRED"
+    status = (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "pending_gate: none" in status
+    assert "release_authorized" not in status
+    decision = yaml.safe_load((tmp_path / result["decision_path"]).read_text(encoding="utf-8"))
+    assert decision["decision"] == "REWORK_REQUIRED"
+
+
+def test_delivery_acceptance_rejects_incompatible_module_without_side_effects(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "DELIVERY")
+    module = materialize_module(project, "catalog", "Catalog")
+    open_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "DELIVERED", "accept", ["delivery/DELIVERY_PACKAGE.md"])
+    before_project = (project / "STATUS.md").read_text(encoding="utf-8")
+    before_module = (module / "STATUS.md").read_text(encoding="utf-8")
+
+    with pytest.raises(IntakeError, match="READY_FOR_DELIVERY"):
+        resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "human", "accepted")
+
+    assert (project / "STATUS.md").read_text(encoding="utf-8") == before_project
+    assert (module / "STATUS.md").read_text(encoding="utf-8") == before_module
+    audit = tmp_path / "naamive" / "registries" / "orchestration" / "sample"
+    assert not list((audit / "gate-decisions").glob("*.yaml"))
+    assert not (audit / "delivery-acceptance").exists()
+
+
+def test_delivery_acceptance_recovers_partial_module_failure_and_is_idempotent(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = make_project(tmp_path, "DELIVERY")
+    modules = [materialize_module(project, module_id, module_id.title()) for module_id in ("catalog", "billing")]
+    for module in modules:
+        for state, control in (("DEFINED", "INDEPENDENT_REVIEW"), ("ARCHITECTED", "INDEPENDENT_REVIEW"), ("PLANNED", "INDEPENDENT_REVIEW"), ("IMPLEMENTING", "AUTOMATED_EVIDENCE"), ("INTEGRATING", "AUTOMATED_EVIDENCE"), ("VALIDATING", "AUTOMATED_EVIDENCE"), ("READY_FOR_DELIVERY", "INDEPENDENT_REVIEW")):
+            apply_state_transition(tmp_path, "sample", state, scope_type="module", module_id=module.name, actor="test", reason=state, evidence=["evidence"], control_type=control)
+    open_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "DELIVERED", "accept", ["delivery/DELIVERY_PACKAGE.md"])
+    original = orchestration._apply_state_transition_locked
+    calls = 0
+
+    def fail_second(*args: object, **kwargs: object):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise OSError("injected persistence failure")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(orchestration, "_apply_state_transition_locked", fail_second)
+    with pytest.raises(OSError, match="injected persistence failure"):
+        resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "human", "accepted")
+    assert "current_state: DELIVERY" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "current_state: READY_FOR_DELIVERY" in (modules[0] / "STATUS.md").read_text(encoding="utf-8")
+    assert "current_state: DELIVERED" in (modules[1] / "STATUS.md").read_text(encoding="utf-8")
+    operation = next((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "delivery-acceptance").glob("delivery-acceptance-*.yaml"))
+    assert yaml.safe_load(operation.read_text(encoding="utf-8"))["state"] == "INCOMPLETE"
+
+    monkeypatch.setattr(orchestration, "_apply_state_transition_locked", original)
+    first = resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "human", "accepted")
+    module_histories = [(module / "STATUS_HISTORY.md").read_text(encoding="utf-8") for module in modules]
+    repeated = resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "human", "accepted")
+    assert repeated == first
+    assert [(module / "STATUS_HISTORY.md").read_text(encoding="utf-8") for module in modules] == module_histories
+
+
+def test_blocking_validation_finding_reopens_work_and_returns_to_implementation(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "VALIDATION")
+    materialize_module(project, "catalog", "Catalog")
+    for state, control in (("DEFINED", "INDEPENDENT_REVIEW"), ("ARCHITECTED", "INDEPENDENT_REVIEW"), ("PLANNED", "INDEPENDENT_REVIEW")):
+        apply_state_transition(tmp_path, "sample", state, scope_type="module", module_id="catalog", actor="test", reason=state, evidence=["evidence"], control_type=control)
+    create_work_item(project, "catalog", "catalog-rules", "Catalog rules", objective="Implement rules", write_scope=["modules/catalog/applications/rules.py"], dependencies=[], priority="HIGH", definition_of_ready=["Ready"], expected_evidence=["modules/catalog/tests/rules.md"], authorization_reference="plan")
+    for state, control in (("IMPLEMENTING", "AUTOMATED_EVIDENCE"), ("INTEGRATING", "AUTOMATED_EVIDENCE"), ("VALIDATING", "AUTOMATED_EVIDENCE"), ("READY_FOR_DELIVERY", "INDEPENDENT_REVIEW")):
+        apply_state_transition(tmp_path, "sample", state, scope_type="module", module_id="catalog", actor="test", reason=state, evidence=["evidence"], control_type=control)
+    set_work_item_status(project, "catalog", "catalog-rules", "IN_PROGRESS")
+    set_work_item_status(project, "catalog", "catalog-rules", "COMPLETED")
+
+    result = return_to_implementation_for_finding(tmp_path, "sample", "catalog", "catalog-rules", "CRITICAL", ["validation/QUALITY_REPORT.md"], "reproduce", "fix rule")
+
+    assert result["state"] == "IMPLEMENTATION"
+    assert "current_state: IMPLEMENTATION" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "current_state: IMPLEMENTING" in (project / "modules" / "catalog" / "STATUS.md").read_text(encoding="utf-8")
+    assert "**Status:** `AUTHORIZED`" in (project / "modules" / "catalog" / "planning" / "work-items" / "catalog-rules.md").read_text(encoding="utf-8")
+
+
 def test_module_architecture_and_planning_rounds_are_independently_reviewed(tmp_path: Path) -> None:
     project = make_project(tmp_path, "ARCHITECTURE")
     module = materialize_module(project, "catalog", "Catalog")
-    apply_state_transition(tmp_path, "sample", "DEFINED", scope_type="module", module_id="catalog", actor="reviewer", reason="defined", evidence=["domain"], control_type="INDEPENDENT_REVIEW")
+    (project / "analysis" / "domain").mkdir(parents=True)
+    (project / "analysis" / "domain" / "MODULE_PROPOSAL.md").write_text("# proposal\n", encoding="utf-8")
+    (project / "analysis" / "requirements").mkdir(parents=True)
+    (project / "analysis" / "requirements" / "REQUIREMENTS.md").write_text("# requirements\n", encoding="utf-8")
 
     def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
         trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nmodule\n# Fonte\nrequirements\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
-        if agent == "solution-architecture":
+        if agent == "requirements-engineering":
+            (target / "MODULE_REQUIREMENTS.md").write_text("# Módulo\ncatalog\n# Objetivo\nx\n# Limites\nx\n# Rastreabilidade\nx\n" + trace, encoding="utf-8")
+        elif agent == "solution-architecture":
             (target / "SOLUTION_ARCHITECTURE.md").write_text("material_decision_required: false\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nnenhuma\n" + trace, encoding="utf-8")
         elif agent == "delivery-planning":
-            (target / "DELIVERY_PLAN.md").write_text("# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n" + trace, encoding="utf-8")
+            (target / "DELIVERY_PLAN.md").write_text("risks_resolved: true\ndependencies_resolved: true\nunresolved_risks: []\n# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n" + trace, encoding="utf-8")
         else:
             (target / "REVIEW.md").write_text("# Critérios verificados\nx\n# Resultado\nAPPROVED\n" + trace, encoding="utf-8")
         return {}
 
+    assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "DEFINED"
     assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "ARCHITECTED"
     apply_state_transition(tmp_path, "sample", "PLANNING", actor="reviewer", reason="project architecture reviewed", evidence=["architecture"], control_type="INDEPENDENT_REVIEW")
     assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "PLANNED"
@@ -402,3 +580,46 @@ def test_module_consumption_is_owned_by_consumer_and_cannot_authorize_provider_w
     assert record.is_file()
     assert record.is_relative_to(consumer_project / "modules" / "orders")
     assert not (provider_project / "modules" / "identity" / "architecture" / "module-consumption").exists()
+
+
+def test_deterministic_end_to_end_happy_path(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    (project / "need").mkdir()
+    (project / "need" / "BUSINESS_NEED.md").write_text("# Need\n", encoding="utf-8")
+
+    def runner(_root, _project_id, agent, _work_item, target, _inputs, **kwargs):
+        trace = f"# Execution ID\n{kwargs['execution_context']['execution_id']}\n# Escopo\nx\n# Fonte\nx\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+        documents = {
+            "business-analysis": ("BUSINESS_ANALYSIS.md", "# Problema\nx\n# Valor\nx\n# Stakeholders\nx\n# Fluxo\nx\n# Restrições\nx\n# Incertezas\nx\n# Métricas\nx\n"),
+            "domain-modeling": ("MODULE_PROPOSAL.md", "# Módulos candidatos\n- `catalog`\n# Justificativa\nx\n# Dependências\nx\n# Riscos\nx\n# Questões em aberto\nx\n"),
+            "requirements-engineering": ("REQUIREMENTS.md" if target.name == "requirements" and "modules" not in target.parts else "MODULE_REQUIREMENTS.md", "# Requisitos\nx\n# Critérios de aceitação\nx\n# Rastreabilidade\nx\n" if "modules" not in target.parts else "# Módulo\ncatalog\n# Objetivo\nx\n# Limites\nx\n# Rastreabilidade\nx\n"),
+            "solution-architecture": ("SOLUTION_ARCHITECTURE.md", "material_decision_required: false\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nnone\n"),
+            "delivery-planning": ("DELIVERY_PLAN.md", "risks_resolved: true\ndependencies_resolved: true\nunresolved_risks: []\n# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n"),
+            "integration-engineering": ("INTEGRATION_REPORT.md", "# Contratos\nx\n# Fluxos\nx\n# Sistemas externos\nx\n# Incompatibilidades\nx\n# Resultado\nAPPROVED\n"),
+            "quality-assurance": ("QUALITY_REPORT.md", "# Requisitos\nx\n# Critérios de aceitação\nx\n# Testes\nx\n# Achados\nnone\n# Resultado\nAPPROVED\n"),
+            "security-assurance": ("SECURITY_ASSESSMENT.md", "residual_risk_acceptance_required: false\n# Riscos\nx\n# Impacto\nx\n# Mitigação\nx\n# Exceções\nnone\n# Risco residual\nnone\n# Resultado\nAPPROVED\n"),
+            "release-operations": ("DELIVERY_PACKAGE.md", "release_authorization_required: false\n# Release\nx\n# Implantação\nx\n# Reversão\nx\n# Operação\nx\n# Observabilidade\nx\n# Handover\nx\n# Resultado\nAPPROVED\n"),
+            "governance-assurance": ("REVIEW.md", "# Critérios verificados\nx\n# Resultado\nAPPROVED\n"),
+        }
+        if agent == "implementation":
+            (target / "tests").mkdir(exist_ok=True)
+            (target / "tests" / "rules.md").write_text("# evidence\n", encoding="utf-8")
+            return {}
+        filename, content = documents[agent]
+        (target / filename).write_text(content + trace, encoding="utf-8")
+        return {}
+
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "DEFINITION"
+    assert orchestrate_project(tmp_path, "sample", runner)["state"] == "WAITING_FOR_GATE"
+    resolve_product_commitment(tmp_path, "sample", "APPROVED", "human", "approved", "catalog", "Catalog")
+    assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "DEFINED"
+    assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "ARCHITECTED"
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "PLANNING"
+    assert orchestrate_module_architecture_planning(tmp_path, "sample", "catalog", runner)["current_state"] == "PLANNED"
+    create_work_item(project, "catalog", "catalog-rules", "Rules", objective="rules", write_scope=["modules/catalog/applications/rules.py"], dependencies=[], priority="HIGH", definition_of_ready=["ready"], expected_evidence=["modules/catalog/tests/rules.md"], authorization_reference="plan")
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "IMPLEMENTATION"
+    assert dispatch_module_implementation(tmp_path, "sample", "catalog", "catalog-rules", runner)["state"] == "COMPLETED"
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "VALIDATION"
+    assert orchestrate_project(tmp_path, "sample", runner)["current_state"] == "DELIVERY"
+    assert orchestrate_project(tmp_path, "sample", runner)["gate_id"] == "DELIVERY_ACCEPTANCE"
+    assert resolve_human_gate(tmp_path, "sample", "DELIVERY_ACCEPTANCE", "APPROVED", "human", "accepted")["state"] == "DELIVERED"

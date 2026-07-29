@@ -9,6 +9,7 @@ import yaml
 
 from .intake import IntakeError, SLUG_PATTERN
 from .intake import parse_request
+from .audit_schema import validate_audit_record
 
 
 STATUS_FRONT_MATTER = re.compile(r"\A---\s*\n(?P<meta>.*?)\n---\s*\n", re.DOTALL)
@@ -209,7 +210,7 @@ def _intake_references_for_project(repository_root: Path, project_id: str) -> li
 
 
 def permanently_delete_project(repository_root: Path, project_id: str) -> list[Path]:
-    """Irreversibly remove a cancelled project and all its owned runtime records."""
+    """Irreversibly remove a cancelled project and its records, retaining only proof."""
     project_path = project_directory(repository_root, project_id)
     if not project_path.is_dir() or project_path.is_symlink():
         raise IntakeError(f"project not found or unsafe to delete: {project_path}")
@@ -229,6 +230,18 @@ def permanently_delete_project(repository_root: Path, project_id: str) -> list[P
     deleted_paths = [project_path, *intake_references]
     if audit_path.exists():
         deleted_paths.append(audit_path)
+    proof_path = repository_root / "naamive" / "registries" / "deletion-proofs" / f"{project_id}.yaml"
+    if proof_path.exists():
+        raise IntakeError(f"deletion proof already exists: {proof_path}")
+    proof_path.parent.mkdir(parents=True, exist_ok=True)
+    proof = validate_audit_record({
+        "project_id": project_id,
+        "prior_state": "CANCELLED",
+        "authorization": "CLI exact project confirmation",
+        "deleted_paths": [str(path.relative_to(repository_root)) for path in deleted_paths],
+        "deleted_at": datetime.now(timezone.utc).isoformat(),
+    }, "deletion_proof")
+    proof_path.write_text(yaml.safe_dump(proof, allow_unicode=True, sort_keys=False), encoding="utf-8")
     for path in deleted_paths:
         shutil.rmtree(path)
     return deleted_paths

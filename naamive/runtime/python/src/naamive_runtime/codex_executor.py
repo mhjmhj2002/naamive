@@ -14,6 +14,7 @@ from .intake import IntakeError
 class CodexProfile:
     model: str | None = None
     reasoning_effort: str = "low"
+    timeout_seconds: int = 900
 
 
 def codex_command() -> str:
@@ -63,6 +64,20 @@ def canonical_work_branch(context: dict[str, object]) -> str:
 def _allowed(path: str, allowed_paths: list[str]) -> bool:
     candidate = Path(path)
     return any(candidate == Path(allowed) or Path(allowed) in candidate.parents for allowed in allowed_paths)
+
+
+def _scope_violations(
+    before: dict[Path, tuple[int, int]], after: dict[Path, tuple[int, int]], writable_paths: list[Path]
+) -> list[str]:
+    """Return unauthorized creations, changes, and removals since a dispatch began."""
+    changed = {
+        path for path in before.keys() | after.keys()
+        if before.get(path) != after.get(path)
+    }
+    return sorted(
+        str(path) for path in changed
+        if not any(path == allowed or allowed in path.parents for allowed in writable_paths)
+    )
 
 
 def prepare_git_iteration(repository_root: Path, context: dict[str, object]) -> tuple[str, str]:
@@ -151,10 +166,19 @@ Do not change STATUS.md, STATUS_HISTORY.md, dependencies, credentials, or files 
     if configured_model:
         command.extend(["--model", configured_model])
     command.append(prompt)
-    result = subprocess.run(command, cwd=repository_root, capture_output=True, text=True)
+    timeout_seconds = int(os.environ.get("NAAMIVE_CODEX_TIMEOUT_SECONDS", profile.timeout_seconds))
+    if timeout_seconds <= 0:
+        raise IntakeError("Codex timeout must be a positive number of seconds")
+    try:
+        result = subprocess.run(command, cwd=repository_root, capture_output=True, text=True, timeout=timeout_seconds)
+    except subprocess.TimeoutExpired as error:
+        after = _workspace_snapshot(repository_root)
+        violations = _scope_violations(before, after, writable_paths)
+        if violations:
+            raise IntakeError(f"agent wrote outside authorized target_path: {', '.join(violations)}") from error
+        raise IntakeError(f"Codex agent timed out after {timeout_seconds} seconds") from error
     after = _workspace_snapshot(repository_root)
-    changed = {path for path, fingerprint in after.items() if before.get(path) != fingerprint}
-    violations = sorted(str(path) for path in changed if not any(path == allowed or allowed in path.parents for allowed in writable_paths))
+    violations = _scope_violations(before, after, writable_paths)
     if violations:
         raise IntakeError(f"agent wrote outside authorized target_path: {', '.join(violations)}")
     if result.returncode != 0:

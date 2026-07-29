@@ -1,10 +1,10 @@
 ---
 document_type: orchestration-end-to-end-backlog
-status: IN_PROGRESS
-last_updated_at: 2026-07-28
-completed_phases: [1, 2, 3, 4]
-current_phase: 5
-next_action: Orquestrar arquitetura, planejamento e implementação somente para work items autorizados de módulos planejados.
+status: DONE
+last_updated_at: 2026-07-29
+completed_phases: [1, 2, 3, 4, 5, 6, 7]
+current_phase: complete
+next_action: Manter a suíte de robustez e repetir o baseline limpo ao evoluir o runtime global.
 ---
 
 # Backlog de Orquestração Ponta a Ponta
@@ -27,9 +27,9 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
 | 2. Execução de análise e definição | `DONE` | Agentes geram evidência verificável para análise, domínio e requisitos. |
 | 3. Gates e decisões humanas | `DONE` | Gates persistem decisões, retomam/rejeitam/retrabalham sem inferência. |
 | 4. Módulos e work items | `DONE` | Capacidades aprovadas e seus work items obedecem à propriedade estrutural. |
-| 5. Arquitetura, planejamento e implementação | `IN_PROGRESS` | O fluxo avança somente com planos, riscos e itens autorizados. |
-| 6. Integração, validação e entrega | `NOT_STARTED` | Evidências integradas culminam em aceite humano de entrega. |
-| 7. Robustez e prova ponta a ponta | `NOT_STARTED` | Testes cobrem sucesso, falha, rework, pausa, cancelamento e exclusão. |
+| 5. Arquitetura, planejamento e implementação | `DONE` | O fluxo avança somente com planos, riscos e itens autorizados. |
+| 6. Integração, validação e entrega | `DONE` | Evidências integradas culminam em aceite humano de entrega. |
+| 7. Robustez e prova ponta a ponta | `DONE` | Cobertura e prova real registradas em baseline limpo e ambiente descartável. |
 
 ## Fase 1 — Motor de estados e auditoria
 
@@ -209,7 +209,7 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
 
 ## Fase 5 — Arquitetura, planejamento e implementação
 
-**Estado:** `IN_PROGRESS`
+**Estado:** `DONE`
 
 ### Progresso registrado
 
@@ -220,13 +220,12 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
 - O despacho `implementation` de módulo valida estado do projeto e módulo, work item autorizado, predecessores completos, escopo de escrita e evidências esperadas; ele usa a iteração Git controlada e conclui o work item somente após a evidência exigida.
 - A arquitetura declara obrigatoriamente `material_decision_required: true|false`; quando `true`, a orquestração de projeto abre `MATERIAL_ARCHITECTURE_DECISION` e aguarda autoridade humana antes de entrar em planejamento.
 - As rodadas de arquitetura e planejamento de módulo possuem despacho e revisão independente próprios, aplicando `DEFINED → ARCHITECTED` e `ARCHITECTED → PLANNED` somente após evidência válida.
+- O plano exige `risks_resolved: true`, `dependencies_resolved: true` e `unresolved_risks: []`; qualquer outro valor impede a entrada em implementação.
 
-### Falta implementar
+### Evidência de conclusão
 
-- Despachos de `solution-architecture`, `delivery-planning` e `implementation` para os estados e escopos corretos.
-- Registro de decisões arquiteturais, integrações, riscos, dependências, plano de entrega e work items autorizados.
-- Controles de `ARCHITECTURE → PLANNING`, `PLANNING → IMPLEMENTATION` e transições equivalentes de módulo.
-- Aplicação das políticas de branch, autorização de escrita e evidência automatizada sem permitir commits pelo orquestrador em `main`.
+- A suíte determinística `./.venv/bin/python -m pytest naamive/tests/runtime_python -q` passou com **38 testes** em 28 de julho de 2026.
+- A prova integrada opcional com Codex real permanece isolada e não é pré-requisito para a conclusão determinística desta fase.
 
 ### Fluxo por estado
 
@@ -252,14 +251,31 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
 
 ## Fase 6 — Integração, validação e entrega
 
-**Estado:** `NOT_STARTED`
+**Estado:** `DONE`
 
-### Falta implementar
+### Implementação concluída
 
 - Orquestrar `integration-engineering`, `quality-assurance`, `security-assurance` e `release-operations`.
-- Validar contratos, fluxos, requisitos, qualidade, segurança, operação, handover e risco residual.
-- Implementar retorno de `VALIDATION` para `IMPLEMENTATION` com achados rastreáveis.
+  - **Resolução aplicada:** criado um orquestrador dedicado à Fase 6, usando o mesmo ciclo auditável de contexto, `execution_id`, despacho restrito, validação de evidência e revisão independente empregado nas rodadas da Fase 5.
+- Implementar as rodadas de projeto e módulo para `IMPLEMENTING → INTEGRATING → VALIDATING → READY_FOR_DELIVERY → DELIVERED`, com compatibilidade obrigatória entre os dois ciclos de vida.
+  - **Resolução aplicada:** o projeto avança por `IMPLEMENTATION → VALIDATION → DELIVERY → DELIVERED`; o módulo por `IMPLEMENTING → INTEGRATING → VALIDATING → READY_FOR_DELIVERY`. A entrada do projeto em `DELIVERY` exige que todos os módulos requeridos estejam `READY_FOR_DELIVERY`, e somente a entrega aceita do projeto promove esses módulos a `DELIVERED`.
+- Definir contratos de evidência versionados e validadores determinísticos para integração, qualidade, segurança, pacote de release, operação, handover e risco residual; presença de arquivo não é suficiente.
+  - **Resolução aplicada:** foram adicionados validadores para `integration/INTEGRATION_REPORT.md`, `validation/QUALITY_REPORT.md`, `validation/security/SECURITY_ASSESSMENT.md` e `delivery/DELIVERY_PACKAGE.md`. Todos exigem rastreabilidade (`execution_id`, escopo, fontes, responsável, data, premissas e lacunas), resultado estruturado e bloqueios/riscos explícitos.
+- Implementar retorno de `VALIDATION` para `IMPLEMENTATION` com achados rastreáveis, incluindo criação ou reabertura auditável de work items e preservação das evidências anteriores.
+  - **Resolução aplicada:** achados imutáveis são persistidos em `registries/orchestration/<project-id>/findings/`, com severidade, evidência de origem, work item afetado, critério de reprodução e resolução. Achados impeditivos reabrem work items vinculados, e a transição de retorno referencia os identificadores dos achados.
 - Implementar `DELIVERY → DELIVERED` somente após aceite humano e evidência de entrega.
+  - **Resolução aplicada:** as evidências validadas são consolidadas no pacote de entrega; `DELIVERY_ACCEPTANCE` aplica a transição somente para decisão `APPROVED`, enquanto rejeição mantém `DELIVERY` ou retorna a `VALIDATION`, conforme a decisão registrada.
+- Definir e implementar o controle humano aplicável a release/produção de alto risco, esclarecendo sua relação com `RESIDUAL_RISK_ACCEPTANCE` e `DELIVERY_ACCEPTANCE`; o runtime não pode pressupor um gate de release inexistente.
+  - **Resolução aplicada:** `RELEASE_AUTHORIZATION` foi formalizado como gate condicional para produção, alto impacto, dados sensíveis, compliance ou reversão relevante. `RESIDUAL_RISK_ACCEPTANCE` aceita o risco remanescente, `RELEASE_AUTHORIZATION` autoriza a mudança operacional e `DELIVERY_ACCEPTANCE` aceita o resultado de negócio; a dispensa do gate de release consta na evidência de risco.
+- Criar testes unitários, de integração e de CLI específicos para as rodadas, os retornos por achado, os gates de risco/release/aceite e as incompatibilidades projeto–módulo da fase.
+  - **Resolução aplicada:** foram usados dublês determinísticos dos quatro agentes para cobrir o caminho feliz e o achado crítico com reabertura; a matriz restante de cenários de falha segue como escopo da Fase 7.
+
+### Evidência de conclusão
+
+- O runtime executa as rodadas de integração, qualidade, segurança e operação, com contratos de evidência validados antes de cada avanço de estado.
+- Achados críticos são persistidos imutavelmente, reabrem o work item afetado e retornam projeto e módulo para implementação pelo comando `record-finding`.
+- `RELEASE_AUTHORIZATION` é um gate operacional sem transição de estado; `DELIVERY_ACCEPTANCE` promove coordenadamente projeto e módulos para `DELIVERED`.
+- A suíte determinística `../.venv/bin/python -m pytest tests/runtime_python -q` passou com **41 testes** em 28 de julho de 2026.
 
 ### Sequência de encerramento
 
@@ -286,14 +302,63 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
 
 ## Fase 7 — Robustez e prova ponta a ponta
 
-**Estado:** `NOT_STARTED`
+**Estado:** `DONE`
 
-### Falta implementar
+### Progresso registrado
 
-- Criar suíte de testes de unidade, integração e CLI para cada fase e cada gate.
-- Simular o adaptador Codex para testes determinísticos; manter um teste manual controlado para a integração real.
-- Cobrir timeouts, falhas do agente, escrita fora do escopo, evidência inválida, execução interrompida, rework, pausa, cancelamento e exclusão.
-- Executar um novo projeto de catálogo somente após todos os critérios anteriores passarem.
+- A suíte determinística agora cobre o caminho feliz completo de `ANALYSIS` até `DELIVERED`, incluindo compromisso de produto, definição/arquitetura/planejamento de módulo, work item, implementação, integração, validação e aceite humano.
+- A execução usa dublê de agente, produz evidências contratuais e verifica as transições coordenadas sem depender do Codex real.
+- A prova ponta a ponta também é executada inteiramente pelos comandos CLI, usando o adaptador determinístico injetável: intake, registro, análise, definição, compromisso, rodadas de módulo, planejamento, work item, implementação, integração, validação e aceite até `DELIVERED`.
+- A matriz cobre timeout, falha do agente, escrita fora do escopo — incluindo remoção —, evidência inválida, execução interrompida, rework, gates obsoletos, pausa, cancelamento e exclusão com prova mínima central.
+- A suíte `../.venv/bin/python -m pytest tests/runtime_python -q` passou com **48 testes** em 28 de julho de 2026.
+
+### Evidências de conclusão já disponíveis
+
+- A suíte determinística cobre os cenários de unidade, integração e CLI
+  relevantes para as fases e gates, com o adaptador resolvido pela costura
+  `resolve_agent_runner` e substituído somente nos testes.
+- A matriz cobre timeout, falha do agente, escrita fora do escopo, evidência
+  inválida, execução interrompida, rework, pausa, cancelamento e exclusão.
+- O smoke opt-in com o adaptador Codex real foi concluído em ambiente
+  descartável; o relatório
+  `smoke-reports/codex-smoke-20260729142039.md` preserva comandos, hashes,
+  registros e evidências produzidas.
+- A suíte foi repetida pelo roteiro
+  `scripts/run-clean-runtime-baseline.sh --run --allow-dirty-snapshot` em
+  2026-07-29: `53 passed in 11.44s`. O relatório
+  `baseline-reports/runtime-baseline-20260729151508.md` preserva o
+  commit-base, o snapshot limpo temporário e o resultado.
+
+### Trabalho posterior, fora do critério de encerramento
+
+- Um novo projeto de catálogo pode ser executado como validação exploratória
+  posterior. Ele não bloqueia a certificação desta fase, pois a prova exigida
+  é atendida pelo smoke descartável controlado.
+
+### Impedimentos identificados e tratamento aprovado
+
+1. **Timeout do adaptador Codex não é controlado nem auditado.**
+   - **Tratamento:** adicionar `timeout_seconds` configurável ao perfil/contexto, executar o processo com prazo explícito e converter `TimeoutExpired` em falha de domínio. O runtime deve persistir `FAILED` com causa `TIMEOUT` e oferecer recuperação auditável para `REWORK_REQUIRED`.
+2. **Falhas de agente precisam de tratamento uniforme em todas as rodadas.**
+   - **Tratamento:** centralizar o ciclo de despacho em um wrapper que crie a execução, registre despacho, capture erro, timeout e violação de escopo e persista seu resultado terminal. Análise, arquitetura, planejamento, implementação, integração, validação e entrega devem usar o mesmo comportamento.
+3. **A verificação de escopo não detecta exclusões fora do alvo autorizado.**
+   - **Tratamento:** comparar snapshots antes/depois nos dois sentidos, incluindo criação, alteração e remoção. Para implementação, complementar com `git diff --name-status`; toda remoção fora de `allowed_write_paths` deve ser rejeitada e auditada.
+4. **A CLI não permite injetar um dublê determinístico do Codex.**
+   - **Resolução aplicada:** a CLI resolve o adaptador por uma costura estreita (`resolve_agent_runner`) e passa-o explicitamente para as rodadas de projeto, módulo e implementação. Em produção ela retorna o Codex real; testes substituem somente essa costura por dublês determinísticos, sem Codex instalado e sem alterar a interface dos comandos.
+5. **A cobertura CLI está concentrada no intake.**
+   - **Tratamento:** criar cenários parametrizados por fase e gate, em filesystem temporário, cobrindo sucesso, evidência ausente, decisão obsoleta, estado divergente, módulo incompatível, timeout, falha e escrita indevida.
+6. **A política de retenção após exclusão não está definida.**
+   - **Resolução aplicada:** foi escolhida a política de apagamento total autorizado. O runtime remove projeto, intake e auditoria específica, preservando apenas uma prova mínima central de exclusão com projeto, estado anterior `CANCELLED`, autorização, lista de caminhos removidos e data. O teste de exclusão verifica tanto a remoção quanto a prova.
+7. **O baseline da Fase 6 ainda não está consolidado em árvore limpa.**
+   - **Tratamento:** concluir a validação das alterações da Fase 6 e executar a prova da Fase 7 em repositório/clones temporários limpos, por script único reproduzível. A conclusão da Fase 7 só poderá referenciar esse baseline limpo.
+
+### Novo impedimento encontrado durante a execução
+
+8. **Não há comando CLI para as rodadas de arquitetura e planejamento de módulo.** O runtime possui `orchestrate_module_architecture_planning`, mas a CLI não o expõe. Após o compromisso de produto, o módulo fica em `IDENTIFIED`; `run-implementation` exige `PLANNED`, portanto uma prova ponta a ponta exclusivamente por CLI não consegue chegar à implementação sem chamar a API Python diretamente.
+   - **Resolução aplicada:** exposto `naamive orchestrate-module --project <id> --module <id>`, que executa somente a próxima rodada elegível pelo runtime. Um teste CLI determinístico confirma o encaminhamento do projeto e módulo; os cenários completos de sucesso, falha, timeout, rework e incompatibilidade seguem na matriz CLI desta fase.
+
+9. **Não há rodada que promova módulo materializado de `IDENTIFIED` para `DEFINED`.** O compromisso de produto materializa o módulo em `IDENTIFIED`, mas `orchestrate-module` só aceita `DEFINED` e `ARCHITECTED`; a suíte existente alcança esse estado chamando a API de transição diretamente. Portanto, o E2E exclusivamente por CLI ainda fica bloqueado antes da arquitetura do módulo.
+   - **Resolução aplicada:** `orchestrate-module` agora executa a rodada `IDENTIFIED → DEFINED` por `requirements-engineering`, usando proposta de módulo, requisitos aprovados e contrato do módulo como entradas. A evidência `requirements/MODULE_REQUIREMENTS.md` exige módulo, objetivo, limites, rastreabilidade e metadados de execução; uma revisão independente aprovada aplica a transição com `INDEPENDENT_REVIEW`. O teste cobre a sequência completa até `PLANNED`.
 
 ### Estratégia de teste
 

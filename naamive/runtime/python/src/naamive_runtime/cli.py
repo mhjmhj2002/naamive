@@ -9,10 +9,15 @@ import typer
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
 from .project import cancel_project, migrate_project_status, permanently_delete_project, project_directory, read_project_status, render_project_status
 from .codex_executor import run_codex_agent
-from .orchestration import create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_project, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment
+from .orchestration import create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_module_architecture_planning, orchestrate_project, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment, return_to_implementation_for_finding
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
+
+
+def resolve_agent_runner():
+    """Return the production adapter; tests may replace this narrow seam."""
+    return run_codex_agent
 
 
 def repository_root(path: Optional[Path]) -> Path:
@@ -58,7 +63,7 @@ def orchestrate(
         if project and request:
             raise IntakeError("provide only one of --project or --request")
         if project:
-            emit(orchestrate_project(repo, project))
+            emit(orchestrate_project(repo, project, agent_runner=resolve_agent_runner()))
             return
 
         path = request_path(repo, request or "")
@@ -126,7 +131,8 @@ def delete_project(
         deleted_paths = permanently_delete_project(repository_root(root), project)
     except IntakeError as error:
         fail(error)
-    emit({"project_id": project, "state": "DELETED", "deleted_paths": [str(path) for path in deleted_paths]})
+    proof_path = repository_root(root) / "naamive" / "registries" / "deletion-proofs" / f"{project}.yaml"
+    emit({"project_id": project, "state": "DELETED", "deleted_paths": [str(path) for path in deleted_paths], "deletion_proof_path": str(proof_path)})
 
 
 @app.command("run-agent")
@@ -224,6 +230,19 @@ def create_module_work_item(
     emit({"project_id": project, "module_id": module, "work_item_id": work_item, "work_item_path": str(path), "state": "AUTHORIZED"})
 
 
+@app.command("orchestrate-module")
+def orchestrate_module(
+    project: str = typer.Option(..., "--project"),
+    module: str = typer.Option(..., "--module"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Execute the next eligible architecture or planning round for one module."""
+    try:
+        emit(orchestrate_module_architecture_planning(repository_root(root), project, module, agent_runner=resolve_agent_runner()))
+    except IntakeError as error:
+        fail(error)
+
+
 @app.command("run-implementation")
 def run_implementation(
     project: str = typer.Option(..., "--project"),
@@ -233,7 +252,25 @@ def run_implementation(
 ) -> None:
     """Dispatch one authorized, dependency-ready module implementation item."""
     try:
-        emit(dispatch_module_implementation(repository_root(root), project, module, work_item))
+        emit(dispatch_module_implementation(repository_root(root), project, module, work_item, agent_runner=resolve_agent_runner()))
+    except IntakeError as error:
+        fail(error)
+
+
+@app.command("record-finding")
+def record_finding(
+    project: str = typer.Option(..., "--project"),
+    module: str = typer.Option(..., "--module"),
+    work_item: str = typer.Option(..., "--work-item"),
+    severity: str = typer.Option(..., "--severity"),
+    evidence: list[str] = typer.Option(..., "--evidence"),
+    reproduction: str = typer.Option(..., "--reproduction"),
+    resolution: str = typer.Option(..., "--resolution"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Record a validation finding and return blocking work to implementation."""
+    try:
+        emit(return_to_implementation_for_finding(repository_root(root), project, module, work_item, severity, evidence, reproduction, resolution))
     except IntakeError as error:
         fail(error)
 

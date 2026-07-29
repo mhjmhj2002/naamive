@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import fcntl
+import hashlib
 import re
 from datetime import datetime, timezone
-from contextlib import contextmanager
+from contextlib import ExitStack, contextmanager
 from pathlib import Path
 from uuid import uuid4
 
@@ -12,7 +13,7 @@ import yaml
 
 from .codex_executor import run_codex_agent
 from .audit_schema import validate_audit_record
-from .evidence import architecture_requires_material_decision, validate_architecture, validate_architecture_document, validate_business_analysis, validate_delivery_plan, validate_delivery_plan_document, validate_module_proposal, validate_requirements, validate_review
+from .evidence import architecture_requires_material_decision, report_requires_human_gate, validate_architecture, validate_architecture_document, validate_business_analysis, validate_delivery_package, validate_delivery_plan, validate_delivery_plan_document, validate_integration_report, validate_module_definition_document, validate_module_proposal, validate_quality_report, validate_requirements, validate_review, validate_security_assessment
 from .intake import IntakeError, SLUG_PATTERN
 from .project import append_transition_history, migrate_project_status, render_project_status
 
@@ -126,6 +127,35 @@ def _write_immutable(path: Path, payload: dict[str, object], record_type: str) -
     if path.exists():
         raise IntakeError(f"immutable audit record already exists: {path}")
     return _write_yaml(path, validate_audit_record(payload, record_type))
+
+
+def _record_release_package(repository_root: Path, project_id: str, project: Path, execution_id: str, package: Path, validation_evidence: list[Path]) -> Path:
+    """Persist the exact package that operational authority is asked to approve."""
+    record_id = f"release-package-{execution_id.removeprefix('execution-')}"
+    record_path = audit_root(repository_root, project_id) / "release-packages" / f"{record_id}.yaml"
+    return _write_immutable(record_path, {
+        "release_package_id": record_id, "project_id": project_id, "execution_id": execution_id,
+        "package_path": _relative(project, package), "sha256": hashlib.sha256(package.read_bytes()).hexdigest(),
+        "validation_evidence": [_relative(project, item) for item in validation_evidence], "recorded_at": _now(),
+    }, "release_package")
+
+
+def _load_authorized_release_package(repository_root: Path, project_id: str, project: Path, status: dict[str, object]) -> tuple[dict[str, object], Path, Path]:
+    reference = status.get("release_authorized")
+    if not isinstance(reference, str) or not reference:
+        raise IntakeError("delivery has no authorized release package")
+    record_path = repository_root / reference
+    record = yaml.safe_load(record_path.read_text(encoding="utf-8")) if record_path.is_file() else None
+    if not isinstance(record, dict) or record.get("record_type") != "release_package" or record.get("project_id") != project_id:
+        raise IntakeError("authorized release package record is invalid")
+    package_ref = record.get("package_path")
+    if not isinstance(package_ref, str):
+        raise IntakeError("authorized release package path is invalid")
+    _assert_relative_reference(package_ref)
+    package = project / package_ref
+    if not package.is_file() or hashlib.sha256(package.read_bytes()).hexdigest() != record.get("sha256"):
+        raise IntakeError("authorized release package is missing or its hash diverged")
+    return record, record_path, package
 
 
 def _execution_event_path(repository_root: Path, project_id: str, execution_id: str) -> Path:
@@ -270,6 +300,20 @@ def _evidence_files(target: Path) -> list[Path]:
 
 def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: str, agent: str, work_item: str, target_rel: str, inputs: list[Path], expected_output: str, agent_runner) -> tuple[str, Path]:
     execution_id = f"execution-{uuid4().hex}"
+    completion_criteria = f"Produce {expected_output}; include headings Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas, and link the supplied execution_id."
+    if expected_output == "analysis/business/BUSINESS_ANALYSIS.md":
+        completion_criteria = (
+            "Produce analysis/business/BUSINESS_ANALYSIS.md with non-empty headings "
+            "Problema, Valor, Stakeholders, Fluxo, Restrições, Incertezas and Métricas; "
+            "also include headings Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas, "
+            "and link the supplied execution_id."
+        )
+    elif expected_output.endswith("/REVIEW.md"):
+        completion_criteria = (
+            f"Produce {expected_output} with non-empty headings Critérios verificados and Resultado; "
+            "the result must include the word approved, and the document must also include headings "
+            "Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas linked to the supplied execution_id."
+        )
     context = {
         "execution_id": execution_id, "project_id": project_id, "scope_type": "project", "state_machine": "naamive/orchestration/PROJECT_LIFECYCLE.md",
         "current_state": str(migrate_project_status(project)["current_state"]), "requested_transition": "evidence-only",
@@ -277,7 +321,7 @@ def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: s
         "input_artifacts": [str(path.relative_to(project)) for path in inputs], "required_evidence": [expected_output],
         "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
         "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none",
-        "action_class": "WRITE", "expected_outputs": [expected_output], "completion_criteria": f"Produce {expected_output}; include headings Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas, and link the supplied execution_id.",
+        "action_class": "WRITE", "expected_outputs": [expected_output], "completion_criteria": completion_criteria,
     }
     create_execution(repository_root, context)
     advance_execution(repository_root, project_id, execution_id, "VALIDATING")
@@ -286,9 +330,11 @@ def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: s
     target.mkdir(parents=True, exist_ok=True)
     try:
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
-    except IntakeError:
+    except Exception as error:
         advance_execution(repository_root, project_id, execution_id, "FAILED")
-        raise
+        if isinstance(error, IntakeError):
+            raise
+        raise IntakeError(f"agent dispatch failed: {error}") from error
     advance_execution(repository_root, project_id, execution_id, "EVIDENCE_REVIEW", agent_result=result, produced_evidence=[expected_output])
     return execution_id, target / Path(expected_output).name
 
@@ -313,9 +359,11 @@ def _dispatch_project_round(repository_root: Path, project: Path, project_id: st
     target.mkdir(parents=True, exist_ok=True)
     try:
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
-    except IntakeError:
+    except Exception as error:
         advance_execution(repository_root, project_id, execution_id, "FAILED")
-        raise
+        if isinstance(error, IntakeError):
+            raise
+        raise IntakeError(f"agent dispatch failed: {error}") from error
     advance_execution(repository_root, project_id, execution_id, "EVIDENCE_REVIEW", agent_result=result, produced_evidence=[expected_output])
     return execution_id, target / Path(expected_output).name
 
@@ -392,12 +440,13 @@ def _open_product_commitment_gate(repository_root: Path, project: Path, project_
     return request
 
 
-def open_human_gate(repository_root: Path, project_id: str, gate_id: str, to_state: str, rationale: str, evidence: list[str], actor: str = "human-cli") -> Path:
+def open_human_gate(repository_root: Path, project_id: str, gate_id: str, to_state: str, rationale: str, evidence: list[str], actor: str = "human-cli", release_package_record: str | None = None) -> Path:
     """Open a human gate for one valid project transition without applying it."""
     allowed_targets = {
         "MATERIAL_ARCHITECTURE_DECISION": {("ARCHITECTURE", "PLANNING")},
         "RESIDUAL_RISK_ACCEPTANCE": {("VALIDATION", "DELIVERY")},
         "DELIVERY_ACCEPTANCE": {("DELIVERY", "DELIVERED")},
+        "RELEASE_AUTHORIZATION": {("DELIVERY", "DELIVERY")},
     }
     if gate_id not in {*allowed_targets, "PAUSE"}:
         raise IntakeError(f"unsupported human gate: {gate_id}")
@@ -406,18 +455,22 @@ def open_human_gate(repository_root: Path, project_id: str, gate_id: str, to_sta
     current = str(status["current_state"])
     if status.get("pending_gate") not in (None, "", "none"):
         raise IntakeError("project already has a pending gate")
-    if to_state not in PROJECT_STATE_GRAPH.get(current, set()) or not rationale.strip() or not evidence:
+    action_gate = gate_id == "RELEASE_AUTHORIZATION" and current == to_state
+    if (not action_gate and to_state not in PROJECT_STATE_GRAPH.get(current, set())) or not rationale.strip() or not evidence:
         raise IntakeError("gate target, rationale or evidence is invalid")
     if gate_id == "PAUSE" and to_state != "PAUSED":
         raise IntakeError("PAUSE gate can target only PAUSED")
     if gate_id in allowed_targets and (current, to_state) not in allowed_targets[gate_id]:
         raise IntakeError(f"gate {gate_id} is not applicable to {current} -> {to_state}")
     request_id = f"transition-{uuid4().hex}"
-    request = _write_immutable(audit_root(repository_root, project_id) / "transition-requests" / f"{request_id}.yaml", {
+    payload: dict[str, object] = {
         "transition_request_id": request_id, "execution_id": "human-gate-request", "scope_type": "project", "project_id": project_id,
         "state_machine": "naamive/orchestration/PROJECT_LIFECYCLE.md", "from_state": current, "to_state": to_state,
         "trigger": rationale.strip(), "evidence": evidence, "required_gate": "HUMAN_DECISION", "requested_by": actor, "requested_at": _now(),
-    }, "transition_request")
+    }
+    if release_package_record:
+        payload["release_package_record"] = release_package_record
+    request = _write_immutable(audit_root(repository_root, project_id) / "transition-requests" / f"{request_id}.yaml", payload, "transition_request")
     status["pending_gate"] = gate_id
     status["pending_transition_request"] = str(request.relative_to(repository_root))
     (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
@@ -431,6 +484,14 @@ def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, dec
     with _scope_lock(repository_root, project_id, "project", None):
         project = repository_root / "projects" / project_id
         status = migrate_project_status(project)
+        if gate_id == "DELIVERY_ACCEPTANCE" and decision == "APPROVED" and status.get("current_state") == "DELIVERED":
+            completed = sorted((audit_root(repository_root, project_id) / "delivery-acceptance").glob("*-completed.yaml"))
+            if completed:
+                operation = yaml.safe_load(completed[-1].read_text(encoding="utf-8"))
+                if isinstance(operation, dict) and operation.get("state") == "COMPLETED":
+                    operation_id = str(operation["operation_id"])
+                    decision_path = audit_root(repository_root, project_id) / "gate-decisions" / f"gate-{operation_id.removeprefix('delivery-acceptance-')}.yaml"
+                    return {"project_id": project_id, "gate_id": gate_id, "state": "DELIVERED", "decision_path": str(decision_path), "operation_path": str(completed[-1].with_name(f"{operation_id}.yaml"))}
         if status.get("pending_gate") != gate_id:
             raise IntakeError(f"project is not waiting for gate: {gate_id}")
         reference = status.get("pending_transition_request")
@@ -438,14 +499,42 @@ def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, dec
         request = yaml.safe_load(request_path.read_text(encoding="utf-8")) if request_path and request_path.is_file() else None
         if not isinstance(request, dict) or request.get("from_state") != status.get("current_state"):
             raise IntakeError("pending gate transition request is invalid or obsolete")
+        if decision == "APPROVED" and gate_id == "DELIVERY_ACCEPTANCE":
+            return _resolve_delivery_acceptance(repository_root, project_id, project, status, request, actor, rationale.strip())
+        release_record = request.get("release_package_record")
+        if gate_id == "RELEASE_AUTHORIZATION" and decision == "APPROVED":
+            if not isinstance(release_record, str):
+                raise IntakeError("release authorization has no immutable package record")
+            candidate = repository_root / release_record
+            record = yaml.safe_load(candidate.read_text(encoding="utf-8")) if candidate.is_file() else None
+            if not isinstance(record, dict) or record.get("record_type") != "release_package":
+                raise IntakeError("release authorization package record is invalid")
+            # Detect a package changed between preparation and the operational decision.
+            temporary = dict(status, release_authorized=release_record)
+            _load_authorized_release_package(repository_root, project_id, project, temporary)
         decision_id = f"gate-{uuid4().hex}"
-        decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", {
+        decision_payload: dict[str, object] = {
             "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": gate_id,
             "decision": decision, "control_type": "HUMAN_DECISION", "decided_by": actor, "authority_basis": "human gate decision",
             "evidence_reviewed": list(request.get("evidence", [])), "rationale": rationale.strip(), "decided_at": _now(),
-        }, "gate_decision")
+        }
+        if isinstance(release_record, str):
+            decision_payload["release_package_record"] = release_record
+        decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", decision_payload, "gate_decision")
         status.pop("pending_transition_request", None)
-        if decision == "APPROVED":
+        if decision == "APPROVED" and gate_id == "RELEASE_AUTHORIZATION":
+            status["pending_gate"] = "none"
+            # This is a versioned audit reference, never a reusable boolean.
+            status["release_authorized"] = str(release_record)
+            status["last_gate_decision"] = str(decision_path.relative_to(repository_root))
+            (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
+            record, record_path, package = _load_authorized_release_package(repository_root, project_id, project, status)
+            acceptance = open_human_gate(repository_root, project_id, "DELIVERY_ACCEPTANCE", "DELIVERED", "Authorized delivery package is ready for business acceptance.", [str(record["package_path"]), str(record_path.relative_to(repository_root))], actor="release-operations", release_package_record=str(record_path.relative_to(repository_root)))
+            execution_id = str(record["execution_id"])
+            if _execution_events(repository_root, project_id, execution_id) and str(_execution_events(repository_root, project_id, execution_id)[-1].get("state")) == "EVIDENCE_REVIEW":
+                advance_execution(repository_root, project_id, execution_id, "WAITING_FOR_GATE")
+            return {"project_id": project_id, "gate_id": gate_id, "state": "WAITING_FOR_GATE", "decision_path": str(decision_path), "transition_request": str(acceptance.relative_to(repository_root))}
+        elif decision == "APPROVED":
             _transition(project, status, str(request["to_state"]), actor, rationale.strip(), str(decision_path.relative_to(repository_root)), "HUMAN_DECISION")
         else:
             status["pending_gate"] = "none"
@@ -453,6 +542,84 @@ def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, dec
             status["last_gate_decision"] = str(decision_path.relative_to(repository_root))
             (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
         return {"project_id": project_id, "gate_id": gate_id, "state": str(request["to_state"]) if decision == "APPROVED" else decision, "decision_path": str(decision_path)}
+
+
+def _resolve_delivery_acceptance(repository_root: Path, project_id: str, project: Path, status: dict[str, object], request: dict[str, object], actor: str, rationale: str) -> dict[str, object]:
+    """Promote every module and the project as one recoverable acceptance operation."""
+    if status.get("current_state") != "DELIVERY" or request.get("to_state") != "DELIVERED":
+        raise IntakeError("delivery acceptance requires DELIVERY -> DELIVERED")
+    release_reference = request.get("release_package_record")
+    if release_reference:
+        if release_reference != status.get("release_authorized"):
+            raise IntakeError("delivery acceptance package does not match the authorized release")
+        try:
+            _load_authorized_release_package(repository_root, project_id, project, status)
+        except IntakeError as error:
+            decision_id = f"gate-{uuid4().hex}"
+            decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", {
+                "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": "DELIVERY_ACCEPTANCE",
+                "decision": "REWORK_REQUIRED", "control_type": "HUMAN_DECISION", "decided_by": "runtime-integrity-check",
+                "authority_basis": "authorized release package integrity check", "evidence_reviewed": list(request.get("evidence", [])),
+                "rationale": str(error), "decided_at": _now(),
+            }, "gate_decision")
+            status.pop("pending_transition_request", None)
+            status["pending_gate"] = "none"
+            status.pop("release_authorized", None)
+            status["last_gate_decision"] = str(decision_path.relative_to(repository_root))
+            status["next_action"] = "Prepare and authorize a new release package before delivery acceptance."
+            (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
+            return {"project_id": project_id, "gate_id": "DELIVERY_ACCEPTANCE", "state": "REWORK_REQUIRED", "decision_path": str(decision_path), "error": str(error)}
+    modules = sorted((path for path in (project / "modules").glob("*") if path.is_dir()), key=lambda path: path.name) if (project / "modules").is_dir() else []
+    operation_id = f"delivery-acceptance-{str(request['transition_request_id']).removeprefix('transition-')}"
+    operation_path = audit_root(repository_root, project_id) / "delivery-acceptance" / f"{operation_id}.yaml"
+    # Holding every module lock makes pre-validation and the following promotions one coordinated critical section.
+    with ExitStack() as locks:
+        for module in modules:
+            locks.enter_context(_scope_lock(repository_root, project_id, "module", module.name))
+        existing = yaml.safe_load(operation_path.read_text(encoding="utf-8")) if operation_path.exists() else None
+        if existing is not None:
+            if not isinstance(existing, dict) or existing.get("operation_id") != operation_id:
+                raise IntakeError("delivery acceptance operation is invalid")
+            participants = [str(item.get("module_id")) for item in existing.get("participants", []) if isinstance(item, dict)]
+            if participants != [module.name for module in modules]:
+                raise IntakeError("delivery acceptance participants changed; explicit compensation is required")
+        else:
+            incompatible = [module.name for module in modules if str(_read_module_status(module)["current_state"]) != "READY_FOR_DELIVERY"]
+            if incompatible:
+                raise IntakeError(f"delivery acceptance requires module(s) to be READY_FOR_DELIVERY: {', '.join(incompatible)}")
+            participants = [module.name for module in modules]
+            _write_immutable(operation_path, {
+                "operation_id": operation_id, "project_id": project_id, "transition_request_id": request["transition_request_id"],
+                "decision": "APPROVED", "participants": [{"module_id": module_id, "expected_state": "READY_FOR_DELIVERY"} for module_id in participants],
+                "expected_project_state": "DELIVERY", "expected_module_state": "READY_FOR_DELIVERY", "state": "INCOMPLETE", "recorded_at": _now(),
+            }, "delivery_acceptance_operation")
+        decision_id = f"gate-{operation_id.removeprefix('delivery-acceptance-')}"
+        decision_path = audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml"
+        if not decision_path.exists():
+            _write_immutable(decision_path, {
+                "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": "DELIVERY_ACCEPTANCE",
+                "decision": "APPROVED", "control_type": "HUMAN_DECISION", "decided_by": actor, "authority_basis": "coordinated human delivery acceptance",
+                "evidence_reviewed": list(request.get("evidence", [])), "rationale": rationale, "decided_at": _now(),
+            }, "gate_decision")
+        decision_reference = str(decision_path.relative_to(repository_root))
+        for module in modules:
+            current = str(_read_module_status(module)["current_state"])
+            if current == "DELIVERED":
+                continue
+            if current != "READY_FOR_DELIVERY":
+                raise IntakeError(f"delivery acceptance recovery requires module {module.name} to be READY_FOR_DELIVERY or DELIVERED")
+            _apply_state_transition_locked(repository_root, project_id, "DELIVERED", scope_type="module", module_id=module.name, actor=actor, reason="Module is included in the accepted project delivery.", evidence=[decision_reference, str(operation_path.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state="READY_FOR_DELIVERY", idempotency_key=f"{operation_id}-{module.name}")
+        # The project is deliberately last: a failed module persistence can never declare the delivery complete.
+        status = migrate_project_status(project)
+        if str(status["current_state"]) != "DELIVERY":
+            raise IntakeError("delivery acceptance recovery requires project state DELIVERY")
+        _transition(project, status, "DELIVERED", actor, rationale, decision_reference, "HUMAN_DECISION")
+        _write_immutable(operation_path.with_name(f"{operation_id}-completed.yaml"), {
+            "operation_id": operation_id, "project_id": project_id, "transition_request_id": request["transition_request_id"],
+            "decision": "APPROVED", "participants": [{"module_id": module_id, "expected_state": "READY_FOR_DELIVERY"} for module_id in participants],
+            "expected_project_state": "DELIVERY", "expected_module_state": "READY_FOR_DELIVERY", "state": "COMPLETED", "recorded_at": _now(),
+        }, "delivery_acceptance_operation")
+        return {"project_id": project_id, "gate_id": "DELIVERY_ACCEPTANCE", "state": "DELIVERED", "decision_path": str(decision_path), "operation_path": str(operation_path)}
 
 
 def resolve_product_commitment(repository_root: Path, project_id: str, decision: str, actor: str, rationale: str, module_id: str | None = None, module_title: str | None = None) -> dict[str, object]:
@@ -523,6 +690,83 @@ def _orchestrate_analysis_definition(repository_root: Path, project: Path, proje
     return {"project_id": project_id, "current_state": "DEFINITION", "state": "WAITING_FOR_GATE", "gate_id": "PRODUCT_COMMITMENT", "definition_executions": [domain_execution, requirements_execution, review_execution]}
 
 
+def _phase6_modules(project: Path) -> list[Path]:
+    modules = sorted(path for path in (project / "modules").glob("*") if path.is_dir()) if (project / "modules").is_dir() else []
+    if not modules:
+        raise IntakeError("phase 6 requires at least one materialized module")
+    return modules
+
+
+def _orchestrate_phase6(repository_root: Path, project: Path, project_id: str, status: dict[str, object], agent_runner) -> dict[str, object]:
+    """Run the integration, assurance and delivery rounds with explicit gates."""
+    state = str(status["current_state"])
+    modules = _phase6_modules(project)
+    module_evidence = [module / "evidence" for module in modules]
+    if state == "IMPLEMENTATION":
+        for module in modules:
+            module_state = str(_read_module_status(module)["current_state"])
+            if module_state != "IMPLEMENTING":
+                raise IntakeError(f"integration requires module {module.name} in IMPLEMENTING, found {module_state}")
+        inputs = [project / "architecture" / "SOLUTION_ARCHITECTURE.md", *module_evidence]
+        execution_id, report = _dispatch_project_round(repository_root, project, project_id, state, "integration-engineering", "verify-integrated-contracts", "integration", inputs, "integration/INTEGRATION_REPORT.md", agent_runner)
+        error = _validate_round_evidence(repository_root, project_id, execution_id, validate_integration_report, project, execution_id)
+        if error:
+            return {"project_id": project_id, "current_state": state, "state": "REWORK_REQUIRED", "execution_id": execution_id, "error": error}
+        for module in modules:
+            apply_state_transition(repository_root, project_id, "INTEGRATING", scope_type="module", module_id=module.name, actor="integration-engineering", reason="Integration evidence is available for the module.", evidence=[str(report.relative_to(project))], control_type="AUTOMATED_EVIDENCE", execution_id=execution_id, expected_state="IMPLEMENTING", idempotency_key=f"integrating-{module.name}-{execution_id.split('-')[-1]}")
+        apply_state_transition(repository_root, project_id, "VALIDATION", actor="integration-engineering", reason="Integrated contract and flow evidence was validated.", evidence=[str(report.relative_to(project))], control_type="AUTOMATED_EVIDENCE", execution_id=execution_id, expected_state="IMPLEMENTATION", idempotency_key=f"implementation-validation-{execution_id.split('-')[-1]}")
+        advance_execution(repository_root, project_id, execution_id, "WAITING_FOR_GATE")
+        advance_execution(repository_root, project_id, execution_id, "COMPLETED")
+        return {"project_id": project_id, "current_state": "VALIDATION", "state": "COMPLETED", "integration_execution": execution_id}
+    if state == "VALIDATION":
+        for module in modules:
+            if str(_read_module_status(module)["current_state"]) != "INTEGRATING":
+                raise IntakeError(f"validation requires module {module.name} in INTEGRATING")
+        integration = project / "integration" / "INTEGRATION_REPORT.md"
+        quality_id, quality = _dispatch_project_round(repository_root, project, project_id, state, "quality-assurance", "validate-quality", "validation", [integration], "validation/QUALITY_REPORT.md", agent_runner)
+        error = _validate_round_evidence(repository_root, project_id, quality_id, validate_quality_report, project, quality_id)
+        if error:
+            return {"project_id": project_id, "current_state": state, "state": "REWORK_REQUIRED", "execution_id": quality_id, "error": error}
+        security_id, security = _dispatch_project_round(repository_root, project, project_id, state, "security-assurance", "assess-security", "validation/security", [integration, quality], "validation/security/SECURITY_ASSESSMENT.md", agent_runner)
+        error = _validate_round_evidence(repository_root, project_id, security_id, validate_security_assessment, project, security_id)
+        if error:
+            return {"project_id": project_id, "current_state": state, "state": "REWORK_REQUIRED", "execution_id": security_id, "error": error}
+        review_id, review = _dispatch_project_round(repository_root, project, project_id, state, "governance-assurance", "review-validation", "validation/reviews", [quality, security], "validation/reviews/REVIEW.md", agent_runner)
+        error = _validate_round_evidence(repository_root, project_id, review_id, validate_review, review, review_id)
+        if error:
+            return {"project_id": project_id, "current_state": state, "state": "REWORK_REQUIRED", "execution_id": review_id, "error": error}
+        for module in modules:
+            apply_state_transition(repository_root, project_id, "VALIDATING", scope_type="module", module_id=module.name, actor="quality-assurance", reason="Project validation evidence is available.", evidence=[str(quality.relative_to(project)), str(security.relative_to(project))], control_type="AUTOMATED_EVIDENCE", execution_id=quality_id, expected_state="INTEGRATING", idempotency_key=f"validating-{module.name}-{quality_id.split('-')[-1]}")
+            apply_state_transition(repository_root, project_id, "READY_FOR_DELIVERY", scope_type="module", module_id=module.name, actor="governance-assurance", reason="Independent validation review approved the module evidence.", evidence=[str(quality.relative_to(project)), str(security.relative_to(project)), str(review.relative_to(project))], control_type="INDEPENDENT_REVIEW", execution_id=review_id, expected_state="VALIDATING", idempotency_key=f"ready-for-delivery-{module.name}-{review_id.split('-')[-1]}")
+        if report_requires_human_gate(security, "residual_risk_acceptance_required"):
+            request = open_human_gate(repository_root, project_id, "RESIDUAL_RISK_ACCEPTANCE", "DELIVERY", "Security assessment declares residual risk requiring authority.", [str(quality.relative_to(project)), str(security.relative_to(project)), str(review.relative_to(project))], actor="governance-assurance")
+            return {"project_id": project_id, "current_state": state, "state": "WAITING_FOR_GATE", "gate_id": "RESIDUAL_RISK_ACCEPTANCE", "transition_request": str(request.relative_to(repository_root))}
+        apply_state_transition(repository_root, project_id, "DELIVERY", actor="governance-assurance", reason="Independent quality and security review approved validation.", evidence=[str(quality.relative_to(project)), str(security.relative_to(project)), str(review.relative_to(project))], control_type="INDEPENDENT_REVIEW", execution_id=review_id, expected_state="VALIDATION", idempotency_key=f"validation-delivery-{review_id.split('-')[-1]}")
+        for identifier in (quality_id, security_id, review_id):
+            advance_execution(repository_root, project_id, identifier, "WAITING_FOR_GATE")
+            advance_execution(repository_root, project_id, identifier, "COMPLETED")
+        return {"project_id": project_id, "current_state": "DELIVERY", "state": "COMPLETED", "validation_execution": review_id}
+    # DELIVERY
+    if any(str(_read_module_status(module)["current_state"]) != "READY_FOR_DELIVERY" for module in modules):
+        raise IntakeError("delivery requires every project module to be READY_FOR_DELIVERY")
+    if status.get("release_authorized"):
+        record, record_path, _package = _load_authorized_release_package(repository_root, project_id, project, status)
+        request = open_human_gate(repository_root, project_id, "DELIVERY_ACCEPTANCE", "DELIVERED", "Authorized delivery package is ready for business acceptance.", [str(record["package_path"]), str(record_path.relative_to(repository_root))], actor="release-operations", release_package_record=str(record_path.relative_to(repository_root)))
+        return {"project_id": project_id, "current_state": state, "state": "WAITING_FOR_GATE", "gate_id": "DELIVERY_ACCEPTANCE", "transition_request": str(request.relative_to(repository_root))}
+    inputs = [project / "validation" / "QUALITY_REPORT.md", project / "validation" / "security" / "SECURITY_ASSESSMENT.md"]
+    execution_id, package = _dispatch_project_round(repository_root, project, project_id, state, "release-operations", "prepare-delivery", "delivery", inputs, "delivery/DELIVERY_PACKAGE.md", agent_runner)
+    error = _validate_round_evidence(repository_root, project_id, execution_id, validate_delivery_package, project, execution_id)
+    if error:
+        return {"project_id": project_id, "current_state": state, "state": "REWORK_REQUIRED", "execution_id": execution_id, "error": error}
+    if report_requires_human_gate(package, "release_authorization_required") and not status.get("release_authorized"):
+        record = _record_release_package(repository_root, project_id, project, execution_id, package, inputs)
+        request = open_human_gate(repository_root, project_id, "RELEASE_AUTHORIZATION", "DELIVERY", "Delivery package requires operational release authorization.", [str(package.relative_to(project)), str(record.relative_to(repository_root))], actor="release-operations", release_package_record=str(record.relative_to(repository_root)))
+        return {"project_id": project_id, "current_state": state, "state": "WAITING_FOR_GATE", "gate_id": "RELEASE_AUTHORIZATION", "transition_request": str(request.relative_to(repository_root))}
+    request = open_human_gate(repository_root, project_id, "DELIVERY_ACCEPTANCE", "DELIVERED", "Delivery package is ready for business acceptance.", [str(package.relative_to(project))], actor="release-operations")
+    advance_execution(repository_root, project_id, execution_id, "WAITING_FOR_GATE")
+    return {"project_id": project_id, "current_state": state, "state": "WAITING_FOR_GATE", "gate_id": "DELIVERY_ACCEPTANCE", "transition_request": str(request.relative_to(repository_root))}
+
+
 def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run_codex_agent) -> dict[str, object]:
     project = repository_root / "projects" / project_id
     if not project.is_dir():
@@ -537,6 +781,8 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
         return _orchestrate_analysis_definition(repository_root, project, project_id, status, agent_runner)
     if state in {"ARCHITECTURE", "PLANNING"}:
         return _orchestrate_architecture_planning(repository_root, project, project_id, status, agent_runner)
+    if state in {"IMPLEMENTATION", "VALIDATION", "DELIVERY"}:
+        return _orchestrate_phase6(repository_root, project, project_id, status, agent_runner)
     if state not in PROJECT_TRANSITIONS:
         return {"project_id": project_id, "current_state": state, "state": "PROJECT_EXECUTION_PENDING", "reason": "no automated project round is configured for this state"}
 
@@ -596,17 +842,18 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
 
 
 def orchestrate_module_architecture_planning(repository_root: Path, project_id: str, module_id: str, agent_runner=run_codex_agent) -> dict[str, object]:
-    """Advance one module through its Phase 5 architecture or planning round."""
+    """Advance one module through definition, architecture, or planning."""
     project = repository_root / "projects" / project_id
     module = project / "modules" / module_id
     project_state = str(migrate_project_status(project)["current_state"])
     module_state = str(_read_module_status(module)["current_state"])
     rounds = {
+        "IDENTIFIED": ("ARCHITECTURE", "requirements-engineering", "define-module-boundary", "requirements", "MODULE_REQUIREMENTS.md", validate_module_definition_document),
         "DEFINED": ("ARCHITECTURE", "solution-architecture", "define-module-architecture", "architecture", "SOLUTION_ARCHITECTURE.md", validate_architecture_document),
         "ARCHITECTED": ("PLANNING", "delivery-planning", "plan-module-delivery", "planning", "DELIVERY_PLAN.md", validate_delivery_plan_document),
     }
     if module_state not in rounds:
-        raise IntakeError("module is not eligible for an architecture or planning round")
+        raise IntakeError("module is not eligible for a definition, architecture, or planning round")
     expected_project_state, agent, work_item, directory, filename, validator = rounds[module_state]
     if project_state != expected_project_state:
         raise IntakeError(f"module {module_state} round requires project state {expected_project_state}")
@@ -617,7 +864,7 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
         "execution_id": execution_id, "project_id": project_id, "scope_type": "module", "module_id": module_id,
         "state_machine": "naamive/orchestration/MODULE_LIFECYCLE.md", "current_state": module_state, "requested_transition": "evidence-only",
         "agent_id": agent, "authorized_work_item": work_item, "target_path": target_rel,
-        "input_artifacts": [f"modules/{module_id}/MODULE.md"] if module_state == "DEFINED" else [f"modules/{module_id}/architecture/SOLUTION_ARCHITECTURE.md"], "required_evidence": [evidence_rel],
+        "input_artifacts": (["analysis/domain/MODULE_PROPOSAL.md", "analysis/requirements/REQUIREMENTS.md", f"modules/{module_id}/MODULE.md"] if module_state == "IDENTIFIED" else [f"modules/{module_id}/MODULE.md"] if module_state == "DEFINED" else [f"modules/{module_id}/architecture/SOLUTION_ARCHITECTURE.md"]), "required_evidence": [evidence_rel],
         "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
         "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none", "action_class": "WRITE",
         "expected_outputs": [evidence_rel], "completion_criteria": f"Produce {evidence_rel} with complete traceability and the supplied execution_id.",
@@ -630,9 +877,11 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
     try:
         inputs = [project / str(reference) for reference in context["input_artifacts"]]
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
-    except IntakeError:
+    except Exception as error:
         advance_execution(repository_root, project_id, execution_id, "FAILED")
-        raise
+        if isinstance(error, IntakeError):
+            raise
+        raise IntakeError(f"agent dispatch failed: {error}") from error
     evidence = project / evidence_rel
     advance_execution(repository_root, project_id, execution_id, "EVIDENCE_REVIEW", agent_result=result, produced_evidence=[evidence_rel])
     error = _validate_round_evidence(repository_root, project_id, execution_id, validator, evidence, execution_id)
@@ -647,7 +896,13 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
     advance_execution(repository_root, project_id, review_id, "DISPATCHED")
     review_target = project / review_target_rel
     review_target.mkdir(parents=True, exist_ok=True)
-    result = agent_runner(repository_root, project_id, "governance-assurance", f"review-{work_item}", review_target, [evidence], execution_context=review_context)
+    try:
+        result = agent_runner(repository_root, project_id, "governance-assurance", f"review-{work_item}", review_target, [evidence], execution_context=review_context)
+    except Exception as error:
+        advance_execution(repository_root, project_id, review_id, "FAILED")
+        if isinstance(error, IntakeError):
+            raise
+        raise IntakeError(f"agent dispatch failed: {error}") from error
     review = project / review_rel
     advance_execution(repository_root, project_id, review_id, "EVIDENCE_REVIEW", agent_result=result, produced_evidence=[review_rel])
     error = _validate_round_evidence(repository_root, project_id, review_id, validate_review, review, review_id)
@@ -667,7 +922,7 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
         for identifier in (execution_id, review_id):
             advance_execution(repository_root, project_id, identifier, "WAITING_FOR_GATE")
         return {"project_id": project_id, "module_id": module_id, "current_state": "DEFINED", "state": "WAITING_FOR_GATE", "gate_id": "MATERIAL_MODULE_ARCHITECTURE_DECISION", "transition_request": str(request.relative_to(repository_root))}
-    destination = "ARCHITECTED" if module_state == "DEFINED" else "PLANNED"
+    destination = "DEFINED" if module_state == "IDENTIFIED" else "ARCHITECTED" if module_state == "DEFINED" else "PLANNED"
     apply_state_transition(repository_root, project_id, destination, scope_type="module", module_id=module_id, actor="governance-assurance", reason=f"Independent review approved module {directory}.", evidence=[evidence_rel, review_rel], control_type="INDEPENDENT_REVIEW", execution_id=review_id, expected_state=module_state, idempotency_key=f"module-{module_id}-{directory}-{execution_id}")
     for identifier in (execution_id, review_id):
         advance_execution(repository_root, project_id, identifier, "WAITING_FOR_GATE")
@@ -805,12 +1060,45 @@ def set_work_item_status(project: Path, module_id: str, work_item_id: str, statu
         "AUTHORIZED": {"IN_PROGRESS", "BLOCKED", "CANCELLED"},
         "IN_PROGRESS": {"BLOCKED", "COMPLETED", "CANCELLED"},
         "BLOCKED": {"AUTHORIZED", "CANCELLED"},
-        "COMPLETED": set(), "CANCELLED": set(),
+        "COMPLETED": {"AUTHORIZED"}, "CANCELLED": set(),
     }
     if status not in allowed[previous]:
         raise IntakeError(f"invalid work item transition: {previous} -> {status}")
     path.write_text(path.read_text(encoding="utf-8").replace(f"**Status:** `{previous}`", f"**Status:** `{status}`", 1), encoding="utf-8")
     return path
+
+
+def record_validation_finding(repository_root: Path, project_id: str, module_id: str, work_item_id: str, severity: str, evidence: list[str], reproduction: str, resolution: str) -> Path:
+    """Persist an immutable validation finding and reopen its authorized work item."""
+    if severity not in {"LOW", "MEDIUM", "HIGH", "CRITICAL"} or not evidence or not reproduction.strip() or not resolution.strip():
+        raise IntakeError("finding severity, evidence, reproduction and resolution are required")
+    project = repository_root / "projects" / project_id
+    item = _work_item_path(project, module_id, work_item_id)
+    _assert_relative_reference(str(item.relative_to(project)))
+    finding_id = f"finding-{uuid4().hex}"
+    path = _write_immutable(audit_root(repository_root, project_id) / "findings" / f"{finding_id}.yaml", {
+        "finding_id": finding_id, "project_id": project_id, "module_id": module_id, "work_item_id": work_item_id,
+        "severity": severity, "evidence": evidence, "reproduction": reproduction.strip(), "resolution": resolution.strip(), "recorded_at": _now(),
+    }, "finding")
+    if severity in {"HIGH", "CRITICAL"} and work_item_status(project, module_id, work_item_id) == "COMPLETED":
+        set_work_item_status(project, module_id, work_item_id, "AUTHORIZED")
+    return path
+
+
+def return_to_implementation_for_finding(repository_root: Path, project_id: str, module_id: str, work_item_id: str, severity: str, evidence: list[str], reproduction: str, resolution: str) -> dict[str, object]:
+    """Record a blocking finding and perform the auditable validation rework path."""
+    project = repository_root / "projects" / project_id
+    if str(migrate_project_status(project)["current_state"]) != "VALIDATION":
+        raise IntakeError("validation finding rework requires project state VALIDATION")
+    finding = record_validation_finding(repository_root, project_id, module_id, work_item_id, severity, evidence, reproduction, resolution)
+    if severity not in {"HIGH", "CRITICAL"}:
+        return {"project_id": project_id, "finding_path": str(finding), "state": "RECORDED"}
+    apply_state_transition(repository_root, project_id, "IMPLEMENTATION", actor="quality-assurance", reason="Blocking validation finding requires implementation rework.", evidence=[str(finding.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state="VALIDATION", idempotency_key=f"validation-rework-{finding.stem.split('-')[-1]}")
+    module = project / "modules" / module_id
+    current = str(_read_module_status(module)["current_state"])
+    if current != "IMPLEMENTING":
+        apply_state_transition(repository_root, project_id, "IMPLEMENTING", scope_type="module", module_id=module_id, actor="quality-assurance", reason="Blocking finding reopens module implementation.", evidence=[str(finding.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state=current, idempotency_key=f"module-rework-{module_id}-{finding.stem.split('-')[-1]}")
+    return {"project_id": project_id, "module_id": module_id, "work_item_id": work_item_id, "finding_path": str(finding), "state": "IMPLEMENTATION"}
 
 
 def unresolved_work_item_dependencies(project: Path, module_id: str, work_item_id: str) -> list[str]:
@@ -866,10 +1154,12 @@ def dispatch_module_implementation(repository_root: Path, project_id: str, modul
     advance_execution(repository_root, project_id, execution_id, "DISPATCHED")
     try:
         result = agent_runner(repository_root, project_id, "implementation", work_item_id, module, [item_path], execution_context=context)
-    except IntakeError:
+    except Exception as error:
         set_work_item_status(project, module_id, work_item_id, "BLOCKED")
         advance_execution(repository_root, project_id, execution_id, "FAILED")
-        raise
+        if isinstance(error, IntakeError):
+            raise
+        raise IntakeError(f"agent dispatch failed: {error}") from error
     missing = [evidence for evidence in expected_evidence if not (project / evidence).is_file()]
     if missing:
         set_work_item_status(project, module_id, work_item_id, "BLOCKED")

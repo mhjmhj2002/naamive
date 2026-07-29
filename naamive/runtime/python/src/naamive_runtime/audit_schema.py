@@ -58,11 +58,61 @@ class IdempotencyIndex(_AuditRecord):
     recorded_at: str = Field(min_length=1)
 
 
+class DeliveryAcceptanceOperation(_AuditRecord):
+    """Append-only record for a coordinated delivery-acceptance operation."""
+    record_type: Literal["delivery_acceptance_operation"]
+    operation_id: str = Field(min_length=1)
+    project_id: str = Field(pattern=SLUG_PATTERN.pattern)
+    transition_request_id: str = Field(min_length=1)
+    decision: Literal["APPROVED"]
+    participants: list[dict[str, str]]
+    expected_project_state: Literal["DELIVERY"]
+    expected_module_state: Literal["READY_FOR_DELIVERY"]
+    state: Literal["INCOMPLETE", "COMPLETED"]
+    recorded_at: str = Field(min_length=1)
+
+
+class ReleasePackage(_AuditRecord):
+    """Immutable identity of the delivery package reviewed for a release."""
+    record_type: Literal["release_package"]
+    release_package_id: str = Field(min_length=1)
+    project_id: str = Field(pattern=SLUG_PATTERN.pattern)
+    execution_id: str = Field(min_length=1)
+    package_path: str = Field(min_length=1)
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    validation_evidence: list[str] = Field(min_length=1)
+    recorded_at: str = Field(min_length=1)
+
+
+class Finding(_AuditRecord):
+    record_type: Literal["finding"]
+    finding_id: str = Field(min_length=1)
+    project_id: str = Field(pattern=SLUG_PATTERN.pattern)
+    severity: Literal["LOW", "MEDIUM", "HIGH", "CRITICAL"]
+    evidence: list[str] = Field(min_length=1)
+    reproduction: str = Field(min_length=1)
+    resolution: str = Field(min_length=1)
+    recorded_at: str = Field(min_length=1)
+
+
+class DeletionProof(_AuditRecord):
+    record_type: Literal["deletion_proof"]
+    project_id: str = Field(pattern=SLUG_PATTERN.pattern)
+    prior_state: Literal["CANCELLED"]
+    authorization: str = Field(min_length=1)
+    deleted_paths: list[str] = Field(min_length=1)
+    deleted_at: str = Field(min_length=1)
+
+
 SCHEMAS = {
     "execution_event": ExecutionEvent,
     "transition_request": TransitionRequest,
     "gate_decision": GateDecision,
     "idempotency_index": IdempotencyIndex,
+    "delivery_acceptance_operation": DeliveryAcceptanceOperation,
+    "release_package": ReleasePackage,
+    "finding": Finding,
+    "deletion_proof": DeletionProof,
 }
 
 

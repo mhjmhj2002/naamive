@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pytest
 
-from naamive_runtime.codex_executor import canonical_work_branch, prepare_git_iteration, verify_git_iteration
+from naamive_runtime import codex_executor
+from naamive_runtime.codex_executor import CodexProfile, _scope_violations, canonical_work_branch, prepare_git_iteration, run_codex_agent, verify_git_iteration
 from naamive_runtime.intake import IntakeError
 
 
@@ -71,3 +72,23 @@ def test_git_iteration_rejects_unauthorized_committed_path(tmp_path: Path) -> No
     git(repo, "commit", "-m", "agent(implementation): invalid")
     with pytest.raises(IntakeError, match="unauthorized paths"):
         verify_git_iteration(repo, context(), branch, before)
+
+
+def test_scope_check_rejects_removal_outside_authorized_path() -> None:
+    before = {Path("authorized/evidence.md"): (1, 1), Path("STATUS.md"): (1, 1)}
+    after = {Path("authorized/evidence.md"): (1, 1)}
+
+    assert _scope_violations(before, after, [Path("authorized")]) == ["STATUS.md"]
+
+
+def test_codex_timeout_is_translated_to_domain_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(codex_executor, "codex_command", lambda: "codex")
+
+    def time_out(*args: object, **kwargs: object) -> object:
+        raise subprocess.TimeoutExpired("codex exec", 3)
+
+    monkeypatch.setattr(codex_executor.subprocess, "run", time_out)
+    target = tmp_path / "projects/sample/analysis/business"
+
+    with pytest.raises(IntakeError, match="timed out after 3 seconds"):
+        run_codex_agent(tmp_path, "sample", "business-analysis", "analyze", target, [], profile=CodexProfile(timeout_seconds=3))

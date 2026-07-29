@@ -5,7 +5,10 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+import naamive_runtime.cli as cli
 from naamive_runtime.cli import app
+from naamive_runtime.orchestration import materialize_module, open_human_gate
+from naamive_runtime.project import render_project_status
 
 
 runner = CliRunner()
@@ -161,6 +164,9 @@ def test_only_cancelled_project_can_be_permanently_deleted_with_intake_reference
     assert not (repository / "projects" / "customer-self-service").exists()
     assert not request.parent.exists()
     assert not audit.exists()
+    proof = repository / "naamive" / "registries" / "deletion-proofs" / "customer-self-service.yaml"
+    assert proof.is_file()
+    assert "prior_state: CANCELLED" in proof.read_text(encoding="utf-8")
 
 
 def test_permanent_deletion_requires_exact_confirmation(tmp_path: Path) -> None:
@@ -173,3 +179,107 @@ def test_permanent_deletion_requires_exact_confirmation(tmp_path: Path) -> None:
 
     assert result.exit_code == 1
     assert project.exists()
+
+
+def test_orchestrate_module_exposes_the_next_module_round(tmp_path: Path, monkeypatch) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    expected = {"project_id": "customer-self-service", "module_id": "catalog", "state": "COMPLETED"}
+
+    def fake_orchestrator(root: Path, project: str, module: str, **kwargs) -> dict[str, str]:
+        assert root == repository
+        assert (project, module) == ("customer-self-service", "catalog")
+        assert callable(kwargs["agent_runner"])
+        return expected
+
+    monkeypatch.setattr(cli, "orchestrate_module_architecture_planning", fake_orchestrator)
+    result = runner.invoke(app, ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", "--repository-root", str(repository)])
+
+    assert result.exit_code == 0, result.output
+    assert '"module_id": "catalog"' in result.output
+
+
+def test_cli_orchestration_accepts_a_deterministic_agent_double(tmp_path: Path, monkeypatch) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    runner.invoke(app, ["init-project-request", "--request-id", "self-service", "--repository-root", str(repository)])
+    request = repository / "naamive" / "registries" / "project-intake" / "self-service" / "PROJECT_REQUEST.md"
+    complete_request(request)
+    runner.invoke(app, ["orchestrate", "--request", "self-service", "--repository-root", str(repository)])
+    runner.invoke(app, ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", "--repository-root", str(repository)])
+
+    def no_evidence_runner(*args, **kwargs):
+        return {"adapter": "deterministic-double"}
+
+    monkeypatch.setattr(cli, "resolve_agent_runner", lambda: no_evidence_runner)
+    result = runner.invoke(app, ["orchestrate", "--project", "customer-self-service", "--repository-root", str(repository)])
+
+    assert result.exit_code == 0, result.output
+    assert "REWORK_REQUIRED" in result.output
+
+
+def test_cli_delivery_acceptance_rejects_incompatible_module_without_partial_effects(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    project = repository / "projects" / "customer-self-service"
+    project.mkdir()
+    status = {
+        "format_version": 2, "scope_type": "project", "project_id": "customer-self-service", "current_state": "DELIVERY",
+        "state_machine": "naamive/orchestration/PROJECT_LIFECYCLE.md", "transition_sequence": 1,
+        "last_transition_id": "project-0001", "last_transition_from": "PRE_PROJECT", "last_transition_to": "DELIVERY",
+        "last_transition_at": "2026-01-01T00:00:00+00:00", "last_transition_actor": "test", "last_transition_reason": "created",
+        "last_transition_evidence": "test", "pending_gate": "none", "history_path": "STATUS_HISTORY.md",
+    }
+    (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
+    (project / "STATUS_HISTORY.md").write_text("# history\n", encoding="utf-8")
+    module = materialize_module(project, "catalog", "Catalog")
+    open_human_gate(repository, "customer-self-service", "DELIVERY_ACCEPTANCE", "DELIVERED", "accept", ["delivery/DELIVERY_PACKAGE.md"])
+
+    result = runner.invoke(app, ["decide", "--project", "customer-self-service", "--gate", "DELIVERY_ACCEPTANCE", "--decision", "APPROVED", "--repository-root", str(repository)])
+
+    assert result.exit_code == 1
+    assert "READY_FOR_DELIVERY" in result.output
+    assert "current_state: DELIVERY" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "current_state: IDENTIFIED" in (module / "STATUS.md").read_text(encoding="utf-8")
+
+
+def test_cli_deterministic_end_to_end_happy_path(tmp_path: Path, monkeypatch) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    invoke = runner.invoke
+    common = "# Execution ID\n{execution}\n# Escopo\nx\n# Fonte\nx\n# Responsável\na\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n"
+
+    def agent_runner(_root, _project, agent, _item, target, _inputs, **kwargs):
+        execution = kwargs["execution_context"]["execution_id"]
+        if agent == "implementation":
+            (target / "tests").mkdir(exist_ok=True)
+            (target / "tests" / "rules.md").write_text("# evidence\n", encoding="utf-8")
+            return {}
+        content = {
+            "business-analysis": ("BUSINESS_ANALYSIS.md", "# Problema\nx\n# Valor\nx\n# Stakeholders\nx\n# Fluxo\nx\n# Restrições\nx\n# Incertezas\nx\n# Métricas\nx\n"),
+            "domain-modeling": ("MODULE_PROPOSAL.md", "# Módulos candidatos\n- `catalog`\n# Justificativa\nx\n# Dependências\nx\n# Riscos\nx\n# Questões em aberto\nx\n"),
+            "requirements-engineering": ("MODULE_REQUIREMENTS.md" if "modules" in target.parts else "REQUIREMENTS.md", "# Módulo\nx\n# Objetivo\nx\n# Limites\nx\n# Rastreabilidade\nx\n" if "modules" in target.parts else "# Requisitos\nx\n# Critérios de aceitação\nx\n# Rastreabilidade\nx\n"),
+            "solution-architecture": ("SOLUTION_ARCHITECTURE.md", "material_decision_required: false\n# Decisões\nx\n# Integrações\nx\n# Impactos\nx\n# Riscos\nx\n# Decisões materiais\nx\n"),
+            "delivery-planning": ("DELIVERY_PLAN.md", "risks_resolved: true\ndependencies_resolved: true\nunresolved_risks: []\n# Roadmap\nx\n# Releases\nx\n# Riscos\nx\n# Dependências\nx\n# Work items\nx\n# Critérios de pronto\nx\n"),
+            "integration-engineering": ("INTEGRATION_REPORT.md", "# Contratos\nx\n# Fluxos\nx\n# Sistemas externos\nx\n# Incompatibilidades\nx\n# Resultado\nx\n"),
+            "quality-assurance": ("QUALITY_REPORT.md", "# Requisitos\nx\n# Critérios de aceitação\nx\n# Testes\nx\n# Achados\nx\n# Resultado\nx\n"),
+            "security-assurance": ("SECURITY_ASSESSMENT.md", "residual_risk_acceptance_required: false\n# Riscos\nx\n# Impacto\nx\n# Mitigação\nx\n# Exceções\nx\n# Risco residual\nx\n# Resultado\nx\n"),
+            "release-operations": ("DELIVERY_PACKAGE.md", "release_authorization_required: false\n# Release\nx\n# Implantação\nx\n# Reversão\nx\n# Operação\nx\n# Observabilidade\nx\n# Handover\nx\n# Resultado\nx\n"),
+            "governance-assurance": ("REVIEW.md", "# Critérios verificados\nx\n# Resultado\nAPPROVED\n"),
+        }[agent]
+        (target / content[0]).write_text(content[1] + common.format(execution=execution), encoding="utf-8")
+        return {}
+
+    monkeypatch.setattr(cli, "resolve_agent_runner", lambda: agent_runner)
+    root = ["--repository-root", str(repository)]
+    assert invoke(app, ["init-project-request", "--request-id", "self-service", *root]).exit_code == 0
+    request = repository / "naamive/registries/project-intake/self-service/PROJECT_REQUEST.md"
+    complete_request(request)
+    for command in (["orchestrate", "--request", "self-service", *root], ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate", "--project", "customer-self-service", *root], ["decide", "--project", "customer-self-service", "--gate", "PRODUCT_COMMITMENT", "--decision", "APPROVED", "--module", "catalog", "--module-title", "Catalog", *root], ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", *root], ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", *root]):
+        assert invoke(app, command).exit_code == 0
+
+    result = invoke(app, ["status", "--project", "customer-self-service", *root])
+    assert "PLANNING" in result.output
+
+    def create_item():
+        return invoke(app, ["create-work-item", "--project", "customer-self-service", "--module", "catalog", "--work-item", "catalog-rules", "--title", "Rules", "--objective", "Rules", "--write-scope", "modules/catalog/applications/rules.py", "--priority", "HIGH", "--ready-criterion", "Ready", "--expected-evidence", "modules/catalog/tests/rules.md", "--authorization", "plan", *root])
+    assert create_item().exit_code == 0
+    for command in (["orchestrate", "--project", "customer-self-service", *root], ["run-implementation", "--project", "customer-self-service", "--module", "catalog", "--work-item", "catalog-rules", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate", "--project", "customer-self-service", *root], ["decide", "--project", "customer-self-service", "--gate", "DELIVERY_ACCEPTANCE", "--decision", "APPROVED", *root]):
+        assert invoke(app, command).exit_code == 0
+    assert "DELIVERED" in invoke(app, ["status", "--project", "customer-self-service", *root]).output
