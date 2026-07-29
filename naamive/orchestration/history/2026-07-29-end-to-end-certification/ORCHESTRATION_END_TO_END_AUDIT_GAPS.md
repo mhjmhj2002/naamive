@@ -16,7 +16,7 @@ temporário usando:
 naamive/scripts/run-clean-runtime-baseline.sh --run --allow-dirty-snapshot
 ```
 
-Ela cobre o caminho de CLI de intake a `DELIVERED` com um dublê determinístico do agente. O relatório `baseline-reports/runtime-baseline-20260729151508.md` registra o commit-base e o snapshot limpo testado. A prova controlada com o adaptador Codex real também foi concluída em projeto descartável e registrada em `smoke-reports/codex-smoke-20260729142039.md`.
+Ela cobre o caminho de CLI de intake a `DELIVERED` com um dublê determinístico do agente. O relatório `evidence/baseline-reports/runtime-baseline-20260729151508.md` registra o commit-base e o snapshot limpo testado. A prova controlada com o adaptador Codex real também foi concluída em projeto descartável e registrada em `evidence/smoke-reports/codex-smoke-20260729142039.md`.
 
 As correções técnicas, a prova real e a evidência de baseline limpo estão registradas abaixo; todos os gaps desta auditoria foram fechados.
 
@@ -77,7 +77,7 @@ Quando `RELEASE_AUTHORIZATION` é aprovada, o estado continua em `DELIVERY` e o 
 **Evidência de resolução:** o smoke opt-in executou intake, registro, análise
 e revisão independente usando `resolve_agent_runner` de produção; o projeto
 `codex-smoke-20260729142039` alcançou `DEFINITION`. O relatório
-`smoke-reports/codex-smoke-20260729142039.md` preserva comandos, versão do
+`evidence/smoke-reports/codex-smoke-20260729142039.md` preserva comandos, versão do
 Codex, IDs de despacho e execução, hashes e registros auditáveis.
 
 O teste E2E de CLI troca `resolve_agent_runner` por um dublê. Ele não valida disponibilidade do Codex CLI, autenticação, compatibilidade do comando `codex exec`, execução com sandbox nem o comportamento real do agente na produção das evidências.
@@ -99,7 +99,7 @@ O teste E2E de CLI troca `resolve_agent_runner` por um dublê. Ele não valida d
 **Evidência de resolução:** a Fase 7 foi reaberta durante a reconciliação,
 sua seção contraditória foi reclassificada e o baseline limpo foi executado
 com `53 passed in 11.44s`. O relatório
-`baseline-reports/runtime-baseline-20260729151508.md` e os estados finais dos
+`evidence/baseline-reports/runtime-baseline-20260729151508.md` e os estados finais dos
 três documentos comprovam a sincronização.
 
 `ORCHESTRATION_END_TO_END_BACKLOG.md` marca a Fase 7 e o documento como `DONE`, mas a própria seção “Falta implementar” ainda lista a matriz completa de testes, o teste com Codex real e a execução de um novo projeto de catálogo.

@@ -80,6 +80,8 @@ MODULE_PROJECT_ELIGIBILITY = {
     "READY_FOR_DELIVERY": {"VALIDATION", "DELIVERY", "EVOLUTION"},
     "DELIVERED": {"DELIVERY", "DELIVERED", "EVOLUTION"},
     "EVOLVING": {"EVOLUTION"},
+    "PAUSED": {"ANALYSIS", "DEFINITION", "ARCHITECTURE", "PLANNING", "IMPLEMENTATION", "VALIDATION", "DELIVERY", "EVOLUTION", "PAUSED"},
+    "CANCELLED": {"ANALYSIS", "DEFINITION", "ARCHITECTURE", "PLANNING", "IMPLEMENTATION", "VALIDATION", "DELIVERY", "EVOLUTION", "PAUSED", "CANCELLED"},
 }
 EXECUTION_STATE_GRAPH = {
     "RECEIVED": {"VALIDATING", "REJECTED"},
@@ -622,11 +624,42 @@ def _resolve_delivery_acceptance(repository_root: Path, project_id: str, project
         return {"project_id": project_id, "gate_id": "DELIVERY_ACCEPTANCE", "state": "DELIVERED", "decision_path": str(decision_path), "operation_path": str(operation_path)}
 
 
-def resolve_product_commitment(repository_root: Path, project_id: str, decision: str, actor: str, rationale: str, module_id: str | None = None, module_title: str | None = None) -> dict[str, object]:
+def _validated_product_modules(candidates: list[dict[str, str]] | None, module_id: str | None, module_title: str | None) -> list[dict[str, str]]:
+    """Normalize the approved product scope before any product artifact is written."""
+    if candidates is None:
+        candidates = []
+    if module_id is not None or module_title is not None:
+        if not module_id or not module_title:
+            raise IntakeError("module_id and module_title must be provided together")
+        # Compatibility with the original public API.  New callers should make
+        # the scope explicit with candidate id, title, justification and owner.
+        candidates = [*candidates, {"module_id": module_id, "title": module_title, "justification": "Approved product capability.", "owner": "product-owner"}]
+    if not candidates:
+        raise IntakeError("at least one product module candidate is required to approve PRODUCT_COMMITMENT")
+    normalized: list[dict[str, str]] = []
+    identifiers: set[str] = set()
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            raise IntakeError("each product module candidate must be an object")
+        identifier = str(candidate.get("module_id", "")).strip()
+        title = str(candidate.get("title", "")).strip()
+        justification = str(candidate.get("justification", "")).strip()
+        owner = str(candidate.get("owner", "")).strip()
+        if not SLUG_PATTERN.fullmatch(identifier):
+            raise IntakeError("product module candidate id must use kebab-case")
+        if not title or not justification or not owner:
+            raise IntakeError("product module candidates require title, justification and owner")
+        if identifier in identifiers:
+            raise IntakeError(f"duplicate product module candidate: {identifier}")
+        identifiers.add(identifier)
+        normalized.append({"module_id": identifier, "title": title, "justification": justification, "owner": owner})
+    return normalized
+
+
+def resolve_product_commitment(repository_root: Path, project_id: str, decision: str, actor: str, rationale: str, module_id: str | None = None, module_title: str | None = None, module_candidates: list[dict[str, str]] | None = None) -> dict[str, object]:
     if decision not in {"APPROVED", "REJECTED", "REWORK_REQUIRED"} or not rationale.strip():
         raise IntakeError("valid decision and rationale are required")
-    if decision == "APPROVED" and (not module_id or not module_title):
-        raise IntakeError("module_id and module_title are required to approve PRODUCT_COMMITMENT")
+    candidates = _validated_product_modules(module_candidates, module_id, module_title) if decision == "APPROVED" else []
     project = repository_root / "projects" / project_id
     status = migrate_project_status(project)
     if status.get("current_state") != "DEFINITION" or status.get("pending_gate") != "PRODUCT_COMMITMENT":
@@ -638,11 +671,31 @@ def resolve_product_commitment(repository_root: Path, project_id: str, decision:
     request = yaml.safe_load(request_path.read_text(encoding="utf-8")) if request_path.is_file() else None
     if not isinstance(request, dict) or request.get("from_state") != "DEFINITION" or request.get("to_state") != "ARCHITECTURE":
         raise IntakeError("pending PRODUCT_COMMITMENT transition request is invalid or obsolete")
+    modules_root = project / "modules"
+    if decision == "APPROVED":
+        existing = {path.name for path in modules_root.glob("*") if path.is_dir()} if modules_root.exists() else set()
+        conflicts = sorted(existing.intersection(candidate["module_id"] for candidate in candidates))
+        if conflicts:
+            raise IntakeError(f"product module already exists: {', '.join(conflicts)}")
     decision_id = f"gate-{uuid4().hex}"
+    decision_reference = str((audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml").relative_to(repository_root))
+    stage_root: Path | None = None
+    if decision == "APPROVED":
+        # Build the complete set out of the published modules directory.  A
+        # failed candidate therefore cannot expose a partially approved scope.
+        stage_root = project / f".product-commitment-{uuid4().hex}"
+        staged_project = stage_root / project.name
+        try:
+            for candidate in candidates:
+                materialize_module(staged_project, candidate["module_id"], candidate["title"], decision_reference)
+        except Exception:
+            import shutil
+            shutil.rmtree(stage_root, ignore_errors=True)
+            raise
     decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", {
         "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": "PRODUCT_COMMITMENT",
         "decision": decision, "control_type": "HUMAN_DECISION", "decided_by": actor, "authority_basis": "human product commitment",
-        "evidence_reviewed": list(request.get("evidence", [])), "rationale": rationale.strip(), "decided_at": _now(),
+        "evidence_reviewed": list(request.get("evidence", [])), "rationale": rationale.strip(), "approved_modules": candidates, "decided_at": _now(),
     }, "gate_decision")
     if decision != "APPROVED":
         status["pending_gate"] = "none"
@@ -651,10 +704,20 @@ def resolve_product_commitment(repository_root: Path, project_id: str, decision:
         status["last_gate_decision"] = str(decision_path.relative_to(repository_root))
         (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
         return {"project_id": project_id, "state": decision, "gate_id": "PRODUCT_COMMITMENT", "decision_path": str(decision_path)}
-    module = materialize_module(project, module_id, module_title, str(decision_path.relative_to(repository_root)))
+    assert stage_root is not None
+    staged_modules = stage_root / project.name / "modules"
+    try:
+        # PRODUCT_COMMITMENT is the first module materialization.  Replacing
+        # its empty directory publishes the whole approved set in one rename.
+        if modules_root.exists() and any(modules_root.iterdir()):
+            raise IntakeError("product module directory changed during commitment; retry the decision")
+        staged_modules.replace(modules_root)
+    finally:
+        import shutil
+        shutil.rmtree(stage_root, ignore_errors=True)
     status.pop("pending_transition_request", None)
     _transition(project, status, "ARCHITECTURE", actor, rationale.strip(), str(decision_path.relative_to(repository_root)), "HUMAN_DECISION")
-    return {"project_id": project_id, "module_id": module_id, "module_path": str(module), "state": "ARCHITECTURE", "decision_path": str(decision_path)}
+    return {"project_id": project_id, "module_ids": [candidate["module_id"] for candidate in candidates], "module_paths": [str(modules_root / candidate["module_id"]) for candidate in candidates], "state": "ARCHITECTURE", "decision_path": str(decision_path)}
 
 
 def _orchestrate_analysis_definition(repository_root: Path, project: Path, project_id: str, status: dict[str, object], agent_runner) -> dict[str, object]:
@@ -697,10 +760,57 @@ def _phase6_modules(project: Path) -> list[Path]:
     return modules
 
 
+def _published_provider_contract(repository_root: Path, provider_project_id: str, provider_module_id: str, contract_reference: str) -> tuple[Path, str, str]:
+    """Resolve a published provider contract and return its stable identity."""
+    if not SLUG_PATTERN.fullmatch(provider_project_id) or not SLUG_PATTERN.fullmatch(provider_module_id):
+        raise IntakeError("provider project and module identifiers must use kebab-case")
+    _assert_relative_reference(contract_reference)
+    reference = Path(contract_reference)
+    provider_root = Path("modules") / provider_module_id
+    if reference == provider_root or provider_root not in reference.parents:
+        raise IntakeError("contract reference must remain under the provider module")
+    provider_module = repository_root / "projects" / provider_project_id / provider_root
+    provider_status = _read_module_status(provider_module)
+    if str(provider_status["current_state"]) != "DELIVERED":
+        raise IntakeError("provider module is not published for consumption; it must be DELIVERED")
+    contract = repository_root / "projects" / provider_project_id / reference
+    if not contract.is_file():
+        raise IntakeError("published provider contract does not exist")
+    document = contract.read_text(encoding="utf-8")
+    if not document.startswith("---\n") or "\n---\n" not in document:
+        raise IntakeError("published provider contract must contain YAML front matter")
+    metadata_text, _body = document[4:].split("\n---\n", 1)
+    metadata = yaml.safe_load(metadata_text)
+    if not isinstance(metadata, dict) or metadata.get("publication_status") != "PUBLISHED":
+        raise IntakeError("provider contract is not published")
+    version = metadata.get("contract_version")
+    if not isinstance(version, str) or not version.strip():
+        raise IntakeError("published provider contract must declare contract_version")
+    return contract, version.strip(), hashlib.sha256(contract.read_bytes()).hexdigest()
+
+
+def _revalidate_module_consumptions(repository_root: Path, project: Path) -> None:
+    """Reject integration/delivery when a recorded provider contract has drifted."""
+    for consumer in _phase6_modules(project):
+        records = consumer / "architecture" / "module-consumption"
+        for record_path in sorted(records.glob("*.yaml")) if records.is_dir() else []:
+            record = yaml.safe_load(record_path.read_text(encoding="utf-8"))
+            if not isinstance(record, dict):
+                raise IntakeError(f"module consumption record is invalid: {record_path}")
+            required = ("provider_project_id", "provider_module_id", "contract_reference", "provider_contract_path", "contract_version", "contract_sha256")
+            if any(not isinstance(record.get(field), str) or not str(record[field]).strip() for field in required):
+                raise IntakeError(f"module consumption record lacks immutable contract identity: {record_path}")
+            contract, version, digest = _published_provider_contract(repository_root, str(record["provider_project_id"]), str(record["provider_module_id"]), str(record["contract_reference"]))
+            canonical = str(contract.relative_to(repository_root))
+            if canonical != record["provider_contract_path"] or version != record["contract_version"] or digest != record["contract_sha256"]:
+                raise IntakeError(f"provider contract changed or was replaced since consumption registration: {record_path}")
+
+
 def _orchestrate_phase6(repository_root: Path, project: Path, project_id: str, status: dict[str, object], agent_runner) -> dict[str, object]:
     """Run the integration, assurance and delivery rounds with explicit gates."""
     state = str(status["current_state"])
     modules = _phase6_modules(project)
+    _revalidate_module_consumptions(repository_root, project)
     module_evidence = [module / "evidence" for module in modules]
     if state == "IMPLEMENTATION":
         for module in modules:
@@ -1094,11 +1204,67 @@ def return_to_implementation_for_finding(repository_root: Path, project_id: str,
     if severity not in {"HIGH", "CRITICAL"}:
         return {"project_id": project_id, "finding_path": str(finding), "state": "RECORDED"}
     apply_state_transition(repository_root, project_id, "IMPLEMENTATION", actor="quality-assurance", reason="Blocking validation finding requires implementation rework.", evidence=[str(finding.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state="VALIDATION", idempotency_key=f"validation-rework-{finding.stem.split('-')[-1]}")
-    module = project / "modules" / module_id
-    current = str(_read_module_status(module)["current_state"])
-    if current != "IMPLEMENTING":
-        apply_state_transition(repository_root, project_id, "IMPLEMENTING", scope_type="module", module_id=module_id, actor="quality-assurance", reason="Blocking finding reopens module implementation.", evidence=[str(finding.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state=current, idempotency_key=f"module-rework-{module_id}-{finding.stem.split('-')[-1]}")
+    # Validation is integrated: every active delivery participant must return
+    # to a state compatible with the reopened project, not only the module in
+    # which the finding was first observed.
+    for module in sorted((path for path in (project / "modules").glob("*") if path.is_dir()), key=lambda path: path.name):
+        current = str(_read_module_status(module)["current_state"])
+        if current != "IMPLEMENTING":
+            apply_state_transition(repository_root, project_id, "IMPLEMENTING", scope_type="module", module_id=module.name, actor="quality-assurance", reason="Blocking integrated finding reopens module implementation.", evidence=[str(finding.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state=current, idempotency_key=f"module-rework-{module.name}-{finding.stem.split('-')[-1]}")
     return {"project_id": project_id, "module_id": module_id, "work_item_id": work_item_id, "finding_path": str(finding), "state": "IMPLEMENTATION"}
+
+
+def pause_or_resume_scope(repository_root: Path, project_id: str, *, scope_type: str, module_id: str | None, reason: str, evidence: list[str], resume: bool = False, actor: str = "human-cli") -> dict[str, object]:
+    """Pause an active scope or resume it only to its recorded active state."""
+    if scope_type not in {"project", "module"} or not reason.strip() or not evidence:
+        raise IntakeError("scope, reason and evidence are required")
+    project = repository_root / "projects" / project_id
+    status = migrate_project_status(project) if scope_type == "project" else _read_module_status(project / "modules" / str(module_id))
+    current = str(status["current_state"])
+    if resume and current != "PAUSED":
+        raise IntakeError("only a paused scope can be resumed")
+    if not resume and current == "PAUSED":
+        raise IntakeError("paused scope must be resumed, not paused again")
+    destination = str(status.get("last_active_state")) if resume else "PAUSED"
+    if resume and not status.get("last_active_state"):
+        raise IntakeError("paused scope has no recorded last_active_state")
+    apply_state_transition(repository_root, project_id, destination, scope_type=scope_type, module_id=module_id, actor=actor, reason=reason, evidence=evidence, control_type="HUMAN_DECISION", expected_state=current)
+    return {"project_id": project_id, "module_id": module_id, "scope_type": scope_type, "state": destination}
+
+
+def cancel_module(repository_root: Path, project_id: str, module_id: str, reason: str, evidence: list[str], actor: str = "human-cli") -> dict[str, object]:
+    """Cancel one module through the same auditable human authority as project cancellation."""
+    module = repository_root / "projects" / project_id / "modules" / module_id
+    current = str(_read_module_status(module)["current_state"])
+    if current in {"CANCELLED", "DELIVERED"}:
+        raise IntakeError("only active or paused modules can be cancelled")
+    apply_state_transition(repository_root, project_id, "CANCELLED", scope_type="module", module_id=module_id, actor=actor, reason=reason, evidence=evidence, control_type="HUMAN_DECISION", expected_state=current)
+    return {"project_id": project_id, "module_id": module_id, "state": "CANCELLED"}
+
+
+def start_evolution(repository_root: Path, project_id: str, module_ids: list[str], rationale: str, evidence: list[str], actor: str = "human-cli") -> dict[str, object]:
+    """Record a change request and reopen only its affected delivered modules."""
+    if not module_ids or len(set(module_ids)) != len(module_ids) or not rationale.strip() or not evidence:
+        raise IntakeError("affected modules, rationale and evidence are required")
+    project = repository_root / "projects" / project_id
+    if str(migrate_project_status(project)["current_state"]) != "DELIVERED":
+        raise IntakeError("evolution can start only from DELIVERED")
+    modules = sorted(module_ids)
+    for module_id in modules:
+        if not SLUG_PATTERN.fullmatch(module_id) or str(_read_module_status(project / "modules" / module_id)["current_state"]) != "DELIVERED":
+            raise IntakeError("each affected evolution module must exist and be DELIVERED")
+    change_id = f"change-{uuid4().hex}"
+    change_path = _write_immutable(audit_root(repository_root, project_id) / "change-requests" / f"{change_id}.yaml", {
+        "change_request_id": change_id, "project_id": project_id, "modules": modules, "rationale": rationale.strip(), "evidence": evidence,
+        "requested_by": actor, "requested_at": _now(),
+    }, "change_request")
+    reference = str(change_path.relative_to(repository_root))
+    apply_state_transition(repository_root, project_id, "EVOLUTION", actor=actor, reason=rationale, evidence=[reference], control_type="HUMAN_DECISION", expected_state="DELIVERED")
+    for module_id in modules:
+        apply_state_transition(repository_root, project_id, "EVOLVING", scope_type="module", module_id=module_id, actor=actor, reason=rationale, evidence=[reference], control_type="HUMAN_DECISION", expected_state="DELIVERED")
+        apply_state_transition(repository_root, project_id, "PLANNED", scope_type="module", module_id=module_id, actor=actor, reason="Approved evolution enters a new planned cycle.", evidence=[reference], control_type="HUMAN_DECISION", expected_state="EVOLVING")
+    apply_state_transition(repository_root, project_id, "PLANNING", actor=actor, reason="Approved evolution enters planning for affected modules.", evidence=[reference], control_type="HUMAN_DECISION", expected_state="EVOLUTION")
+    return {"project_id": project_id, "module_ids": modules, "state": "PLANNING", "change_request_path": str(change_path)}
 
 
 def unresolved_work_item_dependencies(project: Path, module_id: str, work_item_id: str) -> list[str]:
@@ -1174,21 +1340,15 @@ def dispatch_module_implementation(repository_root: Path, project_id: str, modul
 
 
 def register_module_consumption(repository_root: Path, consumer_project_id: str, consumer_module_id: str, provider_project_id: str, provider_module_id: str, contract_reference: str, compatible_version: str, business_purpose: str, integration_owner: str, impact_and_risk: str) -> Path:
-    """Record a consumer-owned contract reference without granting provider writes."""
+    """Record a consumer-owned, immutable identity of a published provider contract."""
     required = [contract_reference, compatible_version, business_purpose, integration_owner, impact_and_risk]
     if consumer_project_id == provider_project_id and consumer_module_id == provider_module_id:
         raise IntakeError("a module cannot consume itself")
     if not all(value.strip() for value in required):
         raise IntakeError("module consumption requires all contract fields")
     consumer = repository_root / "projects" / consumer_project_id / "modules" / consumer_module_id
-    provider = repository_root / "projects" / provider_project_id / "modules" / provider_module_id
     _read_module_status(consumer)
-    _read_module_status(provider)
-    _assert_relative_reference(contract_reference)
-    reference = Path(contract_reference)
-    provider_root = Path("modules") / provider_module_id
-    if reference != provider_root and provider_root not in reference.parents:
-        raise IntakeError("contract reference must remain under the provider module")
+    contract, contract_version, contract_sha256 = _published_provider_contract(repository_root, provider_project_id, provider_module_id, contract_reference)
     record = consumer / "architecture" / "module-consumption" / f"{provider_project_id}-{provider_module_id}.yaml"
     if record.exists():
         raise IntakeError("module consumption is already registered")
@@ -1196,6 +1356,8 @@ def register_module_consumption(repository_root: Path, consumer_project_id: str,
         "consumer_project_id": consumer_project_id, "consumer_module_id": consumer_module_id,
         "provider_project_id": provider_project_id, "provider_module_id": provider_module_id,
         "contract_reference": contract_reference, "compatible_version": compatible_version,
+        "provider_contract_path": str(contract.relative_to(repository_root)), "contract_version": contract_version,
+        "contract_sha256": contract_sha256,
         "business_purpose": business_purpose, "integration_owner": integration_owner,
         "impact_and_risk": impact_and_risk, "recorded_at": _now(),
     })

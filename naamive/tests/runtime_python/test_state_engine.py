@@ -24,6 +24,9 @@ from naamive_runtime.orchestration import (
     resolve_product_commitment,
     open_human_gate,
     return_to_implementation_for_finding,
+    pause_or_resume_scope,
+    cancel_module,
+    start_evolution,
     resolve_human_gate,
 )
 from naamive_runtime.project import render_project_status
@@ -66,6 +69,32 @@ def test_pause_resumes_only_recorded_active_state_and_is_audited(tmp_path: Path)
     assert request.is_file()
     assert "current_state: ANALYSIS" in (project / "STATUS.md").read_text(encoding="utf-8")
     assert len(list((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "gate-decisions").glob("*.yaml"))) == 2
+
+
+def test_public_scope_operations_pause_resume_and_cancel_a_module(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "DEFINITION")
+    materialize_module(project, "catalog", "Catalog")
+    paused = pause_or_resume_scope(tmp_path, "sample", scope_type="module", module_id="catalog", reason="waiting", evidence=["evidence/pause.md"])
+    resumed = pause_or_resume_scope(tmp_path, "sample", scope_type="module", module_id="catalog", reason="unblocked", evidence=["evidence/resume.md"], resume=True)
+    cancelled = cancel_module(tmp_path, "sample", "catalog", "scope removed", ["evidence/cancel.md"])
+
+    assert paused["state"] == "PAUSED"
+    assert resumed["state"] == "IDENTIFIED"
+    assert cancelled["state"] == "CANCELLED"
+
+
+def test_evolution_requires_change_request_and_reopens_only_affected_modules(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "DELIVERED")
+    module = materialize_module(project, "catalog", "Catalog")
+    status = module / "STATUS.md"
+    status.write_text(status.read_text(encoding="utf-8").replace("current_state: IDENTIFIED", "current_state: DELIVERED"), encoding="utf-8")
+
+    result = start_evolution(tmp_path, "sample", ["catalog"], "New regulatory requirement", ["need/change-001.md"])
+
+    assert result["state"] == "PLANNING"
+    assert "current_state: PLANNING" in (project / "STATUS.md").read_text(encoding="utf-8")
+    assert "current_state: PLANNED" in status.read_text(encoding="utf-8")
+    assert (tmp_path / result["change_request_path"]).is_file()
 
 
 def test_module_cannot_advance_beyond_project_eligibility(tmp_path: Path) -> None:
@@ -208,11 +237,42 @@ def test_product_commitment_decision_is_linked_to_pending_request(tmp_path: Path
         return {}
 
     assert orchestrate_project(tmp_path, "sample", runner)["state"] == "WAITING_FOR_GATE"
-    outcome = resolve_product_commitment(tmp_path, "sample", "APPROVED", "human-test", "scope approved", "catalog", "Catalog")
+    candidates = [
+        {"module_id": "catalog", "title": "Catalog", "justification": "Product catalog capability.", "owner": "catalog-owner"},
+        {"module_id": "orders", "title": "Orders", "justification": "Order lifecycle capability.", "owner": "orders-owner"},
+    ]
+    outcome = resolve_product_commitment(tmp_path, "sample", "APPROVED", "human-test", "scope approved", module_candidates=candidates)
 
     assert outcome["state"] == "ARCHITECTURE"
     assert (project / "modules" / "catalog" / "MODULE.md").is_file()
+    assert (project / "modules" / "orders" / "MODULE.md").is_file()
+    decision = yaml.safe_load((tmp_path / str(outcome["decision_path"])).read_text(encoding="utf-8"))
+    assert decision["approved_modules"] == candidates
     assert len(list((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "gate-decisions").glob("*.yaml"))) == 1
+
+
+def test_product_commitment_does_not_publish_a_partial_module_set(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    project = make_project(tmp_path, "DEFINITION")
+    orchestration._open_product_commitment_gate(tmp_path, project, "sample", "execution-test", ["analysis/domain/MODULE_PROPOSAL.md"])
+    original = orchestration.materialize_module
+    calls = 0
+
+    def fail_second_materialization(*args, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise IntakeError("simulated materialization failure")
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(orchestration, "materialize_module", fail_second_materialization)
+    with pytest.raises(IntakeError, match="simulated materialization failure"):
+        resolve_product_commitment(tmp_path, "sample", "APPROVED", "human-test", "scope approved", module_candidates=[
+            {"module_id": "catalog", "title": "Catalog", "justification": "Catalog capability.", "owner": "catalog-owner"},
+            {"module_id": "orders", "title": "Orders", "justification": "Order capability.", "owner": "orders-owner"},
+        ])
+
+    assert not (project / "modules").exists()
+    assert not list((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "gate-decisions").glob("*.yaml"))
 
 
 def test_architecture_and_planning_rounds_require_review_and_authorized_work(tmp_path: Path) -> None:
@@ -573,13 +633,50 @@ def test_module_consumption_is_owned_by_consumer_and_cannot_authorize_provider_w
     (provider_project / "STATUS.md").write_text(render_project_status(provider_status), encoding="utf-8")
     (provider_project / "STATUS_HISTORY.md").write_text("# history\n", encoding="utf-8")
     materialize_module(consumer_project, "orders", "Orders")
-    materialize_module(provider_project, "identity", "Identity")
+    provider_module = materialize_module(provider_project, "identity", "Identity")
+    provider_module_status = orchestration._read_module_status(provider_module)
+    provider_module_status["current_state"] = "DELIVERED"
+    (provider_module / "STATUS.md").write_text(orchestration._render_module_status(provider_module_status), encoding="utf-8")
+    contract = provider_module / "documentation" / "CONTRACT.md"
+    contract.write_text("---\npublication_status: PUBLISHED\ncontract_version: 1.2.0\n---\n\n# Identity contract\n", encoding="utf-8")
 
     record = register_module_consumption(tmp_path, "sample", "orders", "provider", "identity", "modules/identity/documentation/CONTRACT.md", "1.x", "Authenticate orders", "integration-team", "Identity unavailable")
 
     assert record.is_file()
     assert record.is_relative_to(consumer_project / "modules" / "orders")
     assert not (provider_project / "modules" / "identity" / "architecture" / "module-consumption").exists()
+    payload = yaml.safe_load(record.read_text(encoding="utf-8"))
+    assert payload["provider_contract_path"] == "projects/provider/modules/identity/documentation/CONTRACT.md"
+    assert payload["contract_version"] == "1.2.0"
+    assert len(payload["contract_sha256"]) == 64
+
+
+def test_module_consumption_rejects_missing_unpublished_or_drifted_provider_contract(tmp_path: Path) -> None:
+    consumer_project = make_project(tmp_path, "IMPLEMENTATION")
+    provider_project = tmp_path / "projects" / "provider"
+    provider_project.mkdir()
+    provider_status = dict(yaml.safe_load((consumer_project / "STATUS.md").read_text(encoding="utf-8").split("---\n", 2)[1]))
+    provider_status["project_id"] = "provider"
+    (provider_project / "STATUS.md").write_text(render_project_status(provider_status), encoding="utf-8")
+    (provider_project / "STATUS_HISTORY.md").write_text("# history\n", encoding="utf-8")
+    consumer = materialize_module(consumer_project, "orders", "Orders")
+    provider = materialize_module(provider_project, "identity", "Identity")
+    for module in (consumer, provider):
+        status = orchestration._read_module_status(module)
+        status["current_state"] = "DELIVERED" if module == provider else "IMPLEMENTING"
+        (module / "STATUS.md").write_text(orchestration._render_module_status(status), encoding="utf-8")
+    reference = "modules/identity/documentation/CONTRACT.md"
+    with pytest.raises(IntakeError, match="does not exist"):
+        register_module_consumption(tmp_path, "sample", "orders", "provider", "identity", reference, "1.x", "Authenticate", "team", "risk")
+    contract = provider / "documentation" / "CONTRACT.md"
+    contract.write_text("---\npublication_status: DRAFT\ncontract_version: 1.0.0\n---\n", encoding="utf-8")
+    with pytest.raises(IntakeError, match="not published"):
+        register_module_consumption(tmp_path, "sample", "orders", "provider", "identity", reference, "1.x", "Authenticate", "team", "risk")
+    contract.write_text("---\npublication_status: PUBLISHED\ncontract_version: 1.0.0\n---\n# API\n", encoding="utf-8")
+    register_module_consumption(tmp_path, "sample", "orders", "provider", "identity", reference, "1.x", "Authenticate", "team", "risk")
+    contract.write_text("---\npublication_status: PUBLISHED\ncontract_version: 1.0.0\n---\n# Changed API\n", encoding="utf-8")
+    with pytest.raises(IntakeError, match="changed or was replaced"):
+        orchestration._revalidate_module_consumptions(tmp_path, consumer_project)
 
 
 def test_deterministic_end_to_end_happy_path(tmp_path: Path) -> None:

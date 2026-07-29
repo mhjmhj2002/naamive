@@ -29,10 +29,30 @@ O orquestrador resolve exclusivamente `projects/<project-id>/`, valida o `STATUS
 
 Em `ANALYSIS`, ele despacha `business-analysis` para `analysis/business/`, exige evidência nesse caminho e, após a revisão independente automatizada, registra `ANALYSIS → DEFINITION`. Em `DEFINITION`, despacha `domain-modeling` para `analysis/domain/` e para no gate humano `PRODUCT_COMMITMENT`; não infere a decisão nem materializa módulos antes dela. Os registros da própria plataforma ficam centralizados em `naamive/registries/orchestration/<project-id>/` (execuções, solicitações e decisões); o projeto contém somente os seus artefatos de produto e estado.
 
-Após a proposta, a autoridade humana seleciona explicitamente o módulo de capacidade e registra o compromisso. A aprovação materializa o módulo em `IDENTIFIED` e avança o projeto para `ARCHITECTURE`:
+Após a proposta, a autoridade humana aprova a lista explícita de capacidades de negócio. Cada candidato informa identificador, título, justificativa e dono. A aprovação materializa todo o conjunto em `IDENTIFIED`, de forma atômica, e avança o projeto para `ARCHITECTURE`:
 
 ```text
-naamive decide --project <project-id> --gate PRODUCT_COMMITMENT --decision APPROVED --module <module-id> --module-title "<capacidade de negócio>"
+naamive decide --project <project-id> --gate PRODUCT_COMMITMENT --decision APPROVED \
+  --module-candidate '{"module_id":"catalog","title":"Catálogo","justification":"Gerir oferta de produtos.","owner":"product-catalog"}' \
+  --module-candidate '{"module_id":"orders","title":"Pedidos","justification":"Gerir ciclo de pedidos.","owner":"product-orders"}'
+```
+
+`--module-candidate` pode ser repetido. Identificadores devem usar kebab-case e não podem se repetir; título, justificativa e dono são obrigatórios. A forma anterior com um único `--module` e `--module-title` continua aceita para compatibilidade, mas novos compromissos devem usar candidatos explícitos.
+
+## Exceções e evolução
+
+Pausa, retomada e cancelamento de módulo são operações humanas auditáveis. A retomada usa exclusivamente o `last_active_state` gravado pela pausa:
+
+```text
+naamive pause --project <project-id> [--module <module-id>] --reason "<motivo>" --evidence <referência>
+naamive resume --project <project-id> [--module <module-id>] --reason "<motivo>" --evidence <referência>
+naamive cancel-module --project <project-id> --module <module-id> --reason "<motivo>" --evidence <referência>
+```
+
+Uma evolução pós-entrega exige necessidade rastreável e reabre somente os módulos afetados em um novo ciclo de planejamento:
+
+```text
+naamive start-evolution --project <project-id> --module <módulo-afetado> --reason "<change request>" --evidence <referência-da-necessidade>
 ```
 
 Itens de trabalho só podem ser criados durante o planejamento de um módulo, em `planning/work-items/`, com escopo, critérios e autorização explícitos:
@@ -41,29 +61,26 @@ Itens de trabalho só podem ser criados durante o planejamento de um módulo, em
 naamive create-work-item --project <project-id> --module <module-id> --work-item <work-item-id> --title "<trabalho autorizado>" --objective "<objetivo>" --write-scope modules/<module-id>/applications/<alvo> --priority HIGH --ready-criterion "<critério>" --expected-evidence modules/<module-id>/tests/<evidência> --authorization <decisão-ou-plano>
 ```
 
-O consumo de um módulo de outro projeto é registrado no módulo consumidor, por referência de contrato; esse comando nunca concede escrita no módulo provedor:
+O consumo de um módulo de outro projeto é registrado no módulo consumidor, por referência de contrato; esse comando nunca concede escrita no módulo provedor. O contrato do provedor deve existir, estar sob `modules/<módulo-provedor>/`, ter front matter com `publication_status: PUBLISHED` e `contract_version`, e o módulo provedor deve estar `DELIVERED`. O registro fixa o caminho canônico, a versão e o SHA-256; integração e entrega recusam um contrato removido ou alterado:
 
 ```text
 naamive register-module-consumption --consumer-project <projeto-consumidor> --consumer-module <módulo-consumidor> --provider-project <projeto-provedor> --provider-module <módulo-provedor> --contract-reference modules/<módulo-provedor>/documentation/<contrato> --compatible-version "<versão>" --business-purpose "<finalidade>" --integration-owner "<responsável>" --impact-and-risk "<risco>"
 ```
 
-## Despacho explícito de agente Codex
+## Despacho de agente Codex
 
-O runtime usa o modelo padrão suportado pela conta autenticada no Codex CLI, com raciocínio `low`. Isso evita fixar um identificador de modelo indisponível para a forma de autenticação atual. Cada execução deve indicar projeto, agente oficial, work item e caminho relativo autorizado:
+Não existe comando operacional para despachar um agente com `work-item` ou
+`target` livres. Os únicos despachos públicos são acionados pela orquestração:
+`naamive orchestrate --project <project-id>`,
+`naamive orchestrate-module --project <project-id> --module <module-id>` e
+`naamive run-implementation --project <project-id> --module <module-id>
+--work-item <work-item-id>`.
 
-```text
-naamive run-agent --project <project-id> --agent business-analysis --work-item <work-item-id> --target analysis/business
-```
-
-O adaptador entrega apenas a necessidade aprovada, instrui o agente a respeitar seus contratos e rejeita alterações novas fora de `target`. Ele não muda estado, cria módulo, aprova gate ou faz commit: essas ações continuam sendo responsabilidade da orquestração e da autoridade humana.
-
-Para uma conta com acesso a um modelo específico no Codex CLI, a substituição é explícita e não fica gravada no repositório:
-
-```text
-NAAMIVE_CODEX_MODEL=<modelo-compativel> naamive run-agent ...
-```
-
-Não é permitido inferir projeto pelo diretório atual, por nome de branch ou por texto do comando.
+Esses fluxos resolvem o estado e o trabalho autorizado, criam o contexto e o
+registro de execução antes do despacho e preservam a cadeia contexto →
+despacho → execução → evidência em
+`naamive/registries/orchestration/<project-id>/`. Não é permitido inferir
+projeto pelo diretório atual, por nome de branch ou por texto do comando.
 
 ## Nova necessidade de projeto
 

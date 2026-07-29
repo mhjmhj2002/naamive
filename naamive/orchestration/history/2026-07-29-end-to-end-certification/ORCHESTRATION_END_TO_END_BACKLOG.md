@@ -321,12 +321,12 @@ Este documento acompanha o que falta para o runtime global do NAAMIVE conduzir u
   inválida, execução interrompida, rework, pausa, cancelamento e exclusão.
 - O smoke opt-in com o adaptador Codex real foi concluído em ambiente
   descartável; o relatório
-  `smoke-reports/codex-smoke-20260729142039.md` preserva comandos, hashes,
+  `evidence/smoke-reports/codex-smoke-20260729142039.md` preserva comandos, hashes,
   registros e evidências produzidas.
 - A suíte foi repetida pelo roteiro
   `scripts/run-clean-runtime-baseline.sh --run --allow-dirty-snapshot` em
   2026-07-29: `53 passed in 11.44s`. O relatório
-  `baseline-reports/runtime-baseline-20260729151508.md` preserva o
+  `evidence/baseline-reports/runtime-baseline-20260729151508.md` preserva o
   commit-base, o snapshot limpo temporário e o resultado.
 
 ### Trabalho posterior, fora do critério de encerramento

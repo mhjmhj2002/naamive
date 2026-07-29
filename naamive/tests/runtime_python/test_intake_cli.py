@@ -21,6 +21,28 @@ def create_repository(tmp_path: Path, source_root: Path) -> Path:
     return tmp_path
 
 
+def test_run_agent_is_not_an_operational_command(tmp_path: Path) -> None:
+    repository = create_repository(tmp_path, Path(__file__).parents[3])
+    project = repository / "projects" / "customer-self-service"
+    project.mkdir()
+
+    result = runner.invoke(
+        app,
+        [
+            "run-agent",
+            "--project", "customer-self-service",
+            "--agent", "business-analysis",
+            "--work-item", "untracked-work",
+            "--target", "analysis/untracked",
+            "--repository-root", str(repository),
+        ],
+    )
+
+    assert result.exit_code != 0
+    assert "No such command 'run-agent'" in result.output
+    assert not (project / "analysis" / "untracked").exists()
+
+
 def complete_request(path: Path) -> None:
     content = path.read_text(encoding="utf-8")
     replacements = {

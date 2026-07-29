@@ -21,12 +21,25 @@ Cada dependência de consumo deve registrar:
 | `provider_project_id` | Projeto proprietário do módulo reutilizável. |
 | `provider_module_id` | Módulo reutilizável consumido. |
 | `contract_reference` | Contrato ou interface publicada pelo provedor. |
+| `provider_contract_path` | Caminho canônico do contrato no projeto provedor. |
+| `contract_version` | Versão publicada, obtida do contrato do provedor. |
+| `contract_sha256` | SHA-256 do conteúdo publicado no momento do registro. |
 | `compatible_version` | Versão ou intervalo de compatibilidade aceito. |
 | `business_purpose` | Finalidade de negócio do consumo. |
 | `integration_owner` | Responsável pelo relacionamento de integração. |
 | `impact_and_risk` | Impacto de indisponibilidade, mudança ou incompatibilidade. |
 
 O registro pertence à arquitetura ou integração do projeto consumidor. O provedor publica seus contratos no próprio escopo. O catálogo global apenas aponta para módulos aprovados para consumo; ele não transfere propriedade.
+
+Um contrato publicável fica sob `modules/<module-id>/`, somente pode ser
+consumido quando o módulo provedor está `DELIVERED`, e começa com front matter:
+
+```yaml
+---
+publication_status: PUBLISHED
+contract_version: 1.0.0
+---
+```
 
 ## Exemplo conceitual
 

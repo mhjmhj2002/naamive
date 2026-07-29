@@ -9,7 +9,7 @@ import typer
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
 from .project import cancel_project, migrate_project_status, permanently_delete_project, project_directory, read_project_status, render_project_status
 from .codex_executor import run_codex_agent
-from .orchestration import create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_module_architecture_planning, orchestrate_project, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment, return_to_implementation_for_finding
+from .orchestration import cancel_module, create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_module_architecture_planning, orchestrate_project, pause_or_resume_scope, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment, return_to_implementation_for_finding, start_evolution
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
@@ -135,32 +135,6 @@ def delete_project(
     emit({"project_id": project, "state": "DELETED", "deleted_paths": [str(path) for path in deleted_paths], "deletion_proof_path": str(proof_path)})
 
 
-@app.command("run-agent")
-def run_agent(
-    project: str = typer.Option(..., "--project"),
-    agent: str = typer.Option(..., "--agent"),
-    work_item: str = typer.Option(..., "--work-item"),
-    target: str = typer.Option(..., "--target"),
-    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
-) -> None:
-    """Explicitly dispatch one scoped Codex terra/low agent."""
-    try:
-        repo = repository_root(root)
-        project_path = project_directory(repo, project)
-        if not project_path.is_dir():
-            raise IntakeError(f"project not found: {project_path}")
-        target_path = (project_path / target).resolve()
-        if not target_path.is_relative_to(project_path) or "modules" in target_path.relative_to(project_path).parts[:1]:
-            raise IntakeError("target must be a project-owned path; module dispatch requires the module runtime")
-        if not (repo / "naamive" / "agents" / agent / "AGENT.md").is_file():
-            raise IntakeError(f"official agent not found: {agent}")
-        target_path.mkdir(parents=True, exist_ok=True)
-        result = run_codex_agent(repo, project, agent, work_item, target_path, [project_path / "need" / "BUSINESS_NEED.md"])
-    except IntakeError as error:
-        fail(error)
-    emit(result)
-
-
 @app.command()
 def decide(
     request: Optional[str] = typer.Option(None, "--request"),
@@ -169,6 +143,7 @@ def decide(
     decision: str = typer.Option(..., "--decision"),
     module: Optional[str] = typer.Option(None, "--module"),
     module_title: Optional[str] = typer.Option(None, "--module-title"),
+    module_candidate: list[str] = typer.Option([], "--module-candidate", help="JSON candidate: module_id, title, justification and owner; repeat for each module."),
     reason: str = typer.Option("Human gate decision.", "--reason"),
     root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
 ) -> None:
@@ -186,7 +161,16 @@ def decide(
                 emit(resolve_module_architecture_gate(repo, project, module, decision, "human-cli", reason))
                 return
             if gate == "PRODUCT_COMMITMENT":
-                emit(resolve_product_commitment(repo, project, decision, "human-cli", reason, module, module_title))
+                candidates: list[dict[str, str]] = []
+                for raw_candidate in module_candidate:
+                    try:
+                        candidate = json.loads(raw_candidate)
+                    except json.JSONDecodeError as error:
+                        raise IntakeError("module-candidate must be a JSON object") from error
+                    if not isinstance(candidate, dict):
+                        raise IntakeError("module-candidate must be a JSON object")
+                    candidates.append(candidate)
+                emit(resolve_product_commitment(repo, project, decision, "human-cli", reason, module, module_title, candidates))
                 return
             emit(resolve_human_gate(repo, project, gate, decision, "human-cli", reason))
             return
@@ -294,6 +278,60 @@ def register_consumption(
     except IntakeError as error:
         fail(error)
     emit({"consumer_project_id": consumer_project, "consumer_module_id": consumer_module, "consumption_path": str(path)})
+
+
+@app.command("pause")
+def pause(
+    project: str = typer.Option(..., "--project"),
+    module: Optional[str] = typer.Option(None, "--module"),
+    reason: str = typer.Option(..., "--reason"),
+    evidence: list[str] = typer.Option(..., "--evidence"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Pause a project or one module through an auditable human decision."""
+    try:
+        emit(pause_or_resume_scope(repository_root(root), project, scope_type="module" if module else "project", module_id=module, reason=reason, evidence=evidence))
+    except IntakeError as error:
+        fail(error)
+
+
+@app.command("resume")
+def resume(
+    project: str = typer.Option(..., "--project"),
+    module: Optional[str] = typer.Option(None, "--module"),
+    reason: str = typer.Option(..., "--reason"),
+    evidence: list[str] = typer.Option(..., "--evidence"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Resume a paused project or module to its recorded active state."""
+    try:
+        emit(pause_or_resume_scope(repository_root(root), project, scope_type="module" if module else "project", module_id=module, reason=reason, evidence=evidence, resume=True))
+    except IntakeError as error:
+        fail(error)
+
+
+@app.command("cancel-module")
+def cancel_one_module(
+    project: str = typer.Option(..., "--project"), module: str = typer.Option(..., "--module"), reason: str = typer.Option(..., "--reason"), evidence: list[str] = typer.Option(..., "--evidence"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Cancel one module while preserving its state history and decision."""
+    try:
+        emit(cancel_module(repository_root(root), project, module, reason, evidence))
+    except IntakeError as error:
+        fail(error)
+
+
+@app.command("start-evolution")
+def evolve(
+    project: str = typer.Option(..., "--project"), module: list[str] = typer.Option(..., "--module"), reason: str = typer.Option(..., "--reason"), evidence: list[str] = typer.Option(..., "--evidence"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Record a change request and begin a new planned cycle for affected modules."""
+    try:
+        emit(start_evolution(repository_root(root), project, module, reason, evidence))
+    except IntakeError as error:
+        fail(error)
 
 
 @app.command("request-gate")

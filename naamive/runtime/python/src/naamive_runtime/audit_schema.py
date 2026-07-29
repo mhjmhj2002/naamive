@@ -95,6 +95,17 @@ class Finding(_AuditRecord):
     recorded_at: str = Field(min_length=1)
 
 
+class ChangeRequest(_AuditRecord):
+    record_type: Literal["change_request"]
+    change_request_id: str = Field(min_length=1)
+    project_id: str = Field(pattern=SLUG_PATTERN.pattern)
+    modules: list[str] = Field(min_length=1)
+    rationale: str = Field(min_length=1)
+    evidence: list[str] = Field(min_length=1)
+    requested_by: str = Field(min_length=1)
+    requested_at: str = Field(min_length=1)
+
+
 class DeletionProof(_AuditRecord):
     record_type: Literal["deletion_proof"]
     project_id: str = Field(pattern=SLUG_PATTERN.pattern)
@@ -112,6 +123,7 @@ SCHEMAS = {
     "delivery_acceptance_operation": DeliveryAcceptanceOperation,
     "release_package": ReleasePackage,
     "finding": Finding,
+    "change_request": ChangeRequest,
     "deletion_proof": DeletionProof,
 }
 

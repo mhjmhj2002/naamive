@@ -4,12 +4,17 @@ status: OPEN
 audit_type: theoretical-end-to-end-reaudit
 audited_at: 2026-07-29
 scope: README.md, REPOSITORY_MODEL.md, naamive/vision/, naamive/orchestration/, contracts, governance, runtime-python and runtime tests
-supersedes: Historical remediation backlog closed on 2026-07-29
-test_evidence: 53 passed in 10.76s (.venv/bin/pytest -q naamive/tests/runtime_python)
-next_action: Corrigir GAP-001 antes de expor o comando run-agent a operadores.
+historical_certification: history/2026-07-29-end-to-end-certification/
+state_machine: ORCHESTRATION_END_TO_END_AUDIT_GAPS_STATE_MACHINE.md
+test_evidence: 54 passed in 10.74s (.venv/bin/pytest -q naamive/tests/runtime_python), including GAP-001 command-removal regression
+next_action: Tratar o próximo gap priorizado conforme o escopo de trabalho solicitado.
 ---
 
 # Backlog de Gaps — Nova Auditoria Ponta a Ponta da Orquestração
+
+O estado consolidado de cada gap é registrado em
+[Status dos Gaps](ORCHESTRATION_END_TO_END_AUDIT_GAPS_STATE_MACHINE.md). Esse
+registro é informativo e não cria workflow adicional para agentes.
 
 ## Parecer
 
@@ -64,6 +69,15 @@ despacho. Não aceitar `target` e `work-item` livres.
 - um despacho durante `pending_gate` ou para estado divergente é rejeitado;
 - sucesso produz somente arquivos permitidos e a cadeia
   contexto → despacho → execução → evidência é consultável.
+
+**Estado:** `RESOLVED`
+
+**Evidência de resolução:** a interface operacional `run-agent` foi removida.
+Os despachos permanecem exclusivamente nos fluxos canônicos, que criam contexto
+e registros de execução antes de chamar o agente. A suíte
+`.venv/bin/pytest -q naamive/tests/runtime_python` passou com `54 passed in
+10.74s`, e `test_run_agent_is_not_an_operational_command` confirma que o
+comando removido é rejeitado sem criar diretório.
 
 ## GAP-002 — Compromisso de produto materializa somente um módulo
 
