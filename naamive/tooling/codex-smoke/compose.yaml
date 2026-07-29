@@ -1,0 +1,33 @@
+services:
+  codex-smoke:
+    build:
+      context: ../../..
+      dockerfile: naamive/tooling/codex-smoke/Dockerfile
+    environment:
+      HOME: /home/codex
+      NAAMIVE_RUNTIME_CLI: naamive
+    cap_add:
+      - SYS_ADMIN
+    privileged: true
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - ../../..:/work/naamive:rw
+      - codex-smoke-state:/home/codex/.codex:rw
+    working_dir: /work/naamive
+    entrypoint: ["bash", "-lc"]
+  codex-login:
+    build:
+      context: ../../..
+      dockerfile: naamive/tooling/codex-smoke/Dockerfile
+    environment:
+      HOME: /home/codex
+      NAAMIVE_RUNTIME_CLI: naamive
+    network_mode: host
+    volumes:
+      - codex-smoke-state:/home/codex/.codex:rw
+    working_dir: /work/naamive
+    entrypoint: ["bash", "-lc"]
+
+volumes:
+  codex-smoke-state:
