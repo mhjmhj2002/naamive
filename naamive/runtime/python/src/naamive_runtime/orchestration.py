@@ -1,4 +1,4 @@
-"""Auditable project orchestration; agents supply evidence, never state changes."""
+"""DEPRECATED legacy orchestration retained for Node migration reference."""
 from __future__ import annotations
 
 import fcntl

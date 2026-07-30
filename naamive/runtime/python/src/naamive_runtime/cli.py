@@ -1,3 +1,4 @@
+# DEPRECATED: legacy Python runtime retained only for Node migration reference.
 from __future__ import annotations
 
 import json

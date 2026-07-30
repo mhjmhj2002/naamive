@@ -1,3 +1,4 @@
+# DEPRECATED: tests for the legacy Python runtime, retained for Node parity.
 from __future__ import annotations
 
 import shutil

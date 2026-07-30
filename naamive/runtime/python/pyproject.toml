@@ -5,8 +5,11 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "naamive-runtime"
 version = "0.1.0"
-description = "NAAMIVE orchestration runtime"
+description = "DEPRECATED legacy NAAMIVE Python orchestration runtime; retained only for Node migration reference"
 requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 7 - Inactive",
+]
 dependencies = [
   "pydantic>=2,<3",
   "PyYAML>=6,<7",

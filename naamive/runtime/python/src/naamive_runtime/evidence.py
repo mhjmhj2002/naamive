@@ -1,4 +1,4 @@
-"""Evidence contracts for the orchestration rounds."""
+"""DEPRECATED legacy evidence contracts retained for Node migration reference."""
 from __future__ import annotations
 
 import re

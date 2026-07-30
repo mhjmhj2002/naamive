@@ -1,6 +1,12 @@
 # Guia de Execução da Orquestração
 
-Este documento define a interface de linha de comando canônica e as regras de uso. A implementação inicial está em Python, em `naamive/runtime/python/`, e preserva este contrato.
+> **DEPRECATED — runtime Python legado.** Esta interface CLI permanece somente
+> como referência durante a migração para a plataforma Node/Web. Não deve
+> receber novas funcionalidades de produto e será removida após o corte
+> controlado documentado em `demand-intake/node-web-orchestration-platform/`.
+
+Este documento preserva a interface e as regras históricas do runtime Python em
+`naamive/runtime/python/`, usadas como fonte de paridade durante a migração.
 
 ## Instalação do runtime inicial
 
