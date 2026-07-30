@@ -9,6 +9,7 @@ import naamive_runtime.orchestration as orchestration
 
 from naamive_runtime.intake import IntakeError
 from naamive_runtime.orchestration import (
+    audit_timeline,
     advance_execution,
     apply_state_transition,
     create_execution,
@@ -136,7 +137,29 @@ def test_unexpected_agent_failure_is_audited_as_failed(tmp_path: Path) -> None:
         orchestrate_project(tmp_path, "sample", broken_runner)
 
     events = list((tmp_path / "naamive" / "registries" / "orchestration" / "sample" / "executions").glob("*/events/*.yaml"))
-    assert any(yaml.safe_load(event.read_text(encoding="utf-8"))["state"] == "FAILED" for event in events)
+    failed = next(yaml.safe_load(event.read_text(encoding="utf-8")) for event in events if yaml.safe_load(event.read_text(encoding="utf-8"))["state"] == "FAILED")
+    assert failed["failure_code"] == "ADAPTER_ERROR"
+    assert failed["failure_origin"] == "agent-adapter"
+    assert failed["failure_message"] == "transport disconnected"
+
+
+def test_audit_timeline_projects_failed_execution_for_humans(tmp_path: Path) -> None:
+    make_project(tmp_path)
+    context = {
+        "execution_id": "execution-sample", "project_id": "sample", "scope_type": "project",
+        "current_state": "ANALYSIS", "requested_transition": "ANALYSIS->DEFINITION",
+        "authorized_work_item": "analyze", "target_path": "analysis/business",
+        "input_artifacts": ["need/BUSINESS_NEED.md"], "required_evidence": ["analysis/business"],
+        "authority_context": "INDEPENDENT_REVIEW",
+    }
+    create_execution(tmp_path, context)
+    advance_execution(tmp_path, "sample", "execution-sample", "VALIDATING")
+    advance_execution(tmp_path, "sample", "execution-sample", "DISPATCHED")
+    advance_execution(tmp_path, "sample", "execution-sample", "FAILED", failure_code="TIMEOUT", failure_origin="agent-adapter", failure_message="timeout after 30 seconds")
+    rows = audit_timeline(tmp_path, "sample")
+    assert rows[-1]["cause"] == "timeout after 30 seconds"
+    assert rows[-1]["next_action"] == "recover-execution"
+    assert "/executions/" in str(rows[-1]["canonical_record"])
 
 
 def test_transition_is_idempotent_and_detects_stale_state(tmp_path: Path) -> None:

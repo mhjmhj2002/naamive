@@ -4,6 +4,7 @@ from __future__ import annotations
 import fcntl
 import hashlib
 import re
+import subprocess
 from datetime import datetime, timezone
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
@@ -13,7 +14,7 @@ import yaml
 
 from .codex_executor import run_codex_agent
 from .audit_schema import validate_audit_record
-from .evidence import architecture_requires_material_decision, report_requires_human_gate, validate_architecture, validate_architecture_document, validate_business_analysis, validate_delivery_package, validate_delivery_plan, validate_delivery_plan_document, validate_integration_report, validate_module_definition_document, validate_module_proposal, validate_quality_report, validate_requirements, validate_review, validate_security_assessment
+from .evidence import architecture_requires_material_decision, completion_criteria as evidence_completion_criteria, report_requires_human_gate, validate_architecture, validate_architecture_document, validate_business_analysis, validate_delivery_package, validate_delivery_plan, validate_delivery_plan_document, validate_integration_report, validate_module_definition_document, validate_module_proposal, validate_quality_report, validate_requirements, validate_review, validate_security_assessment
 from .intake import IntakeError, SLUG_PATTERN
 from .project import append_transition_history, migrate_project_status, render_project_status
 
@@ -117,6 +118,25 @@ def _relative(project: Path, path: Path) -> str:
 def audit_root(repository_root: Path, project_id: str) -> Path:
     """Runtime audit data belongs to NAAMIVE, never to a disposable product."""
     return repository_root / "naamive" / "registries" / "orchestration" / project_id
+
+
+def audit_timeline(repository_root: Path, project_id: str) -> list[dict[str, object]]:
+    """Human-readable, chronological projection; immutable records stay canonical."""
+    root = audit_root(repository_root, project_id)
+    if not root.is_dir():
+        raise IntakeError(f"audit project not found: {project_id}")
+    rows: list[dict[str, object]] = []
+    for path in sorted((root / "executions").glob("*/events/*.yaml")) if (root / "executions").is_dir() else []:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            continue
+        rows.append({"occurred_at": payload.get("occurred_at"), "kind": "execution", "execution_id": payload.get("execution_id"), "phase": payload.get("current_state"), "module_id": payload.get("module_id"), "agent": payload.get("agent_id"), "work_item": payload.get("authorized_work_item"), "result": payload.get("state"), "cause": payload.get("failure_message") or payload.get("validation_error"), "next_action": "recover-execution" if payload.get("state") == "FAILED" else "address evidence and redispatch" if payload.get("state") == "REWORK_REQUIRED" else "await gate" if payload.get("state") == "WAITING_FOR_GATE" else None, "canonical_record": str(path.relative_to(repository_root))})
+    for directory, kind, stamp in (("transition-requests", "gate-request", "requested_at"), ("gate-decisions", "gate-decision", "decided_at")):
+        for path in sorted((root / directory).glob("*.yaml")) if (root / directory).is_dir() else []:
+            payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+            if isinstance(payload, dict):
+                rows.append({"occurred_at": payload.get(stamp), "kind": kind, "phase": payload.get("from_state"), "result": payload.get("decision") or payload.get("required_gate"), "cause": payload.get("rationale") or payload.get("trigger"), "next_action": "human decision" if kind == "gate-request" else None, "canonical_record": str(path.relative_to(repository_root))})
+    return sorted(rows, key=lambda item: (str(item.get("occurred_at") or ""), str(item["canonical_record"])))
 
 
 def _assert_relative_reference(value: str) -> None:
@@ -241,11 +261,30 @@ def recover_interrupted_execution(repository_root: Path, project_id: str, execut
         raise IntakeError(f"execution not found: {execution_id}")
     current = str(events[-1].get("state"))
     if current == "DISPATCHED" or current == "EVIDENCE_REVIEW":
-        advance_execution(repository_root, project_id, execution_id, "FAILED", recovery_reason=reason.strip())
+        advance_execution(repository_root, project_id, execution_id, "FAILED", failure_code="INTERRUPTED", failure_origin="operator-recovery", failure_message=_sanitize_failure(reason))
         return advance_execution(repository_root, project_id, execution_id, "REWORK_REQUIRED", recovery_reason=reason.strip())
     if current == "FAILED":
         return advance_execution(repository_root, project_id, execution_id, "REWORK_REQUIRED", recovery_reason=reason.strip())
     raise IntakeError(f"execution cannot be recovered from state: {current}")
+
+
+def _sanitize_failure(error: BaseException | str) -> str:
+    """Keep a short diagnostic without recording prompts, tokens, or secrets."""
+    message = str(error).replace("\n", " ").strip()
+    message = re.sub(r"(?i)(token|password|secret|api[_-]?key)\s*[=:]\s*\S+", r"\1=[REDACTED]", message)
+    return message[:500] or "Agent dispatch failed without a diagnostic message."
+
+
+def _failure_details(error: BaseException) -> dict[str, str]:
+    if isinstance(error, subprocess.TimeoutExpired) or "timed out" in str(error).lower():
+        code = "TIMEOUT"
+    elif isinstance(error, KeyboardInterrupt):
+        code = "INTERRUPTED"
+    elif isinstance(error, IntakeError) and ("evidence" in str(error).lower() or "authorized target" in str(error).lower()):
+        code = "EVIDENCE_ERROR"
+    else:
+        code = "ADAPTER_ERROR"
+    return {"failure_code": code, "failure_origin": "agent-adapter", "failure_message": _sanitize_failure(error)}
 
 
 @contextmanager
@@ -302,15 +341,8 @@ def _evidence_files(target: Path) -> list[Path]:
 
 def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: str, agent: str, work_item: str, target_rel: str, inputs: list[Path], expected_output: str, agent_runner) -> tuple[str, Path]:
     execution_id = f"execution-{uuid4().hex}"
-    completion_criteria = f"Produce {expected_output}; include headings Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas, and link the supplied execution_id."
-    if expected_output == "analysis/business/BUSINESS_ANALYSIS.md":
-        completion_criteria = (
-            "Produce analysis/business/BUSINESS_ANALYSIS.md with non-empty headings "
-            "Problema, Valor, Stakeholders, Fluxo, Restrições, Incertezas and Métricas; "
-            "also include headings Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas, "
-            "and link the supplied execution_id."
-        )
-    elif expected_output.endswith("/REVIEW.md"):
+    completion_criteria = evidence_completion_criteria(expected_output)
+    if expected_output.endswith("/REVIEW.md"):
         completion_criteria = (
             f"Produce {expected_output} with non-empty headings Critérios verificados and Resultado; "
             "the result must include the word approved, and the document must also include headings "
@@ -333,7 +365,7 @@ def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: s
     try:
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
     except Exception as error:
-        advance_execution(repository_root, project_id, execution_id, "FAILED")
+        advance_execution(repository_root, project_id, execution_id, "FAILED", **_failure_details(error))
         if isinstance(error, IntakeError):
             raise
         raise IntakeError(f"agent dispatch failed: {error}") from error
@@ -352,7 +384,7 @@ def _dispatch_project_round(repository_root: Path, project: Path, project_id: st
         "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
         "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none",
         "action_class": "WRITE", "expected_outputs": [expected_output],
-        "completion_criteria": f"Produce {expected_output} with complete traceability and the supplied execution_id.",
+        "completion_criteria": evidence_completion_criteria(expected_output),
     }
     create_execution(repository_root, context)
     advance_execution(repository_root, project_id, execution_id, "VALIDATING")
@@ -362,7 +394,7 @@ def _dispatch_project_round(repository_root: Path, project: Path, project_id: st
     try:
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
     except Exception as error:
-        advance_execution(repository_root, project_id, execution_id, "FAILED")
+        advance_execution(repository_root, project_id, execution_id, "FAILED", **_failure_details(error))
         if isinstance(error, IntakeError):
             raise
         raise IntakeError(f"agent dispatch failed: {error}") from error
@@ -892,6 +924,10 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
     if state in {"ARCHITECTURE", "PLANNING"}:
         return _orchestrate_architecture_planning(repository_root, project, project_id, status, agent_runner)
     if state in {"IMPLEMENTATION", "VALIDATION", "DELIVERY"}:
+        if state == "IMPLEMENTATION":
+            modules = _phase6_modules(project)
+            if any(str(_read_module_status(module)["current_state"]) != "IMPLEMENTING" for module in modules):
+                return {"project_id": project_id, "current_state": state, "state": "PROJECT_EXECUTION_PENDING", "reason": "authorized module implementation work must complete before integration"}
         return _orchestrate_phase6(repository_root, project, project_id, status, agent_runner)
     if state not in PROJECT_TRANSITIONS:
         return {"project_id": project_id, "current_state": state, "state": "PROJECT_EXECUTION_PENDING", "reason": "no automated project round is configured for this state"}
@@ -915,7 +951,7 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
     try:
         result = run_codex_agent(repository_root, project_id, agent, work_item, target, [project / "need" / "BUSINESS_NEED.md"], execution_context=execution)
     except IntakeError as error:
-        execution.update({"state": "FAILED", "completed_at": _now(), "error": str(error)})
+        execution.update({"state": "FAILED", "completed_at": _now(), **_failure_details(error)})
         _record_execution(repository_root, project_id, execution)
         raise
     evidence = [_relative(project, item) for item in _evidence_files(target) if item.name != "EXECUTION_CONTEXT_VALIDATION.md"]
@@ -951,6 +987,21 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
     return {"project_id": project_id, "current_state": to_state, "state": "COMPLETED", "execution_path": str(execution_path)}
 
 
+def orchestrate_until_blocked(repository_root: Path, project_id: str, agent_runner=run_codex_agent) -> dict[str, object]:
+    """Chain public project rounds until a real decision or terminal condition.
+
+    Individual rounds retain their own immutable execution streams; this loop is
+    merely the public convenience layer that prevents an eligible project from
+    stopping between automatic states.
+    """
+    rounds: list[dict[str, object]] = []
+    while True:
+        result = orchestrate_project(repository_root, project_id, agent_runner)
+        rounds.append(result)
+        if result.get("state") != "COMPLETED":
+            return dict(result, rounds=rounds)
+
+
 def orchestrate_module_architecture_planning(repository_root: Path, project_id: str, module_id: str, agent_runner=run_codex_agent) -> dict[str, object]:
     """Advance one module through definition, architecture, or planning."""
     project = repository_root / "projects" / project_id
@@ -977,7 +1028,7 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
         "input_artifacts": (["analysis/domain/MODULE_PROPOSAL.md", "analysis/requirements/REQUIREMENTS.md", f"modules/{module_id}/MODULE.md"] if module_state == "IDENTIFIED" else [f"modules/{module_id}/MODULE.md"] if module_state == "DEFINED" else [f"modules/{module_id}/architecture/SOLUTION_ARCHITECTURE.md"]), "required_evidence": [evidence_rel],
         "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
         "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none", "action_class": "WRITE",
-        "expected_outputs": [evidence_rel], "completion_criteria": f"Produce {evidence_rel} with complete traceability and the supplied execution_id.",
+        "expected_outputs": [evidence_rel], "completion_criteria": evidence_completion_criteria(evidence_rel),
     }
     create_execution(repository_root, context)
     advance_execution(repository_root, project_id, execution_id, "VALIDATING")
@@ -988,7 +1039,7 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
         inputs = [project / str(reference) for reference in context["input_artifacts"]]
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
     except Exception as error:
-        advance_execution(repository_root, project_id, execution_id, "FAILED")
+        advance_execution(repository_root, project_id, execution_id, "FAILED", **_failure_details(error))
         if isinstance(error, IntakeError):
             raise
         raise IntakeError(f"agent dispatch failed: {error}") from error
@@ -1009,7 +1060,7 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
     try:
         result = agent_runner(repository_root, project_id, "governance-assurance", f"review-{work_item}", review_target, [evidence], execution_context=review_context)
     except Exception as error:
-        advance_execution(repository_root, project_id, review_id, "FAILED")
+        advance_execution(repository_root, project_id, review_id, "FAILED", **_failure_details(error))
         if isinstance(error, IntakeError):
             raise
         raise IntakeError(f"agent dispatch failed: {error}") from error

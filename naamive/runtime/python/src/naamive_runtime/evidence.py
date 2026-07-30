@@ -13,6 +13,38 @@ MODULE_DEFINITION_REQUIRED = ("módulo", "objetivo", "limites", "rastreabilidade
 TRACEABILITY_REQUIRED = ("execution id", "escopo", "fonte", "responsável", "data", "premissas", "lacunas")
 TECHNICAL_MODULE_NAMES = {"backend", "frontend", "database", "banco de dados", "api", "web", "mobile", "common", "utils"}
 
+# Single source used by both dispatch contexts and validation.  The text is
+# intentionally explicit: an agent must never be asked to infer headings that
+# a later validator treats as mandatory.
+EVIDENCE_REQUIREMENTS: dict[str, tuple[str, ...]] = {
+    "analysis/business/BUSINESS_ANALYSIS.md": BUSINESS_REQUIRED + TRACEABILITY_REQUIRED,
+    "analysis/domain/MODULE_PROPOSAL.md": ("módulos candidatos", "justificativa", "dependências", "riscos", "questões em aberto") + TRACEABILITY_REQUIRED,
+    "analysis/requirements/REQUIREMENTS.md": REQUIREMENTS_REQUIRED + TRACEABILITY_REQUIRED,
+    "architecture/SOLUTION_ARCHITECTURE.md": ("decisões", "integrações", "impactos", "riscos", "decisões materiais") + TRACEABILITY_REQUIRED,
+    "planning/DELIVERY_PLAN.md": ("roadmap", "releases", "riscos", "dependências", "work items", "critérios de pronto") + TRACEABILITY_REQUIRED,
+    "integration/INTEGRATION_REPORT.md": ("contratos", "fluxos", "sistemas externos", "incompatibilidades", "resultado") + TRACEABILITY_REQUIRED,
+    "validation/QUALITY_REPORT.md": ("requisitos", "critérios de aceitação", "testes", "achados", "resultado") + TRACEABILITY_REQUIRED,
+    "validation/security/SECURITY_ASSESSMENT.md": ("riscos", "impacto", "mitigação", "exceções", "risco residual", "resultado") + TRACEABILITY_REQUIRED,
+    "delivery/DELIVERY_PACKAGE.md": ("release", "implantação", "reversão", "operação", "observabilidade", "handover", "resultado") + TRACEABILITY_REQUIRED,
+}
+
+
+def completion_criteria(evidence_path: str) -> str:
+    required = EVIDENCE_REQUIREMENTS.get(evidence_path)
+    if required is None:
+        filename_contracts = {
+            "MODULE_REQUIREMENTS.md": MODULE_DEFINITION_REQUIRED + TRACEABILITY_REQUIRED,
+            "SOLUTION_ARCHITECTURE.md": EVIDENCE_REQUIREMENTS["architecture/SOLUTION_ARCHITECTURE.md"],
+            "DELIVERY_PLAN.md": EVIDENCE_REQUIREMENTS["planning/DELIVERY_PLAN.md"],
+            "REVIEW.md": ("critérios verificados", "resultado") + TRACEABILITY_REQUIRED,
+        }
+        required = filename_contracts.get(Path(evidence_path).name, TRACEABILITY_REQUIRED)
+    return f"Produce {evidence_path} with non-empty headings: {', '.join(required)}; include the supplied execution_id."
+
+
+def required_sections(evidence_path: str) -> tuple[str, ...]:
+    return EVIDENCE_REQUIREMENTS.get(evidence_path, TRACEABILITY_REQUIRED)
+
 
 def require_markdown(path: Path, required_sections: tuple[str, ...], execution_id: str | None = None) -> Path:
     if not path.is_file():
@@ -27,11 +59,11 @@ def require_markdown(path: Path, required_sections: tuple[str, ...], execution_i
 
 
 def validate_business_analysis(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "analysis" / "business" / "BUSINESS_ANALYSIS.md", BUSINESS_REQUIRED + TRACEABILITY_REQUIRED, execution_id)
+    return require_markdown(project / "analysis" / "business" / "BUSINESS_ANALYSIS.md", required_sections("analysis/business/BUSINESS_ANALYSIS.md"), execution_id)
 
 
 def validate_module_proposal(project: Path, execution_id: str) -> Path:
-    path = require_markdown(project / "analysis" / "domain" / "MODULE_PROPOSAL.md", ("módulos candidatos", "justificativa", "dependências", "riscos", "questões em aberto") + TRACEABILITY_REQUIRED, execution_id)
+    path = require_markdown(project / "analysis" / "domain" / "MODULE_PROPOSAL.md", required_sections("analysis/domain/MODULE_PROPOSAL.md"), execution_id)
     candidates = re.findall(r"^\s*-\s+`?([^`\n:]+)`?", path.read_text(encoding="utf-8"), re.MULTILINE)
     invalid = [candidate.strip().lower() for candidate in candidates if candidate.strip().lower() in TECHNICAL_MODULE_NAMES]
     if invalid:
@@ -40,7 +72,7 @@ def validate_module_proposal(project: Path, execution_id: str) -> Path:
 
 
 def validate_requirements(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "analysis" / "requirements" / "REQUIREMENTS.md", REQUIREMENTS_REQUIRED + TRACEABILITY_REQUIRED, execution_id)
+    return require_markdown(project / "analysis" / "requirements" / "REQUIREMENTS.md", required_sections("analysis/requirements/REQUIREMENTS.md"), execution_id)
 
 
 def validate_module_definition_document(path: Path, execution_id: str) -> Path:
@@ -61,7 +93,7 @@ def validate_architecture(project: Path, execution_id: str) -> Path:
 def validate_architecture_document(path: Path, execution_id: str) -> Path:
     validated = require_markdown(
         path,
-        ("decisões", "integrações", "impactos", "riscos", "decisões materiais") + TRACEABILITY_REQUIRED,
+        required_sections("architecture/SOLUTION_ARCHITECTURE.md"),
         execution_id,
     )
     if not re.search(r"^material_decision_required:\s*(true|false)\s*$", validated.read_text(encoding="utf-8"), re.IGNORECASE | re.MULTILINE):
@@ -85,7 +117,7 @@ def validate_delivery_plan(project: Path, execution_id: str) -> Path:
 def validate_delivery_plan_document(path: Path, execution_id: str) -> Path:
     validated = require_markdown(
         path,
-        ("roadmap", "releases", "riscos", "dependências", "work items", "critérios de pronto") + TRACEABILITY_REQUIRED,
+        required_sections("planning/DELIVERY_PLAN.md"),
         execution_id,
     )
     content = validated.read_text(encoding="utf-8")
@@ -95,21 +127,21 @@ def validate_delivery_plan_document(path: Path, execution_id: str) -> Path:
 
 
 def validate_integration_report(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "integration" / "INTEGRATION_REPORT.md", ("contratos", "fluxos", "sistemas externos", "incompatibilidades", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+    return require_markdown(project / "integration" / "INTEGRATION_REPORT.md", required_sections("integration/INTEGRATION_REPORT.md"), execution_id)
 
 
 def validate_quality_report(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "validation" / "QUALITY_REPORT.md", ("requisitos", "critérios de aceitação", "testes", "achados", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+    return require_markdown(project / "validation" / "QUALITY_REPORT.md", required_sections("validation/QUALITY_REPORT.md"), execution_id)
 
 
 def validate_security_assessment(project: Path, execution_id: str) -> Path:
-    validated = require_markdown(project / "validation" / "security" / "SECURITY_ASSESSMENT.md", ("riscos", "impacto", "mitigação", "exceções", "risco residual", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+    validated = require_markdown(project / "validation" / "security" / "SECURITY_ASSESSMENT.md", required_sections("validation/security/SECURITY_ASSESSMENT.md"), execution_id)
     _require_gate_marker(validated, "residual_risk_acceptance_required")
     return validated
 
 
 def validate_delivery_package(project: Path, execution_id: str) -> Path:
-    validated = require_markdown(project / "delivery" / "DELIVERY_PACKAGE.md", ("release", "implantação", "reversão", "operação", "observabilidade", "handover", "resultado") + TRACEABILITY_REQUIRED, execution_id)
+    validated = require_markdown(project / "delivery" / "DELIVERY_PACKAGE.md", required_sections("delivery/DELIVERY_PACKAGE.md"), execution_id)
     _require_gate_marker(validated, "release_authorization_required")
     return validated
 
