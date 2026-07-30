@@ -6,6 +6,10 @@ services:
     environment:
       HOME: /home/codex
       NAAMIVE_RUNTIME_CLI: naamive
+      NAAMIVE_CODEX_COMMAND: /usr/local/bin/codex
+      # This service runs only with the persisted session produced by the
+      # companion `codex-login` service in the same isolated volume.
+      NAAMIVE_CODEX_AUTH_VERIFIED: "true"
     cap_add:
       - SYS_ADMIN
     privileged: true

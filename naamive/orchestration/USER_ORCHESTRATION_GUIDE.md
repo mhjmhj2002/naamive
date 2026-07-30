@@ -22,10 +22,10 @@ O comando `naamive` disponibiliza o fluxo de intake e as primeiras rodadas audit
 ## Projeto existente
 
 ```text
-naamive orchestrate --project <project-id>
+naamive start --project <project-id>
 ```
 
-O orquestrador resolve exclusivamente `projects/<project-id>/`, valida o `STATUS.md`, a máquina de estado, o contexto e o próximo trabalho autorizado. Ele executa controles automatizados e revisões independentes possíveis e para em `WAITING_FOR_GATE` quando houver decisão humana exigida.
+O `start` resolve exclusivamente `projects/<project-id>/`, valida o `STATUS.md`, a máquina de estado, o contexto e o próximo trabalho autorizado. Ele encadeia projeto, módulos, planejamento e implementação autorizada e para em `WAITING_FOR_GATE` quando houver decisão humana exigida. O operador não informa fase, módulo ou item de trabalho para avançar o fluxo normal.
 
 Em `ANALYSIS`, ele despacha `business-analysis` para `analysis/business/`, exige evidência nesse caminho e, após a revisão independente automatizada, registra `ANALYSIS → DEFINITION`. Em `DEFINITION`, despacha `domain-modeling` para `analysis/domain/` e para no gate humano `PRODUCT_COMMITMENT`; não infere a decisão nem materializa módulos antes dela. Os registros da própria plataforma ficam centralizados em `naamive/registries/orchestration/<project-id>/` (execuções, solicitações e decisões); o projeto contém somente os seus artefatos de produto e estado.
 
@@ -55,11 +55,9 @@ Uma evolução pós-entrega exige necessidade rastreável e reabre somente os m�
 naamive start-evolution --project <project-id> --module <módulo-afetado> --reason "<change request>" --evidence <referência-da-necessidade>
 ```
 
-Itens de trabalho só podem ser criados durante o planejamento de um módulo, em `planning/work-items/`, com escopo, critérios e autorização explícitos:
-
-```text
-naamive create-work-item --project <project-id> --module <module-id> --work-item <work-item-id> --title "<trabalho autorizado>" --objective "<objetivo>" --write-scope modules/<module-id>/applications/<alvo> --priority HIGH --ready-criterion "<critério>" --expected-evidence modules/<module-id>/tests/<evidência> --authorization <decisão-ou-plano>
-```
+Itens de trabalho são materializados pelo runtime a partir do planejamento de
+módulo aprovado. Não há comando normal para criar, escolher ou despachar um
+item de trabalho; o operador apenas retoma com `naamive start` após um gate.
 
 O consumo de um módulo de outro projeto é registrado no módulo consumidor, por referência de contrato; esse comando nunca concede escrita no módulo provedor. O contrato do provedor deve existir, estar sob `modules/<módulo-provedor>/`, ter front matter com `publication_status: PUBLISHED` e `contract_version`, e o módulo provedor deve estar `DELIVERED`. O registro fixa o caminho canônico, a versão e o SHA-256; integração e entrega recusam um contrato removido ou alterado:
 
@@ -70,11 +68,8 @@ naamive register-module-consumption --consumer-project <projeto-consumidor> --co
 ## Despacho de agente Codex
 
 Não existe comando operacional para despachar um agente com `work-item` ou
-`target` livres. Os únicos despachos públicos são acionados pela orquestração:
-`naamive orchestrate --project <project-id>`,
-`naamive orchestrate-module --project <project-id> --module <module-id>` e
-`naamive run-implementation --project <project-id> --module <module-id>
---work-item <work-item-id>`.
+`target` livres. O único despacho normal público é acionado por
+`naamive start --project <project-id>`.
 
 Esses fluxos resolvem o estado e o trabalho autorizado, criam o contexto e o
 registro de execução antes do despacho e preservam a cadeia contexto →
@@ -87,7 +82,9 @@ projeto pelo diretório atual, por nome de branch ou por texto do comando.
 Crie a solicitação a partir do template:
 
 ```text
-naamive init-project-request --request-id <request-id>
+mkdir -p naamive/registries/project-intake/<request-id>
+cp naamive/templates/project-intake/PROJECT_REQUEST_TEMPLATE.md \
+  naamive/registries/project-intake/<request-id>/PROJECT_REQUEST.md
 ```
 
 O comando materializa somente:
@@ -99,10 +96,22 @@ naamive/registries/project-intake/<request-id>/PROJECT_REQUEST.md
 Preencha-o conforme o [contrato de entrada](../contracts/PROJECT_INTAKE.md) e envie para validação:
 
 ```text
-naamive orchestrate --request <request-id>
+naamive start --request <request-id>
 ```
 
 Se não houver `--project` nem `--request`, o orquestrador não cria artefatos ambíguos e retorna instruções para criar uma solicitação. Se o documento estiver ausente, inválido, incompleto ou contiver decisão técnica, a execução termina em `REJECTED`.
+
+Uma aprovação é seguida apenas de nova chamada a `start`. Para rejeitar ou
+pedir retrabalho, preencha o arquivo criado no projeto em
+`gate-feedback/<GATE_ID>.md` e informe-o na decisão; o registro exige decisão,
+itens rejeitados, evidências, ajustes propostos, responsável e critério de nova
+submissão:
+
+```text
+naamive decide --project <project-id> --gate <gate-id> --decision REWORK_REQUIRED \
+  --feedback gate-feedback/<GATE_ID>.md
+naamive start --project <project-id>
+```
 
 ## Parada para decisão humana
 

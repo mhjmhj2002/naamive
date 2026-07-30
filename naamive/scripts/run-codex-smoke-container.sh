@@ -12,7 +12,7 @@ case "${1:---run}" in
     exec docker compose -f "$compose_file" run --rm codex-login 'codex login'
     ;;
   --run)
-    exec docker compose -f "$compose_file" run --rm codex-smoke 'naamive/scripts/run-codex-smoke.sh --run'
+    exec docker compose -f "$compose_file" run --build --rm codex-smoke 'naamive/scripts/run-codex-smoke.sh --run'
     ;;
   *)
     echo "usage: $0 [--login|--run]" >&2

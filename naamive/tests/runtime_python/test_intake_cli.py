@@ -203,22 +203,12 @@ def test_permanent_deletion_requires_exact_confirmation(tmp_path: Path) -> None:
     assert project.exists()
 
 
-def test_orchestrate_module_exposes_the_next_module_round(tmp_path: Path, monkeypatch) -> None:
+def test_legacy_module_orchestration_command_is_not_operational(tmp_path: Path, monkeypatch) -> None:
     repository = create_repository(tmp_path, Path(__file__).parents[3])
-    expected = {"project_id": "customer-self-service", "module_id": "catalog", "state": "COMPLETED"}
-
-    def fake_orchestrator(root: Path, project: str, module: str, **kwargs) -> dict[str, str]:
-        assert root == repository
-        assert (project, module) == ("customer-self-service", "catalog")
-        assert callable(kwargs["agent_runner"])
-        return expected
-
-    monkeypatch.setattr(cli, "orchestrate_module_architecture_planning", fake_orchestrator)
-    monkeypatch.setattr(cli, "codex_preflight", lambda: {"authenticated": "test-double"})
     result = runner.invoke(app, ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", "--repository-root", str(repository)])
 
-    assert result.exit_code == 0, result.output
-    assert '"module_id": "catalog"' in result.output
+    assert result.exit_code != 0
+    assert "No such command 'orchestrate-module'" in result.output
 
 
 def test_cli_orchestration_accepts_a_deterministic_agent_double(tmp_path: Path, monkeypatch) -> None:
@@ -294,15 +284,8 @@ def test_cli_deterministic_end_to_end_happy_path(tmp_path: Path, monkeypatch) ->
     assert invoke(app, ["init-project-request", "--request-id", "self-service", *root]).exit_code == 0
     request = repository / "naamive/registries/project-intake/self-service/PROJECT_REQUEST.md"
     complete_request(request)
-    for command in (["orchestrate", "--request", "self-service", *root], ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate", "--project", "customer-self-service", *root], ["decide", "--project", "customer-self-service", "--gate", "PRODUCT_COMMITMENT", "--decision", "APPROVED", "--module", "catalog", "--module-title", "Catalog", *root], ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", *root], ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", *root]):
+    for command in (["start", "--request", "self-service", *root], ["decide", "--request", "self-service", "--gate", "REGISTER_PROJECT", "--decision", "APPROVED", *root], ["start", "--project", "customer-self-service", *root], ["decide", "--project", "customer-self-service", "--gate", "PRODUCT_COMMITMENT", "--decision", "APPROVED", "--module", "catalog", "--module-title", "Catalog", *root]):
         assert invoke(app, command).exit_code == 0
-
-    result = invoke(app, ["status", "--project", "customer-self-service", *root])
-    assert "PLANNING" in result.output
-
-    def create_item():
-        return invoke(app, ["create-work-item", "--project", "customer-self-service", "--module", "catalog", "--work-item", "catalog-rules", "--title", "Rules", "--objective", "Rules", "--write-scope", "modules/catalog/applications/rules.py", "--priority", "HIGH", "--ready-criterion", "Ready", "--expected-evidence", "modules/catalog/tests/rules.md", "--authorization", "plan", *root])
-    assert create_item().exit_code == 0
-    for command in (["orchestrate", "--project", "customer-self-service", *root], ["run-implementation", "--project", "customer-self-service", "--module", "catalog", "--work-item", "catalog-rules", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate", "--project", "customer-self-service", *root], ["orchestrate", "--project", "customer-self-service", *root], ["decide", "--project", "customer-self-service", "--gate", "DELIVERY_ACCEPTANCE", "--decision", "APPROVED", *root]):
+    for command in (["start", "--project", "customer-self-service", *root], ["decide", "--project", "customer-self-service", "--gate", "DELIVERY_ACCEPTANCE", "--decision", "APPROVED", *root]):
         assert invoke(app, command).exit_code == 0
     assert "DELIVERED" in invoke(app, ["status", "--project", "customer-self-service", *root]).output

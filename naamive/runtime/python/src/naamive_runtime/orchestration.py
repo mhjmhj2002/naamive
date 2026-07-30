@@ -135,7 +135,8 @@ def audit_timeline(repository_root: Path, project_id: str) -> list[dict[str, obj
         for path in sorted((root / directory).glob("*.yaml")) if (root / directory).is_dir() else []:
             payload = yaml.safe_load(path.read_text(encoding="utf-8"))
             if isinstance(payload, dict):
-                rows.append({"occurred_at": payload.get(stamp), "kind": kind, "phase": payload.get("from_state"), "result": payload.get("decision") or payload.get("required_gate"), "cause": payload.get("rationale") or payload.get("trigger"), "next_action": "human decision" if kind == "gate-request" else None, "canonical_record": str(path.relative_to(repository_root))})
+                feedback = payload.get("feedback_snapshot") or payload.get("feedback_path")
+                rows.append({"occurred_at": payload.get(stamp), "kind": kind, "phase": payload.get("from_state"), "result": payload.get("decision") or payload.get("required_gate"), "cause": payload.get("rationale") or payload.get("trigger"), "feedback": feedback, "next_action": "human decision" if kind == "gate-request" else "run naamive start" if payload.get("decision") in {"REJECTED", "REWORK_REQUIRED"} else None, "canonical_record": str(path.relative_to(repository_root))})
     return sorted(rows, key=lambda item: (str(item.get("occurred_at") or ""), str(item["canonical_record"])))
 
 
@@ -339,12 +340,21 @@ def _evidence_files(target: Path) -> list[Path]:
     return [path for path in target.rglob("*") if path.is_file() and path.name != ".gitkeep"]
 
 
+def _rework_completion_criteria(project: Path, expected_output: str) -> str:
+    criteria = evidence_completion_criteria(expected_output)
+    feedback = _active_feedback_inputs(project)
+    if feedback:
+        return f"{criteria} This is authorized rework: add a non-empty Feedback tratado section that addresses every adjustment in {feedback[0].relative_to(project)}."
+    return criteria
+
+
 def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: str, agent: str, work_item: str, target_rel: str, inputs: list[Path], expected_output: str, agent_runner) -> tuple[str, Path]:
+    inputs = [*inputs, *_active_feedback_inputs(project)]
     execution_id = f"execution-{uuid4().hex}"
-    completion_criteria = evidence_completion_criteria(expected_output)
+    completion_criteria = _rework_completion_criteria(project, expected_output)
     if expected_output.endswith("/REVIEW.md"):
         completion_criteria = (
-            f"Produce {expected_output} with non-empty headings Critérios verificados and Resultado; "
+            f"Produce {expected_output} using YAML front matter evidence_schema_version: 1, artifact_type: {expected_output}, execution_id: <supplied execution_id>, with non-empty headings Critérios verificados and Resultado; "
             "the result must include the word approved, and the document must also include headings "
             "Execution ID, Escopo, Fonte, Responsável, Data, Premissas and Lacunas linked to the supplied execution_id."
         )
@@ -374,6 +384,7 @@ def _dispatch_analysis_agent(repository_root: Path, project: Path, project_id: s
 
 
 def _dispatch_project_round(repository_root: Path, project: Path, project_id: str, state: str, agent: str, work_item: str, target_rel: str, inputs: list[Path], expected_output: str, agent_runner) -> tuple[str, Path]:
+    inputs = [*inputs, *_active_feedback_inputs(project)]
     """Dispatch a non-analysis project round with a fully auditable context."""
     execution_id = f"execution-{uuid4().hex}"
     context = {
@@ -384,7 +395,7 @@ def _dispatch_project_round(repository_root: Path, project: Path, project_id: st
         "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
         "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none",
         "action_class": "WRITE", "expected_outputs": [expected_output],
-        "completion_criteria": evidence_completion_criteria(expected_output),
+        "completion_criteria": _rework_completion_criteria(project, expected_output),
     }
     create_execution(repository_root, context)
     advance_execution(repository_root, project_id, execution_id, "VALIDATING")
@@ -471,7 +482,19 @@ def _open_product_commitment_gate(repository_root: Path, project: Path, project_
     status["pending_gate"] = "PRODUCT_COMMITMENT"
     status["pending_transition_request"] = str(request.relative_to(repository_root))
     (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
+    _ensure_gate_feedback(project, "PRODUCT_COMMITMENT")
     return request
+
+
+def _ensure_gate_feedback(project: Path, gate_id: str) -> Path:
+    feedback = project / "gate-feedback" / f"{gate_id}.md"
+    if not feedback.exists():
+        feedback.parent.mkdir(parents=True, exist_ok=True)
+        feedback.write_text(
+            f"# Feedback do Gate — {gate_id}\n\n## Decisão\n\nREJECTED ou REWORK_REQUIRED\n\n## Módulos afetados\n\n- `module-id` (remova a linha se o impacto for de projeto)\n\n## Itens rejeitados\n\n- Descreva o item e o motivo.\n\n## Evidências revisadas\n\n- Referência à evidência.\n\n## Ajustes propostos\n\n- Ajuste necessário.\n\n## Responsável\n\nIdentidade responsável pela revisão.\n\n## Critério para nova submissão\n\nCritério objetivo de aceite.\n",
+            encoding="utf-8",
+        )
+    return feedback
 
 
 def open_human_gate(repository_root: Path, project_id: str, gate_id: str, to_state: str, rationale: str, evidence: list[str], actor: str = "human-cli", release_package_record: str | None = None) -> Path:
@@ -508,10 +531,69 @@ def open_human_gate(repository_root: Path, project_id: str, gate_id: str, to_sta
     status["pending_gate"] = gate_id
     status["pending_transition_request"] = str(request.relative_to(repository_root))
     (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
+    _ensure_gate_feedback(project, gate_id)
     return request
 
 
-def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, decision: str, actor: str, rationale: str) -> dict[str, object]:
+def _validated_gate_feedback(project: Path, gate_id: str, reference: str | None) -> Path:
+    path = project / (reference or f"gate-feedback/{gate_id}.md")
+    try:
+        path.relative_to(project)
+    except ValueError as error:
+        raise IntakeError("gate feedback must stay under the project") from error
+    if not path.is_file():
+        raise IntakeError("rejected gate requires a completed gate feedback document")
+    content = path.read_text(encoding="utf-8")
+    required = ("## Decisão", "## Módulos afetados", "## Itens rejeitados", "## Evidências revisadas", "## Ajustes propostos", "## Responsável", "## Critério para nova submissão")
+    if any(section not in content for section in required) or "Descreva o item e o motivo." in content:
+        raise IntakeError("gate feedback is incomplete")
+    return path
+
+
+def _freeze_gate_feedback(project: Path, gate_id: str, feedback: Path) -> Path:
+    """Create a content-addressed, append-only feedback version for rework.
+
+    The editable gate template is useful to the human reviewer, but must never
+    be the artifact supplied to an agent after a decision was recorded.
+    """
+    content = feedback.read_bytes()
+    digest = hashlib.sha256(content).hexdigest()
+    snapshot = project / "gate-feedback" / "history" / f"{gate_id}-{digest}.md"
+    if snapshot.exists():
+        if snapshot.read_bytes() != content:
+            raise IntakeError("gate feedback snapshot collision")
+        return snapshot
+    snapshot.parent.mkdir(parents=True, exist_ok=True)
+    snapshot.write_bytes(content)
+    return snapshot
+
+
+def _active_feedback_inputs(project: Path) -> list[Path]:
+    """Expose only the immutable, project-scoped feedback selected for rework."""
+    status = migrate_project_status(project)
+    reference = status.get("rework_feedback_snapshot") or status.get("rework_feedback")
+    if not isinstance(reference, str):
+        return []
+    path = project / reference
+    if not path.is_file():
+        raise IntakeError("recorded rework feedback snapshot is unavailable")
+    return [path]
+
+
+def _affected_modules(project: Path, feedback: Path) -> list[str]:
+    content = feedback.read_text(encoding="utf-8")
+    match = re.search(r"## Módulos afetados\n\n(.*?)(?:\n\n## |\Z)", content, re.DOTALL)
+    candidates = re.findall(r"`([a-z0-9]+(?:-[a-z0-9]+)*)`", match.group(1) if match else "")
+    modules = sorted(set(candidates))
+    if not modules:
+        modules = [path.name for path in _phase6_modules(project)]
+    available = {path.name for path in _phase6_modules(project)}
+    if any(module not in available for module in modules):
+        raise IntakeError("gate feedback references an unknown affected module")
+    return modules
+
+
+def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, decision: str, actor: str, rationale: str, feedback_reference: str | None = None) -> dict[str, object]:
     """Resolve a pending generic human gate, rejecting stale or mismatched requests."""
     if decision not in {"APPROVED", "REJECTED", "REWORK_REQUIRED"} or not rationale.strip():
         raise IntakeError("valid decision and rationale are required")
@@ -546,6 +628,7 @@ def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, dec
             # Detect a package changed between preparation and the operational decision.
             temporary = dict(status, release_authorized=release_record)
             _load_authorized_release_package(repository_root, project_id, project, temporary)
+        feedback = _validated_gate_feedback(project, gate_id, feedback_reference) if decision in {"REJECTED", "REWORK_REQUIRED"} else None
         decision_id = f"gate-{uuid4().hex}"
         decision_payload: dict[str, object] = {
             "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": gate_id,
@@ -554,6 +637,11 @@ def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, dec
         }
         if isinstance(release_record, str):
             decision_payload["release_package_record"] = release_record
+        snapshot: Path | None = None
+        if feedback:
+            snapshot = _freeze_gate_feedback(project, gate_id, feedback)
+            decision_payload["feedback_path"] = str(feedback.relative_to(project))
+            decision_payload["feedback_snapshot"] = str(snapshot.relative_to(project))
         decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", decision_payload, "gate_decision")
         status.pop("pending_transition_request", None)
         if decision == "APPROVED" and gate_id == "RELEASE_AUTHORIZATION":
@@ -572,9 +660,26 @@ def resolve_human_gate(repository_root: Path, project_id: str, gate_id: str, dec
             _transition(project, status, str(request["to_state"]), actor, rationale.strip(), str(decision_path.relative_to(repository_root)), "HUMAN_DECISION")
         else:
             status["pending_gate"] = "none"
-            status["next_action"] = "Submit a new proposal." if decision == "REJECTED" else "Address the recorded decision rationale and submit a new proposal."
+            if snapshot:
+                status["rework_feedback"] = str(feedback.relative_to(project))
+                status["rework_feedback_snapshot"] = str(snapshot.relative_to(project))
+                status["rework_gate"] = gate_id
+            status["next_action"] = "Update the recorded gate feedback and run naamive start to submit the authorized rework."
             status["last_gate_decision"] = str(decision_path.relative_to(repository_root))
             (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
+            if gate_id == "DELIVERY_ACCEPTANCE" and feedback and (project / "modules").is_dir() and any((project / "modules").iterdir()):
+                affected = _affected_modules(project, snapshot)
+                apply_state_transition(repository_root, project_id, "VALIDATION", actor=actor, reason="Delivery acceptance feedback requires scoped validation rework.", evidence=[str(decision_path.relative_to(repository_root))], control_type="HUMAN_DECISION", expected_state="DELIVERY")
+                for module_id in affected:
+                    module = project / "modules" / module_id
+                    if str(_read_module_status(module)["current_state"]) == "READY_FOR_DELIVERY":
+                        apply_state_transition(repository_root, project_id, "IMPLEMENTING", scope_type="module", module_id=module_id, actor="naamive-runtime", reason="Accepted delivery feedback reopens affected module work.", evidence=[str(decision_path.relative_to(repository_root))], control_type="AUTOMATED_EVIDENCE", expected_state="READY_FOR_DELIVERY")
+                    for item in sorted((module / "planning" / "work-items").glob("*.md")):
+                        if work_item_status(project, module_id, item.stem) == "COMPLETED":
+                            set_work_item_status(project, module_id, item.stem, "AUTHORIZED")
+                refreshed = migrate_project_status(project)
+                refreshed["rework_modules"] = affected
+                (project / "STATUS.md").write_text(render_project_status(refreshed), encoding="utf-8")
         return {"project_id": project_id, "gate_id": gate_id, "state": str(request["to_state"]) if decision == "APPROVED" else decision, "decision_path": str(decision_path)}
 
 
@@ -688,7 +793,7 @@ def _validated_product_modules(candidates: list[dict[str, str]] | None, module_i
     return normalized
 
 
-def resolve_product_commitment(repository_root: Path, project_id: str, decision: str, actor: str, rationale: str, module_id: str | None = None, module_title: str | None = None, module_candidates: list[dict[str, str]] | None = None) -> dict[str, object]:
+def resolve_product_commitment(repository_root: Path, project_id: str, decision: str, actor: str, rationale: str, module_id: str | None = None, module_title: str | None = None, module_candidates: list[dict[str, str]] | None = None, feedback_reference: str | None = None) -> dict[str, object]:
     if decision not in {"APPROVED", "REJECTED", "REWORK_REQUIRED"} or not rationale.strip():
         raise IntakeError("valid decision and rationale are required")
     candidates = _validated_product_modules(module_candidates, module_id, module_title) if decision == "APPROVED" else []
@@ -724,14 +829,23 @@ def resolve_product_commitment(repository_root: Path, project_id: str, decision:
             import shutil
             shutil.rmtree(stage_root, ignore_errors=True)
             raise
-    decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", {
+    feedback = _validated_gate_feedback(project, "PRODUCT_COMMITMENT", feedback_reference) if decision != "APPROVED" else None
+    snapshot = _freeze_gate_feedback(project, "PRODUCT_COMMITMENT", feedback) if feedback else None
+    payload = {
         "gate_decision_id": decision_id, "transition_request_id": request["transition_request_id"], "gate_id": "PRODUCT_COMMITMENT",
         "decision": decision, "control_type": "HUMAN_DECISION", "decided_by": actor, "authority_basis": "human product commitment",
         "evidence_reviewed": list(request.get("evidence", [])), "rationale": rationale.strip(), "approved_modules": candidates, "decided_at": _now(),
-    }, "gate_decision")
+    }
+    if feedback:
+        payload["feedback_path"] = str(feedback.relative_to(project))
+        payload["feedback_snapshot"] = str(snapshot.relative_to(project))
+    decision_path = _write_immutable(audit_root(repository_root, project_id) / "gate-decisions" / f"{decision_id}.yaml", payload, "gate_decision")
     if decision != "APPROVED":
         status["pending_gate"] = "none"
         status.pop("pending_transition_request", None)
+        status["rework_feedback"] = str(feedback.relative_to(project)) if feedback else ""
+        status["rework_feedback_snapshot"] = str(snapshot.relative_to(project)) if snapshot else ""
+        status["rework_gate"] = "PRODUCT_COMMITMENT"
         status["next_action"] = "Submit a new product proposal." if decision == "REJECTED" else "Address the recorded product commitment rationale and submit a new proposal."
         status["last_gate_decision"] = str(decision_path.relative_to(repository_root))
         (project / "STATUS.md").write_text(render_project_status(status), encoding="utf-8")
@@ -787,6 +901,10 @@ def _orchestrate_analysis_definition(repository_root: Path, project: Path, proje
 
 def _phase6_modules(project: Path) -> list[Path]:
     modules = sorted(path for path in (project / "modules").glob("*") if path.is_dir()) if (project / "modules").is_dir() else []
+    status = migrate_project_status(project)
+    scoped = status.get("rework_modules")
+    if isinstance(scoped, list):
+        modules = [module for module in modules if module.name in scoped]
     if not modules:
         raise IntakeError("phase 6 requires at least one materialized module")
     return modules
@@ -924,6 +1042,9 @@ def orchestrate_project(repository_root: Path, project_id: str, agent_runner=run
     if state in {"ARCHITECTURE", "PLANNING"}:
         return _orchestrate_architecture_planning(repository_root, project, project_id, status, agent_runner)
     if state in {"IMPLEMENTATION", "VALIDATION", "DELIVERY"}:
+        if state == "VALIDATION" and isinstance(status.get("rework_modules"), list):
+            apply_state_transition(repository_root, project_id, "IMPLEMENTATION", actor="naamive-runtime", reason="Scoped delivery feedback resumes affected module implementation.", evidence=[str(status["rework_feedback"])], control_type="AUTOMATED_EVIDENCE", expected_state="VALIDATION")
+            return {"project_id": project_id, "current_state": "IMPLEMENTATION", "state": "COMPLETED"}
         if state == "IMPLEMENTATION":
             modules = _phase6_modules(project)
             if any(str(_read_module_status(module)["current_state"]) != "IMPLEMENTING" for module in modules):
@@ -996,10 +1117,56 @@ def orchestrate_until_blocked(repository_root: Path, project_id: str, agent_runn
     """
     rounds: list[dict[str, object]] = []
     while True:
+        module_round = _orchestrate_next_module_round(repository_root, project_id, agent_runner)
+        if module_round is not None:
+            rounds.append(module_round)
+            if module_round.get("state") != "COMPLETED":
+                return dict(module_round, rounds=rounds)
+            continue
         result = orchestrate_project(repository_root, project_id, agent_runner)
         rounds.append(result)
         if result.get("state") != "COMPLETED":
             return dict(result, rounds=rounds)
+
+
+def _orchestrate_next_module_round(repository_root: Path, project_id: str, agent_runner) -> dict[str, object] | None:
+    """Select exactly one eligible module action; callers loop until a real stop."""
+    project = repository_root / "projects" / project_id
+    status = migrate_project_status(project)
+    if status.get("pending_gate") not in (None, "", "none"):
+        return None
+    project_state = str(status["current_state"])
+    modules = _phase6_modules(project) if (project / "modules").is_dir() else []
+    module_states = {module.name: str(_read_module_status(module)["current_state"]) for module in modules}
+
+    # Module evidence belongs before the corresponding project round.
+    if project_state == "ARCHITECTURE":
+        candidate = next((name for name, state in module_states.items() if state in {"IDENTIFIED", "DEFINED"}), None)
+        if candidate:
+            return orchestrate_module_architecture_planning(repository_root, project_id, candidate, agent_runner)
+    if project_state == "PLANNING":
+        candidate = next((name for name, state in module_states.items() if state == "ARCHITECTED"), None)
+        if candidate:
+            return orchestrate_module_architecture_planning(repository_root, project_id, candidate, agent_runner)
+        candidate = next((name for name, state in module_states.items() if state == "PLANNED" and not list((project / "modules" / name / "planning" / "work-items").glob("*.md"))), None)
+        if candidate:
+            # The reviewed module delivery plan is the authorization source for the
+            # smallest executable slice. More granular planning remains an agent output.
+            item = create_work_item(project, candidate, "implement-mvp", "Implement approved module MVP",
+                objective="Implement the approved module scope, including a usable application, automated tests and local usage instructions.",
+                write_scope=[f"modules/{candidate}/applications", f"modules/{candidate}/documentation"], dependencies=[], priority="HIGH",
+                definition_of_ready=["Module architecture and delivery plan were independently reviewed."],
+                expected_evidence=[f"modules/{candidate}/tests/rules.md"],
+                authorization_reference=f"modules/{candidate}/planning/DELIVERY_PLAN.md")
+            return {"project_id": project_id, "module_id": candidate, "state": "COMPLETED", "work_item_path": str(item), "activity": "authorize-planned-work"}
+    if project_state == "IMPLEMENTATION":
+        candidate = next((name for name, state in module_states.items() if state == "PLANNED"), None)
+        if candidate:
+            items = sorted((project / "modules" / candidate / "planning" / "work-items").glob("*.md"))
+            authorized = next((item.stem for item in items if work_item_status(project, candidate, item.stem) == "AUTHORIZED"), None)
+            if authorized:
+                return dispatch_module_implementation(repository_root, project_id, candidate, authorized, agent_runner)
+    return None
 
 
 def orchestrate_module_architecture_planning(repository_root: Path, project_id: str, module_id: str, agent_runner=run_codex_agent) -> dict[str, object]:
@@ -1021,14 +1188,16 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
     target_rel = f"modules/{module_id}/{directory}"
     evidence_rel = f"{target_rel}/{filename}"
     execution_id = f"execution-{uuid4().hex}"
+    feedback_inputs = [str(path.relative_to(project)) for path in _active_feedback_inputs(project)]
+    base_inputs = (["analysis/domain/MODULE_PROPOSAL.md", "analysis/requirements/REQUIREMENTS.md", f"modules/{module_id}/MODULE.md"] if module_state == "IDENTIFIED" else [f"modules/{module_id}/MODULE.md"] if module_state == "DEFINED" else [f"modules/{module_id}/architecture/SOLUTION_ARCHITECTURE.md"])
     context = {
         "execution_id": execution_id, "project_id": project_id, "scope_type": "module", "module_id": module_id,
         "state_machine": "naamive/orchestration/MODULE_LIFECYCLE.md", "current_state": module_state, "requested_transition": "evidence-only",
         "agent_id": agent, "authorized_work_item": work_item, "target_path": target_rel,
-        "input_artifacts": (["analysis/domain/MODULE_PROPOSAL.md", "analysis/requirements/REQUIREMENTS.md", f"modules/{module_id}/MODULE.md"] if module_state == "IDENTIFIED" else [f"modules/{module_id}/MODULE.md"] if module_state == "DEFINED" else [f"modules/{module_id}/architecture/SOLUTION_ARCHITECTURE.md"]), "required_evidence": [evidence_rel],
+        "input_artifacts": [*base_inputs, *feedback_inputs], "required_evidence": [evidence_rel],
         "authority_context": "INDEPENDENT_REVIEW", "dispatch_id": f"dispatch-{uuid4().hex}", "activity": work_item,
         "allowed_write_paths": [target_rel], "allowed_tools": ["codex"], "allowed_network_targets": [], "credential_scope": "none", "action_class": "WRITE",
-        "expected_outputs": [evidence_rel], "completion_criteria": evidence_completion_criteria(evidence_rel),
+        "expected_outputs": [evidence_rel], "completion_criteria": _rework_completion_criteria(project, evidence_rel),
     }
     create_execution(repository_root, context)
     advance_execution(repository_root, project_id, execution_id, "VALIDATING")
@@ -1036,7 +1205,7 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
     target = project / target_rel
     target.mkdir(parents=True, exist_ok=True)
     try:
-        inputs = [project / str(reference) for reference in context["input_artifacts"]]
+        inputs = [project / str(reference) for reference in context["input_artifacts"]] + _active_feedback_inputs(project)
         result = agent_runner(repository_root, project_id, agent, work_item, target, inputs, execution_context=context)
     except Exception as error:
         advance_execution(repository_root, project_id, execution_id, "FAILED", **_failure_details(error))
@@ -1051,14 +1220,14 @@ def orchestrate_module_architecture_planning(repository_root: Path, project_id: 
     review_target_rel = f"modules/{module_id}/{directory}/reviews"
     review_rel = f"{review_target_rel}/REVIEW.md"
     review_id = f"execution-{uuid4().hex}"
-    review_context = dict(context, execution_id=review_id, agent_id="governance-assurance", authorized_work_item=f"review-{work_item}", target_path=review_target_rel, input_artifacts=[evidence_rel], required_evidence=[review_rel], dispatch_id=f"dispatch-{uuid4().hex}", activity=f"review-{work_item}", allowed_write_paths=[review_target_rel], expected_outputs=[review_rel])
+    review_context = dict(context, execution_id=review_id, agent_id="governance-assurance", authorized_work_item=f"review-{work_item}", target_path=review_target_rel, input_artifacts=[evidence_rel, *feedback_inputs], required_evidence=[review_rel], dispatch_id=f"dispatch-{uuid4().hex}", activity=f"review-{work_item}", allowed_write_paths=[review_target_rel], expected_outputs=[review_rel])
     create_execution(repository_root, review_context)
     advance_execution(repository_root, project_id, review_id, "VALIDATING")
     advance_execution(repository_root, project_id, review_id, "DISPATCHED")
     review_target = project / review_target_rel
     review_target.mkdir(parents=True, exist_ok=True)
     try:
-        result = agent_runner(repository_root, project_id, "governance-assurance", f"review-{work_item}", review_target, [evidence], execution_context=review_context)
+        result = agent_runner(repository_root, project_id, "governance-assurance", f"review-{work_item}", review_target, [evidence, *[project / item for item in feedback_inputs]], execution_context=review_context)
     except Exception as error:
         advance_execution(repository_root, project_id, review_id, "FAILED", **_failure_details(error))
         if isinstance(error, IntakeError):
@@ -1370,7 +1539,7 @@ def dispatch_module_implementation(repository_root: Path, project_id: str, modul
     advance_execution(repository_root, project_id, execution_id, "VALIDATING")
     advance_execution(repository_root, project_id, execution_id, "DISPATCHED")
     try:
-        result = agent_runner(repository_root, project_id, "implementation", work_item_id, module, [item_path], execution_context=context)
+        result = agent_runner(repository_root, project_id, "implementation", work_item_id, module, [item_path, *_active_feedback_inputs(project)], execution_context=context)
     except Exception as error:
         set_work_item_status(project, module_id, work_item_id, "BLOCKED")
         advance_execution(repository_root, project_id, execution_id, "FAILED")

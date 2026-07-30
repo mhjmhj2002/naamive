@@ -99,6 +99,16 @@ def orchestrate(
         fail(error)
 
 
+@app.command("start")
+def start(
+    project: Optional[str] = typer.Option(None, "--project"),
+    request: Optional[str] = typer.Option(None, "--request"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Start or continue a project until a human gate or a real stop condition."""
+    orchestrate(project=project, request=request, root=root)
+
+
 @app.command()
 def cancel(
     project: str = typer.Option(..., "--project"),
@@ -169,6 +179,7 @@ def decide(
     module_title: Optional[str] = typer.Option(None, "--module-title"),
     module_candidate: list[str] = typer.Option([], "--module-candidate", help="JSON candidate: module_id, title, justification and owner; repeat for each module."),
     reason: str = typer.Option("Human gate decision.", "--reason"),
+    feedback: Optional[str] = typer.Option(None, "--feedback", help="Project-relative completed GATE_FEEDBACK.md for rejection or rework."),
     root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
 ) -> None:
     """Apply a human decision to a waiting project intake request."""
@@ -194,9 +205,9 @@ def decide(
                     if not isinstance(candidate, dict):
                         raise IntakeError("module-candidate must be a JSON object")
                     candidates.append(candidate)
-                emit(resolve_product_commitment(repo, project, decision, "human-cli", reason, module, module_title, candidates))
+                emit(resolve_product_commitment(repo, project, decision, "human-cli", reason, module, module_title, candidates, feedback))
                 return
-            emit(resolve_human_gate(repo, project, gate, decision, "human-cli", reason))
+            emit(resolve_human_gate(repo, project, gate, decision, "human-cli", reason, feedback))
             return
         if gate != "REGISTER_PROJECT":
             raise IntakeError("only REGISTER_PROJECT is implemented for requests")
@@ -210,63 +221,6 @@ def decide(
             return
         write_request(parsed, "REJECTED")
         emit({"request_id": request, "state": "REJECTED", "decision": decision})
-    except IntakeError as error:
-        fail(error)
-
-
-@app.command("create-work-item")
-def create_module_work_item(
-    project: str = typer.Option(..., "--project"),
-    module: str = typer.Option(..., "--module"),
-    work_item: str = typer.Option(..., "--work-item"),
-    title: str = typer.Option(..., "--title"),
-    objective: str = typer.Option(..., "--objective"),
-    write_scope: list[str] = typer.Option(..., "--write-scope"),
-    dependency: list[str] = typer.Option([], "--dependency"),
-    priority: str = typer.Option(..., "--priority"),
-    ready_criterion: list[str] = typer.Option(..., "--ready-criterion"),
-    expected_evidence: list[str] = typer.Option(..., "--expected-evidence"),
-    authorization: str = typer.Option(..., "--authorization"),
-    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
-) -> None:
-    """Create an authorized work item owned by an existing module."""
-    try:
-        project_path = project_directory(repository_root(root), project)
-        path = create_work_item(project_path, module, work_item, title, objective=objective, write_scope=write_scope, dependencies=dependency, priority=priority, definition_of_ready=ready_criterion, expected_evidence=expected_evidence, authorization_reference=authorization)
-    except IntakeError as error:
-        fail(error)
-    emit({"project_id": project, "module_id": module, "work_item_id": work_item, "work_item_path": str(path), "state": "AUTHORIZED"})
-
-
-@app.command("orchestrate-module")
-def orchestrate_module(
-    project: str = typer.Option(..., "--project"),
-    module: str = typer.Option(..., "--module"),
-    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
-) -> None:
-    """Execute the next eligible architecture or planning round for one module."""
-    try:
-        agent_runner = resolve_agent_runner()
-        if agent_runner is run_codex_agent:
-            codex_preflight()
-        emit(orchestrate_module_architecture_planning(repository_root(root), project, module, agent_runner=agent_runner))
-    except IntakeError as error:
-        fail(error)
-
-
-@app.command("run-implementation")
-def run_implementation(
-    project: str = typer.Option(..., "--project"),
-    module: str = typer.Option(..., "--module"),
-    work_item: str = typer.Option(..., "--work-item"),
-    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
-) -> None:
-    """Dispatch one authorized, dependency-ready module implementation item."""
-    try:
-        agent_runner = resolve_agent_runner()
-        if agent_runner is run_codex_agent:
-            codex_preflight()
-        emit(dispatch_module_implementation(repository_root(root), project, module, work_item, agent_runner=agent_runner))
     except IntakeError as error:
         fail(error)
 
