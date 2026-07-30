@@ -1,0 +1,10 @@
+format_version: 1
+record_type: deletion_proof
+project_id: catalog-e2e-20260729
+prior_state: CANCELLED
+authorization: CLI exact project confirmation
+deleted_paths:
+- projects/catalog-e2e-20260729
+- naamive/registries/project-intake/catalog-e2e-20260729
+- naamive/registries/orchestration/catalog-e2e-20260729
+deleted_at: '2026-07-29T19:15:58.290328+00:00'

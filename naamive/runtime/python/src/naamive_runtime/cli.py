@@ -8,8 +8,8 @@ import typer
 
 from .intake import IntakeError, initialize_request, materialize_project, parse_request, reject_request_document, request_path, validate_request, write_request
 from .project import cancel_project, migrate_project_status, permanently_delete_project, project_directory, read_project_status, render_project_status
-from .codex_executor import run_codex_agent
-from .orchestration import cancel_module, create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_module_architecture_planning, orchestrate_project, pause_or_resume_scope, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment, return_to_implementation_for_finding, start_evolution
+from .codex_executor import codex_preflight, run_codex_agent
+from .orchestration import audit_timeline, cancel_module, create_work_item, dispatch_module_implementation, open_human_gate, orchestrate_module_architecture_planning, orchestrate_until_blocked, pause_or_resume_scope, recover_interrupted_execution, register_module_consumption, resolve_human_gate, resolve_module_architecture_gate, resolve_product_commitment, return_to_implementation_for_finding, start_evolution
 
 
 app = typer.Typer(add_completion=False, no_args_is_help=True, help="NAAMIVE orchestration runtime")
@@ -49,6 +49,15 @@ def init_project_request(
     emit({"request_id": request_id, "request_path": str(path), "state": "DRAFT"})
 
 
+@app.command("preflight")
+def preflight() -> None:
+    """Verify the stable Codex CLI configuration before starting a dispatch."""
+    try:
+        emit(codex_preflight())
+    except IntakeError as error:
+        fail(error)
+
+
 @app.command()
 def orchestrate(
     project: Optional[str] = typer.Option(None, "--project"),
@@ -63,7 +72,10 @@ def orchestrate(
         if project and request:
             raise IntakeError("provide only one of --project or --request")
         if project:
-            emit(orchestrate_project(repo, project, agent_runner=resolve_agent_runner()))
+            agent_runner = resolve_agent_runner()
+            if agent_runner is run_codex_agent:
+                codex_preflight()
+            emit(orchestrate_until_blocked(repo, project, agent_runner=agent_runner))
             return
 
         path = request_path(repo, request or "")
@@ -116,6 +128,18 @@ def status(
     except IntakeError as error:
         fail(error)
     emit({"project_id": project, "current_state": status_record["current_state"], "state_category": status_record.get("state_category", "legacy"), "status_path": str(project_path / "STATUS.md"), "history_path": str(project_path / "STATUS_HISTORY.md")})
+
+
+@app.command("audit-timeline")
+def show_audit_timeline(
+    project: str = typer.Option(..., "--project"),
+    root: Optional[Path] = typer.Option(None, "--repository-root", file_okay=False),
+) -> None:
+    """Show the chronological, human-readable projection of project audit records."""
+    try:
+        emit({"project_id": project, "timeline": audit_timeline(repository_root(root), project)})
+    except IntakeError as error:
+        fail(error)
 
 
 @app.command("delete-project")
@@ -222,7 +246,10 @@ def orchestrate_module(
 ) -> None:
     """Execute the next eligible architecture or planning round for one module."""
     try:
-        emit(orchestrate_module_architecture_planning(repository_root(root), project, module, agent_runner=resolve_agent_runner()))
+        agent_runner = resolve_agent_runner()
+        if agent_runner is run_codex_agent:
+            codex_preflight()
+        emit(orchestrate_module_architecture_planning(repository_root(root), project, module, agent_runner=agent_runner))
     except IntakeError as error:
         fail(error)
 
@@ -236,7 +263,10 @@ def run_implementation(
 ) -> None:
     """Dispatch one authorized, dependency-ready module implementation item."""
     try:
-        emit(dispatch_module_implementation(repository_root(root), project, module, work_item, agent_runner=resolve_agent_runner()))
+        agent_runner = resolve_agent_runner()
+        if agent_runner is run_codex_agent:
+            codex_preflight()
+        emit(dispatch_module_implementation(repository_root(root), project, module, work_item, agent_runner=agent_runner))
     except IntakeError as error:
         fail(error)
 

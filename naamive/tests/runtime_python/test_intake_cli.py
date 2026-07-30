@@ -214,6 +214,7 @@ def test_orchestrate_module_exposes_the_next_module_round(tmp_path: Path, monkey
         return expected
 
     monkeypatch.setattr(cli, "orchestrate_module_architecture_planning", fake_orchestrator)
+    monkeypatch.setattr(cli, "codex_preflight", lambda: {"authenticated": "test-double"})
     result = runner.invoke(app, ["orchestrate-module", "--project", "customer-self-service", "--module", "catalog", "--repository-root", str(repository)])
 
     assert result.exit_code == 0, result.output

@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 
 from naamive_runtime import codex_executor
-from naamive_runtime.codex_executor import CodexProfile, _scope_violations, canonical_work_branch, prepare_git_iteration, run_codex_agent, verify_git_iteration
+from naamive_runtime.codex_executor import CodexProfile, _scope_violations, canonical_work_branch, codex_command, codex_preflight, prepare_git_iteration, run_codex_agent, verify_git_iteration
 from naamive_runtime.intake import IntakeError
 
 
@@ -34,6 +34,33 @@ def context() -> dict[str, object]:
 
 def test_derives_canonical_module_branch() -> None:
     assert canonical_work_branch(context()) == "work/sample/catalog/catalog-rules"
+
+
+def test_codex_command_uses_explicit_stable_binary(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    binary = tmp_path / "codex"
+    binary.write_text("#!/bin/sh\n", encoding="utf-8")
+    binary.chmod(0o755)
+    monkeypatch.setenv("NAAMIVE_CODEX_COMMAND", str(binary))
+    assert codex_command() == str(binary.resolve())
+
+
+def test_codex_preflight_records_configured_version(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    binary = tmp_path / "codex"
+    binary.write_text("#!/bin/sh\necho codex-test-1.0\n", encoding="utf-8")
+    binary.chmod(0o755)
+    monkeypatch.setenv("NAAMIVE_CODEX_COMMAND", str(binary))
+    monkeypatch.setenv("NAAMIVE_CODEX_AUTH_VERIFIED", "true")
+    assert codex_preflight()["version"] == "codex-test-1.0"
+
+
+def test_codex_preflight_rejects_unattested_authentication(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    binary = tmp_path / "codex"
+    binary.write_text("#!/bin/sh\necho codex-test-1.0\n", encoding="utf-8")
+    binary.chmod(0o755)
+    monkeypatch.setenv("NAAMIVE_CODEX_COMMAND", str(binary))
+    monkeypatch.delenv("NAAMIVE_CODEX_AUTH_VERIFIED", raising=False)
+    with pytest.raises(IntakeError, match="AUTH_VERIFIED"):
+        codex_preflight()
 
 
 def test_git_iteration_creates_branch_and_records_scoped_commit(tmp_path: Path) -> None:

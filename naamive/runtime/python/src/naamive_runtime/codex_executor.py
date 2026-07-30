@@ -4,6 +4,8 @@ import shutil
 import subprocess
 import os
 import re
+import tempfile
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -18,17 +20,47 @@ class CodexProfile:
 
 
 def codex_command() -> str:
+    """Resolve the explicitly configured Codex binary, if any.
+
+    A launcher can set ``NAAMIVE_CODEX_COMMAND`` once for terminals and IDEs;
+    accepting an arbitrary IDE cache here would make dispatch non-reproducible.
+    """
+    configured = os.environ.get("NAAMIVE_CODEX_COMMAND")
+    if configured:
+        candidate = Path(configured).expanduser()
+        if not candidate.is_file() or not os.access(candidate, os.X_OK):
+            raise IntakeError("NAAMIVE_CODEX_COMMAND must name an executable Codex CLI")
+        if "/.cache/JetBrains/" in str(candidate):
+            raise IntakeError("NAAMIVE_CODEX_COMMAND must not point to an IDE cache; install Codex in a stable location")
+        return str(candidate.resolve())
     command = shutil.which("codex")
     if not command:
         raise IntakeError("Codex CLI not found on PATH; install or expose codex before dispatching an agent")
     return command
 
 
+def codex_preflight() -> dict[str, str]:
+    """Verify the configured CLI before a real dispatch is created."""
+    command = codex_command()
+    try:
+        result = subprocess.run([command, "--version"], capture_output=True, text=True, timeout=15)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise IntakeError(f"Codex preflight could not execute configured CLI: {error}") from error
+    if result.returncode != 0:
+        raise IntakeError("Codex preflight failed; authenticate or repair the configured Codex CLI")
+    if os.environ.get("NAAMIVE_CODEX_AUTH_VERIFIED", "").lower() != "true":
+        raise IntakeError("Codex preflight requires NAAMIVE_CODEX_AUTH_VERIFIED=true from the managed launcher or CI")
+    return {"command": command, "version": (result.stdout or result.stderr).strip()[:200], "authenticated": "verified-by-launcher"}
+
+
 def _workspace_snapshot(repository_root: Path) -> dict[Path, tuple[int, int]]:
     snapshot: dict[Path, tuple[int, int]] = {}
     for path in repository_root.rglob("*"):
         relative = path.relative_to(repository_root)
-        if path.is_file() and ".git" not in relative.parts and ".venv" not in relative.parts:
+        # IDE workspace state is incidental local metadata.  It is never an
+        # authorized write target and is deliberately excluded from collision
+        # detection so an open IDE cannot be attributed to an agent dispatch.
+        if path.is_file() and ".git" not in relative.parts and ".venv" not in relative.parts and ".idea" not in relative.parts:
             stat = path.stat()
             snapshot[relative] = (stat.st_mtime_ns, stat.st_size)
     return snapshot
@@ -78,6 +110,43 @@ def _scope_violations(
         str(path) for path in changed
         if not any(path == allowed or allowed in path.parents for allowed in writable_paths)
     )
+
+
+@contextmanager
+def _ephemeral_worktree(repository_root: Path):
+    """Yield an isolated detached worktree and always remove it afterwards."""
+    if _git(repository_root, "rev-parse", "--is-inside-work-tree") != "true":
+        raise IntakeError("agent dispatch requires a Git worktree for isolation")
+    base = _git(repository_root, "rev-parse", "HEAD")
+    location = Path(tempfile.mkdtemp(prefix="naamive-dispatch-"))
+    location.rmdir()
+    try:
+        _git(repository_root, "worktree", "add", "--detach", str(location), base)
+        yield location
+    finally:
+        if location.exists():
+            subprocess.run(["git", "worktree", "remove", "--force", str(location)], cwd=repository_root, capture_output=True, text=True)
+            shutil.rmtree(location, ignore_errors=True)
+
+
+def _promote_authorized_output(source_root: Path, destination_root: Path, writable_paths: list[Path]) -> list[str]:
+    promoted: list[str] = []
+    for allowed in writable_paths:
+        source = source_root / allowed
+        if source.is_file():
+            destination = destination_root / allowed
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+            promoted.append(str(allowed))
+        elif source.is_dir():
+            for item in source.rglob("*"):
+                if item.is_file():
+                    relative = item.relative_to(source_root)
+                    destination = destination_root / relative
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(item, destination)
+                    promoted.append(str(relative))
+    return sorted(set(promoted))
 
 
 def prepare_git_iteration(repository_root: Path, context: dict[str, object]) -> tuple[str, str]:
@@ -146,6 +215,22 @@ def run_codex_agent(repository_root: Path, project_id: str, agent_id: str, work_
     }
     implementation_iteration = str(context.get("action_class", "")) == "IMPLEMENTATION"
     writable_paths = [Path(str(item)) for item in context.get("allowed_write_paths", [])] if implementation_iteration else [relative_target]
+    # Every real dispatch runs in an isolated checkout. Implementation promotes
+    # its validated commit by retaining the canonical branch; evidence rounds
+    # promote only their validated authorized files.
+    if not context.get("_isolated_workspace") and (repository_root / ".git").exists():
+        with _ephemeral_worktree(repository_root) as isolated:
+            isolated_context = dict(context, _isolated_workspace=True)
+            response = run_codex_agent(
+                isolated, project_id, agent_id, work_item, isolated / relative_target,
+                [isolated / path.relative_to(repository_root) for path in inputs], profile, isolated_context,
+            )
+            if not implementation_iteration:
+                response["promoted_paths"] = _promote_authorized_output(isolated, repository_root, writable_paths)
+            else:
+                response["promoted_paths"] = [str(response["commit"])]
+            response["isolation"] = "ephemeral-worktree"
+            return response
     before = _workspace_snapshot(repository_root)
     branch = before_head = None
     if implementation_iteration:
