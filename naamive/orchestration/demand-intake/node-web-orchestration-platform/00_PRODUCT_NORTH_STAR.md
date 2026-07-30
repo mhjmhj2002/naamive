@@ -1,7 +1,9 @@
 ---
 document_type: product-north-star
-status: DRAFT_FOR_BRAINSTORM
+status: APPROVED_FOR_PHASE_1
 created_at: 2026-07-30
+approved_at: 2026-07-30
+approved_by: NAAMIVE product and engineering
 scope: Node.js/TypeScript orchestration platform and responsive operator web application
 related_baseline: ../ORCHESTRATION_END_TO_END_AUDIT_GAPS_BACKLOG.md
 ---
@@ -99,6 +101,20 @@ em arquivo e H2 não serão usados como substitutos do PostgreSQL no fluxo norma
 Reconstrução automática do banco a partir de um ledger de arquivos não faz parte
 do MVP. Ela é uma evolução futura, caso backup/restore e volumes persistentes
 não atendam à necessidade de resiliência observada.
+
+## Área de artefatos externa
+
+Em runtime, o repositório NAAMIVE é somente leitura e nunca recebe projetos,
+logs, evidências ou estado de execução. A plataforma exige um `ArtifactStore`
+externo, persistente e parametrizável por `NAAMIVE_ARTIFACT_STORE_URI`. No MVP,
+um volume/diretório de rede montado usa o adaptador `file://`; adaptadores de
+object storage podem ser adicionados depois.
+
+PostgreSQL mantém a auditoria operacional e referências imutáveis. O
+repositório externo do produto mantém somente código, testes, documentação,
+commits e PRs. Relatórios, evidências, logs sanitizados e snapshots de gate vão
+ao `ArtifactStore`, com URI, chave, hash, schema e vínculo opcional ao commit
+Git. O contrato detalhado está em `03_ARTIFACT_STORAGE_AND_AUDIT_CONTRACT.md`.
 
 ## Fila e despacho assíncrono do MVP
 
@@ -250,6 +266,9 @@ runtime Node. A remoção deve ser uma mudança explícita, revisada e rastreáv
 - **Máquina de estados soberana:** ela é o único componente que autoriza uma
   transição e define elegibilidade do próximo trabalho; agentes não editam
   estado canônico diretamente.
+- **Workflow versionado por dados:** estados de negócio, transições, guards,
+  efeitos e mapeamentos são definições publicadas no PostgreSQL; o runtime Node
+  interpreta essas definições e não usa enums de negócio como fonte de verdade.
 - **Orquestração sem espera:** o retorno síncrono de um comando operacional é
   apenas `ACCEPTED` com `operation_id`; progresso e resultado chegam por eventos.
 - **Sequência antes de paralelismo:** apenas um agente executa por vez no MVP;
@@ -307,11 +326,23 @@ revalidação. Política de transição define quais achados retornam
 automaticamente ao trabalho elegível e quais exigem gate humano, como segurança,
 mudança de escopo, arquitetura ou repetição acima do limite configurado.
 
-## Escopo do primeiro release operacional
+## Releases incrementais e limite do MVP
 
-Inclui criação de projeto, formulário de intake, submissão, início/continuidade
-assíncrona, tela de status, timeline por SSE, leitura de evidências, gates
-`REGISTER_PROJECT` e `PRODUCT_COMMITMENT`, e a trilha de auditoria.
+Cada fase é um release de valor completo para o operador: a fase seguinte
+preserva a jornada já utilizável e a amplia. Não há uma fundação isolada nem um
+“primeiro release” que dependa de outra fase para fazer sentido.
+
+| Release incremental | Valor demonstrável de ponta a ponta |
+| --- | --- |
+| Release 1 / Fase 1 | Criar, preencher, submeter, validar e registrar um projeto pela web, com operação assíncrona, status e auditoria. |
+| Release 2 / Fase 2 | Levar o projeto registrado até `PRODUCT_COMMITMENT`, com agentes, evidências e gate visíveis. |
+| Release 3 / Fase 3 | Levar um módulo por Dev, QA, finding, correção e revalidação pela web. |
+| Release 4 / Fase 4 — **MVP completo** | Entregar um projeto de referência até aceite, evidências e PR draft para `main`. |
+| Evolução operacional / Fase 5 | Sustentar operação, recuperação e futura expansão depois do MVP. |
+
+Portanto, o MVP de entrega de projeto compreende as Fases 1–4. A Fase 1 já é o
+primeiro release operacional e não inclui `PRODUCT_COMMITMENT`, que é o valor
+incremental específico da Fase 2.
 
 O MVP é de **operador único e mono-organização**. Não haverá multitenancy,
 gestão de usuários, convite, troca de organização ou matriz de permissões no
