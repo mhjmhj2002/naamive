@@ -227,6 +227,23 @@ janelas de execução. Na Fase 2, evidências aparecem como resumo sanitizado,
 tipo, hash e data; abertura do conteúdo completo permanece fora da tela inicial
 e será evoluída somente quando houver autorização de acesso adequada.
 
+**Decisão inicial — gate e aceite:** `REVIEW_PRODUCT_COMMITMENT` com
+`READY_FOR_GATE` abre `PRODUCT_COMMITMENT` contendo resumos, módulos
+consolidados, parecer, riscos/findings, hashes e timestamps. O operador pode
+aprovar, alcançando `PRODUCT_COMMITMENT`, ou solicitar ajustes com feedback
+obrigatório, retornando somente a requisitos e nova revisão. O E2E usa
+adaptador controlado/determinístico para cobrir aprovação e ajustes; execução
+real do Codex é smoke separado.
+
+**Decisão inicial — cancelamento/arquivamento global:** `ARCHIVE_PROJECT` é uma
+ação administrativa disponível em qualquer estado ativo do ciclo de vida,
+inclusive durante análise, requisitos, revisão ou gate; ela não depende nem é
+bloqueada por uma decisão de gate. A web exige apenas confirmação explícita
+(`Você realmente quer cancelar e arquivar este projeto?`) e motivo. O runtime
+interrompe/cancela de forma governada qualquer job ativo, registra evento e
+evidência de arquivamento e então aplica o arquivamento lógico definido em
+I-005. Projetos já arquivados não oferecem a ação novamente.
+
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F2-01 | Portar análise, proposta de módulos, requisitos e revisão com testes de paridade críticos. | Regressão do Python; mapear cada controle relevante para teste Node. |
