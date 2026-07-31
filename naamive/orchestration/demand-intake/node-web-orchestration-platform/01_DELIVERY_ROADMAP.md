@@ -185,13 +185,13 @@ as regras de atualização da tabela de tarefas, pendências e issues.
    e próxima ação a web exibe em cada etapa, sem simular progresso?
 5. **Gate e aceite:** quais dados entram na decisão de `PRODUCT_COMMITMENT` e
    como o E2E controlado valida o fluxo sem depender da variabilidade da IA?
-6. **Decisão de módulos:** no gate, o operador aprova/rejeita o pacote inteiro
+6. **Decisão de módulos — RESOLVIDA:** no gate, o operador aprova/rejeita o pacote inteiro
    ou seleciona módulos individualmente, preservando a decisão auditável de
    cada módulo?
-7. **Workflow publicado:** quais códigos exatos de estados, triggers, guards e
+7. **Workflow publicado — RESOLVIDA:** quais códigos exatos de estados, triggers, guards e
    effects compõem `PROJECT_DISCOVERY` v1, incluindo ajustes e arquivamento
    global?
-8. **Launcher Codex:** qual comando/launcher suportado, diretório de trabalho,
+8. **Launcher Codex — RESOLVIDA:** qual comando/launcher suportado, diretório de trabalho,
    identidade e limite de permissões o adaptador Node usa no ambiente local?
 
 **Decisão inicial — início e jobs:** o botão/comando será
@@ -251,6 +251,31 @@ bloqueada por uma decisão de gate. A web exige apenas confirmação explícita
 interrompe/cancela de forma governada qualquer job ativo, registra evento e
 evidência de arquivamento e então aplica o arquivamento lógico definido em
 I-005. Projetos já arquivados não oferecem a ação novamente.
+
+**Decisão final — módulos no gate:** `PRODUCT_COMMITMENT` aprova ou solicita
+ajustes sobre o pacote consolidado inteiro; não haverá seleção individual de
+módulos na Fase 2. A análise sugere e requisitos consolida os módulos. Decisão
+por módulo pertence à Fase 3, quando cada módulo passa a ter ciclo próprio.
+
+**Decisão final — workflow `PROJECT_DISCOVERY` v1:** estados e transições
+publicados: `REGISTERED` -- `START_PRODUCT_DISCOVERY` →
+`ANALYSIS_IN_PROGRESS` → `REQUIREMENTS_IN_PROGRESS` →
+`REVIEW_IN_PROGRESS` → `WAITING_FOR_PRODUCT_COMMITMENT`; aprovação do gate leva
+a `PRODUCT_COMMITMENT` e solicitação de ajustes retorna a
+`REQUIREMENTS_IN_PROGRESS`. De qualquer estado ativo,
+`ARCHIVE_PROJECT` leva a `ARCHIVING` e, após cancelamento governado de trabalho
+ativo e evidência válida, a `ARCHIVED`. Guards exigem estado de origem, lease e
+idempotência válidos, evidência completa, versão atual de gate e, para
+arquivamento, confirmação e motivo.
+
+**Decisão final — launcher Codex:** o adaptador Node invoca processo filho por
+`NAAMIVE_CODEX_COMMAND=codex`, usa workdir temporário por execução em
+`NAAMIVE_CODEX_WORKDIR` fora do repositório NAAMIVE e respeita
+`NAAMIVE_CODEX_TIMEOUT_SECONDS`. Contexto é entregue em arquivo estruturado
+temporário, nunca por argumentos de shell; ambiente é mínimo e stdout/stderr
+brutos não são persistidos. Timeout encerra o processo e registra falha
+auditável. O launcher só devolve resultado/evidência sanitizados e nunca altera
+estado canônico diretamente.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
