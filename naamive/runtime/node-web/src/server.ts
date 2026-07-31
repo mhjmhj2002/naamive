@@ -10,6 +10,7 @@ import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
+const log = (entry: Record<string, unknown>) => console.info(JSON.stringify({ service: 'naamive-node-web', ...entry }));
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
 const respond = (response: ServerResponse, status: number, body: object) => { response.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': settings.webOrigin }); response.end(JSON.stringify(body)); };
 const decide = async (projectId: string, body: Record<string, unknown>) => withTransaction(async (client) => {
@@ -38,8 +39,10 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
   if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
-} catch (error) { const known=error instanceof ApiError ? error : new ApiError(500, 'INTERNAL_ERROR'); respond(response, known.status, { code: known.code, message: known.message }); } });
+} catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : new ApiError(500, 'INTERNAL_ERROR');
+  log({ level: 'error', request_id: requestId, method: request.method, route: new URL(request.url ?? '/', settings.webOrigin).pathname, status: known.status, code: known.code, error_kind: error instanceof Error ? error.constructor.name : 'UnknownError', database_code: typeof (error as { code?: unknown })?.code === 'string' ? (error as { code: string }).code : undefined });
+  respond(response, known.status, { code: known.code, message: known.message, request_id: requestId }); } });
 if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.js')) {
-  const server = createApiServer(); server.listen(settings.port, settings.host);
-  process.on('SIGTERM', async () => { server.close(); await pool.end(); });
+  const server = createApiServer(); server.listen(settings.port, settings.host, () => log({ level: 'info', event: 'server_started', url: `http://${settings.host}:${settings.port}`, artifact_store: 'configured', repository_roots: settings.repositoryRoots.length }));
+  process.on('SIGTERM', async () => { log({ level: 'info', event: 'server_stopping' }); server.close(); await pool.end(); });
 }
