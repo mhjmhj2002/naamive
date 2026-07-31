@@ -1,12 +1,11 @@
 # Runtime Node/Web — Fase 1
 
-Pré-requisitos: Node 24+, PostgreSQL 16+ e um diretório persistente para
-artefatos. Todos os comandos abaixo devem ser executados no diretório
+Pré-requisitos: consulte o [guia de pré-requisitos de ambiente](ENVIRONMENT_PREREQUISITES.md).
+Para instalar ou atualizar o runtime, consulte também o
+[guia de configuração do Node.js](NODE_SETUP.md). Todos os comandos abaixo
+devem ser executados no diretório
 `naamive/runtime/node-web`. Nele, copie `.env.example` para `.env`, ajuste as
 raízes permitidas e execute:
-
-Não sabe se possui Node.js 24+ ou como instalá-lo/atualizá-lo? Consulte o
-[guia de configuração do Node.js](NODE_SETUP.md) antes de continuar.
 
 ```sh
 cd naamive/runtime/node-web
