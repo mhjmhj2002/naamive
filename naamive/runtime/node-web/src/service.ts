@@ -30,8 +30,12 @@ const gitBinding = (path: string, requestedBase: unknown, dirtyConfirmation: unk
     const git = (...args: string[]) => execFileSync('git', ['-C', repositoryPath, ...args], { encoding: 'utf8' }).trim();
     const origin = git('remote', 'get-url', 'origin'); const normalizedOrigin = origin.replace(/\/$/, '').replace(/\.git$/, '');
     const explicitBase = typeof requestedBase === 'string' && requestedBase.trim();
-    const originHead = explicitBase ? '' : git('symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD').replace(/^origin\//, '');
-    const base = explicitBase || originHead; const baseSource = explicitBase ? 'PROJECT_CONFIGURATION' : 'ORIGIN_HEAD';
+    let originHead = '', baseSource = explicitBase ? 'PROJECT_CONFIGURATION' : 'ORIGIN_HEAD';
+    if (!explicitBase) {
+      try { originHead = git('symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD').replace(/^origin\//, ''); }
+      catch { originHead = git('branch', '--show-current'); baseSource = 'LOCAL_HEAD_FALLBACK'; }
+    }
+    const base = explicitBase || originHead;
     const sha = git('rev-parse', 'HEAD'); const dirty = git('status', '--porcelain');
     const confirmation = dirtyConfirmation as { confirmed?: unknown; reason?: unknown } | undefined;
     const dirtyReason = typeof confirmation?.reason === 'string' ? confirmation.reason.trim() : '';
