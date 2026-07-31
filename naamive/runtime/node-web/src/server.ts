@@ -9,6 +9,7 @@ import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
+const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
 const respond = (response: ServerResponse, status: number, body: object) => { response.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': settings.webOrigin }); response.end(JSON.stringify(body)); };
 const decide = async (projectId: string, body: Record<string, unknown>) => withTransaction(async (client) => {
@@ -34,6 +35,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (match && request.method === 'POST' && match[2] === 'submit') return respond(response, 202, await submitIntake(match[1], request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (match && request.method === 'POST' && match[2] === 'decision') return respond(response, 200, await decide(match[1], await json(request)));
   if (match && request.method === 'GET' && match[2] === 'events') { response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive', 'access-control-allow-origin': settings.webOrigin }); let after=Number(url.searchParams.get('after') ?? 0); const timer=setInterval(async()=> { for (const item of await projectTimeline(match[1], after)) { after=Number(item.id); response.write(`id: ${item.id}\nevent: ${item.event_type}\ndata: ${JSON.stringify(item)}\n\n`); } }, 750); request.on('close', ()=>clearInterval(timer)); return; }
+  if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
   if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
 } catch (error) { const known=error instanceof ApiError ? error : new ApiError(500, 'INTERNAL_ERROR'); respond(response, known.status, { code: known.code, message: known.message }); } });
