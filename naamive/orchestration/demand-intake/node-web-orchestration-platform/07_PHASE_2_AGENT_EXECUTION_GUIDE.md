@@ -34,7 +34,9 @@ Trabalhe a partir da raiz do projeto. O runtime Python permanece `DEPRECATED` e
 
 ## Escopo e ordem obrigatória
 
-Execute somente F2-01 a F2-06. Não iniciar Fase 3.
+Execute somente F2-01 a F2-06. Não iniciar Fase 3. Execute a fase completa de
+forma contínua, sem pausas para pedir confirmação entre tarefas, salvo quando
+uma issue `BLOCKING` impedir o trabalho do escopo afetado.
 
 1. F2-01: portar análise, módulos sugeridos, requisitos e revisão com testes
    de paridade críticos.
@@ -149,13 +151,23 @@ aprovação até `PRODUCT_COMMITMENT` e arquivamento durante job/gate. Execuçã
 real do Codex é smoke separado; falha de ambiente externo deve ser registrada
 como issue, sem invalidar o aceite controlado.
 
-## Atualização do roadmap
+## Atualização do roadmap e issues
 
 Antes de cada tarefa, marque `TO DO → DOING`; após definição de pronto e
 validação, marque `DONE` com observação factual. Registre issues reais na tabela
-de issues do roadmap com ID sequencial, impacto, proposta e aprovação. Uma issue
-`BLOCKING` bloqueia apenas a tarefa/fase afetada. Ao fim, revise pendências,
-status e issues para eliminar divergências.
+de issues do roadmap imediatamente, com ID sequencial, fase/tarefa, impacto,
+status `OPEN`, descrição factual, proposta de solução e aprovação `PENDING`.
+
+- Uma issue `NON_BLOCKING` não interrompe a implementação: registre-a e
+  continue todas as tarefas independentes até concluir a fase.
+- Uma issue `BLOCKING` também deve ser registrada no mesmo formato, mas
+  interrompe a implementação da tarefa/escopo afetado. Continue apenas tarefas
+  independentes; no retorno ao operador, informe explicitamente a parada, a
+  evidência e a decisão/condição necessária para retomar.
+- Após aprovação, implemente a solução, execute as validações e atualize a
+  issue para `RESOLVED` com `Aprovada: YES`.
+
+Ao fim, revise pendências, status e issues para eliminar divergências.
 
 ## Critério de término
 
