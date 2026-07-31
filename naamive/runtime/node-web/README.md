@@ -17,6 +17,15 @@ npm run dev
 npm run worker
 ```
 
+Se você estiver na raiz do repositório (`~/git/naamive`), prefixe os comandos
+com o diretório do runtime em vez de executá-los diretamente:
+
+```sh
+npm --prefix naamive/runtime/node-web run worker
+```
+
+O mesmo formato funciona para `migrate`, `dev`, `reconcile`, `test` e `e2e`.
+
 Os comandos `start`, `dev`, `worker`, `migrate` e `reconcile` carregam
 automaticamente o arquivo `.env` desse diretório quando ele existe.
 
