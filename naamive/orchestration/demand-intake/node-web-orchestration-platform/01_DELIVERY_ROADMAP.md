@@ -209,6 +209,16 @@ módulos candidatos. `REVIEW_PRODUCT_COMMITMENT` produz
 `product-commitment-decision` com decisão, feedback, versão e referências das
 três evidências anteriores.
 
+**Decisão inicial — execução Codex:** o adaptador executa um job por vez, com
+intake/evidências anteriores como contexto, evidência estruturada e Markdown
+legível, sem persistir prompt completo, saída bruta, tokens ou segredos. O
+timeout padrão é **10 minutos**, com **duas tentativas adicionais** para falhas
+transitórias e heartbeat a cada 30 segundos. Esses valores serão lidos de
+configuração de ambiente (`NAAMIVE_AGENT_TIMEOUT_SECONDS`,
+`NAAMIVE_AGENT_MAX_RETRIES` e `NAAMIVE_AGENT_HEARTBEAT_SECONDS`), para ajuste
+operacional sem mudança de código. Sucesso apenas solicita transição ao
+workflow; falha permanente permanece auditável e exige ação explícita.
+
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F2-01 | Portar análise, proposta de módulos, requisitos e revisão com testes de paridade críticos. | Regressão do Python; mapear cada controle relevante para teste Node. |
