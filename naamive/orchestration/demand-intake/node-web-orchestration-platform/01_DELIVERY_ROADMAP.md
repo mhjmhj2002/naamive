@@ -172,6 +172,20 @@ as regras de atualização da tabela de tarefas, pendências e issues.
 
 **Demonstração ponta a ponta:** iniciar por botão, ver despacho, heartbeat, evidência e transição de cada agente; abrir documentos e decidir o compromisso com autoria na timeline.
 
+### Questões de planejamento a decidir antes da implementação
+
+1. **Início e estados:** qual comando inicia o ciclo em `REGISTERED` e quais
+   estados/gatilhos versionados conduzem análise, requisitos, revisão e
+   `PRODUCT_COMMITMENT`?
+2. **Evidências mínimas:** quais schemas e artefatos canônicos de análise,
+   proposta de módulos, requisitos e revisão cada etapa deve produzir?
+3. **Execução Codex:** quais timeout, retry, evidência sanitizada e tratamento
+   de falha o adaptador Node aplica antes de solicitar uma transição?
+4. **Experiência do operador:** quais projeções, heartbeat, duração, evidências
+   e próxima ação a web exibe em cada etapa, sem simular progresso?
+5. **Gate e aceite:** quais dados entram na decisão de `PRODUCT_COMMITMENT` e
+   como o E2E controlado valida o fluxo sem depender da variabilidade da IA?
+
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F2-01 | Portar análise, proposta de módulos, requisitos e revisão com testes de paridade críticos. | Regressão do Python; mapear cada controle relevante para teste Node. |
