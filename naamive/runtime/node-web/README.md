@@ -1,9 +1,7 @@
 # Runtime Node/Web — Fase 1
 
 Pré-requisitos: consulte o [guia de pré-requisitos de ambiente](ENVIRONMENT_PREREQUISITES.md).
-Para instalar ou atualizar o runtime, consulte também o
-[guia de configuração do Node.js](NODE_SETUP.md). Todos os comandos abaixo
-devem ser executados no diretório
+Todos os comandos abaixo devem ser executados no diretório
 `naamive/runtime/node-web`. Nele, copie `.env.example` para `.env`, ajuste as
 raízes permitidas e execute:
 
