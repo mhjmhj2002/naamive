@@ -25,9 +25,9 @@ export const validateIntake = (payload: Intake) => {
 };
 
 const gitBinding = (path: string, requestedBase: unknown, dirtyConfirmation: unknown) => {
-  const repositoryPath = containedPath(path, config().repositoryRoots);
-  const git = (...args: string[]) => execFileSync('git', ['-C', repositoryPath, ...args], { encoding: 'utf8' }).trim();
   try {
+    const repositoryPath = containedPath(path, config().repositoryRoots);
+    const git = (...args: string[]) => execFileSync('git', ['-C', repositoryPath, ...args], { encoding: 'utf8' }).trim();
     const origin = git('remote', 'get-url', 'origin'); const normalizedOrigin = origin.replace(/\/$/, '').replace(/\.git$/, '');
     const explicitBase = typeof requestedBase === 'string' && requestedBase.trim();
     const originHead = explicitBase ? '' : git('symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD').replace(/^origin\//, '');
@@ -39,7 +39,13 @@ const gitBinding = (path: string, requestedBase: unknown, dirtyConfirmation: unk
     if (!origin || !base || !sha) throw new Error(); if (dirty && !confirmed) throw new ApiError(422, 'REPOSITORY_DIRTY_CONFIRMATION_REQUIRED');
     return { repositoryPath, origin, normalizedOrigin, base, baseSource, sha, dirty: Boolean(dirty), dirtyReason: confirmed ? dirtyReason : null };
   }
-  catch (error) { if (error instanceof ApiError) throw error; throw new ApiError(422, 'REPOSITORY_INVALID'); }
+  catch (error) {
+    if (error instanceof ApiError) throw error;
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code === 'ENOENT') throw new ApiError(422, 'REPOSITORY_PATH_NOT_FOUND', 'Informe o caminho absoluto de um clone Git local existente.');
+    if (error instanceof Error && error.message === 'REPOSITORY_PATH_NOT_ALLOWED') throw new ApiError(422, 'REPOSITORY_PATH_NOT_ALLOWED', 'O clone precisa estar abaixo de uma raiz Git permitida.');
+    throw new ApiError(422, 'REPOSITORY_INVALID', 'O caminho precisa apontar para um clone Git válido com origin.');
+  }
 };
 
 export const createProject = async (body: Intake) => {
