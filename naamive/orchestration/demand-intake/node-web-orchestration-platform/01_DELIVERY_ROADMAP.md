@@ -185,6 +185,14 @@ as regras de atualização da tabela de tarefas, pendências e issues.
    e próxima ação a web exibe em cada etapa, sem simular progresso?
 5. **Gate e aceite:** quais dados entram na decisão de `PRODUCT_COMMITMENT` e
    como o E2E controlado valida o fluxo sem depender da variabilidade da IA?
+6. **Decisão de módulos:** no gate, o operador aprova/rejeita o pacote inteiro
+   ou seleciona módulos individualmente, preservando a decisão auditável de
+   cada módulo?
+7. **Workflow publicado:** quais códigos exatos de estados, triggers, guards e
+   effects compõem `PROJECT_DISCOVERY` v1, incluindo ajustes e arquivamento
+   global?
+8. **Launcher Codex:** qual comando/launcher suportado, diretório de trabalho,
+   identidade e limite de permissões o adaptador Node usa no ambiente local?
 
 **Decisão inicial — início e jobs:** o botão/comando será
 `START_PRODUCT_DISCOVERY` (**Iniciar descoberta do produto**), disponível apenas
