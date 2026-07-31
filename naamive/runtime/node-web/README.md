@@ -29,6 +29,28 @@ O mesmo formato funciona para `migrate`, `dev`, `reconcile`, `test` e `e2e`.
 Os comandos `start`, `dev`, `worker`, `migrate` e `reconcile` carregam
 automaticamente o arquivo `.env` desse diretório quando ele existe.
 
+## Depois de iniciar
+
+Mantenha os dois terminais abertos:
+
+| Terminal | Comando | Responsabilidade |
+| --- | --- | --- |
+| 1 | `npm run dev` | Executa a API e serve a interface web local. |
+| 2 | `npm run worker` | Processa em segundo plano a validação do intake e abre o gate de registro. |
+
+Abra [http://127.0.0.1:3000](http://127.0.0.1:3000) no navegador. A interface
+permite criar um rascunho, informar o caminho absoluto de um clone Git local,
+submeter a necessidade e acompanhar os eventos. Quando o worker concluir a
+validação, aprove ou rejeite o gate `REGISTER_PROJECT` na própria página.
+
+O caminho do clone deve estar abaixo de `NAAMIVE_REPOSITORY_ROOTS` no `.env`,
+ter Git, `origin`, branch-base e um commit inicial. Use um clone descartável ou
+de teste para experimentar o fluxo.
+
+Para encerrar, pressione `Ctrl+C` em cada terminal. O PostgreSQL permanece em
+execução; para pará-lo também, execute `docker compose stop postgres` no
+diretório `naamive/runtime/node-web`.
+
 A API aceita somente loopback. `NAAMIVE_REPOSITORY_ROOTS`,
 `NAAMIVE_ARTIFACT_STORE_URI` e `NAAMIVE_OPERATOR_ID` são obrigatórios; o worker
 não inicia sem eles. O operador é injetado pelo servidor: a interface não pode
