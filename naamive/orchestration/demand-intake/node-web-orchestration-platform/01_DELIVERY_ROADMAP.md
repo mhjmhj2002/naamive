@@ -655,6 +655,7 @@ afetada e continuar todo trabalho independente que não esteja bloqueado.
 | ID | Fase / tarefa | Impacto | Status | Descrição | Proposta de solução | Aprovada |
 | --- | --- | --- | --- | --- | --- | --- |
 | I-001 | F1-06 / F1-09 | `BLOCKING` | `RESOLVED` | A submissão bloqueava ao reservar intenção de artefato por uma segunda conexão enquanto a transação mantinha lock do projeto. | A intenção passou a usar a transação do comando; aceite HTTP PostgreSQL confirmou `ACCEPTED` e os quatro artefatos obrigatórios. | `YES` |
+| I-002 | F1-13 | `NON_BLOCKING` | `OPEN` | A interface web da Fase 1 é funcional e responsiva, porém usa apresentação visual mínima e não comunica adequadamente o valor do produto em demonstrações para stakeholders. Faltam hierarquia visual, navegação contextual, tratamento visual de estados, feedback de ações e acabamento consistente. | Adotar Bootstrap local/versionado e evoluir a tela sem alterar contratos de API, workflow, SSE ou auditoria. Incluir layout responsivo com cabeçalho e navegação, cartões de projeto/status, formulário segmentado, timeline legível, estados vazio/carregando/erro, feedback acessível e componentes de decisão de gate destacados. Critérios de aceite: fluxo criar → submeter → worker → decidir permanece funcional; navegação é utilizável em viewport móvel e desktop; controles têm rótulos e foco visível; itens visuais continuam derivados de projeções/eventos persistidos; não introduzir CDN, telemetria externa ou dependência de rede em runtime. | `PENDING` |
 
 Valores permitidos:
 
