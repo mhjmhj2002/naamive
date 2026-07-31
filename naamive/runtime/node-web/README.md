@@ -5,6 +5,9 @@ artefatos. Todos os comandos abaixo devem ser executados no diretório
 `naamive/runtime/node-web`. Nele, copie `.env.example` para `.env`, ajuste as
 raízes permitidas e execute:
 
+Não sabe se possui Node.js 24+ ou como instalá-lo/atualizá-lo? Consulte o
+[guia de configuração do Node.js](NODE_SETUP.md) antes de continuar.
+
 ```sh
 cd naamive/runtime/node-web
 cp .env.example .env
