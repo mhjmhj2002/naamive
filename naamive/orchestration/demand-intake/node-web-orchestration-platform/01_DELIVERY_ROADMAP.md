@@ -219,6 +219,14 @@ configuração de ambiente (`NAAMIVE_AGENT_TIMEOUT_SECONDS`,
 operacional sem mudança de código. Sucesso apenas solicita transição ao
 workflow; falha permanente permanece auditável e exige ação explícita.
 
+**Decisão inicial — experiência do operador:** a web mostra poucos status de
+negócio, etapa atual, duração real, heartbeat, próxima ação e timeline de
+marcos persistidos. Cada status/evento exibe timestamp completo em horário
+local (**data, hora, minuto e segundo**) para permitir acompanhamento das
+janelas de execução. Na Fase 2, evidências aparecem como resumo sanitizado,
+tipo, hash e data; abertura do conteúdo completo permanece fora da tela inicial
+e será evoluída somente quando houver autorização de acesso adequada.
+
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F2-01 | Portar análise, proposta de módulos, requisitos e revisão com testes de paridade críticos. | Regressão do Python; mapear cada controle relevante para teste Node. |
