@@ -196,6 +196,19 @@ transição; o workflow permanece soberano. Revisão com ajustes cria findings e
 retorna somente para requisitos. Esta decisão será validada pelo aceite
 controlado antes de adicionar gates intermediários ou novos jobs.
 
+**Decisão inicial — evidências:** cada job grava JSON estruturado e Markdown
+legível no ArtifactStore, com `schema_version`, projeto, operação, job, hashes
+e referências das evidências de entrada. `ANALYZE_PRODUCT_NEED` produz
+`product-need-analysis` com problema, público, objetivos, riscos, hipóteses,
+lacunas, perguntas abertas e **sugestões** de módulos. `DEFINE_PRODUCT_REQUIREMENTS`
+produz `product-requirements` com escopo, fora de escopo, requisitos, critérios
+de sucesso, restrições de negócio, dependências e a lista **consolidada** de
+módulos candidatos. `REVIEW_PRODUCT_COMMITMENT` produz
+`product-commitment-review` com findings, riscos, recomendação e resultado
+`READY_FOR_GATE` ou `REQUIRES_ADJUSTMENT`. O gate registra
+`product-commitment-decision` com decisão, feedback, versão e referências das
+três evidências anteriores.
+
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F2-01 | Portar análise, proposta de módulos, requisitos e revisão com testes de paridade críticos. | Regressão do Python; mapear cada controle relevante para teste Node. |
