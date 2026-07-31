@@ -186,6 +186,16 @@ as regras de atualização da tabela de tarefas, pendências e issues.
 5. **Gate e aceite:** quais dados entram na decisão de `PRODUCT_COMMITMENT` e
    como o E2E controlado valida o fluxo sem depender da variabilidade da IA?
 
+**Decisão inicial — início e jobs:** o botão/comando será
+`START_PRODUCT_DISCOVERY` (**Iniciar descoberta do produto**), disponível apenas
+em `REGISTERED` e com retorno imediato `ACCEPTED`. O fluxo inicial será
+sequencial: `ANALYZE_PRODUCT_NEED` → `DEFINE_PRODUCT_REQUIREMENTS` →
+`REVIEW_PRODUCT_COMMITMENT` → gate `PRODUCT_COMMITMENT`. Cada job recebe o
+intake e as evidências anteriores, persiste evidência sanitizada e solicita a
+transição; o workflow permanece soberano. Revisão com ajustes cria findings e
+retorna somente para requisitos. Esta decisão será validada pelo aceite
+controlado antes de adicionar gates intermediários ou novos jobs.
+
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F2-01 | Portar análise, proposta de módulos, requisitos e revisão com testes de paridade críticos. | Regressão do Python; mapear cada controle relevante para teste Node. |
