@@ -3,14 +3,15 @@ import { readFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { config } from './config.js';
-import { ApiError, archiveProject, bindRepository, createProject, listProjects, projectDetail, projectTimeline, saveIntake, startProductDiscovery, submitIntake } from './service.js';
+import { ApiError, applyReviewAdjustments, archiveProject, bindRepository, createProject, listProjects, projectDetail, projectTimeline, retryProductDiscovery, saveIntake, startProductDiscovery, submitIntake } from './service.js';
+import { checkAgentReadiness, AgentReadinessError, AgentConfigurationError } from './agent.js';
 import { pool, withTransaction } from './db.js';
 import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
+import { log } from './log.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
-const log = (entry: Record<string, unknown>) => console.info(JSON.stringify({ service: 'naamive-node-web', ...entry }));
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
 const respond = (response: ServerResponse, status: number, body: object) => { response.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': settings.webOrigin }); response.end(JSON.stringify(body)); };
 const decide = async (projectId: string, body: Record<string, unknown>) => withTransaction(async (client) => {
@@ -28,14 +29,17 @@ const decide = async (projectId: string, body: Record<string, unknown>) => withT
 });
 export const createApiServer = () => createServer(async (request, response) => { try {
   if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': settings.webOrigin, 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'content-type,idempotency-key' }); return response.end(); }
-  const url = new URL(request.url ?? '/', settings.webOrigin); const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|archive))?$/);
+  const url = new URL(request.url ?? '/', settings.webOrigin); const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|retry-discovery|apply-review-adjustments|archive))?$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
+  if (request.method === 'POST' && url.pathname === '/api/agent/readiness') { try { return respond(response,200,await checkAgentReadiness(true)); } catch(error) { const code=error instanceof AgentReadinessError||error instanceof AgentConfigurationError?error.code:'CODEX_PROCESS_FAILED'; return respond(response,503,{code,message:'O agente não está pronto. Corrija a configuração e teste novamente.'}); } }
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));
   if (match && request.method === 'PUT' && match[2] === undefined) return respond(response, 200, await bindRepository(match[1], await json(request)));
   if (match && request.method === 'PUT' && match[2] === 'intake') return respond(response, 200, await saveIntake(match[1], await json(request)));
   if (match && request.method === 'POST' && match[2] === 'submit') return respond(response, 202, await submitIntake(match[1], request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (match && request.method === 'POST' && match[2] === 'start-discovery') return respond(response, 202, await startProductDiscovery(match[1], request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (match && request.method === 'POST' && match[2] === 'retry-discovery') return respond(response, 202, await retryProductDiscovery(match[1], request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (match && request.method === 'POST' && match[2] === 'apply-review-adjustments') return respond(response, 202, await applyReviewAdjustments(match[1],await json(request),request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (match && request.method === 'POST' && match[2] === 'archive') return respond(response, 200, await archiveProject(match[1], await json(request)));
   if (match && request.method === 'POST' && match[2] === 'decision') return respond(response, 200, await decide(match[1], await json(request)));
   if (match && request.method === 'GET' && match[2] === 'events') { response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive', 'access-control-allow-origin': settings.webOrigin }); let after=Number(url.searchParams.get('after') ?? 0); const timer=setInterval(async()=> { for (const item of await projectTimeline(match[1], after)) { after=Number(item.id); response.write(`id: ${item.id}\nevent: ${item.event_type}\ndata: ${JSON.stringify(item)}\n\n`); } }, 750); request.on('close', ()=>clearInterval(timer)); return; }
@@ -43,9 +47,9 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
 } catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : new ApiError(500, 'INTERNAL_ERROR');
-  log({ level: 'error', request_id: requestId, method: request.method, route: new URL(request.url ?? '/', settings.webOrigin).pathname, status: known.status, code: known.code, error_kind: error instanceof Error ? error.constructor.name : 'UnknownError', database_code: typeof (error as { code?: unknown })?.code === 'string' ? (error as { code: string }).code : undefined });
+  log('server',known.status>=500?'error':'warn',known.status>=500?'request_failed':'request_rejected',{request_id:requestId,method:request.method,route:new URL(request.url ?? '/',settings.webOrigin).pathname,status:known.status,code:known.code,error_kind:error instanceof Error?error.constructor.name:'UnknownError',database_code:typeof (error as { code?: unknown })?.code==='string'?(error as { code:string }).code:undefined});
   respond(response, known.status, { code: known.code, message: known.message, request_id: requestId }); } });
 if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.js')) {
-  const server = createApiServer(); server.listen(settings.port, settings.host, () => log({ level: 'info', event: 'server_started', url: `http://${settings.host}:${settings.port}`, artifact_store: 'configured', repository_roots: settings.repositoryRoots.length }));
-  process.on('SIGTERM', async () => { log({ level: 'info', event: 'server_stopping' }); server.close(); await pool.end(); });
+  const server = createApiServer(); server.listen(settings.port, settings.host, () => log('server','info','server_started',{url:`http://${settings.host}:${settings.port}`,artifact_store:'configured',repository_roots:settings.repositoryRoots.length}));
+  process.on('SIGTERM', async () => { log('server','info','server_stopping'); server.close(); await pool.end(); log('server','info','server_stopped'); });
 }
