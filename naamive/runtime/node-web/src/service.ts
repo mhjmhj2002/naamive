@@ -2,7 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { pool, withTransaction } from './db.js';
 import { config, containedPath } from './config.js';
-import { putArtifact } from './artifacts.js';
+import { putArtifact, putArchiveRecord } from './artifacts.js';
+import { transitionTarget } from './workflow.js';
 import type pg from 'pg';
 
 type Intake = Record<string, unknown>;
@@ -90,6 +91,60 @@ export const submitIntake = async (projectId: string, key: string) => withTransa
   await event(client, projectId, 'INTAKE_SUBMITTED', correlation, {}, operationId, jobId, revisionId); return { operation_id: operationId, status: 'ACCEPTED' };
 });
 
+export const startProductDiscovery = async (projectId: string, key: string) => {
+  return withTransaction(async (client) => {
+  const project = await client.query('SELECT * FROM projects WHERE id=$1 FOR UPDATE', [projectId]); if (!project.rowCount) throw new ApiError(404, 'PROJECT_NOT_FOUND'); const row = project.rows[0];
+  const existing = await client.query('SELECT id FROM operations WHERE idempotency_key=$1', [key]); if (existing.rowCount) return { operation_id: existing.rows[0].id, status: 'ACCEPTED' };
+  if (row.state !== 'REGISTERED' || row.archived_at) throw new ApiError(409, 'WORKFLOW_TRANSITION_NOT_ALLOWED');
+  const operationId=randomUUID(), jobId=randomUUID(), correlation=randomUUID();
+  await client.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=2,state='ANALYSIS_IN_PROGRESS',updated_at=now() WHERE id=$1`, [projectId]);
+  await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id) VALUES($1,$2,'PRODUCT_DISCOVERY','QUEUED',$3,$4,$5)`, [operationId,projectId,key,correlation,row.id ? (await client.query('SELECT id FROM intake_revisions WHERE project_id=$1 ORDER BY submitted_at DESC LIMIT 1',[projectId])).rows[0]?.id ?? null : null]);
+  const revisionId=(await client.query('SELECT revision_id FROM operations WHERE id=$1',[operationId])).rows[0].revision_id;
+  await client.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,idempotency_key) VALUES($1,$2,$3,$4,'ANALYZE_PRODUCT_NEED',$5)`,[jobId,operationId,projectId,revisionId,`analysis:${projectId}:${operationId}`]);
+  await event(client,projectId,'PRODUCT_DISCOVERY_STARTED',correlation,{stage:'ANALYZE_PRODUCT_NEED'},operationId,jobId,revisionId); return {operation_id:operationId,status:'ACCEPTED'};
+  });
+};
+
+export const retryProductDiscovery = async (projectId:string,key:string) => {
+  return withTransaction(async client => {
+    const project=await client.query('SELECT * FROM projects WHERE id=$1 FOR UPDATE',[projectId]); if(!project.rowCount) throw new ApiError(404,'PROJECT_NOT_FOUND'); const row=project.rows[0];
+    const existing=await client.query('SELECT id FROM operations WHERE idempotency_key=$1',[key]); if(existing.rowCount) return {operation_id:existing.rows[0].id,status:'ACCEPTED'};
+    if(row.workflow_code!=='PROJECT_DISCOVERY'||row.state!=='DISCOVERY_FAILED'||row.archived_at) throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');
+    if((await client.query(`SELECT 1 FROM operations WHERE project_id=$1 AND status IN ('ACCEPTED','QUEUED','RUNNING')`,[projectId])).rowCount) throw new ApiError(409,'PROJECT_OPERATION_ACTIVE');
+    const failed=await client.query(`SELECT j.kind,o.revision_id,o.id FROM jobs j JOIN operations o ON o.id=j.operation_id WHERE j.project_id=$1 AND j.status='FAILED' AND j.kind IN ('ANALYZE_PRODUCT_NEED','DEFINE_PRODUCT_REQUIREMENTS','REVIEW_PRODUCT_COMMITMENT') ORDER BY j.completed_at DESC NULLS LAST LIMIT 1`,[projectId]); if(!failed.rowCount) throw new ApiError(409,'DISCOVERY_RETRY_NOT_AVAILABLE');
+    const prior=failed.rows[0], trigger=`RETRY_${prior.kind}`, target=await transitionTarget(client,projectId,trigger),operationId=randomUUID(),jobId=randomUUID(),correlation=randomUUID();
+    await client.query(`UPDATE projects SET state=$2,failure_stage=NULL,failure_code=NULL,updated_at=now() WHERE id=$1`,[projectId,target]);
+    await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id) VALUES($1,$2,'PRODUCT_DISCOVERY','QUEUED',$3,$4,$5)`,[operationId,projectId,key,correlation,prior.revision_id]);
+    await client.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,idempotency_key) VALUES($1,$2,$3,$4,$5,$6)`,[jobId,operationId,projectId,prior.revision_id,prior.kind,`retry:${prior.kind}:${operationId}`]);
+    await event(client,projectId,'PRODUCT_DISCOVERY_RETRY_ACCEPTED',correlation,{failed_operation_id:prior.id,stage:prior.kind},operationId,jobId,prior.revision_id);
+    return {operation_id:operationId,status:'ACCEPTED'};
+  });
+};
+export const applyReviewAdjustments = async (projectId:string,body:Record<string,unknown>,key:string) => withTransaction(async client => {
+  const feedback=typeof body.feedback==='string'?body.feedback.trim():''; if(!feedback) throw new ApiError(422,'REVIEW_ADJUSTMENT_FEEDBACK_REQUIRED','Descreva os ajustes a aplicar.'); if(feedback.length>500) throw new ApiError(422,'REVIEW_ADJUSTMENT_FEEDBACK_TOO_LONG','Descreva os ajustes em até 500 caracteres.');
+  const p=(await client.query('SELECT * FROM projects WHERE id=$1 FOR UPDATE',[projectId])).rows[0]; if(!p) throw new ApiError(404,'PROJECT_NOT_FOUND'); if(p.state!=='WAITING_FOR_REVIEW_ADJUSTMENT'||p.archived_at) throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');
+  const target=await transitionTarget(client,projectId,'APPLY_REVIEW_ADJUSTMENTS'),operationId=randomUUID(),jobId=randomUUID(),correlation=randomUUID(); const revision=(await client.query('SELECT id FROM intake_revisions WHERE project_id=$1 ORDER BY submitted_at DESC LIMIT 1',[projectId])).rows[0].id;
+  await client.query('UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1',[projectId,target]); await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id) VALUES($1,$2,'PRODUCT_DISCOVERY','QUEUED',$3,$4,$5)`,[operationId,projectId,key,correlation,revision]); await client.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,idempotency_key) VALUES($1,$2,$3,$4,'DEFINE_PRODUCT_REQUIREMENTS',$5)`,[jobId,operationId,projectId,revision,`operator-rework:${operationId}`]); await event(client,projectId,'REVIEW_ADJUSTMENTS_APPLIED',correlation,{feedback},operationId,jobId,revision); return {operation_id:operationId,status:'ACCEPTED'};
+});
+
+export const archiveProject = async (projectId: string, body: Record<string, unknown>) => withTransaction(async (client) => {
+  if (body.confirmed !== true || typeof body.reason !== 'string' || !body.reason.trim()) throw new ApiError(422,'ARCHIVE_CONFIRMATION_AND_REASON_REQUIRED');
+  const p=await client.query('SELECT * FROM projects WHERE id=$1 FOR UPDATE',[projectId]); if(!p.rowCount) throw new ApiError(404,'PROJECT_NOT_FOUND'); const row=p.rows[0]; if(row.archived_at) throw new ApiError(409,'PROJECT_ALREADY_ARCHIVED');
+  const policy=await client.query(`SELECT target_workflow_code,target_workflow_version FROM workflow_global_policies WHERE policy_code='ARCHIVE_PROJECT' AND source_workflow_code=$1 AND source_state=$2`,[row.workflow_code,row.state]);
+  if(!policy.rowCount) throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');
+  const correlation=randomUUID();
+  await client.query(`UPDATE projects SET workflow_code=$2,workflow_version=$3,state='ARCHIVING',updated_at=now() WHERE id=$1`,[projectId,policy.rows[0].target_workflow_code,policy.rows[0].target_workflow_version]);
+  await event(client,projectId,'PROJECT_ARCHIVING',correlation,{from_state:row.state,reason:body.reason.trim()});
+  await client.query(`UPDATE jobs SET status='FAILED',completed_at=now(),last_error='PROJECT_ARCHIVED' WHERE project_id=$1 AND status IN ('PENDING','RETRYABLE','LEASED')`,[projectId]);
+  await client.query(`UPDATE operations SET status='FAILED',failure_code='PROJECT_ARCHIVED',completed_at=now() WHERE project_id=$1 AND status IN ('ACCEPTED','QUEUED','RUNNING')`,[projectId]);
+  await client.query(`UPDATE gates SET status='CANCELLED',decided_at=now() WHERE project_id=$1 AND status='OPEN'`,[projectId]);
+  const record={schema_version:1,project_id:projectId,archived_by:config().operatorId,archive_reason:body.reason.trim(),archived_from_state:row.state,archived_at:new Date().toISOString()};
+  const artifact=await putArchiveRecord(client,projectId,JSON.stringify(record));
+  const target=await transitionTarget(client,projectId,'ARCHIVING_COMPLETED');
+  await client.query(`UPDATE projects SET state=$2,archived_at=now(),archived_by=$3,archive_reason=$4,archived_from_state=$5,updated_at=now() WHERE id=$1`,[projectId,target,config().operatorId,body.reason.trim(),row.state]);
+  await event(client,projectId,'PROJECT_ARCHIVED',correlation,{...record,artifact_hash:artifact.hash}); return {project_id:projectId,state:target};
+});
+
 export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT * FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows;
 const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,sd.label AS status,sd.next_action,
   (SELECT event_type FROM events e WHERE e.project_id=p.id ORDER BY id DESC LIMIT 1) AS last_event
@@ -97,11 +152,18 @@ const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,sd.label AS 
  LEFT JOIN workflow_definitions wd ON wd.code=p.workflow_code AND wd.version=p.workflow_version
  LEFT JOIN state_status_mappings sm ON sm.workflow_id=wd.id AND sm.state_code=p.state AND sm.event_code IS NULL AND sm.status_type_code='JOURNEY' AND sm.audience_code='OPERATOR'
  LEFT JOIN status_definitions sd ON sd.code=sm.status_code AND sd.version=sm.status_definition_version`;
-export const listProjects = async () => (await pool.query(`${projectedProjects} ORDER BY p.updated_at DESC`)).rows;
+export const listProjects = async (archived=false) => (await pool.query(`${projectedProjects} ${archived ? 'WHERE p.archived_at IS NOT NULL' : 'WHERE p.archived_at IS NULL'} ORDER BY p.updated_at DESC`)).rows;
+const display = (state:string, review:Record<string,unknown>|null) => {
+  const labels:Record<string,[string,string]>={ANALYSIS_IN_PROGRESS:['Analisando necessidade','Identificando problema e objetivos'],REQUIREMENTS_IN_PROGRESS:['Definindo requisitos','Detalhando escopo e critérios'],REVIEW_IN_PROGRESS:['Revisando proposta','Validando o pacote de produto'],WAITING_FOR_REVIEW_ADJUSTMENT:['Aguardando seus ajustes','A revisão pediu complementos'],WAITING_FOR_PRODUCT_COMMITMENT:['Aguardando sua decisão','Pacote pronto para aprovação'],DISCOVERY_FAILED:['Descoberta interrompida','Falha na etapa de descoberta'],PRODUCT_COMMITMENT:['Compromisso de produto','Pacote aprovado']}; const [display_status,default_reason]=labels[state]??[state,'Sem ação necessária']; const reason=state==='WAITING_FOR_REVIEW_ADJUSTMENT'?'A revisão pediu complementos.':default_reason; return {display_status,status_reason:reason};
+};
 export const projectDetail = async (projectId: string) => {
-  const project = await pool.query(`${projectedProjects} WHERE p.id=$1`, [projectId]);
+  const project = await pool.query(`${projectedProjects.replace('p.updated_at,','p.updated_at,p.failure_stage,p.failure_code,')} WHERE p.id=$1`, [projectId]);
   if (!project.rowCount) throw new ApiError(404, 'PROJECT_NOT_FOUND');
-  const gate = await pool.query(`SELECT id,kind,version,status,revision_id,opened_at FROM gates WHERE project_id=$1 AND status='OPEN' ORDER BY opened_at DESC LIMIT 1`, [projectId]);
+  const gate = await pool.query(`SELECT id,kind,version,status,revision_id,opened_at,evidence FROM gates WHERE project_id=$1 AND status='OPEN' ORDER BY opened_at DESC LIMIT 1`, [projectId]);
   const operations = await pool.query(`SELECT id,kind,status,created_at,completed_at,failure_code FROM operations WHERE project_id=$1 ORDER BY created_at DESC`, [projectId]);
-  return { ...project.rows[0], gate: gate.rows[0] ?? null, operations: operations.rows };
+  const artifacts=await pool.query(`SELECT artifact_type,sha256,created_at FROM artifacts WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]);
+  const review=await pool.query(`SELECT metadata FROM artifacts WHERE project_id=$1 AND artifact_type='product-commitment-review' ORDER BY created_at DESC LIMIT 1`,[projectId]);
+  const activeJob=await pool.query(`SELECT kind,heartbeat_at,lease_expires_at,available_at FROM jobs WHERE project_id=$1 AND status='LEASED' ORDER BY available_at DESC LIMIT 1`,[projectId]);
+  const reviewData=(review.rows[0]?.metadata??null) as Record<string,unknown>|null;
+  return { ...project.rows[0], ...display(project.rows[0].state,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null };
 };

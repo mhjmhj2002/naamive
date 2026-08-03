@@ -19,7 +19,7 @@ export const config = () => {
   if (!isLoopback(host)) throw new Error('Phase 1 API must bind to loopback only');
   const webOrigin = process.env.NAAMIVE_WEB_ORIGIN ?? `http://${host}:${process.env.PORT ?? '3000'}`;
   if (!new URL(webOrigin).hostname || !isLoopback(new URL(webOrigin).hostname)) throw new Error('NAAMIVE_WEB_ORIGIN must be localhost-only');
-  return { databaseUrl: required('DATABASE_URL'), artifactRoot: fileURLToPath(artifactStore), repositoryRoots, operatorId, host, webOrigin, port: Number(process.env.PORT ?? 3000) };
+  return { databaseUrl: required('DATABASE_URL'), artifactRoot: fileURLToPath(artifactStore), repositoryRoots, operatorId, host, webOrigin, port: Number(process.env.PORT ?? 3000), agentTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_TIMEOUT_SECONDS ?? 600), agentReadinessTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_TIMEOUT_SECONDS ?? 20), agentReadinessCacheSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_CACHE_SECONDS ?? 300), agentMaxRetries: Number(process.env.NAAMIVE_AGENT_MAX_RETRIES ?? 2), agentHeartbeatSeconds: Number(process.env.NAAMIVE_AGENT_HEARTBEAT_SECONDS ?? 30), codexCommand: process.env.NAAMIVE_CODEX_COMMAND ?? 'codex', codexWorkdir: process.env.NAAMIVE_CODEX_WORKDIR, agentAdapter: process.env.NAAMIVE_AGENT_ADAPTER ?? 'codex' };
 };
 
 export const containedPath = (candidate: string, roots: string[]): string => {
