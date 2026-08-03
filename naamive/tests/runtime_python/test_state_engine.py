@@ -1,3 +1,4 @@
+# DEPRECATED: tests for the legacy Python runtime, retained for Node parity.
 from __future__ import annotations
 
 from pathlib import Path
@@ -247,6 +248,37 @@ def test_technical_module_candidate_is_rejected(tmp_path: Path) -> None:
         validate_module_proposal(project, "execution-domain")
 
 
+def test_versioned_evidence_schema_rejects_wrong_artifact_or_execution(tmp_path: Path) -> None:
+    project = make_project(tmp_path)
+    proposal = project / "analysis" / "domain"
+    proposal.mkdir(parents=True)
+    proposal.joinpath("MODULE_PROPOSAL.md").write_text(
+        "---\nevidence_schema_version: 1\nartifact_type: analysis/business/BUSINESS_ANALYSIS.md\nexecution_id: execution-domain\n---\n"
+        "# Módulos candidatos\n- `catalog`\n# Justificativa\nx\n# Dependências\nx\n# Riscos\nx\n# Questões em aberto\nx\n"
+        "# Execution ID\nexecution-domain\n# Escopo\nproject\n# Fonte\nneed\n# Responsável\nagent\n# Data\nnow\n# Premissas\nx\n# Lacunas\nx\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(IntakeError, match="artifact_type"):
+        validate_module_proposal(project, "execution-domain")
+
+
+def test_rejected_gate_freezes_feedback_version_for_later_rework(tmp_path: Path) -> None:
+    project = make_project(tmp_path, "DEFINITION")
+    orchestration._open_product_commitment_gate(tmp_path, project, "sample", "execution-test", ["analysis/domain/MODULE_PROPOSAL.md"])
+    feedback = project / "gate-feedback" / "PRODUCT_COMMITMENT.md"
+    feedback.write_text(
+        "# Feedback\n\n## Decisão\n\nREJECTED\n\n## Módulos afetados\n\n\n## Itens rejeitados\n\n- Escopo insuficiente.\n\n## Evidências revisadas\n\n- analysis/domain/MODULE_PROPOSAL.md\n\n## Ajustes propostos\n\n- Delimitar a capacidade.\n\n## Responsável\n\nreviewer\n\n## Critério para nova submissão\n\nEscopo delimitado.\n",
+        encoding="utf-8",
+    )
+    result = resolve_product_commitment(tmp_path, "sample", "REJECTED", "reviewer", "rework required")
+    decision = yaml.safe_load((tmp_path / result["decision_path"]).read_text(encoding="utf-8"))
+    snapshot = project / str(decision["feedback_snapshot"])
+    feedback.write_text("changed after decision", encoding="utf-8")
+    assert snapshot.is_file()
+    assert "Delimitar a capacidade" in snapshot.read_text(encoding="utf-8")
+    assert orchestration._active_feedback_inputs(project) == [snapshot]
+
+
 def test_product_commitment_decision_is_linked_to_pending_request(tmp_path: Path) -> None:
     project = make_project(tmp_path, "DEFINITION")
     (project / "need").mkdir()
@@ -365,6 +397,11 @@ def test_conditional_human_gate_applies_only_approved_pending_transition(tmp_pat
 def test_conditional_gate_rejection_and_rework_preserve_state_and_next_action(tmp_path: Path, gate: str, state: str, target: str, decision: str) -> None:
     project = make_project(tmp_path, state)
     open_human_gate(tmp_path, "sample", gate, target, "human decision needed", ["evidence/gate.md"])
+    feedback = project / "gate-feedback" / f"{gate}.md"
+    feedback.write_text(
+        f"# Feedback\n\n## Decisão\n\n{decision}\n\n## Módulos afetados\n\n- projeto\n\n## Itens rejeitados\n\n- item\n\n## Evidências revisadas\n\n- evidence/gate.md\n\n## Ajustes propostos\n\n- corrigir\n\n## Responsável\n\nreviewer\n\n## Critério para nova submissão\n\ncorreção validada\n",
+        encoding="utf-8",
+    )
 
     result = resolve_human_gate(tmp_path, "sample", gate, decision, "human-test", "not accepted yet")
 

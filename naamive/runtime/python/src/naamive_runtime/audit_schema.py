@@ -1,4 +1,4 @@
-"""Versioned schemas for immutable NAAMIVE orchestration audit records."""
+"""DEPRECATED legacy schemas retained for Node migration reference."""
 from __future__ import annotations
 
 from typing import Literal

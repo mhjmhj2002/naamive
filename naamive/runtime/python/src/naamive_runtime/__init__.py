@@ -1,1 +1,1 @@
-"""NAAMIVE orchestration runtime."""
+"""DEPRECATED legacy NAAMIVE Python orchestration runtime."""

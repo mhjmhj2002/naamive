@@ -1,0 +1,26 @@
+{
+  "name": "naamive-node-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node --env-file-if-exists=.env dist/server.js",
+    "dev": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs watch src/server.ts",
+    "worker": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/worker.ts",
+    "migrate": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/migrate.ts",
+    "reconcile": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/reconcile.ts",
+    "test": "node --test dist/**/*.test.js",
+    "e2e": "npm run build && node --test dist/*.e2e.test.js"
+  },
+  "dependencies": {
+    "bootstrap": "^5.3.8",
+    "pg": "^8.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0",
+    "@types/pg": "^8.15.5",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}

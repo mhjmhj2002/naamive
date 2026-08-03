@@ -1,3 +1,4 @@
+# DEPRECATED: legacy Python runtime retained only for Node migration reference.
 from __future__ import annotations
 
 import shutil
@@ -220,10 +221,26 @@ def run_codex_agent(repository_root: Path, project_id: str, agent_id: str, work_
     # promote only their validated authorized files.
     if not context.get("_isolated_workspace") and (repository_root / ".git").exists():
         with _ephemeral_worktree(repository_root) as isolated:
+            # A detached worktree starts at HEAD and deliberately omits
+            # uncommitted product evidence.  Inputs are immutable for this
+            # dispatch, so stage just those authorized files into the isolated
+            # workspace before the agent reads them.
+            isolated_inputs: list[Path] = []
+            for input_path in inputs:
+                relative_input = input_path.relative_to(repository_root)
+                destination = isolated / relative_input
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                if input_path.is_file():
+                    shutil.copy2(input_path, destination)
+                elif input_path.is_dir():
+                    shutil.copytree(input_path, destination, dirs_exist_ok=True)
+                else:
+                    raise IntakeError(f"authorized input does not exist: {relative_input}")
+                isolated_inputs.append(destination)
             isolated_context = dict(context, _isolated_workspace=True)
             response = run_codex_agent(
                 isolated, project_id, agent_id, work_item, isolated / relative_target,
-                [isolated / path.relative_to(repository_root) for path in inputs], profile, isolated_context,
+                isolated_inputs, profile, isolated_context,
             )
             if not implementation_iteration:
                 response["promoted_paths"] = _promote_authorized_output(isolated, repository_root, writable_paths)

@@ -1,0 +1,11 @@
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS dirty_tree_confirmed boolean NOT NULL DEFAULT false;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS dirty_tree_reason text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS dirty_tree_confirmed_by text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS branch_base_source text NOT NULL DEFAULT 'ORIGIN_HEAD';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS repository_origin_normalized text;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS created_by text NOT NULL DEFAULT 'migration';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS updated_by text NOT NULL DEFAULT 'migration';
+ALTER TABLE events ADD COLUMN IF NOT EXISTS actor_id text NOT NULL DEFAULT 'migration';
+CREATE TABLE IF NOT EXISTS artifact_intents (id uuid PRIMARY KEY, project_id text NOT NULL REFERENCES projects(id), execution_id uuid, artifact_type text NOT NULL, storage_key text NOT NULL, expected_sha256 text NOT NULL, status text NOT NULL DEFAULT 'RESERVED', created_at timestamptz NOT NULL DEFAULT now(), completed_at timestamptz, UNIQUE(project_id, storage_key));
+CREATE UNIQUE INDEX IF NOT EXISTS state_status_default_mapping_unique ON state_status_mappings(workflow_id,state_code,status_type_code,audience_code) WHERE event_code IS NULL;
+CREATE UNIQUE INDEX IF NOT EXISTS state_status_event_mapping_unique ON state_status_mappings(workflow_id,state_code,event_code,status_type_code,audience_code) WHERE event_code IS NOT NULL;

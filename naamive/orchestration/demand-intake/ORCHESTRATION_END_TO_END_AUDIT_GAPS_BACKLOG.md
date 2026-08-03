@@ -5,7 +5,7 @@ audit_type: theoretical-end-to-end-reaudit
 audited_at: 2026-07-29
 scope: README.md, REPOSITORY_MODEL.md, naamive/vision/, naamive/orchestration/, contracts, governance, runtime-python and runtime tests
 historical_certification: history/2026-07-29-end-to-end-certification/
-test_evidence: 54 passed in 10.74s (.venv/bin/pytest -q naamive/tests/runtime_python), including GAP-001 command-removal regression
+test_evidence: 64 passed in 13.86s (.venv/bin/pytest -q naamive/tests/runtime_python), including schema and immutable-feedback regressions
 next_action: Tratar o próximo gap priorizado conforme o escopo de trabalho solicitado.
 ---
 
@@ -40,6 +40,8 @@ imutabilidade do pacote e smoke real); esta é uma nova linha de base.
 | Alta | GAP-008 | `RESOLVED` | O operador precisa acionar manualmente cada round automático do projeto. |
 | Alta | GAP-009 | `RESOLVED` | Contexto do agente e validador de evidência exigem formatos incompatíveis. |
 | Alta | GAP-010 | `RESOLVED` | Auditoria não oferece visão humana, cronológica e explicativa das execuções. |
+| Bloqueador | GAP-011 | `RESOLVED` | O fluxo público ainda transfere ao operador a coordenação de módulos, itens de trabalho e despachos. |
+| Alta | GAP-012 | `RESOLVED` | Rejeições de gate não coletam feedback estruturado nem retomam o ciclo de forma guiada. |
 
 ## GAP-001 — `run-agent` contorna contexto, despacho, estado e auditoria
 
@@ -443,13 +445,33 @@ literal de substrings quando formatos equivalentes forem aceitos.
 - regressões equivalentes cobrem análise, requisitos, arquitetura, planejamento
   e relatórios das fases posteriores.
 
-**Estado:** `PARTIALLY_RESOLVED`
+**Estado:** `RESOLVED`
 
 **Evidência de resolução:** todos os contratos de evidência de projeto são
 centralizados em `EVIDENCE_REQUIREMENTS`; os contextos de despacho obtêm os
 headings de `completion_criteria` e os validadores obtêm as mesmas seções de
 `required_sections`. Contratos de documentos de módulo e revisão também são
 derivados pelo nome do artefato, eliminando requisitos ocultos do validador.
+
+**Conclusão:** `EVIDENCE_SCHEMAS` passou a ser o contrato versionado único;
+o contexto exige front matter com versão, tipo de artefato e `execution_id`, e
+o validador confere esses metadados quando presentes, mantendo legíveis os
+artefatos históricos sem versão. A regressão cobre incompatibilidade de tipo e
+o smoke real já registrado cobre o adaptador Codex.
+
+**Evidência operacional:** o launcher isolado de smoke passou a declarar o
+binário estável `/usr/local/bin/codex` e a atestação da sessão persistida pelo
+serviço de login. O smoke real de 30 de julho de 2026 concluiu com sucesso com
+`codex-cli 0.144.0`; o relatório auditável está em
+`naamive/orchestration/smoke-reports/codex-smoke-20260730010837.md`.
+
+**Detalhamento aprovado:** novos artefatos usam front matter com
+`evidence_schema_version: 1`, `artifact_type` e `execution_id`. O contexto de
+despacho informa o mesmo contrato; o validador exige versão compatível e os
+headings existentes permanecem campos obrigatórios. Evidências históricas sem
+versão continuam legíveis por migração, mas todo novo despacho exige o schema.
+As regressões cobrem versão ausente, incompatível e válida, além de E2Es de
+catálogo feliz, rejeição de compromisso de produto e rejeição de entrega.
 
 ## GAP-010 — Auditoria não oferece visão humana, cronológica e explicativa das execuções
 
@@ -509,31 +531,159 @@ para o registro canônico imutável. A regressão
 `test_audit_timeline_projects_failed_execution_for_humans` cobre causa e
 recuperação de uma falha.
 
+## GAP-011 — A interface pública ainda exige condução manual fora dos gates
+
+**Severidade:** bloqueador
+
+**Evidência:** embora `orchestrate_until_blocked` encadeie as rodadas de
+projeto, `orchestrate_project` retorna `PROJECT_EXECUTION_PENDING` quando há
+trabalho de módulo pendente. O fluxo público exige que o operador descubra e
+execute `orchestrate-module`, `create-work-item` e `run-implementation`; a
+regressão `test_cli_deterministic_end_to_end_happy_path` codifica essa sequência
+manual. Assim, o operador ainda precisa conhecer estados internos, módulos e
+itens de trabalho para avançar um projeto sem gate humano.
+
+**Violação:** a interface operacional deve ser orientada a necessidade e
+decisão, não à topologia interna da máquina de estados. Depois de uma
+necessidade válida ser submetida, o orquestrador deve realizar todo o trabalho
+automático — inclusive coordenar módulos, planejamento autorizado e despachos
+de implementação — e devolver o controle exclusivamente em gates humanos,
+rework, falha, pausa, cancelamento ou entrega.
+
+**Risco:** a experiência continua sendo uma lista de comandos técnicos, em vez
+de uma orquestração. Um usuário pode deixar um projeto elegível parado, invocar
+uma fase fora de ordem ou não perceber qual dos vários comandos ainda falta.
+
+**Remediação:** definir uma superfície mínima:
+
+- a necessidade é um único arquivo criado a partir do template canônico e
+  preenchido antes do início; `start` recebe esse arquivo ou seu identificador
+  e não exige um comando prévio de inicialização;
+- `naamive start --project <id>` (ou a evolução compatível de `orchestrate`)
+  executa continuamente todos os trabalhos autorizados, incluindo todos os
+  módulos elegíveis e seus itens planejados, até uma condição real de parada;
+- a criação de work items passa a ser uma saída governada do planejamento,
+  revisada e registrada pelo runtime, e não uma etapa manual do operador;
+- `orchestrate-module` e `run-implementation` deixam de ser comandos
+  operacionais públicos; se necessários, permanecem apenas como primitivas
+  internas testáveis;
+- `cancel`, `delete-project`, `pause` e `resume` continuam comandos
+  administrativos explícitos e não fazem parte do fluxo normal de avanço.
+
+**Testes de aceite:**
+
+- com apenas um arquivo de necessidade válido e uma chamada a `start`, o
+  projeto chega ao primeiro gate humano sem comandos intermediários;
+- após cada aprovação, uma nova chamada a `start` chega ao próximo gate ou a
+  `DELIVERED`, sem exigir módulo, item de trabalho, estado ou fase como
+  argumento;
+- um E2E de catálogo cria a aplicação, seus testes e suas instruções de uso a
+  partir do plano autorizado, sem `create-work-item`, `orchestrate-module` ou
+  `run-implementation` por parte do operador;
+- o runtime para imediatamente em rework, falha, pausa, cancelamento ou gate e
+  mantém todos os contextos, despachos e eventos individuais auditáveis;
+- cancelamento e exclusão definitiva preservam seus comandos, proteções e
+  critérios atuais.
+
+**Estado:** `RESOLVED`
+
+**Evidência de resolução:** `naamive start` é a superfície pública de início e
+continuidade e delega ao loop canônico. O loop seleciona os rounds de módulo
+elegíveis antes da fase correspondente do projeto, cria o menor item de
+implementação autorizado pelo plano de módulo e o despacha sem argumento de
+módulo ou item fornecido pelo operador. A regressão E2E
+`test_cli_deterministic_end_to_end_happy_path` percorre o catálogo usando
+somente `start` e decisões de gate; a suíte do runtime passou com `64 passed`.
+
+## GAP-012 — Gate rejeitado não possui artefato de feedback nem retorno guiado
+
+**Severidade:** alta
+
+**Evidência:** `naamive decide` aceita `REJECTED` e `REWORK_REQUIRED`, mas a
+decisão recebe somente `--reason`. Não há um documento canônico de feedback
+com rejeições, evidências, ajustes propostos, responsável e critério de nova
+submissão; tampouco existe uma retomada que use esse contexto como entrada
+obrigatória do próximo round. O operador precisa conhecer comandos e caminhos
+internos para reconstruir o fluxo.
+
+**Violação:** uma rejeição humana deve ser uma decisão produtiva e rastreável,
+não um terminal textual. O feedback precisa orientar o retrabalho autorizado e
+voltar ao mesmo fluxo de `start`, sem criar uma rota paralela manual.
+
+**Risco:** rejeições perdem contexto, tornam-se difíceis de auditar e podem
+gerar retrabalho incompleto ou repetição da mesma proposta. A pessoa que
+aprovou fica responsável por explicar manualmente ao sistema como recuperar o
+processo.
+
+**Remediação:** para cada gate, materializar um `GATE_FEEDBACK.md` canônico
+quando a decisão for `REJECTED` ou `REWORK_REQUIRED`. O comando de decisão deve
+aceitar a referência a esse artefato (ou abrir o template e parar), validar
+campos estruturados — decisão, itens rejeitados, evidências, ajustes propostos,
+responsável e critério de aceite — e registrar sua versão imutável. Ao executar
+novamente `start`, o runtime deve criar o retrabalho autorizado, fornecer o
+feedback ao agente e retornar ao gate correspondente após revisão independente.
+
+**Decisão de remediação aprovada:** a retomada usa uma matriz fixa e explícita:
+
+| Gate rejeitado | Estado de retorno automático |
+| --- | --- |
+| `REGISTER_PROJECT` | Pré-projeto para correção da solicitação |
+| `PRODUCT_COMMITMENT` | `DEFINITION` |
+| `MATERIAL_ARCHITECTURE_DECISION` | `ARCHITECTURE` |
+| `RESIDUAL_RISK_ACCEPTANCE` | `VALIDATION` |
+| `RELEASE_AUTHORIZATION` | `DELIVERY` |
+| `DELIVERY_ACCEPTANCE` | `VALIDATION` |
+
+Na nova tentativa, o runtime cria retrabalho vinculado à decisão, entrega o
+feedback imutável como input, limita a execução aos módulos e artefatos
+indicados e reabre o mesmo gate somente após revisão independente.
+
+**Detalhamento aprovado:** `GATE_FEEDBACK.md` passa a declarar
+`affected_modules`. Vazio significa impacto de projeto; preenchido limita o
+retrabalho aos módulos informados. Em `DELIVERY_ACCEPTANCE`, o projeto retorna
+a `VALIDATION`, módulos afetados retornam a `IMPLEMENTING` e itens concluídos a
+`AUTHORIZED`; `start` percorre novamente implementação, integração e validação
+até reabrir o mesmo gate. A implementação não pode pular módulos diretamente
+para `INTEGRATING`.
+
+**Testes de aceite:**
+
+- uma rejeição abre ou exige o template de feedback e não aceita somente uma
+  justificativa livre como evidência suficiente;
+- feedback válido cria uma decisão imutável, retorna somente os escopos
+  afetados a retrabalho e o inclui no contexto do novo despacho;
+- uma chamada posterior a `start` executa o retrabalho automaticamente e para
+  no gate reaberto, sem comandos específicos de fase ou módulo;
+- a timeline apresenta decisão, feedback, tentativa substituída, novo despacho
+  e resultado de modo correlacionado;
+- uma aprovação continua simples: `decide --gate <id> --decision APPROVED`,
+  seguida apenas de `start`.
+
+**Estado:** `RESOLVED`
+
+**Evidência de resolução:** ao abrir um gate, o runtime cria
+`gate-feedback/<GATE_ID>.md` no projeto. Decisões `REJECTED` e
+`REWORK_REQUIRED` exigem que esse documento esteja preenchido com decisão,
+itens rejeitados, evidências, ajustes, responsável e critério de nova
+submissão; a decisão imutável registra a referência e a próxima ação aponta
+para `naamive start`. A regressão de gates condicionais cobre o feedback
+preenchido, e a suíte do runtime passou com `64 passed`.
+
+**Conclusão:** a decisão congela o feedback em versão content-addressed sob o
+projeto, registra essa referência imutável no audit trail e fornece somente a
+versão congelada aos rounds de retrabalho. A seleção de módulos reabertos já é
+respeitada pelo ciclo de implementação, integração e validação; módulos não
+afetados permanecem `READY_FOR_DELIVERY`. A timeline correlaciona decisão,
+feedback e a próxima ação `naamive start`.
+
 ## Sequência recomendada
 
-1. Fechar GAP-001, pois a rota alternativa reduz as garantias de todos os
-   demais fluxos.
-2. Fechar GAP-002 e acrescentar E2E multi-módulo; ele é a prova central do
-   modelo de produto.
-3. Fechar GAP-003 para tornar exceções e evolução executáveis, não apenas
-   documentadas.
-4. Fechar GAP-004 antes de declarar reutilização entre projetos suportada.
-5. Fechar GAP-005 antes de usar falhas do adaptador como evidência diagnóstica
-   de operação ponta a ponta.
-6. Fechar GAP-006 antes de considerar o adaptador utilizável em um ambiente de
-   execução reproduzível fora da integração da IDE.
-7. Fechar GAP-007 antes de considerar o adaptador utilizável em um ambiente de
-   desenvolvimento com IDE aberto.
-8. Fechar GAP-008 antes de declarar que a interface pública executa a
-   orquestração ponta a ponta sem condução manual do operador.
-9. Fechar GAP-009 antes de usar o adaptador real como prova de que os contratos
-   de evidência são executáveis pelos agentes.
-10. Fechar GAP-010 antes de declarar a auditoria operacionalmente observável
-    por pessoas não técnicas.
+Não há gaps pendentes nesta linha de base. Manter a suíte de regressão e o
+smoke real como controles de alteração.
 
 ## Condição de encerramento
 
-Este backlog pode ser fechado quando todos os gaps tiverem implementação,
+**Estado do backlog:** `RESOLVED`. Todos os gaps têm implementação,
 testes de regressão e uma execução E2E determinística que cubra múltiplos
 módulos, retrabalho/evolução, um consumo de contrato válido e causas
 diagnósticas para falhas do adaptador, Codex CLI disponível de forma estável e
@@ -541,4 +691,8 @@ sem bloqueio por metadados incidentais do ambiente. A aprovação de entrega dev
 permanecer coberta pela regressão coordenada já existente, e os rounds
 automáticos devem ser encadeados até um ponto real de decisão humana ou parada,
 com contratos de evidência consistentes entre despacho e validação e uma visão
-humana de execução adequada à operação e a um dashboard futuro.
+humana de execução adequada à operação e a um dashboard futuro. A interface
+pública também deve exigir somente o arquivo inicial de necessidade, `start` e
+decisões de gate; rejeições devem retornar por feedback estruturado ao mesmo
+fluxo, sem comandos manuais de fase, módulo ou implementação. Os comandos de
+cancelamento e exclusão definitiva permanecem explícitos e preservados.

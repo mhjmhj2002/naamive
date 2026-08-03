@@ -1,8 +1,11 @@
-"""Evidence contracts for the orchestration rounds."""
+"""DEPRECATED legacy evidence contracts retained for Node migration reference."""
 from __future__ import annotations
 
 import re
 from pathlib import Path
+from typing import Any
+
+import yaml
 
 from .intake import IntakeError
 
@@ -16,6 +19,10 @@ TECHNICAL_MODULE_NAMES = {"backend", "frontend", "database", "banco de dados", "
 # Single source used by both dispatch contexts and validation.  The text is
 # intentionally explicit: an agent must never be asked to infer headings that
 # a later validator treats as mandatory.
+EVIDENCE_SCHEMA_VERSION = "1"
+
+# Versioned, single-source evidence schemas.  Dispatch contexts and validators
+# consume the same fields; the schema version makes future changes explicit.
 EVIDENCE_REQUIREMENTS: dict[str, tuple[str, ...]] = {
     "analysis/business/BUSINESS_ANALYSIS.md": BUSINESS_REQUIRED + TRACEABILITY_REQUIRED,
     "analysis/domain/MODULE_PROPOSAL.md": ("módulos candidatos", "justificativa", "dependências", "riscos", "questões em aberto") + TRACEABILITY_REQUIRED,
@@ -28,6 +35,16 @@ EVIDENCE_REQUIREMENTS: dict[str, tuple[str, ...]] = {
     "delivery/DELIVERY_PACKAGE.md": ("release", "implantação", "reversão", "operação", "observabilidade", "handover", "resultado") + TRACEABILITY_REQUIRED,
 }
 
+EVIDENCE_SCHEMAS: dict[str, dict[str, object]] = {
+    path: {"version": EVIDENCE_SCHEMA_VERSION, "required_sections": sections}
+    for path, sections in EVIDENCE_REQUIREMENTS.items()
+}
+
+
+def evidence_schema(evidence_path: str) -> dict[str, object]:
+    """Return the versioned contract used by both dispatch and validation."""
+    return EVIDENCE_SCHEMAS.get(evidence_path, {"version": EVIDENCE_SCHEMA_VERSION, "required_sections": required_sections(evidence_path)})
+
 
 def completion_criteria(evidence_path: str) -> str:
     required = EVIDENCE_REQUIREMENTS.get(evidence_path)
@@ -39,17 +56,39 @@ def completion_criteria(evidence_path: str) -> str:
             "REVIEW.md": ("critérios verificados", "resultado") + TRACEABILITY_REQUIRED,
         }
         required = filename_contracts.get(Path(evidence_path).name, TRACEABILITY_REQUIRED)
-    return f"Produce {evidence_path} with non-empty headings: {', '.join(required)}; include the supplied execution_id."
+    schema = evidence_schema(evidence_path)
+    return f"Produce {evidence_path} using YAML front matter evidence_schema_version: {schema['version']}, artifact_type: {evidence_path}, execution_id: <supplied execution_id>, then non-empty headings: {', '.join(required)}."
 
 
 def required_sections(evidence_path: str) -> tuple[str, ...]:
     return EVIDENCE_REQUIREMENTS.get(evidence_path, TRACEABILITY_REQUIRED)
 
 
-def require_markdown(path: Path, required_sections: tuple[str, ...], execution_id: str | None = None) -> Path:
+def _front_matter(content: str) -> dict[str, Any] | None:
+    if not content.startswith("---\n"):
+        return None
+    end = content.find("\n---\n", 4)
+    if end < 0:
+        raise IntakeError("evidence front matter is not terminated")
+    parsed = yaml.safe_load(content[4:end])
+    if not isinstance(parsed, dict):
+        raise IntakeError("evidence front matter must be a mapping")
+    return parsed
+
+
+def require_markdown(path: Path, required_sections: tuple[str, ...], execution_id: str | None = None, evidence_path: str | None = None) -> Path:
     if not path.is_file():
         raise IntakeError(f"required evidence not found: {path}")
-    content = path.read_text(encoding="utf-8").lower()
+    raw = path.read_text(encoding="utf-8")
+    metadata = _front_matter(raw)
+    if metadata is not None:
+        if str(metadata.get("evidence_schema_version")) != EVIDENCE_SCHEMA_VERSION:
+            raise IntakeError(f"evidence schema version is incompatible: {path}")
+        if evidence_path and metadata.get("artifact_type") != evidence_path:
+            raise IntakeError(f"evidence artifact_type is invalid: {path}")
+        if execution_id and metadata.get("execution_id") != execution_id:
+            raise IntakeError(f"evidence front matter is not linked to execution_id: {path}")
+    content = raw.lower()
     missing = [section for section in required_sections if section not in content]
     if missing:
         raise IntakeError(f"evidence is missing required sections: {', '.join(missing)}")
@@ -59,11 +98,11 @@ def require_markdown(path: Path, required_sections: tuple[str, ...], execution_i
 
 
 def validate_business_analysis(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "analysis" / "business" / "BUSINESS_ANALYSIS.md", required_sections("analysis/business/BUSINESS_ANALYSIS.md"), execution_id)
+    return require_markdown(project / "analysis" / "business" / "BUSINESS_ANALYSIS.md", required_sections("analysis/business/BUSINESS_ANALYSIS.md"), execution_id, "analysis/business/BUSINESS_ANALYSIS.md")
 
 
 def validate_module_proposal(project: Path, execution_id: str) -> Path:
-    path = require_markdown(project / "analysis" / "domain" / "MODULE_PROPOSAL.md", required_sections("analysis/domain/MODULE_PROPOSAL.md"), execution_id)
+    path = require_markdown(project / "analysis" / "domain" / "MODULE_PROPOSAL.md", required_sections("analysis/domain/MODULE_PROPOSAL.md"), execution_id, "analysis/domain/MODULE_PROPOSAL.md")
     candidates = re.findall(r"^\s*-\s+`?([^`\n:]+)`?", path.read_text(encoding="utf-8"), re.MULTILINE)
     invalid = [candidate.strip().lower() for candidate in candidates if candidate.strip().lower() in TECHNICAL_MODULE_NAMES]
     if invalid:
@@ -72,7 +111,7 @@ def validate_module_proposal(project: Path, execution_id: str) -> Path:
 
 
 def validate_requirements(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "analysis" / "requirements" / "REQUIREMENTS.md", required_sections("analysis/requirements/REQUIREMENTS.md"), execution_id)
+    return require_markdown(project / "analysis" / "requirements" / "REQUIREMENTS.md", required_sections("analysis/requirements/REQUIREMENTS.md"), execution_id, "analysis/requirements/REQUIREMENTS.md")
 
 
 def validate_module_definition_document(path: Path, execution_id: str) -> Path:
@@ -93,8 +132,7 @@ def validate_architecture(project: Path, execution_id: str) -> Path:
 def validate_architecture_document(path: Path, execution_id: str) -> Path:
     validated = require_markdown(
         path,
-        required_sections("architecture/SOLUTION_ARCHITECTURE.md"),
-        execution_id,
+        required_sections("architecture/SOLUTION_ARCHITECTURE.md"), execution_id, "architecture/SOLUTION_ARCHITECTURE.md",
     )
     if not re.search(r"^material_decision_required:\s*(true|false)\s*$", validated.read_text(encoding="utf-8"), re.IGNORECASE | re.MULTILINE):
         raise IntakeError(f"architecture evidence must declare material_decision_required: {path}")
@@ -117,8 +155,7 @@ def validate_delivery_plan(project: Path, execution_id: str) -> Path:
 def validate_delivery_plan_document(path: Path, execution_id: str) -> Path:
     validated = require_markdown(
         path,
-        required_sections("planning/DELIVERY_PLAN.md"),
-        execution_id,
+        required_sections("planning/DELIVERY_PLAN.md"), execution_id, "planning/DELIVERY_PLAN.md",
     )
     content = validated.read_text(encoding="utf-8")
     if not re.search(r"^risks_resolved:\s*true\s*$", content, re.IGNORECASE | re.MULTILINE) or not re.search(r"^dependencies_resolved:\s*true\s*$", content, re.IGNORECASE | re.MULTILINE) or not re.search(r"^unresolved_risks:\s*\[\s*\]\s*$", content, re.MULTILINE):
@@ -127,21 +164,21 @@ def validate_delivery_plan_document(path: Path, execution_id: str) -> Path:
 
 
 def validate_integration_report(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "integration" / "INTEGRATION_REPORT.md", required_sections("integration/INTEGRATION_REPORT.md"), execution_id)
+    return require_markdown(project / "integration" / "INTEGRATION_REPORT.md", required_sections("integration/INTEGRATION_REPORT.md"), execution_id, "integration/INTEGRATION_REPORT.md")
 
 
 def validate_quality_report(project: Path, execution_id: str) -> Path:
-    return require_markdown(project / "validation" / "QUALITY_REPORT.md", required_sections("validation/QUALITY_REPORT.md"), execution_id)
+    return require_markdown(project / "validation" / "QUALITY_REPORT.md", required_sections("validation/QUALITY_REPORT.md"), execution_id, "validation/QUALITY_REPORT.md")
 
 
 def validate_security_assessment(project: Path, execution_id: str) -> Path:
-    validated = require_markdown(project / "validation" / "security" / "SECURITY_ASSESSMENT.md", required_sections("validation/security/SECURITY_ASSESSMENT.md"), execution_id)
+    validated = require_markdown(project / "validation" / "security" / "SECURITY_ASSESSMENT.md", required_sections("validation/security/SECURITY_ASSESSMENT.md"), execution_id, "validation/security/SECURITY_ASSESSMENT.md")
     _require_gate_marker(validated, "residual_risk_acceptance_required")
     return validated
 
 
 def validate_delivery_package(project: Path, execution_id: str) -> Path:
-    validated = require_markdown(project / "delivery" / "DELIVERY_PACKAGE.md", required_sections("delivery/DELIVERY_PACKAGE.md"), execution_id)
+    validated = require_markdown(project / "delivery" / "DELIVERY_PACKAGE.md", required_sections("delivery/DELIVERY_PACKAGE.md"), execution_id, "delivery/DELIVERY_PACKAGE.md")
     _require_gate_marker(validated, "release_authorization_required")
     return validated
 
