@@ -11,6 +11,7 @@
     "migrate": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/migrate.ts",
     "reconcile": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/reconcile.ts",
     "test": "node --test dist/**/*.test.js",
+    "git:smoke": "node --env-file-if-exists=.env dist/git-delivery-smoke.js",
     "e2e": "npm run build && node --env-file-if-exists=.env -e \"if (!process.env.DATABASE_URL) { console.error('DATABASE_URL is required for e2e'); process.exit(1); }\" && NAAMIVE_ARTIFACT_STORE_URI=file:///tmp/naamive-e2e-artifacts NAAMIVE_AGENT_ADAPTER=controlled node --env-file-if-exists=.env --test --test-concurrency=1 dist/*.e2e.test.js"
   },
   "dependencies": {
