@@ -122,10 +122,10 @@ vincular uma pendência explicável.
 | 3 | F3-03 | `DOING` | Orquestração Git/worktree e reconciliação em implementação. |
 | 3 | F3-04 | `DOING` | Entrega Dev isolada em implementação. |
 | 3 | F3-05 | `DOING` | QA, findings e validação de candidata em implementação. |
-| 3 | F3-06 | `DOING` | Política de rework e escalonamento em implementação. |
+| 3 | F3-06 | `TO DO` | — |
 | 3 | F3-07 | `DOING` | Integração idempotente/reconciliável em implementação. |
-| 3 | F3-08 | `DOING` | Projeção web/SSE em implementação. |
-| 3 | F3-09 | `DOING` | Aceite web controlado em implementação. |
+| 3 | F3-08 | `TO DO` | — |
+| 3 | F3-09 | `TO DO` | — |
 | 4 | F4-01 | `TO DO` | — |
 | 4 | F4-02 | `TO DO` | — |
 | 4 | F4-03 | `TO DO` | — |
