@@ -10,7 +10,7 @@ import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
-import { authorizeRework, authorizeWorkItem, createCandidate, decideModule, materializeModule, phase3Detail, startDevelopment, submitQa } from './phase3.js';
+import { authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideModule, materializeModule, phase3Detail, startDevelopment, submitQa } from './phase3.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -31,7 +31,7 @@ const decide = async (projectId: string, body: Record<string, unknown>) => withT
 export const createApiServer = () => createServer(async (request, response) => { try {
   if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': settings.webOrigin, 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'content-type,idempotency-key' }); return response.end(); }
   const url = new URL(request.url ?? '/', settings.webOrigin); const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|retry-discovery|apply-review-adjustments|archive))?$/);
-  const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items))?)?$/);
+  const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition))?)?$/);
   const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|qa|rework)$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
@@ -40,6 +40,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));
   if (phase3Match && request.method === 'POST' && !phase3Match[2]) return respond(response,202,await materializeModule(phase3Match[1],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'decision') return respond(response,202,await decideModule(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (phase3Match && request.method === 'POST' && phase3Match[3] === 'definition') return respond(response,202,await completeDefinition(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'work-items') return respond(response,202,await authorizeWorkItem(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'development') return respond(response,202,await startDevelopment(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'qa') return respond(response,202,await submitQa(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
