@@ -117,15 +117,15 @@ vincular uma pendência explicável.
 | 2 | F2-04 | `DONE` | Detalhe/SSE exibem etapa, duração, heartbeat, resultado, próxima ação e referências sanitizadas. |
 | 2 | F2-05 | `DONE` | Tela/API exibem o pacote do gate, decisão versionada, feedback obrigatório e retorno a requisitos. |
 | 2 | F2-06 | `DONE` | Aceite controlado cobre descoberta até o gate, ajuste, evidências e arquivamento durante job/gate. |
-| 3 | F3-01 | `TO DO` | — |
-| 3 | F3-02 | `TO DO` | — |
-| 3 | F3-03 | `TO DO` | — |
-| 3 | F3-04 | `TO DO` | — |
-| 3 | F3-05 | `TO DO` | — |
-| 3 | F3-06 | `TO DO` | — |
-| 3 | F3-07 | `TO DO` | — |
-| 3 | F3-08 | `TO DO` | — |
-| 3 | F3-09 | `TO DO` | — |
+| 3 | F3-01 | `DOING` | Implementação autorizada em `phase-3-implementation`; workflows/migrations novos em andamento. |
+| 3 | F3-02 | `DOING` | Contrato de work item autorizado em implementação. |
+| 3 | F3-03 | `DOING` | Orquestração Git/worktree e reconciliação em implementação. |
+| 3 | F3-04 | `DOING` | Entrega Dev isolada em implementação. |
+| 3 | F3-05 | `DOING` | QA, findings e validação de candidata em implementação. |
+| 3 | F3-06 | `DOING` | Política de rework e escalonamento em implementação. |
+| 3 | F3-07 | `DOING` | Integração idempotente/reconciliável em implementação. |
+| 3 | F3-08 | `DOING` | Projeção web/SSE em implementação. |
+| 3 | F3-09 | `DOING` | Aceite web controlado em implementação. |
 | 4 | F4-01 | `TO DO` | — |
 | 4 | F4-02 | `TO DO` | — |
 | 4 | F4-03 | `TO DO` | — |

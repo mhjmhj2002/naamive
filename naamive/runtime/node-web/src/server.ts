@@ -10,6 +10,7 @@ import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
+import { authorizeWorkItem, decideModule, materializeModule, phase3Detail } from './phase3.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -30,10 +31,15 @@ const decide = async (projectId: string, body: Record<string, unknown>) => withT
 export const createApiServer = () => createServer(async (request, response) => { try {
   if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': settings.webOrigin, 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'content-type,idempotency-key' }); return response.end(); }
   const url = new URL(request.url ?? '/', settings.webOrigin); const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|retry-discovery|apply-review-adjustments|archive))?$/);
+  const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items))?)?$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
   if (request.method === 'POST' && url.pathname === '/api/agent/readiness') { try { return respond(response,200,await checkAgentReadiness(true)); } catch(error) { const code=error instanceof AgentReadinessError||error instanceof AgentConfigurationError?error.code:'CODEX_PROCESS_FAILED'; return respond(response,503,{code,message:'O agente não está pronto. Corrija a configuração e teste novamente.'}); } }
+  if (match && request.method === 'GET' && url.searchParams.get('phase3') === 'true') return respond(response, 200, await phase3Detail(match[1]));
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));
+  if (phase3Match && request.method === 'POST' && !phase3Match[2]) return respond(response,202,await materializeModule(phase3Match[1],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (phase3Match && request.method === 'POST' && phase3Match[3] === 'decision') return respond(response,202,await decideModule(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (phase3Match && request.method === 'POST' && phase3Match[3] === 'work-items') return respond(response,202,await authorizeWorkItem(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (match && request.method === 'PUT' && match[2] === undefined) return respond(response, 200, await bindRepository(match[1], await json(request)));
   if (match && request.method === 'PUT' && match[2] === 'intake') return respond(response, 200, await saveIntake(match[1], await json(request)));
   if (match && request.method === 'POST' && match[2] === 'submit') return respond(response, 202, await submitIntake(match[1], request.headers['idempotency-key']?.toString() ?? randomUUID()));
