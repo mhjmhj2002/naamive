@@ -71,16 +71,16 @@ permanecem `OPEN`.
 | P1-03 | Fases 1–5 | P1 | `RESOLVED` | Releases incrementais e limite do MVP estão nomeados. |
 | P1-04 | Fases 1 e 5 | P1 | `RESOLVED` | Backup manual testado na Fase 1; automação fica na Fase 5. |
 | P2-05 | Fase 1 | P2 | `RESOLVED` | Compose, migrations e fluxo web completo validados em PostgreSQL local. |
-| P1-05 | Fase 3 | P1 | `OPEN` | Política Git para falhas e divergências está incompleta. |
+| P1-05 | Fase 3 | P1 | `RESOLVED` | Política Git isolada, recuperação e causas sanitizadas foram implementadas e validadas. |
 | P1-06 | Fase 1 | P1 | `RESOLVED` | Autoria de rascunho e submissão separadas no schema/runtime. |
 | P1-07 | Fase 1 | P1 | `RESOLVED` | Índices únicos parciais aplicados na migration de status. |
 | P1-08 | Fases 1–5 | P1 | `RESOLVED` | North Star e roadmap promovidos para aprovados na Fase 1. |
 | P1-09 | Fase 1 | P1 | `RESOLVED` | Bootstrap Node/Web/PostgreSQL e comandos operacionais criados. |
 | P1-10 | Fase 1 | P1 | `RESOLVED` | Configuração obrigatória validada no startup e documentada. |
 | P2-01 | Fase 4 | P2 | `OPEN` | Mecanismo de abertura de PR não está escolhido. |
-| P2-02 | Fase 3 | P2 | `OPEN` | Identidade e convenção de commits não estão definidas. |
-| P2-03 | Fase 3 | P2 | `OPEN` | Método de integração fase → `integration` não está escolhido. |
-| P2-04 | Fase 3 | P2 | `OPEN` | Estratégia de teste da integração Git remota não está definida. |
+| P2-02 | Fase 3 | P2 | `RESOLVED` | Commits automatizados usam `naamive-bot` e trailers obrigatórios. |
+| P2-03 | Fase 3 | P2 | `RESOLVED` | Integração usa merge commit auditável com SHAs e resultado de push. |
+| P2-04 | Fase 3 | P2 | `RESOLVED` | Remoto bare temporário e smoke GitHub descartável com allowlist foram validados. |
 
 ## Status das tarefas das fases
 
@@ -685,7 +685,7 @@ local. A mesma sequência deve integrar CI com PostgreSQL efêmero.
 
 **Prioridade:** alta; bloquear antes da Fase 3.
 
-**Status:** `OPEN`.
+**Status:** `RESOLVED`.
 
 **Evidência:** branches por fase e integração foram definidas, mas faltam regras
 para remoto adiantado, árvore suja, conflito fase → integração, push falho, PR
@@ -703,7 +703,7 @@ recuperação explícita.
 
 **Prioridade:** média; resolver antes da Fase 3.
 
-**Status:** `OPEN`.
+**Status:** `RESOLVED`.
 
 **Solução aprovada para implementação:** usar `naamive-bot` como autor técnico
 dos commits automatizados. A mensagem começa por `<tipo>(<work-item>):
@@ -715,7 +715,7 @@ como ator auditável de comandos e gates, sem assumir autoria Git do agente.
 
 **Prioridade:** média; resolver antes da Fase 3.
 
-**Status:** `OPEN`.
+**Status:** `RESOLVED`.
 
 **Solução aprovada para implementação:** usar *merge commit* de
 `phases/<fase>` para `integration`, sem squash ou fast-forward, preservando a
@@ -727,7 +727,7 @@ evidência/validação.
 
 **Prioridade:** média; resolver antes da Fase 3.
 
-**Status:** `OPEN`.
+**Status:** `RESOLVED`.
 
 **Solução aprovada para implementação:** testes automatizados usam remoto bare
 local temporário e proíbem URLs que não tenham sido criadas pelo teste. O smoke
