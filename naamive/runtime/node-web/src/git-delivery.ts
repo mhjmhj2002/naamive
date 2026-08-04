@@ -38,3 +38,16 @@ export const reconcileIntegration = (repository:string, integrationBranch:string
   const parents=git(repository,['show','-s','--format=%P',head]).split(' '); if(parents.includes(phaseSha)) return 'APPLIED_UNRECORDED';
   return 'DIVERGED';
 };
+export const assertIncrementalPaths = (repository:string, baseSha:string, allowlist:string[], denylist:string[]=[]):string[] => {
+  const normalize=(path:string)=>path.replaceAll('\\','/').replace(/^\.\//,'');
+  const permitted=(path:string,patterns:string[])=>patterns.some(pattern=>{const p=normalize(pattern).replace(/\*\*/g,'.*').replace(/\*/g,'[^/]*');return new RegExp(`^${p}$`).test(path)||path.startsWith(normalize(pattern).replace(/\*.*$/,''));});
+  const changed=git(repository,['diff','--name-only','--diff-filter=ACMRTUXB',baseSha,'HEAD']).split('\n').filter(Boolean).map(normalize);
+  if(changed.some(path=>path.startsWith('../')||path.includes('/../')||permitted(path,denylist)||!permitted(path,allowlist))) throw new GitDeliveryError('GIT_DIVERGED','PATH_POLICY_VIOLATION');
+  return changed;
+};
+export const initializePhaseRefs = (repository:string, baseSha:string, phaseBranch='phases/3', integrationBranch='integration') => {
+  if(!safe(phaseBranch)||!safe(integrationBranch)||phaseBranch===integrationBranch) throw new GitDeliveryError('GIT_DIVERGED');
+  assertClean(repository);
+  for(const branch of [integrationBranch,phaseBranch]) { try { git(repository,['rev-parse','--verify',branch]); } catch { git(repository,['branch',branch,baseSha]); } }
+  return {phaseSha:git(repository,['rev-parse',phaseBranch]),integrationSha:git(repository,['rev-parse',integrationBranch])};
+};
