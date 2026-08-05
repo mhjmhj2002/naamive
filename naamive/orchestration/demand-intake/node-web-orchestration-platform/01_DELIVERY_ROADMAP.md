@@ -125,7 +125,7 @@ vincular uma pendência explicável.
 | 3 | F3-06 | `DONE` | Rework é uma decisão imutável por finding/delivery/SHA, com índice de exclusão para uma correção ativa por item/revisão, duas rodadas máximas e gate humano auditável para crítico, repetição, escopo, arquitetura, risco aceito ou encerramento. QA aprovado continua sendo a única revalidação que fecha finding; candidata com finding preserva a original, atribui o corretivo e reabre o módulo. Migração e aceite PostgreSQL/E2E comprovados em 2026-08-04. |
 | 3 | F3-07 | `DONE` | Candidata congela SHA e manifesto integral; a tentativa e sua intenção de artefato são persistidas antes do Git. Merge/push usa worktree detached, confirma pais e SHAs, e retry/arquivamento reconciliam o remoto para distinguir `NOT_APPLIED`, `APPLIED_UNRECORDED` e `DIVERGED`. Build, testes unitários e aceite HTTP da Fase 3 verificados em 2026-08-05. |
 | 3 | F3-08 | `DONE` | Projeções F3 sanitizadas exibem estado, duração, heartbeat, SHAs, evidências, findings, gates, bloqueios e próxima ação. SSE usa cursor/replay sem duplicação e a web assina os eventos F3, inclusive rework, escalonamento, candidata, integração e arquivamento. Aceite HTTP/PostgreSQL comprovou dois work items (aprovado e rejeitado), sanitização e retomada por cursor em 2026-08-05. |
-| 3 | F3-09 | `DOING` | Reaberta pela auditoria de 2026-08-05: a limpeza de repositórios temporários não era garantida em falhas anteriores ao setup. Teardown antecipado e asserção global de ausência de `.phase3-http-*` foram adicionados; requer versionamento e aceite global final. |
+| 3 | F3-09 | `DONE` | Auditoria tratada em 2026-08-05: teardown antecipado e asserção global garantem ausência de `.phase3-http-*`; o aceite HTTP passou 5/5 e o aceite global passou após a implementação ser versionada no commit `a1787a7`. |
 | 4 | F4-01 | `TO DO` | — |
 | 4 | F4-02 | `TO DO` | — |
 | 4 | F4-03 | `TO DO` | — |
@@ -288,7 +288,7 @@ estado canônico diretamente.
 
 ## Fase 3 — Ciclo de módulo, desenvolvimento e QA com rework
 
-**Status atual da fase:** `DOING` — a auditoria de 2026-08-05 reabriu a fase para fortalecer a garantia de limpeza dos repositórios temporários e versionar a implementação.
+**Status atual da fase:** `DONE` — a auditoria de 2026-08-05 foi tratada, a implementação foi versionada e o aceite global final passou. Nova auditoria pode reabrir a fase caso encontre anomalia.
 
 **Valor entregue:** o operador aprova módulo e acompanha planejamento, implementação e QA. Uma reprovação cria finding, torna correção elegível e mostra Dev → QA → Dev até aprovação ou escalonamento.
 
@@ -314,7 +314,7 @@ estado canônico diretamente.
 
 **Tratativa aplicada:** QA reprovado agora libera o worktree pela transição governada para que o worker crie a nova execução. O aceite HTTP passou a criar dois itens isolados: um é aprovado e integrado; o outro reprova, cria finding, recebe decisão de rework pela API, é revalidado e permanece fora da candidata. O teste também verifica o SHA congelado como segundo pai, a igualdade dos conjuntos de commits e a exclusão do item pendente. O aceite PostgreSQL deixou de alterar estado de worktree ou matriz de QA diretamente.
 
-**Reabertura por limpeza:** a auditoria encontrou um diretório `.phase3-http-*` após a execução completa. O teardown dos cenários que criam repositórios agora é registrado antes de qualquer efeito de banco ou servidor e sempre remove a raiz em `finally`; o aceite HTTP também possui asserção global que falha se qualquer `.phase3-http-*` restar. O cenário HTTP passou com 5/5 após a mudança. F3-09 e a Fase 3 permanecem em `DOING` até versionamento e aceite global final.
+**Encerramento por limpeza:** a auditoria encontrou um diretório `.phase3-http-*` após a execução completa. O teardown dos cenários que criam repositórios agora é registrado antes de qualquer efeito de banco ou servidor e sempre remove a raiz em `finally`; o aceite HTTP também possui asserção global que falha se qualquer `.phase3-http-*` restar. A implementação, migrations e testes foram versionados no commit `a1787a7`; o aceite HTTP passou 5/5 e o aceite global final passou sem diretórios residuais. F3-09 e a Fase 3 foram promovidas para `DONE`.
 
 ## Fase 4 — Projeto entregue e aceito pela web
 
