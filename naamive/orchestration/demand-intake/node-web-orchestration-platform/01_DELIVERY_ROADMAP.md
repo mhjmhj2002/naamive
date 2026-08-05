@@ -117,15 +117,15 @@ vincular uma pendência explicável.
 | 2 | F2-04 | `DONE` | Detalhe/SSE exibem etapa, duração, heartbeat, resultado, próxima ação e referências sanitizadas. |
 | 2 | F2-05 | `DONE` | Tela/API exibem o pacote do gate, decisão versionada, feedback obrigatório e retorno a requisitos. |
 | 2 | F2-06 | `DONE` | Aceite controlado cobre descoberta até o gate, ajuste, evidências e arquivamento durante job/gate. |
-| 3 | F3-01 | `DOING` | Implementação autorizada em `phase-3-implementation`; workflows/migrations novos em andamento. |
-| 3 | F3-02 | `DOING` | Contrato de work item autorizado em implementação. |
-| 3 | F3-03 | `DOING` | Orquestração Git/worktree e reconciliação em implementação. |
-| 3 | F3-04 | `DOING` | Entrega Dev isolada em implementação. |
-| 3 | F3-05 | `DOING` | QA, findings e validação de candidata em implementação. |
-| 3 | F3-06 | `DOING` | Política de rework e escalonamento em implementação. |
-| 3 | F3-07 | `DOING` | Integração idempotente/reconciliável em implementação. |
-| 3 | F3-08 | `DOING` | Projeção web/SSE em implementação. |
-| 3 | F3-09 | `DOING` | Aceite web controlado em implementação. |
+| 3 | F3-01 | `DONE` | Módulos e revisões imutáveis são materializados a partir de `PRODUCT_COMMITMENT`; rounds, workflows publicados, gates de aprovação/arquitetura e evidências JSON/Markdown foram validados no aceite PostgreSQL até `PLANNING_IN_PROGRESS`. |
+| 3 | F3-02 | `DONE` | Planejamento materializa work items imutáveis com entradas, limites de paths, saída, critérios, dependências, matriz de QA e evidência JSON/Markdown com hash; aceite PostgreSQL validado. |
+| 3 | F3-03 | `DONE` | Aceite HTTP com PostgreSQL e remoto bare temporário comprovou lease/reconciliação (`ACTIVE`, `DIRTY`, `DIVERGED`, `MISSING`), política incremental antes do QA, trailers validados na branch `work-items/<id>`, merge em `phases/3` e rework auditável; evidência: `npm run build`, `npm test` e `npm run e2e` executados em 2026-08-04. |
+| 3 | F3-04 | `DONE` | `START_DEVELOPMENT` persiste intenção/operação/job antes de qualquer efeito Git; o worker leased cria e reconcilia o worktree isolado. QA deriva SHAs, commits, paths e findings auditáveis do repositório, e o aceite PostgreSQL/HTTP/E2E cobre rework, idempotência, lease e estados `DIRTY`/`MISSING`/`DIVERGED` (2026-08-04). |
+| 3 | F3-05 | `DONE` | QA congela a matriz por delivery e a executa no worktree/SHA revisado, persistindo comando, diretório, timeout, critérios e resultado sanitizado em `qa-report` JSON/Markdown. Findings `DELIVERY_QA`/`CANDIDATE_VALIDATION` são deduplicados por regra/fingerprint, carregam severidade e responsabilidade; somente QA aprovada de delivery posterior os fecha com revalidação registrada. A candidata valida o manifesto congelado em worktree detached no SHA persistido e grava `integration-candidate-validation` JSON/Markdown. Aceite PostgreSQL/E2E cobre timeout sanitizado, severidade, rework/revalidação, candidata aprovada e evidências (2026-08-04). |
+| 3 | F3-06 | `DONE` | Rework é uma decisão imutável por finding/delivery/SHA, com índice de exclusão para uma correção ativa por item/revisão, duas rodadas máximas e gate humano auditável para crítico, repetição, escopo, arquitetura, risco aceito ou encerramento. QA aprovado continua sendo a única revalidação que fecha finding; candidata com finding preserva a original, atribui o corretivo e reabre o módulo. Migração e aceite PostgreSQL/E2E comprovados em 2026-08-04. |
+| 3 | F3-07 | `DONE` | Candidata congela SHA e manifesto integral; a tentativa e sua intenção de artefato são persistidas antes do Git. Merge/push usa worktree detached, confirma pais e SHAs, e retry/arquivamento reconciliam o remoto para distinguir `NOT_APPLIED`, `APPLIED_UNRECORDED` e `DIVERGED`. Build, testes unitários e aceite HTTP da Fase 3 verificados em 2026-08-05. |
+| 3 | F3-08 | `DONE` | Projeções F3 sanitizadas exibem estado, duração, heartbeat, SHAs, evidências, findings, gates, bloqueios e próxima ação. SSE usa cursor/replay sem duplicação e a web assina os eventos F3, inclusive rework, escalonamento, candidata, integração e arquivamento. Aceite HTTP/PostgreSQL comprovou dois work items (aprovado e rejeitado), sanitização e retomada por cursor em 2026-08-05. |
+| 3 | F3-09 | `DOING` | Reaberta pela auditoria de 2026-08-05: a limpeza de repositórios temporários não era garantida em falhas anteriores ao setup. Teardown antecipado e asserção global de ausência de `.phase3-http-*` foram adicionados; requer versionamento e aceite global final. |
 | 4 | F4-01 | `TO DO` | — |
 | 4 | F4-02 | `TO DO` | — |
 | 4 | F4-03 | `TO DO` | — |
@@ -288,6 +288,8 @@ estado canônico diretamente.
 
 ## Fase 3 — Ciclo de módulo, desenvolvimento e QA com rework
 
+**Status atual da fase:** `DOING` — a auditoria de 2026-08-05 reabriu a fase para fortalecer a garantia de limpeza dos repositórios temporários e versionar a implementação.
+
 **Valor entregue:** o operador aprova módulo e acompanha planejamento, implementação e QA. Uma reprovação cria finding, torna correção elegível e mostra Dev → QA → Dev até aprovação ou escalonamento.
 
 **Demonstração ponta a ponta:** aprovar módulo, observar criação de trabalho, entrega Dev, reprovação QA, correção, nova validação e fechamento do finding pela web.
@@ -303,6 +305,16 @@ estado canônico diretamente.
 | F3-07 | Integrar fase → `integration`, fazer push e registrar SHAs/evidências após QA aprovar. | Falha de merge/push não inicia próxima fase. |
 | F3-08 | Implementar visão web de entrega, QA, findings, correções e revalidações por work item. | Muitas tentativas; usar correlação e expansão progressiva. |
 | F3-09 | Criar teste de aceite web de finding que retorna ao Dev e fecha após QA aprovar. | Cobrir também timeout, interrupção e causa sanitizada. |
+
+### Registro de auditoria — 2026-08-05
+
+**Resultado inicial:** Fase 3 foi rebaixada para `DOING`; F3-09 foi reaberta. Build, testes unitários e E2E anteriores não demonstravam integralmente o critério obrigatório de aceite web.
+
+**Achados bloqueantes registrados:** o cenário HTTP usava só um work item; o rework forçava estado e liberação de worktree via SQL; o cenário PostgreSQL alterava estado e matriz de QA diretamente; faltavam asserções do segundo pai do merge, dos commits introduzidos e da exclusão do item pendente; havia diretórios `.phase3-http-*` residuais.
+
+**Tratativa aplicada:** QA reprovado agora libera o worktree pela transição governada para que o worker crie a nova execução. O aceite HTTP passou a criar dois itens isolados: um é aprovado e integrado; o outro reprova, cria finding, recebe decisão de rework pela API, é revalidado e permanece fora da candidata. O teste também verifica o SHA congelado como segundo pai, a igualdade dos conjuntos de commits e a exclusão do item pendente. O aceite PostgreSQL deixou de alterar estado de worktree ou matriz de QA diretamente.
+
+**Reabertura por limpeza:** a auditoria encontrou um diretório `.phase3-http-*` após a execução completa. O teardown dos cenários que criam repositórios agora é registrado antes de qualquer efeito de banco ou servidor e sempre remove a raiz em `finally`; o aceite HTTP também possui asserção global que falha se qualquer `.phase3-http-*` restar. O cenário HTTP passou com 5/5 após a mudança. F3-09 e a Fase 3 permanecem em `DOING` até versionamento e aceite global final.
 
 ## Fase 4 — Projeto entregue e aceito pela web
 
@@ -781,6 +793,7 @@ afetada e continuar todo trabalho independente que não esteja bloqueado.
 | I-020 | F2-03 / F2-05 | `BLOCKING` | `RESOLVED` | `REVIEW_REQUIRES_ADJUSTMENT` retornava automaticamente a requisitos, permitindo ciclo ilimitado Revisão → Requisitos quando a IA repetia o mesmo parecer. A tela também expunha códigos técnicos sem descrição curta do motivo. No reteste manual, o relato humano era auditado mas não chegava ao contexto da nova rodada do agente, que reavaliava apenas a necessidade original e podia repetir o parecer. | Workflow `PROJECT_DISCOVERY` v2 cria `WAITING_FOR_REVIEW_ADJUSTMENT`; a revisão pausa sem criar job sucessor, mostra status, motivo, recomendação e pendências amigáveis, e exige um relato humano de até 500 caracteres para iniciar uma única nova rodada. O worker recupera o último relato auditado e o entrega às etapas subsequentes; o contrato do agente exige recomendação e ações estruturadas. A UI aceita formatos legados de evidência já persistidos. O reteste real completou múltiplas rodadas humanas sem job automático em loop e alcançou `PRODUCT_COMMITMENT` aprovado; E2E isolado cobre a pausa e a retomada. | `YES` |
 | I-021 | F2-03 / F2-06 | `BLOCKING` | `RESOLVED` | O gate `PRODUCT_COMMITMENT` era aberto com `evidence: []`: artefatos persistem `execution_id=job.id`, mas a consolidação consultava esse campo com `operation_id`. O projeto podia ser aprovado sem o snapshot das três evidências no gate. | O gate agora consolida a evidência mais recente de cada tipo obrigatório (`product-need-analysis`, `product-requirements`, `product-commitment-review`) no projeto, preservando análise válida da rodada anterior quando uma nova operação executa apenas requisitos e revisão. A abertura é bloqueada se não houver exatamente três evidências; migrations 014 e 015 reconciliam snapshots já gravados. O E2E isolado validou o fluxo inicial e a rodada após ajuste; o gate `central-atendimento-2` foi reconciliado e contém os três tipos esperados. | `YES` |
 | I-022 | F3-09 | `BLOCKING` | `RESOLVED` | A validação PostgreSQL/E2E da Fase 3 exigia `DATABASE_URL`; o ambiente local já dispunha de PostgreSQL controlado. | `docker compose up -d postgres`, migrations e `npm run e2e` executados em 04/08/2026: 8/8 cenários aprovados, sem skips, sem expor conteúdo da configuração. | `NOT_REQUIRED` |
+| I-023 | F3-04 | `BLOCKING` | `RESOLVED` | `START_DEVELOPMENT` criava worktree e SHA-base, mas não executava Dev como job recuperável nem preservava entrega verificável. | O ciclo Dev agora persiste intenção/operação/job antes do Git, usa lease/retry/reconciliação, exige commit real de `naamive-bot` com trailers, registra evidência imutável, valida paths e sincroniza rework. O aceite PostgreSQL/HTTP/E2E de 2026-08-05 confirmou a recuperação e os dois resultados de QA sem edição manual fora do runtime. | `YES` |
 
 Valores permitidos:
 
