@@ -1,0 +1,39 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://agent-runtime/v1/common",
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "sha256", "schemaVersion"],
+      "properties": {
+        "artifactId": { "$ref": "#/$defs/uuid" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "schemaVersion": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "repositoryReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["remote", "commitSha", "relativePath"],
+      "properties": {
+        "remote": { "type": "string", "format": "uri", "maxLength": 2048 },
+        "commitSha": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        "relativePath": { "type": "string", "pattern": "^(?!/)(?!.*\\.\\.).+$", "maxLength": 1024 }
+      }
+    },
+    "sanitizedError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "nextAction"],
+      "properties": {
+        "code": { "type": "string", "maxLength": 128 },
+        "providerCode": { "type": "string", "maxLength": 128 },
+        "retryAfterSeconds": { "type": "integer", "minimum": 0, "maximum": 86400 },
+        "nextAction": { "type": "string", "maxLength": 512 }
+      }
+    }
+  }
+}

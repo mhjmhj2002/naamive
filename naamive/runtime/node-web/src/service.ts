@@ -6,6 +6,7 @@ import { putArtifact, putArchiveRecord } from './artifacts.js';
 import { transitionTarget } from './workflow.js';
 import type pg from 'pg';
 import { publicEvent } from './projection.js';
+import { listProjectExecutionData } from './agent-execution-admin.js';
 
 type Intake = Record<string, unknown>;
 const fields = ['title', 'business_owner', 'business_problem', 'desired_outcome', 'success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions'];
@@ -166,5 +167,6 @@ export const projectDetail = async (projectId: string) => {
   const review=await pool.query(`SELECT metadata FROM artifacts WHERE project_id=$1 AND artifact_type='product-commitment-review' ORDER BY created_at DESC LIMIT 1`,[projectId]);
   const activeJob=await pool.query(`SELECT kind,heartbeat_at,lease_expires_at,available_at FROM jobs WHERE project_id=$1 AND status='LEASED' ORDER BY available_at DESC LIMIT 1`,[projectId]);
   const reviewData=(review.rows[0]?.metadata??null) as Record<string,unknown>|null;
-  return { ...project.rows[0], ...display(project.rows[0].state,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null };
+  const runtimeData = config().runtimeProjectionEnabled ? await listProjectExecutionData(projectId) : { executions: [], attempts: [] };
+  return { ...project.rows[0], ...display(project.rows[0].state,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts };
 };

@@ -22,8 +22,10 @@ export const putArtifact = async (client: pg.PoolClient, projectId: string, type
   const uri = new URL(`file://${path}`).toString();
   // The intent uses the caller transaction. Using a second connection here
   // deadlocks with the project row lock held by submission/worker commands.
+  const intentId = randomUUID();
+  const artifactId = randomUUID();
   try { await client.query(`INSERT INTO artifact_intents(id,project_id,execution_id,gate_id,artifact_type,storage_key,storage_uri,expected_sha256)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (project_id,storage_key) DO NOTHING`, [randomUUID(), projectId, executionId ?? null, gateId ?? null, type, key, uri, hash]);
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (project_id,storage_key) DO NOTHING`, [intentId, projectId, executionId ?? null, gateId ?? null, type, key, uri, hash]);
   await mkdir(join(path, '..'), { recursive: true });
   // Network filesystems may accept the final bounded filename but reject an
   // appended UUID suffix. Keep the atomic temporary name short in its parent.
@@ -31,13 +33,14 @@ export const putArtifact = async (client: pg.PoolClient, projectId: string, type
   await writeFile(temporary, content, { encoding: 'utf8', flag: 'wx' });
   try { await rename(temporary, path); } catch (error: unknown) { if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error; }
   await client.query(`INSERT INTO artifacts(id,project_id,execution_id,gate_id,artifact_type,storage_uri,storage_key,sha256,schema_version)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,1) ON CONFLICT (project_id,storage_key) DO NOTHING`, [randomUUID(), projectId, executionId ?? null, gateId ?? null, type, uri, key, hash]);
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,1) ON CONFLICT (project_id,storage_key) DO NOTHING`, [artifactId, projectId, executionId ?? null, gateId ?? null, type, uri, key, hash]);
   await client.query(`UPDATE artifact_intents SET status='COMPLETED',completed_at=now() WHERE project_id=$1 AND storage_key=$2 AND expected_sha256=$3`, [projectId, key, hash]);
   if (type.startsWith('product-') && !type.endsWith('-markdown')) {
     let readable: unknown = content; try { readable = JSON.parse(content); } catch { /* keep sanitized content */ }
     await putArtifact(client, projectId, `${type}-markdown`, `# ${type}\n\n\`\`\`json\n${JSON.stringify(readable, null, 2)}\n\`\`\`\n`, executionId, gateId);
   }
-  return { uri, hash, key };
+  const storedId = (await client.query(`SELECT id FROM artifacts WHERE project_id=$1 AND storage_key=$2`, [projectId, key])).rows[0]?.id ?? artifactId;
+  return { id: storedId, uri, hash, key };
   } catch(error) { const cause=error as NodeJS.ErrnoException; log('artifact','error','artifact_write_failed',{project_id:projectId,artifact_type:type,storage_key_length:key.length,path_length:path.length,cause_code:cause.code}); if(cause.code==='ENAMETOOLONG') throw new ArtifactStorageError('ARTIFACT_PATH_TOO_LONG'); throw error; }
 };
 

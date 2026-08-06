@@ -2,21 +2,25 @@
 document_type: phase-planning
 status: DRAFT_FOR_HUMAN_VALIDATION
 created_at: 2026-08-05
-scope: planning of Phase 4 only; no implementation authorization
+scope: planning of Phase 5 baseline prerequisite only; no implementation authorization
 primary_roadmap: 01_DELIVERY_ROADMAP.md
 ---
 
-# Planejamento da Fase 4 — Baseline Tecnológica antes dos Módulos
+# Planejamento da Fase 5 — Baseline Tecnológica antes dos Módulos
+
+> **Nota de reorganização — 2026-08-06:** a baseline foi renumerada para Fase 5
+> para liberar a Fase 4 ao runtime multi-provider. O escopo deste plano
+> permanece inalterado e continua sem autorização de implementação.
 
 ## Objetivo e demonstração
 
-A Fase 4 cria uma decisão de implementação explícita entre o compromisso de produto e a primeira materialização de módulo. Ela não escolhe tecnologia por conta própria: reúne um inventário seguro do repositório, permite que o operador confirme as restrições e preferências do projeto e registra o que continua em aberto para a arquitetura de cada módulo.
+A Fase 5 cria uma decisão de implementação explícita entre o compromisso de produto e a primeira materialização de módulo. Ela não escolhe tecnologia por conta própria: reúne um inventário seguro do repositório, permite que o operador confirme as restrições e preferências do projeto e registra o que continua em aberto para a arquitetura de cada módulo.
 
 A demonstração de aceite parte de um novo projeto cujo produto foi aprovado. Pela web, o operador revisa a baseline proposta, deixa o banco como “a definir na arquitetura do módulo”, aprova a decisão e só então cria o primeiro módulo. A proposta, a arquitetura, o work item, a matriz de QA e a execução Dev desse módulo referenciam a mesma revisão imutável da baseline. Uma mudança material posterior cria nova revisão e não altera os registros já autorizados.
 
 ## Escopo e exclusões
 
-Inclui F4-01 a F4-06: workflow e gate da baseline, inventário read-only do repositório, revisões/evidências imutáveis, experiência web, bloqueio da primeira materialização e propagação da revisão aos objetos de entrega.
+Inclui F5-01 a F5-06: workflow e gate da baseline, inventário read-only do repositório, revisões/evidências imutáveis, experiência web, bloqueio da primeira materialização e propagação da revisão aos objetos de entrega.
 
 Não inclui escolher automaticamente linguagem, banco ou infraestrutura; executar instalação, migration, deploy ou comandos arbitrários no repositório; criar PR/release/aceite final, que pertencem à Fase 5; nem reescrever projetos ou módulos já materializados na Fase 3. A baseline registra contexto e autorização — não substitui a decisão arquitetural de cada módulo.
 
@@ -139,19 +143,19 @@ SSE publica `TECHNOLOGY_INVENTORY_STARTED`, `TECHNOLOGY_INVENTORY_READY`, `TECHN
 4. E2E web: compromisso aprovado → inventário → baseline com decisão aberta → aprovação → criação de módulo; valida bloqueio antes do gate, escolha de revisão aprovada para segundo módulo, cópia da revisão ao módulo/work item/QA/Dev e uma nova baseline que não altera módulo já autorizado.
 5. Regressão Fase 3: cenário de projeto legado continua a materializar e entregar módulo sem baseline retroativa; cenário v3 não pode iniciar Dev se alguma referência obrigatória de baseline estiver ausente.
 
-## Sequência F4-01 a F4-06
+## Sequência F5-01 a F5-06
 
 | Ordem | Tarefa | Resultado verificável |
 | --- | --- | --- |
-| 1 | F4-01 | Workflow v3, estados, guards e migração aditiva publicados; v2 permanece intacto. |
-| 2 | F4-02 | Inventário seguro e read-only gera snapshot sanitizado no SHA vinculado. |
-| 3 | F4-03 | Baseline/revisões/evidências imutáveis persistem escolhas, restrições e decisões abertas. |
-| 4 | F4-04 | Web e SSE permitem revisão humana amigável e gate versionado. |
-| 5 | F4-05 | Novo projeto não materializa o primeiro módulo sem baseline aprovada; legado não é bloqueado. |
-| 6 | F4-06 | A revisão aplicada permanece referenciada por todos os contratos de implementação relevantes. |
+| 1 | F5-01 | Workflow v3, estados, guards e migração aditiva publicados; v2 permanece intacto. |
+| 2 | F5-02 | Inventário seguro e read-only gera snapshot sanitizado no SHA vinculado. |
+| 3 | F5-03 | Baseline/revisões/evidências imutáveis persistem escolhas, restrições e decisões abertas. |
+| 4 | F5-04 | Web e SSE permitem revisão humana amigável e gate versionado. |
+| 5 | F5-05 | Novo projeto não materializa o primeiro módulo sem baseline aprovada; legado não é bloqueado. |
+| 6 | F5-06 | A revisão aplicada permanece referenciada por todos os contratos de implementação relevantes. |
 
 Os status no roadmap só mudam de `TO DO` para `DOING` após autorização de implementação. Este plano não altera status nem cria issues.
 
-## Critério de aceite da Fase 4
+## Critério de aceite da Fase 5
 
 Em repositório descartável com `package.json`, pipeline e configuração de banco, um projeto novo alcança o compromisso de produto. A web mostra o inventário sanitizado e permite ao operador confirmar Node/TypeScript como permitido, declarar a integração corporativa como restrição e deixar o banco como decisão da arquitetura do módulo. Antes da aprovação, a API e a UI recusam a criação do primeiro módulo; depois dela, a proposta criada contém a revisão de baseline aprovada. A arquitetura, o work item, a matriz de QA e a execução Dev conservam essa mesma referência. Uma revisão posterior que troca uma tecnologia proibida/permitida cria gate novo, mas não modifica os registros anteriores. Um projeto v2 já em `PRODUCT_COMMITMENT` continua consultável e executa a jornada legada sem inserção retroativa de evento ou baseline. A timeline, SSE e evidências permitem auditar toda a jornada sem revelar conteúdo sensível ou executar código do repositório.

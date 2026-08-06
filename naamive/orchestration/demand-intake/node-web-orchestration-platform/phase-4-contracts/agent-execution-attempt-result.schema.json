@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://agent-runtime/v1/agent-execution-attempt-result",
+  "title": "AgentExecutionAttemptResult",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["attemptId", "executionId", "runtimeId", "adapterType", "status", "startedAt", "finishedAt", "durationMs", "retryable", "fallbackEligible"],
+  "properties": {
+    "attemptId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "executionId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "runtimeId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "adapterType": { "enum": ["CODEX_CLI", "OPENAI_COMPATIBLE_HTTP"] },
+    "status": { "enum": ["SUCCEEDED", "FAILED", "TIMED_OUT", "RATE_LIMITED", "QUOTA_EXHAUSTED", "AUTHENTICATION_FAILED", "INVALID_OUTPUT", "POLICY_BLOCKED", "CANCELLED", "RECONCILIATION_REQUIRED"] },
+    "startedAt": { "type": "string", "format": "date-time" },
+    "finishedAt": { "type": "string", "format": "date-time" },
+    "durationMs": { "type": "integer", "minimum": 0 },
+    "structuredOutputReference": { "$ref": "naamive://agent-runtime/v1/common#/$defs/artifactReference" },
+    "sanitizedError": { "$ref": "naamive://agent-runtime/v1/common#/$defs/sanitizedError" },
+    "usage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 },
+        "totalTokens": { "type": "integer", "minimum": 0 },
+        "estimatedCost": { "type": "number", "minimum": 0 },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$" }
+      }
+    },
+    "retryable": { "type": "boolean" },
+    "fallbackEligible": { "type": "boolean" }
+  }
+}

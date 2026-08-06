@@ -11,6 +11,8 @@ import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
 import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, revalidateCandidate, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
+import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
+import { agentExecutionService } from './agent-execution-service.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -34,9 +36,22 @@ export const createApiServer = () => createServer(async (request, response) => {
   const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition|architecture|plan|revision))?)?$/);
   const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|qa|rework|rework-decision|merge|reconcile)$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
+  const runtimeValidateMatch = url.pathname.match(/^\/api\/admin\/ai-runtimes\/([^/]+)\/validate$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
-  if (request.method === 'POST' && url.pathname === '/api/agent/readiness') { try { return respond(response,200,await checkAgentReadiness(true)); } catch(error) { const code=error instanceof AgentReadinessError||error instanceof AgentConfigurationError?error.code:'CODEX_PROCESS_FAILED'; return respond(response,503,{code,message:'O agente não está pronto. Corrija a configuração e teste novamente.'}); } }
+  if (request.method === 'GET' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 200, { items: await listRuntimeCatalogue() });
+  if (request.method === 'POST' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 202, await registerRuntime(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (request.method === 'POST' && url.pathname === '/api/admin/agent-execution-policies') return respond(response, 202, await publishAgentExecutionPolicy(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (runtimeValidateMatch && request.method === 'POST') return respond(response, 200, await validateRuntime(runtimeValidateMatch[1]));
+  if (request.method === 'POST' && url.pathname === '/api/agent/readiness') {
+    try {
+      if (agentExecutionService.isEnabled()) {
+        const runtime = (await listRuntimeCatalogue()).find((item: any) => item.adapter_type === 'CODEX_CLI');
+        if (runtime?.id) return respond(response, 200, await validateRuntime(runtime.id));
+      }
+      return respond(response, 200, await checkAgentReadiness(true));
+    } catch(error) { const code=error instanceof AgentReadinessError||error instanceof AgentConfigurationError?error.code:'CODEX_PROCESS_FAILED'; return respond(response,503,{code,message:'O agente não está pronto. Corrija a configuração e teste novamente.'}); }
+  }
   if (match && request.method === 'GET' && url.searchParams.get('phase3') === 'true') return respond(response, 200, await phase3Detail(match[1]));
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));
   if (phase3Match && request.method === 'POST' && !phase3Match[2]) return respond(response,202,await materializeModule(phase3Match[1],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
@@ -72,7 +87,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
   if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
-} catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : new ApiError(500, 'INTERNAL_ERROR');
+} catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : error instanceof AgentRuntimeAdminError ? new ApiError(error.status, error.code, error.message) : new ApiError(500, 'INTERNAL_ERROR');
   log('server',known.status>=500?'error':'warn',known.status>=500?'request_failed':'request_rejected',{request_id:requestId,method:request.method,route:new URL(request.url ?? '/',settings.webOrigin).pathname,status:known.status,code:known.code,error_kind:error instanceof Error?error.constructor.name:'UnknownError',database_code:typeof (error as { code?: unknown })?.code==='string'?(error as { code:string }).code:undefined,database_column:typeof (error as { column?: unknown })?.column==='string'?(error as { column:string }).column:undefined,database_message:typeof (error as { message?: unknown })?.message==='string'?(error as { message:string }).message.replace(/[^A-Za-z0-9_. -]/g,'').slice(0,160):undefined});
   respond(response, known.status, { code: known.code, message: known.message, request_id: requestId }); } });
 if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.js')) {

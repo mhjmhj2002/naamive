@@ -56,7 +56,7 @@ API Node.js / TypeScript
 Máquina de estados e registro de eventos
         │ publica trabalho elegível
 Orquestrador reativo + fila + agentes Node.js / TypeScript
-        │ despacham trabalho e adaptador Codex, sem espera síncrona
+        │ despacham trabalho e runtime neutro de provider, sem espera síncrona
 Registro auditável + evidências versionadas ── Projeção operacional PostgreSQL
 ```
 
@@ -76,9 +76,9 @@ Registro auditável + evidências versionadas ── Projeção operacional Post
   considerado se houver uma necessidade real de comunicação bidirecional em tempo real.
 - Markdown/YAML permanecem a evidência auditável e legível; PostgreSQL é a
   projeção consultável para telas, filtros, busca e stream de eventos.
-- O adaptador Codex é encapsulado em Node, com timeout, correlação de IDs,
-  sanitização e eventos de ciclo de vida. Tokens, prompts completos e saída
-  bruta não entram na trilha de auditoria.
+- O runtime de agentes é neutro de provider: o Codex é um adapter possível,
+  selecionado por política determinística junto com outros providers aprovados.
+  Tokens, prompts completos e saída bruta não entram na trilha de auditoria.
 
 ## Persistência e resiliência do MVP
 
@@ -337,10 +337,13 @@ preserva a jornada já utilizável e a amplia. Não há uma fundação isolada n
 | Release 1 / Fase 1 | Criar, preencher, submeter, validar e registrar um projeto pela web, com operação assíncrona, status e auditoria. |
 | Release 2 / Fase 2 | Levar o projeto registrado até `PRODUCT_COMMITMENT`, com agentes, evidências e gate visíveis. |
 | Release 3 / Fase 3 | Levar um módulo por Dev, QA, finding, correção e revalidação pela web. |
-| Release 4 / Fase 4 — **MVP completo** | Entregar um projeto de referência até aceite, evidências e PR draft para `main`. |
-| Evolução operacional / Fase 5 | Sustentar operação, recuperação e futura expansão depois do MVP. |
+| Release 4 / Fase 4 | Runtime multi-provider de agentes, routing governado e observabilidade de IA. |
+| Release 5 / Fase 5 — **MVP completo** | Entregar um projeto de referência até aceite, evidências e PR draft para `main`. |
+| Release 6 / Fase 6 | Sustentar operação, recuperação e futura expansão depois do MVP. |
 
-Portanto, o MVP de entrega de projeto compreende as Fases 1–4. A Fase 1 já é o
+PORTANTO, o MVP de entrega de projeto compreende as Fases 1–5. A Fase 4 cria a
+capacidade de execução independente de provider; a Fase 6 é posterior ao MVP.
+A Fase 1 já é o
 primeiro release operacional e não inclui `PRODUCT_COMMITMENT`, que é o valor
 incremental específico da Fase 2.
 
