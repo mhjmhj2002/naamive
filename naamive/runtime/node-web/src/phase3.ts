@@ -35,16 +35,16 @@ export const authorizeWorkItem=async(projectId:string,moduleId:string,body:Recor
 
 export const phase3Detail=async(projectId:string)=>{
   const [modules,workItems,deliveries,findings,candidates,gates,jobs,artifacts]=await Promise.all([
-    pool.query(`SELECT m.id,m.module_key,m.state,m.version,m.created_at,extract(epoch FROM clock_timestamp()-m.created_at)::integer AS duration_seconds,r.revision FROM modules m JOIN module_revisions r ON r.id=m.current_revision_id WHERE m.project_id=$1 ORDER BY m.created_at`,[projectId]),
+    pool.query(`SELECT m.id,m.module_key,m.state,m.version,m.created_at,extract(epoch FROM clock_timestamp()-m.created_at)::integer AS duration_seconds,r.revision,r.payload->>'name' AS name,r.payload->>'objective' AS objective,r.payload->'scope' AS scope,r.payload->'out_of_scope' AS out_of_scope,r.payload->'dependencies' AS dependencies,r.payload->'acceptance_criteria' AS acceptance_criteria FROM modules m JOIN module_revisions r ON r.id=m.current_revision_id WHERE m.project_id=$1 ORDER BY m.created_at`,[projectId]),
     pool.query(`SELECT id,module_id,title,state,version,rework_rounds,created_at,extract(epoch FROM clock_timestamp()-created_at)::integer AS duration_seconds FROM work_items WHERE project_id=$1 ORDER BY created_at`,[projectId]),
     pool.query(`SELECT id,work_item_id,base_sha,head_sha,phase_before_sha,phase_head_sha,state,created_at,extract(epoch FROM clock_timestamp()-created_at)::integer AS duration_seconds,validations FROM deliveries WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]),
     pool.query(`SELECT id,delivery_id,candidate_id,origin,severity,state,rule_code,description,created_at FROM findings WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]),
     pool.query(`SELECT id,phase_sha,state,blocked_kind,version,created_at,extract(epoch FROM clock_timestamp()-created_at)::integer AS duration_seconds FROM integration_candidates WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]),
     pool.query(`SELECT id,module_id,kind,version,status,decision,feedback,opened_at,decided_at,evidence FROM module_gates WHERE project_id=$1 ORDER BY opened_at DESC`,[projectId]),
-    pool.query(`SELECT kind,status,heartbeat_at,lease_expires_at,created_at FROM jobs WHERE project_id=$1 AND kind='DEVELOP_WORK_ITEM' ORDER BY created_at DESC`,[projectId]),
+    pool.query(`SELECT kind,status,heartbeat_at,lease_expires_at,available_at AS created_at FROM jobs WHERE project_id=$1 AND kind='DEVELOP_WORK_ITEM' ORDER BY available_at DESC`,[projectId]),
     pool.query(`SELECT artifact_type,sha256,created_at FROM artifacts WHERE project_id=$1 ORDER BY created_at DESC`,[projectId])
   ]);
-  const expose=(rows:any[])=>rows.map(row=>publicValue({...row,next_action:nextAction(row.state,row.blocked_kind)}));
+  const expose=(rows:any[])=>rows.map(row=>publicValue({...row,...(typeof row.state==='string'?{next_action:nextAction(row.state,row.blocked_kind)}:{})}));
   return {modules:expose(modules.rows),work_items:expose(workItems.rows),deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),jobs:expose(jobs.rows),evidence:artifacts.rows};
 };
 

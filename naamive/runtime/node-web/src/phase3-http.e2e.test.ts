@@ -88,6 +88,21 @@ if (!databaseUrl) {
 
     const module = await post(`/api/projects/${projectId}/modules`, { module_key: 'http-module', name: 'HTTP module', objective: 'prove runtime', scope: ['runtime'], out_of_scope: [], dependencies: [], acceptance_criteria: ['passes'] });
     const moduleId = module.module_id;
+    // The initial module gate must give the web client the complete business
+    // proposal.  This is deliberately checked before the approval changes the
+    // module state, because this is the operator's informed-decision screen.
+    const proposal = await (await fetch(`${base}/api/projects/${projectId}?phase3=true`)).json() as { modules: Array<Record<string, unknown>>; gates: Array<Record<string, unknown>> };
+    assert.deepEqual(proposal.modules[0] && {
+      module_key: proposal.modules[0].module_key, name: proposal.modules[0].name, objective: proposal.modules[0].objective,
+      scope: proposal.modules[0].scope, out_of_scope: proposal.modules[0].out_of_scope,
+      dependencies: proposal.modules[0].dependencies, acceptance_criteria: proposal.modules[0].acceptance_criteria
+    }, {
+      module_key: 'http-module', name: 'HTTP module', objective: 'prove runtime',
+      scope: ['runtime'], out_of_scope: [], dependencies: [], acceptance_criteria: ['passes']
+    });
+    assert.ok(proposal.gates.some(gate => gate.kind === 'MODULE_APPROVAL' && gate.status === 'OPEN' && gate.module_id === moduleId));
+    const page = await (await fetch(base)).text();
+    for (const copy of ['Revise a proposta antes de aprovar', 'O que faz parte', 'O que não faz parte', 'Dependências', 'Como saberemos que deu certo?', 'não aprova uma entrega de software, não faz deploy']) assert.match(page, new RegExp(copy));
     const approval = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0];
     await post(`/api/projects/${projectId}/modules/${moduleId}/decision`, { decision: 'APPROVED', version: approval.version });
     await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
