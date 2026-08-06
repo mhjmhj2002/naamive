@@ -1,6 +1,6 @@
 ---
 document_type: delivery-roadmap
-status: APPROVED_FOR_PHASE_1
+status: APPROVED_FOR_PHASE_4
 created_at: 2026-07-30
 approved_at: 2026-07-30
 approved_by: NAAMIVE product and engineering
@@ -28,9 +28,9 @@ uma fase posterior para ter valor.
 | Release 1 | Fase 1 | Criar, submeter, validar e registrar um projeto pela web, com operação assíncrona e auditoria. |
 | Release 2 | Fase 2 | Conduzir um projeto registrado até o compromisso de produto, com agentes e gate visíveis. |
 | Release 3 | Fase 3 | Conduzir um módulo por desenvolvimento, QA e rework rastreável. |
-| Release 4 | Fase 4 | Definir e aprovar a baseline tecnológica antes de materializar módulos. |
+| Release 4 | Fase 4 | Executar agentes por Codex ou DeepSeek, com seleção/fallback auditáveis e observabilidade de IA. |
 | Release 5 — **MVP completo** | Fase 5 | Concluir um projeto de referência até entrega, aceite e PR draft auditáveis. |
-| Evolução operacional | Fase 6 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
+| Release 6 | Fase 6 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
 
 ## Fundamentos comuns
 
@@ -78,6 +78,14 @@ permanecem `OPEN`.
 | P1-08 | Fases 1–6 | P1 | `RESOLVED` | North Star e roadmap promovidos para aprovados na Fase 1. |
 | P1-09 | Fase 1 | P1 | `RESOLVED` | Bootstrap Node/Web/PostgreSQL e comandos operacionais criados. |
 | P1-10 | Fase 1 | P1 | `RESOLVED` | Configuração obrigatória validada no startup e documentada. |
+| P0-13 | Fase 4 | P0 | `RESOLVED` | Governança, responsáveis, alçadas, SLA e trilha de auditoria aprovados. |
+| P0-14 | Fase 4 | P0 | `RESOLVED` | Schemas, invariantes, estados e idempotência publicados e aprovados. |
+| P0-15 | Fase 4 | P0 | `RESOLVED` | Ownership e limites de retry do job/provider, fallback e reconciliação aprovados. |
+| P0-16 | Fase 4 | P0 | `RESOLVED` | Precedência de seleção, fallback, bloqueio e motivos estruturados aprovados. |
+| P0-17 | Fase 4 | P0 | `RESOLVED` | DDL, FKs, índices, imutabilidade, retenção e restart aprovados. |
+| P0-18 | Fase 4 | P0 | `RESOLVED` | DeepSeek, secrets, egress e redaction aprovados dentro dos limites registrados. |
+| P0-19 | Fase 4 | P0 | `RESOLVED` | Matriz de consumidores, flags, reversão e cenários de aceite aprovados. |
+| P1-11 | Fase 4 | P1 | `OPEN` | `projects.id` continua `text`; a implementação F4 usa `project_key` + UUID derivado em `agent_execution` até uma migração global de PK ser aprovada. |
 | P2-01 | Fase 5 | P2 | `OPEN` | Mecanismo de abertura de PR não está escolhido. |
 | P2-02 | Fase 3 | P2 | `RESOLVED` | Commits automatizados usam `naamive-bot` e trailers obrigatórios. |
 | P2-03 | Fase 3 | P2 | `RESOLVED` | Integração usa merge commit auditável com SHAs e resultado de push. |
@@ -127,12 +135,18 @@ vincular uma pendência explicável.
 | 3 | F3-07 | `DONE` | Candidata congela SHA e manifesto integral; a tentativa e sua intenção de artefato são persistidas antes do Git. Merge/push usa worktree detached, confirma pais e SHAs, e retry/arquivamento reconciliam o remoto para distinguir `NOT_APPLIED`, `APPLIED_UNRECORDED` e `DIVERGED`. Build, testes unitários e aceite HTTP da Fase 3 verificados em 2026-08-05. |
 | 3 | F3-08 | `DONE` | Projeções F3 sanitizadas exibem estado, duração, heartbeat, SHAs, evidências, findings, gates, bloqueios e próxima ação. SSE usa cursor/replay sem duplicação e a web assina os eventos F3, inclusive rework, escalonamento, candidata, integração e arquivamento. Aceite HTTP/PostgreSQL comprovou dois work items (aprovado e rejeitado), sanitização e retomada por cursor em 2026-08-05. |
 | 3 | F3-09 | `DONE` | Auditoria tratada em 2026-08-05: teardown antecipado e asserção global garantem ausência de `.phase3-http-*`; o aceite HTTP passou 5/5 e o aceite global passou após a implementação ser versionada no commit `a1787a7`. |
-| 4 | F4-01 | `TO DO` | — |
-| 4 | F4-02 | `TO DO` | — |
-| 4 | F4-03 | `TO DO` | — |
-| 4 | F4-04 | `TO DO` | — |
-| 4 | F4-05 | `TO DO` | — |
-| 4 | F4-06 | `TO DO` | — |
+| 4 | F4-01 | `DONE` | Contratos canônicos Draft 2020-12 são carregados dos schemas oficiais, validados via AJV e cobertos por testes de request/result inválidos e sem conteúdo bruto. |
+| 4 | F4-02 | `DONE` | `AgentExecutionService` virou a porta única por flag para jobs de descoberta, persistindo execução/tentativa, idempotência por `(job_id,idempotency_key)`, evidência sanitizada e reconciliação agendada. |
+| 4 | F4-03 | `DONE` | `CodexCliAdapter` encapsula o launcher atual com paridade Codex-only sob flag, preservando workdir/timeout/sanitização e validado no aceite F4 de 2026-08-06. |
+| 4 | F4-04 | `DONE` | `OpenAiCompatibleHttpAdapter` limita endpoint/modelo DeepSeek aprovados, usa `SecretResolver`, classifica 429/auth/quota e roda deterministicamente por cenários controlados. |
+| 4 | F4-05 | `DONE` | Políticas publicadas e versionadas escolhem primário/fallback com motivo estruturado, respeitando classificação, paths, flags DeepSeek e indisponibilidade conhecida por execução. |
+| 4 | F4-06 | `DONE` | Retry no mesmo runtime, fallback único, bloqueio sem ping-pong e reconciliação de tentativas `DISPATCHED` foram persistidos e verificados nos cenários controlados. |
+| 4 | F4-07 | `DONE` | Quota DeepSeek/Codex é normalizada separando `RATE_LIMITED` de `QUOTA_EXHAUSTED`, com fallback autorizado e bloqueio recuperável quando ambos esgotam. |
+| 4 | F4-08 | `DONE` | Migration `025_phase_4_agent_runtime.sql`, cadastro auditável de runtimes/políticas, `EnvironmentSecretResolver`, classificação/egress e redaction foram aplicados e testados. |
+| 4 | F4-09 | `DONE` | Timeline, artefatos, auditoria e uso/custo sanitizados cobrem seleção, tentativa, fallback, bloqueio e sucesso sem persistir segredo, prompt ou saída bruta. |
+| 4 | F4-10 | `DONE` | API/detail/web/SSE projetam execuções, tentativas, política, runtime efetivo e próxima ação sob flag, com replay sem duplicação e campos sensíveis filtrados. |
+| 4 | F4-11 | `DONE` | Suítes unitárias + E2E PostgreSQL agora cobrem contratos, paridade Codex-only, fallback para DeepSeek, bloqueio por quota e sanitização; `npm run migrate && npm test && npm run e2e` passaram em 2026-08-06. |
+| 4 | F4-12 | `DONE` | Worker/consumidores usam o serviço por flags desligadas por padrão, mantendo rollback para novos jobs sem reabrir dispatch incerto nem restaurar chamadas diretas. |
 | 5 | F5-01 | `TO DO` | — |
 | 5 | F5-02 | `TO DO` | — |
 | 5 | F5-03 | `TO DO` | — |
@@ -323,26 +337,52 @@ estado canônico diretamente.
 
 **Encerramento por limpeza:** a auditoria encontrou um diretório `.phase3-http-*` após a execução completa. O teardown dos cenários que criam repositórios agora é registrado antes de qualquer efeito de banco ou servidor e sempre remove a raiz em `finally`; o aceite HTTP também possui asserção global que falha se qualquer `.phase3-http-*` restar. A implementação, migrations e testes foram versionados no commit `a1787a7`; o aceite HTTP passou 5/5 e o aceite global final passou sem diretórios residuais. F3-09 e a Fase 3 foram promovidas para `DONE`.
 
-## Fase 4 — Baseline tecnológica antes dos módulos
+## Fase 4 — Runtimes configuráveis Codex e DeepSeek
 
-**Valor entregue:** antes de autorizar o primeiro módulo, o operador confirma uma baseline tecnológica versionada e auditável do projeto; ela registra o que já é decidido, as restrições e o que permanece aberto para decisão por módulo.
+**Valor entregue:** o operador cadastra e reconfigura AI Runtimes Codex e
+DeepSeek por PostgreSQL, sem deploy quando o adapter já existe, e executa agentes
+por seleção determinística, fallback governado, evidência de tentativas e
+observabilidade sem credenciais.
 
-**Demonstração ponta a ponta:** após o compromisso de produto, a web apresenta o inventário do repositório e a baseline para revisão. A aprovação abre a materialização de módulos; a baseline aprovada fica referenciada pela proposta do módulo, arquitetura, work items, QA e execução Dev.
+**Demonstração ponta a ponta:** a web cadastra `codex-dev` e `deepseek-dev`,
+associa-os à política e inicia um agente. A execução congela a versão do runtime;
+trocar modelo ou segredo cria nova versão sem afetá-la. Indisponibilidade ou quota
+classificada aciona o runtime de contingência apenas quando permitido, valida saída
+estruturada e mostra política, runtime, adapter type,
+tentativas, duração, uso/custo disponível, erro sanitizado e evidências. Se os
+dois estiverem indisponíveis, bloqueia o trabalho com próxima ação clara. Nenhum
+fluxo de negócio conhece um executor específico.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F4-01 | Publicar `PROJECT_DISCOVERY` v3 completo, incluindo fluxo v2, recuperação e arquivamento; selecionar v3 atomicamente para novos projetos no início da descoberta, sem alterar workflows já publicados. | Projetos anteriores não podem ter seu histórico reescrito; v2 permanece selecionado para jornadas já iniciadas. |
-| F4-02 | Inventariar de modo seguro o repositório vinculado em worktree detached no SHA reservado: linguagens, manifests, frameworks, persistência, integrações, CI e infraestrutura detectáveis. | Recusar symlink, submódulo, paths fora da allowlist, arquivo excessivo ou malformado; inferência não é decisão. |
-| F4-03 | Persistir baseline e revisões imutáveis com schema versionado, identidades normalizadas, precedência, versões/ranges, decisões abertas e gate novo por revisão. | Dados sensíveis não entram em evidência/UI; rejeição cria nova revisão, e gate jamais é atualizado. |
-| F4-04 | Criar tela web e SSE para revisão/gate humano `TECHNOLOGY_BASELINE`, escolha explícita da revisão aprovada e opção de deixar decisão para a arquitetura do módulo. | Não forçar decisão prematura nem confundir preferência com restrição. |
-| F4-05 | Bloquear a primeira materialização até existir baseline aprovada; depois manter criação de módulos disponível durante nova revisão e usar a última aprovada por padrão. | Projetos já materializados seguem sem bloqueio retroativo; operador pode selecionar outra revisão aprovada. |
-| F4-06 | Persistir e proteger por FK/trigger transacional a referência da baseline em módulo, revisão, gate, work item, delivery, matriz QA, finding e execução Dev. | Referência deve permanecer estável e igual na cadeia; `NULL` somente para legado v2 marcado. |
+| F4-01 | Publicar contratos versionados para solicitação, tentativa, resultado, AI Runtime, adapter type, `SecretReference` e `SecretResolver`. | Não expor SDK, executor concreto ou segredo no contrato. |
+| F4-02 | Criar `AgentExecutionService` como única entrada de jobs para agentes. | Worker não importa launcher ou cliente de executor. |
+| F4-03 | Implementar adapter `CODEX_CLI` com paridade do launcher e autenticação por sessão. | Preservar workdir, timeout, sanitização e transição indireta. |
+| F4-04 | Implementar adapter `OPENAI_COMPATIBLE_HTTP` para DeepSeek, após confirmar compatibilidade. | Segredo, endpoint e modelo ficam externos e allowlisted. |
+| F4-05 | Publicar políticas determinísticas entre agentes e AI Runtimes persistidos. | Sem IA, catálogo ou preço de mercado para selecionar runtime. |
+| F4-06 | Implementar retry limitado e fallback bidirecional governado. | Não duplicar efeitos, não burlar segurança e não alternar infinitamente. |
+| F4-07 | Detectar e tratar quota/créditos esgotados. | Ambos indisponíveis bloqueiam o trabalho com próxima ação explícita. |
+| F4-08 | Persistir/versionar AI Runtimes e aplicar `EnvironmentSecretResolver`, classificação, sanitização e controles. | Sem API keys no banco; bloqueio de política/segurança não faz fallback. |
+| F4-09 | Persistir decisão, versões congeladas, tentativas imutáveis, auditoria, uso, custo e evidências correlacionadas. | Não persistir prompts, respostas brutas ou segredos. |
+| F4-10 | Exibir execução, tentativas, quota, fallback e bloqueios por web/SSE. | Sem inferência local por timer. |
+| F4-11 | Cobrir unitários, integração, aceite controlado e smoke externo opcional. | Smoke não bloqueia testes determinísticos. |
+| F4-12 | Migrar consumidores, provar modo Codex-only e remover acoplamentos diretos. | Corte somente após matriz de paridade. |
+
+**Gate de início — GO:** ADR, plano e pacote de prontidão foram aprovados em
+2026-08-06, com responsáveis, limites de egress/custo e cenários de corte
+registrados. A implementação pode iniciar respeitando essas restrições.
 
 ## Fase 5 — Projeto entregue e aceito pela web
 
 **Valor entregue:** o operador conduz um projeto de referência até entrega, incluindo integração, validação, risco, release, aceite e consulta completa de evidências/auditoria no navegador.
 
 **Demonstração ponta a ponta:** projeto criado pela web percorre gates aplicáveis, produz aplicação, testes e documentação, e alcança `DELIVERED` com pacote e aceite auditáveis.
+
+**Pré-requisito de baseline:** a baseline tecnológica planejada em
+`10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md` é preservada como trabalho
+prévio da Fase 5, sujeito à aprovação da reorganização em
+`11_PHASE_RENUMBERING_IMPACT_ANALYSIS.md`. Toda execução de agente nesta fase
+usa exclusivamente `AgentExecutionService` e políticas publicadas da Fase 4.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
@@ -365,7 +405,7 @@ estado canônico diretamente.
 | --- | --- | --- |
 | F6-01 | Instrumentar logs, métricas, tracing e alertas correlacionando API, worker, operação e evento. | Volume de eventos; definir retenção e agregação. |
 | F6-02 | Automatizar build, migração, backup, rollback e runbooks testados. | Infraestrutura indefinida; manter contrato independente de provedor. |
-| F6-03 | Formalizar segredos e launcher Codex; somente ambiente atestado, sem credenciais em logs. | Ambientes locais heterogêneos; documentar suporte explícito. |
+| F6-03 | Formalizar segredos, configuração e operação dos adapters; somente ambiente atestado, sem credenciais em logs. | Ambientes locais heterogêneos; documentar suporte explícito. |
 | F6-04 | Preparar fronteira de organização/ator sem habilitar multitenancy no MVP. | Não antecipar telas ou permissões. |
 | F6-05 | Criar teste de resiliência: restart com volume persistente e restore de backup preservam estado, idempotência e auditoria. | Injetar falhas controladas; reconstrução por ledger não pertence ao MVP. |
 
@@ -384,6 +424,67 @@ Estas pendências foram identificadas na revisão de prontidão dos documentos.
 Elas são ordenadas por relevância e devem ser resolvidas antes de iniciar a
 implementação da fase afetada. Uma decisão aprovada deve atualizar este roadmap,
 o radar de produto e as tarefas correspondentes.
+
+### Fase 4 — Bloqueadores de início
+
+**Decisão de prontidão:** `GO`. A aprovação explícita de 2026-08-06 resolveu os
+sete bloqueadores abaixo; mudanças futuras de egress, custo, credencial, modelo
+ou override continuam sujeitas à governança do pacote de prontidão.
+
+### P0-13 — Governança, aprovações e responsáveis não estão concluídos
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** `14_PHASE_4_IMPLEMENTATION_READINESS_PACKAGE.md`,
+**P0-13 — Governança**, com owners e alçadas nomeados.
+
+### P0-14 — Contratos e ciclo de vida de execução não são executáveis
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** `phase-4-contracts/` e pacote de prontidão, **P0-14 —
+Contratos e ciclo de vida**.
+
+### P0-15 — Retry de provider conflita com o retry existente do job
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** pacote de prontidão, **P0-15 e P0-16 — Retry, fallback e
+reconciliação**.
+
+### P0-16 — Seleção e fallback entre executores não são determinísticos o suficiente
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** pacote de prontidão, **P0-15 e P0-16 — Retry, fallback e
+reconciliação**.
+
+### P0-17 — Persistência e operação não têm contrato físico
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** pacote de prontidão, **P0-17 — Contrato físico e
+restart**.
+
+### P0-18 — Configuração e segurança permanecem abertas
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** pacote de prontidão, **P0-18 — DeepSeek, secrets e
+egress**, com DeepSeek habilitado para `PUBLIC`.
+
+### P0-19 — Corte e aceite não possuem matriz verificável
+
+**Prioridade:** bloqueador para a Fase 4. **Status:**
+`RESOLVED`.
+
+**Evidência aprovada:** pacote de prontidão, **P0-19 — Corte, flags e aceite**.
 
 ### Fase 1 — Bloqueadores e decisões de implementação
 
@@ -609,7 +710,8 @@ separado e reutilizável.
 **Decisão aplicada:** cada fase é seu próprio release incremental e de valor
 ponta a ponta. A Fase 1 é o primeiro release utilizável: criação, submissão,
 validação e registro de projeto pela web. O MVP de entrega completa é formado
-pelas Fases 1–5; a Fase 6 é evolução operacional posterior ao MVP.
+pelas Fases 1–5; a Fase 6 é evolução operacional posterior ao MVP. A Fase 4
+é uma capacidade de runtime anterior ao fechamento funcional.
 
 ### P1-04 — Backup manual da Fase 1 e automação da Fase 6 se confundem
 

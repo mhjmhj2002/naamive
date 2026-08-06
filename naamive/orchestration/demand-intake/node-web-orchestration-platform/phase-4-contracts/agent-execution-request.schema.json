@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://agent-runtime/v1/agent-execution-request",
+  "title": "AgentExecutionRequest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["executionId", "operationId", "jobId", "projectId", "agentId", "agentVersion", "taskType", "classification", "contextReference", "outputSchemaReference", "timeoutSeconds", "idempotencyKey", "policyName", "policyVersion"],
+  "properties": {
+    "executionId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "operationId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "jobId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "projectId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "phaseId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "moduleId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "workItemId": { "$ref": "naamive://agent-runtime/v1/common#/$defs/uuid" },
+    "agentId": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "agentVersion": { "type": "string", "minLength": 1, "maxLength": 64 },
+    "taskType": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "classification": { "enum": ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"] },
+    "contextReference": { "$ref": "naamive://agent-runtime/v1/common#/$defs/artifactReference" },
+    "outputSchemaReference": { "$ref": "naamive://agent-runtime/v1/common#/$defs/artifactReference" },
+    "repositoryReference": { "$ref": "naamive://agent-runtime/v1/common#/$defs/repositoryReference" },
+    "workingDirectory": { "type": "string", "minLength": 1, "maxLength": 4096 },
+    "timeoutSeconds": { "type": "integer", "minimum": 1, "maximum": 3600 },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 255 },
+    "policyName": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "policyVersion": { "type": "integer", "minimum": 1 },
+    "fallbackAllowed": { "type": "boolean" }
+  }
+}

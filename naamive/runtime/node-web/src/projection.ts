@@ -1,5 +1,5 @@
 /** Public read model helpers. Canonical execution data must never cross this boundary. */
-const forbidden = /(?:^|_)(?:path|worktree|prompt|secret|token|password|stdout|stderr|output|command|cwd|branch)(?:$|_)/i;
+const forbidden = /(?:^|_)(?:path|worktree|prompt|secret|token|password|stdout|stderr|output|command|cwd|branch|authorization|header|environment|signed_url|api_key)(?:$|_)/i;
 
 export const publicValue = (value: unknown): unknown => {
   if (Array.isArray(value)) return value.map(publicValue);
