@@ -28,8 +28,9 @@ uma fase posterior para ter valor.
 | Release 1 | Fase 1 | Criar, submeter, validar e registrar um projeto pela web, com operação assíncrona e auditoria. |
 | Release 2 | Fase 2 | Conduzir um projeto registrado até o compromisso de produto, com agentes e gate visíveis. |
 | Release 3 | Fase 3 | Conduzir um módulo por desenvolvimento, QA e rework rastreável. |
-| Release 4 — **MVP completo** | Fase 4 | Concluir um projeto de referência até entrega, aceite e PR draft auditáveis. |
-| Evolução operacional | Fase 5 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
+| Release 4 | Fase 4 | Definir e aprovar a baseline tecnológica antes de materializar módulos. |
+| Release 5 — **MVP completo** | Fase 5 | Concluir um projeto de referência até entrega, aceite e PR draft auditáveis. |
+| Evolução operacional | Fase 6 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
 
 ## Fundamentos comuns
 
@@ -68,16 +69,16 @@ permanecem `OPEN`.
 | P0-11 | Fase 1 | P0 | `RESOLVED` | Vínculo Git, branch-base e auditoria persistidos. |
 | P0-12 | Fase 1 | P0 | `RESOLVED` | Operador configurado no servidor e injetado na auditoria. |
 | P1-02 | Fase 1 | P1 | `RESOLVED` | Catálogo e único mapeamento de status versionado definidos. |
-| P1-03 | Fases 1–5 | P1 | `RESOLVED` | Releases incrementais e limite do MVP estão nomeados. |
-| P1-04 | Fases 1 e 5 | P1 | `RESOLVED` | Backup manual testado na Fase 1; automação fica na Fase 5. |
+| P1-03 | Fases 1–6 | P1 | `RESOLVED` | Releases incrementais e limite do MVP estão nomeados. |
+| P1-04 | Fases 1 e 6 | P1 | `RESOLVED` | Backup manual testado na Fase 1; automação fica na Fase 6. |
 | P2-05 | Fase 1 | P2 | `RESOLVED` | Compose, migrations e fluxo web completo validados em PostgreSQL local. |
 | P1-05 | Fase 3 | P1 | `RESOLVED` | Política Git isolada, recuperação e causas sanitizadas foram implementadas e validadas. |
 | P1-06 | Fase 1 | P1 | `RESOLVED` | Autoria de rascunho e submissão separadas no schema/runtime. |
 | P1-07 | Fase 1 | P1 | `RESOLVED` | Índices únicos parciais aplicados na migration de status. |
-| P1-08 | Fases 1–5 | P1 | `RESOLVED` | North Star e roadmap promovidos para aprovados na Fase 1. |
+| P1-08 | Fases 1–6 | P1 | `RESOLVED` | North Star e roadmap promovidos para aprovados na Fase 1. |
 | P1-09 | Fase 1 | P1 | `RESOLVED` | Bootstrap Node/Web/PostgreSQL e comandos operacionais criados. |
 | P1-10 | Fase 1 | P1 | `RESOLVED` | Configuração obrigatória validada no startup e documentada. |
-| P2-01 | Fase 4 | P2 | `OPEN` | Mecanismo de abertura de PR não está escolhido. |
+| P2-01 | Fase 5 | P2 | `OPEN` | Mecanismo de abertura de PR não está escolhido. |
 | P2-02 | Fase 3 | P2 | `RESOLVED` | Commits automatizados usam `naamive-bot` e trailers obrigatórios. |
 | P2-03 | Fase 3 | P2 | `RESOLVED` | Integração usa merge commit auditável com SHAs e resultado de push. |
 | P2-04 | Fase 3 | P2 | `RESOLVED` | Remoto bare temporário e smoke GitHub descartável com allowlist foram validados. |
@@ -117,28 +118,34 @@ vincular uma pendência explicável.
 | 2 | F2-04 | `DONE` | Detalhe/SSE exibem etapa, duração, heartbeat, resultado, próxima ação e referências sanitizadas. |
 | 2 | F2-05 | `DONE` | Tela/API exibem o pacote do gate, decisão versionada, feedback obrigatório e retorno a requisitos. |
 | 2 | F2-06 | `DONE` | Aceite controlado cobre descoberta até o gate, ajuste, evidências e arquivamento durante job/gate. |
-| 3 | F3-01 | `TO DO` | — |
-| 3 | F3-02 | `TO DO` | — |
-| 3 | F3-03 | `TO DO` | — |
-| 3 | F3-04 | `TO DO` | — |
-| 3 | F3-05 | `TO DO` | — |
-| 3 | F3-06 | `TO DO` | — |
-| 3 | F3-07 | `TO DO` | — |
-| 3 | F3-08 | `TO DO` | — |
-| 3 | F3-09 | `TO DO` | — |
+| 3 | F3-01 | `DONE` | Módulos e revisões imutáveis são materializados a partir de `PRODUCT_COMMITMENT`; rounds, workflows publicados, gates de aprovação/arquitetura e evidências JSON/Markdown foram validados no aceite PostgreSQL até `PLANNING_IN_PROGRESS`. |
+| 3 | F3-02 | `DONE` | Planejamento materializa work items imutáveis com entradas, limites de paths, saída, critérios, dependências, matriz de QA e evidência JSON/Markdown com hash; aceite PostgreSQL validado. |
+| 3 | F3-03 | `DONE` | Aceite HTTP com PostgreSQL e remoto bare temporário comprovou lease/reconciliação (`ACTIVE`, `DIRTY`, `DIVERGED`, `MISSING`), política incremental antes do QA, trailers validados na branch `work-items/<id>`, merge em `phases/3` e rework auditável; evidência: `npm run build`, `npm test` e `npm run e2e` executados em 2026-08-04. |
+| 3 | F3-04 | `DONE` | `START_DEVELOPMENT` persiste intenção/operação/job antes de qualquer efeito Git; o worker leased cria e reconcilia o worktree isolado. QA deriva SHAs, commits, paths e findings auditáveis do repositório, e o aceite PostgreSQL/HTTP/E2E cobre rework, idempotência, lease e estados `DIRTY`/`MISSING`/`DIVERGED` (2026-08-04). |
+| 3 | F3-05 | `DONE` | QA congela a matriz por delivery e a executa no worktree/SHA revisado, persistindo comando, diretório, timeout, critérios e resultado sanitizado em `qa-report` JSON/Markdown. Findings `DELIVERY_QA`/`CANDIDATE_VALIDATION` são deduplicados por regra/fingerprint, carregam severidade e responsabilidade; somente QA aprovada de delivery posterior os fecha com revalidação registrada. A candidata valida o manifesto congelado em worktree detached no SHA persistido e grava `integration-candidate-validation` JSON/Markdown. Aceite PostgreSQL/E2E cobre timeout sanitizado, severidade, rework/revalidação, candidata aprovada e evidências (2026-08-04). |
+| 3 | F3-06 | `DONE` | Rework é uma decisão imutável por finding/delivery/SHA, com índice de exclusão para uma correção ativa por item/revisão, duas rodadas máximas e gate humano auditável para crítico, repetição, escopo, arquitetura, risco aceito ou encerramento. QA aprovado continua sendo a única revalidação que fecha finding; candidata com finding preserva a original, atribui o corretivo e reabre o módulo. Migração e aceite PostgreSQL/E2E comprovados em 2026-08-04. |
+| 3 | F3-07 | `DONE` | Candidata congela SHA e manifesto integral; a tentativa e sua intenção de artefato são persistidas antes do Git. Merge/push usa worktree detached, confirma pais e SHAs, e retry/arquivamento reconciliam o remoto para distinguir `NOT_APPLIED`, `APPLIED_UNRECORDED` e `DIVERGED`. Build, testes unitários e aceite HTTP da Fase 3 verificados em 2026-08-05. |
+| 3 | F3-08 | `DONE` | Projeções F3 sanitizadas exibem estado, duração, heartbeat, SHAs, evidências, findings, gates, bloqueios e próxima ação. SSE usa cursor/replay sem duplicação e a web assina os eventos F3, inclusive rework, escalonamento, candidata, integração e arquivamento. Aceite HTTP/PostgreSQL comprovou dois work items (aprovado e rejeitado), sanitização e retomada por cursor em 2026-08-05. |
+| 3 | F3-09 | `DONE` | Auditoria tratada em 2026-08-05: teardown antecipado e asserção global garantem ausência de `.phase3-http-*`; o aceite HTTP passou 5/5 e o aceite global passou após a implementação ser versionada no commit `a1787a7`. |
 | 4 | F4-01 | `TO DO` | — |
 | 4 | F4-02 | `TO DO` | — |
 | 4 | F4-03 | `TO DO` | — |
 | 4 | F4-04 | `TO DO` | — |
 | 4 | F4-05 | `TO DO` | — |
 | 4 | F4-06 | `TO DO` | — |
-| 4 | F4-07 | `TO DO` | — |
-| 4 | F4-08 | `TO DO` | — |
 | 5 | F5-01 | `TO DO` | — |
 | 5 | F5-02 | `TO DO` | — |
 | 5 | F5-03 | `TO DO` | — |
 | 5 | F5-04 | `TO DO` | — |
 | 5 | F5-05 | `TO DO` | — |
+| 5 | F5-06 | `TO DO` | — |
+| 5 | F5-07 | `TO DO` | — |
+| 5 | F5-08 | `TO DO` | — |
+| 6 | F6-01 | `TO DO` | — |
+| 6 | F6-02 | `TO DO` | — |
+| 6 | F6-03 | `TO DO` | — |
+| 6 | F6-04 | `TO DO` | — |
+| 6 | F6-05 | `TO DO` | — |
 
 ## Fase 1 — Projeto web iniciado e submetido
 
@@ -288,6 +295,8 @@ estado canônico diretamente.
 
 ## Fase 3 — Ciclo de módulo, desenvolvimento e QA com rework
 
+**Status atual da fase:** `DONE` — I-024 foi corrigido e o aceite HTTP confirmou que a proposta completa chega ao gate antes da decisão.
+
 **Valor entregue:** o operador aprova módulo e acompanha planejamento, implementação e QA. Uma reprovação cria finding, torna correção elegível e mostra Dev → QA → Dev até aprovação ou escalonamento.
 
 **Demonstração ponta a ponta:** aprovar módulo, observar criação de trabalho, entrega Dev, reprovação QA, correção, nova validação e fechamento do finding pela web.
@@ -301,10 +310,35 @@ estado canônico diretamente.
 | F3-05 | Portar QA e findings ligados à entrega revisada, regra/teste, severidade e revalidação. | Critérios iniciais de QA; definir conjunto mínimo para referência. |
 | F3-06 | Implementar política de rework: correção elegível, limite de tentativas e gate para risco, escopo, arquitetura ou repetição. | Limites variam por risco; iniciar conservador e configurável. |
 | F3-07 | Integrar fase → `integration`, fazer push e registrar SHAs/evidências após QA aprovar. | Falha de merge/push não inicia próxima fase. |
-| F3-08 | Implementar visão web de entrega, QA, findings, correções e revalidações por work item. | Muitas tentativas; usar correlação e expansão progressiva. |
+| F3-08 | Implementar visão web de entrega, QA, findings, correções e revalidações por work item. | A aprovação inicial exibe a proposta completa e diferencia proposta de entrega/deploy. |
 | F3-09 | Criar teste de aceite web de finding que retorna ao Dev e fecha após QA aprovar. | Cobrir também timeout, interrupção e causa sanitizada. |
 
-## Fase 4 — Projeto entregue e aceito pela web
+### Registro de auditoria — 2026-08-05
+
+**Resultado inicial:** Fase 3 foi rebaixada para `DOING`; F3-09 foi reaberta. Build, testes unitários e E2E anteriores não demonstravam integralmente o critério obrigatório de aceite web.
+
+**Achados bloqueantes registrados:** o cenário HTTP usava só um work item; o rework forçava estado e liberação de worktree via SQL; o cenário PostgreSQL alterava estado e matriz de QA diretamente; faltavam asserções do segundo pai do merge, dos commits introduzidos e da exclusão do item pendente; havia diretórios `.phase3-http-*` residuais.
+
+**Tratativa aplicada:** QA reprovado agora libera o worktree pela transição governada para que o worker crie a nova execução. O aceite HTTP passou a criar dois itens isolados: um é aprovado e integrado; o outro reprova, cria finding, recebe decisão de rework pela API, é revalidado e permanece fora da candidata. O teste também verifica o SHA congelado como segundo pai, a igualdade dos conjuntos de commits e a exclusão do item pendente. O aceite PostgreSQL deixou de alterar estado de worktree ou matriz de QA diretamente.
+
+**Encerramento por limpeza:** a auditoria encontrou um diretório `.phase3-http-*` após a execução completa. O teardown dos cenários que criam repositórios agora é registrado antes de qualquer efeito de banco ou servidor e sempre remove a raiz em `finally`; o aceite HTTP também possui asserção global que falha se qualquer `.phase3-http-*` restar. A implementação, migrations e testes foram versionados no commit `a1787a7`; o aceite HTTP passou 5/5 e o aceite global final passou sem diretórios residuais. F3-09 e a Fase 3 foram promovidas para `DONE`.
+
+## Fase 4 — Baseline tecnológica antes dos módulos
+
+**Valor entregue:** antes de autorizar o primeiro módulo, o operador confirma uma baseline tecnológica versionada e auditável do projeto; ela registra o que já é decidido, as restrições e o que permanece aberto para decisão por módulo.
+
+**Demonstração ponta a ponta:** após o compromisso de produto, a web apresenta o inventário do repositório e a baseline para revisão. A aprovação abre a materialização de módulos; a baseline aprovada fica referenciada pela proposta do módulo, arquitetura, work items, QA e execução Dev.
+
+| ID | Tarefa e definição de pronto | Impedimento / tratamento |
+| --- | --- | --- |
+| F4-01 | Publicar `PROJECT_DISCOVERY` v3 completo, incluindo fluxo v2, recuperação e arquivamento; selecionar v3 atomicamente para novos projetos no início da descoberta, sem alterar workflows já publicados. | Projetos anteriores não podem ter seu histórico reescrito; v2 permanece selecionado para jornadas já iniciadas. |
+| F4-02 | Inventariar de modo seguro o repositório vinculado em worktree detached no SHA reservado: linguagens, manifests, frameworks, persistência, integrações, CI e infraestrutura detectáveis. | Recusar symlink, submódulo, paths fora da allowlist, arquivo excessivo ou malformado; inferência não é decisão. |
+| F4-03 | Persistir baseline e revisões imutáveis com schema versionado, identidades normalizadas, precedência, versões/ranges, decisões abertas e gate novo por revisão. | Dados sensíveis não entram em evidência/UI; rejeição cria nova revisão, e gate jamais é atualizado. |
+| F4-04 | Criar tela web e SSE para revisão/gate humano `TECHNOLOGY_BASELINE`, escolha explícita da revisão aprovada e opção de deixar decisão para a arquitetura do módulo. | Não forçar decisão prematura nem confundir preferência com restrição. |
+| F4-05 | Bloquear a primeira materialização até existir baseline aprovada; depois manter criação de módulos disponível durante nova revisão e usar a última aprovada por padrão. | Projetos já materializados seguem sem bloqueio retroativo; operador pode selecionar outra revisão aprovada. |
+| F4-06 | Persistir e proteger por FK/trigger transacional a referência da baseline em módulo, revisão, gate, work item, delivery, matriz QA, finding e execução Dev. | Referência deve permanecer estável e igual na cadeia; `NULL` somente para legado v2 marcado. |
+
+## Fase 5 — Projeto entregue e aceito pela web
 
 **Valor entregue:** o operador conduz um projeto de referência até entrega, incluindo integração, validação, risco, release, aceite e consulta completa de evidências/auditoria no navegador.
 
@@ -312,16 +346,16 @@ estado canônico diretamente.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F4-01 | Portar integração, validação de qualidade/segurança e relatórios. | Contratos entre módulos; validar versão e hash antes de integrar. |
-| F4-02 | Portar gates de risco, release, aceite e rejeição com rework guiado. | Regras de risco precisam ser acordadas; começar com políticas explícitas. |
-| F4-03 | Mostrar pacote, aplicação, testes, documentação e registros canônicos na web. | Artefatos grandes/sensíveis; servir apenas referências autorizadas. |
-| F4-04 | Abrir/atualizar um PR draft de `integration` → `main`, registrando URL, número, branch e SHAs. | GitHub exige credencial de push/PR com escopo mínimo. |
-| F4-05 | Tornar pausa, retomada, timeout, interrupção e cancelamento acionáveis e explicáveis na web. | Cancelamento deve ser atômico; testar falha antes de persistir evidência. |
-| F4-06 | Definir projeto de referência descartável e isolado. | Não reutilizar projeto real. |
-| F4-07 | Criar teste de aceite web completo até `DELIVERED`; merge em `main` permanece humano. | Combinar testes controlados e smoke autenticado. |
-| F4-08 | Executar corte controlado: confirmar matriz de paridade, arquivar evidência legada e remover runtime Python deprecated. | Não remover enquanto houver controle, teste, documentação ou operação sem substituto Node. |
+| F5-01 | Portar integração, validação de qualidade/segurança e relatórios. | Contratos entre módulos; validar versão e hash antes de integrar. |
+| F5-02 | Portar gates de risco, release, aceite e rejeição com rework guiado. | Regras de risco precisam ser acordadas; começar com políticas explícitas. |
+| F5-03 | Mostrar pacote, aplicação, testes, documentação e registros canônicos na web. | Artefatos grandes/sensíveis; servir apenas referências autorizadas. |
+| F5-04 | Abrir/atualizar um PR draft de `integration` → `main`, registrando URL, número, branch e SHAs. | GitHub exige credencial de push/PR com escopo mínimo. |
+| F5-05 | Tornar pausa, retomada, timeout, interrupção e cancelamento acionáveis e explicáveis na web. | Cancelamento deve ser atômico; testar falha antes de persistir evidência. |
+| F5-06 | Definir projeto de referência descartável e isolado. | Não reutilizar projeto real. |
+| F5-07 | Criar teste de aceite web completo até `DELIVERED`; merge em `main` permanece humano. | Combinar testes controlados e smoke autenticado. |
+| F5-08 | Executar corte controlado: confirmar matriz de paridade, arquivar evidência legada e remover runtime Python deprecated. | Não remover enquanto houver controle, teste, documentação ou operação sem substituto Node. |
 
-## Fase 5 — Operação sustentável e expansão segura
+## Fase 6 — Operação sustentável e expansão segura
 
 **Valor entregue:** a plataforma é operável com telemetria, backup, deploy e recuperação; fica preparada para evolução posterior a múltiplos usuários/organizações sem reescrita estrutural.
 
@@ -329,11 +363,11 @@ estado canônico diretamente.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F5-01 | Instrumentar logs, métricas, tracing e alertas correlacionando API, worker, operação e evento. | Volume de eventos; definir retenção e agregação. |
-| F5-02 | Automatizar build, migração, backup, rollback e runbooks testados. | Infraestrutura indefinida; manter contrato independente de provedor. |
-| F5-03 | Formalizar segredos e launcher Codex; somente ambiente atestado, sem credenciais em logs. | Ambientes locais heterogêneos; documentar suporte explícito. |
-| F5-04 | Preparar fronteira de organização/ator sem habilitar multitenancy no MVP. | Não antecipar telas ou permissões. |
-| F5-05 | Criar teste de resiliência: restart com volume persistente e restore de backup preservam estado, idempotência e auditoria. | Injetar falhas controladas; reconstrução por ledger não pertence ao MVP. |
+| F6-01 | Instrumentar logs, métricas, tracing e alertas correlacionando API, worker, operação e evento. | Volume de eventos; definir retenção e agregação. |
+| F6-02 | Automatizar build, migração, backup, rollback e runbooks testados. | Infraestrutura indefinida; manter contrato independente de provedor. |
+| F6-03 | Formalizar segredos e launcher Codex; somente ambiente atestado, sem credenciais em logs. | Ambientes locais heterogêneos; documentar suporte explícito. |
+| F6-04 | Preparar fronteira de organização/ator sem habilitar multitenancy no MVP. | Não antecipar telas ou permissões. |
+| F6-05 | Criar teste de resiliência: restart com volume persistente e restore de backup preservam estado, idempotência e auditoria. | Injetar falhas controladas; reconstrução por ledger não pertence ao MVP. |
 
 ## Critérios transversais
 
@@ -575,21 +609,21 @@ separado e reutilizável.
 **Decisão aplicada:** cada fase é seu próprio release incremental e de valor
 ponta a ponta. A Fase 1 é o primeiro release utilizável: criação, submissão,
 validação e registro de projeto pela web. O MVP de entrega completa é formado
-pelas Fases 1–4; a Fase 5 é evolução operacional posterior ao MVP.
+pelas Fases 1–5; a Fase 6 é evolução operacional posterior ao MVP.
 
-### P1-04 — Backup manual da Fase 1 e automação da Fase 5 se confundem
+### P1-04 — Backup manual da Fase 1 e automação da Fase 6 se confundem
 
 **Prioridade:** alta; resolver antes de definir o aceite operacional da Fase 1.
 
 **Status:** `RESOLVED`.
 
 **Evidência:** backup/restore e dump antes de migration destrutiva aparecem na
-Fase 1 e novamente na automação operacional da Fase 5, sem separar o nível de
+Fase 1 e novamente na automação operacional da Fase 6, sem separar o nível de
 entrega esperado em cada uma.
 
 **Decisão aplicada:** `05_PHASE_1_PLATFORM_OPERATIONS_CONTRACT.md` limita a
 Fase 1 a backup/restore manual testado e reserva agendamento, retenção, rollback
-automatizado, alertas e runbooks para a Fase 5.
+automatizado, alertas e runbooks para a Fase 6.
 
 ### P1-06 — Nomenclatura de autoria do intake diverge entre jornada e schema
 
@@ -735,11 +769,11 @@ autenticado usa exclusivamente repositório GitHub descartável identificado por
 prefixo dedicado, com limpeza no término; falha de limpeza preserva evidência e
 abre alerta, nunca usa repositório real.
 
-### Fase 4 — Decisão necessária antes da entrega por PR
+### Fase 5 — Decisão necessária antes da entrega por PR
 
 ### P2-01 — Mecanismo de abertura de PR não está escolhido
 
-**Prioridade:** média; resolver antes da Fase 4.
+**Prioridade:** média; resolver antes da Fase 5.
 
 **Status:** `OPEN`.
 
@@ -780,6 +814,9 @@ afetada e continuar todo trabalho independente que não esteja bloqueado.
 | I-019 | F2-03 / F2-05 | `BLOCKING` | `RESOLVED` | A descoberta aceitava o comando e só revelava indisponibilidade do agente após o worker criar operação, alterar o estado e aguardar o timeout completo. Não havia teste explícito de autenticação/conectividade/resposta estruturada mínima da IA. | Implementada readiness do adaptador: smoke estruturado `OK`, timeout próprio (`NAAMIVE_AGENT_READINESS_TIMEOUT_SECONDS=20`), cache de sucesso configurável (`NAAMIVE_AGENT_READINESS_CACHE_SECONDS=300`), logs sanitizados de início/sucesso/falha, comando/versão efetivos, endpoint manual `POST /api/agent/readiness` e botão **Testar conexão da IA**. A UI recebe `ACCEPTED` e atualiza o estado antes do smoke; a readiness é executada pelo worker e falha de modo auditável sem bloquear a resposta HTTP. O launcher fecha stdin para evitar que o Codex aguarde entrada adicional; E2E 7/7 cobre o endpoint e o smoke autenticado real confirmou sucesso em 7,7 s. | `YES` |
 | I-020 | F2-03 / F2-05 | `BLOCKING` | `RESOLVED` | `REVIEW_REQUIRES_ADJUSTMENT` retornava automaticamente a requisitos, permitindo ciclo ilimitado Revisão → Requisitos quando a IA repetia o mesmo parecer. A tela também expunha códigos técnicos sem descrição curta do motivo. No reteste manual, o relato humano era auditado mas não chegava ao contexto da nova rodada do agente, que reavaliava apenas a necessidade original e podia repetir o parecer. | Workflow `PROJECT_DISCOVERY` v2 cria `WAITING_FOR_REVIEW_ADJUSTMENT`; a revisão pausa sem criar job sucessor, mostra status, motivo, recomendação e pendências amigáveis, e exige um relato humano de até 500 caracteres para iniciar uma única nova rodada. O worker recupera o último relato auditado e o entrega às etapas subsequentes; o contrato do agente exige recomendação e ações estruturadas. A UI aceita formatos legados de evidência já persistidos. O reteste real completou múltiplas rodadas humanas sem job automático em loop e alcançou `PRODUCT_COMMITMENT` aprovado; E2E isolado cobre a pausa e a retomada. | `YES` |
 | I-021 | F2-03 / F2-06 | `BLOCKING` | `RESOLVED` | O gate `PRODUCT_COMMITMENT` era aberto com `evidence: []`: artefatos persistem `execution_id=job.id`, mas a consolidação consultava esse campo com `operation_id`. O projeto podia ser aprovado sem o snapshot das três evidências no gate. | O gate agora consolida a evidência mais recente de cada tipo obrigatório (`product-need-analysis`, `product-requirements`, `product-commitment-review`) no projeto, preservando análise válida da rodada anterior quando uma nova operação executa apenas requisitos e revisão. A abertura é bloqueada se não houver exatamente três evidências; migrations 014 e 015 reconciliam snapshots já gravados. O E2E isolado validou o fluxo inicial e a rodada após ajuste; o gate `central-atendimento-2` foi reconciliado e contém os três tipos esperados. | `YES` |
+| I-022 | F3-09 | `BLOCKING` | `RESOLVED` | A validação PostgreSQL/E2E da Fase 3 exigia `DATABASE_URL`; o ambiente local já dispunha de PostgreSQL controlado. | `docker compose up -d postgres`, migrations e `npm run e2e` executados em 04/08/2026: 8/8 cenários aprovados, sem skips, sem expor conteúdo da configuração. | `NOT_REQUIRED` |
+| I-023 | F3-04 | `BLOCKING` | `RESOLVED` | `START_DEVELOPMENT` criava worktree e SHA-base, mas não executava Dev como job recuperável nem preservava entrega verificável. | O ciclo Dev agora persiste intenção/operação/job antes do Git, usa lease/retry/reconciliação, exige commit real de `naamive-bot` com trailers, registra evidência imutável, valida paths e sincroniza rework. O aceite PostgreSQL/HTTP/E2E de 2026-08-05 confirmou a recuperação e os dois resultados de QA sem edição manual fora do runtime. | `YES` |
+| I-024 | F3-08 | `BLOCKING` | `RESOLVED` | O gate `MODULE_APPROVAL` exibiu somente identificador e estado, seguido de uma aprovação genérica. Sem objetivo, escopo, exclusões, dependências e critérios, a pessoa operadora não conseguia aprovar de forma informada nem distinguir a proposta inicial de uma entrega Dev, deploy ou uso em produção. | A revisão da proposta agora mostra objetivo, escopo, exclusões, dependências e critérios de aceite antes da decisão. A tela explica que aprovar inicia a definição do módulo — não aprova entrega, deploy ou uso — e permite solicitar ajustes com feedback obrigatório. O aceite HTTP verifica o payload completo ainda com o gate aberto e a versão visível da UI (`UI 2026.08.05-f3-module-review.2`) contém os textos de revisão e distinção de deploy. | `YES` |
 
 Valores permitidos:
 

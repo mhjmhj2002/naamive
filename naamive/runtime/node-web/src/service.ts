@@ -5,6 +5,7 @@ import { config, containedPath } from './config.js';
 import { putArtifact, putArchiveRecord } from './artifacts.js';
 import { transitionTarget } from './workflow.js';
 import type pg from 'pg';
+import { publicEvent } from './projection.js';
 
 type Intake = Record<string, unknown>;
 const fields = ['title', 'business_owner', 'business_problem', 'desired_outcome', 'success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions'];
@@ -145,7 +146,7 @@ export const archiveProject = async (projectId: string, body: Record<string, unk
   await event(client,projectId,'PROJECT_ARCHIVED',correlation,{...record,artifact_hash:artifact.hash}); return {project_id:projectId,state:target};
 });
 
-export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT * FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows;
+export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
 const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,sd.label AS status,sd.next_action,
   (SELECT event_type FROM events e WHERE e.project_id=p.id ORDER BY id DESC LIMIT 1) AS last_event
  FROM projects p
