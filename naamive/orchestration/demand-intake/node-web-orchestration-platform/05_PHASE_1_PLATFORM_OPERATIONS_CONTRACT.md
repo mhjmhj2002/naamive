@@ -60,4 +60,4 @@ dump concluído, checksum e metadados de versão; restore exige destino PostgreS
 explícito e confirmação para destino não efêmero. O teste de aceite restaura em
 PostgreSQL efêmero e comprova projetos, estados, eventos e referências de
 artefatos. Agendamento, retenção, rollback automatizado, alertas e runbooks de
-produção pertencem exclusivamente à Fase 5.
+produção pertencem exclusivamente à Fase 6.

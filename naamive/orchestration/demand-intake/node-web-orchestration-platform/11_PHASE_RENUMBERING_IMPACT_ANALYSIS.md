@@ -5,11 +5,11 @@ created_at: 2026-08-06
 scope: documentation, roadmap, contracts, backlog, and planning only; no runtime implementation authorization
 ---
 
-# Análise de Impacto — Reorganização para Seis Fases
+# Análise de Impacto — Reorganização para Sete Fases
 
 ## Decisão proposta
 
-O roadmap vivo passa a ter seis fases:
+O roadmap vivo passa a ter sete fases:
 
 | Release | Fase | Resultado |
 | --- | --- | --- |
@@ -17,28 +17,25 @@ O roadmap vivo passa a ter seis fases:
 | 2 | Fase 2 | Descoberta e compromisso de produto. |
 | 3 | Fase 3 | Ciclo de módulo, desenvolvimento, QA e rework. |
 | 4 | Fase 4 | Runtime multi-provider de agentes e observabilidade de IA. |
-| 5 — MVP completo | Fase 5 | Projeto entregue, aceito e PR draft auditável. |
-| 6 | Fase 6 | Operação sustentável e expansão segura. |
+| 5 | Fase 5 | Baseline tecnológica aprovada antes da primeira materialização de módulo. |
+| 6 — MVP completo | Fase 6 | Projeto entregue, aceito e PR draft auditável. |
+| 7 | Fase 7 | Operação sustentável e expansão segura. |
 
-O MVP completo termina na Fase 5. A Fase 4 entrega uma capacidade de plataforma
-que é pré-requisito do fechamento funcional, não o fechamento em si.
+O MVP completo termina na Fase 6. A Fase 4 entrega uma capacidade de plataforma
+e a Fase 5 fixa a baseline tecnológica; ambas são pré-requisitos do fechamento
+funcional, não o fechamento em si.
 
 ## Divergência encontrada e tratamento
 
-O pedido de reorganização pressupõe um roadmap anterior de cinco fases, no qual
-entrega era Fase 4 e operação era Fase 5. O roadmap vivo em
-`01_DELIVERY_ROADMAP.md` já contém, ainda sem implementação, uma Fase 4 de
-baseline tecnológica, uma Fase 5 de entrega e uma Fase 6 operacional. Logo, a
-renumeração literal `F4 -> F5`, `F5 -> F6` criaria três escopos distintos em
-apenas Fases 5 e 6 e não pode ser aplicada sem perda ou colisão de IDs.
+O pedido de reorganização introduziu a Fase 4 de runtime multi-provider e
+renumerou a baseline tecnológica para Fase 5. Como a baseline é uma entrega
+própria antes da primeira materialização de módulo, a entrega final e a operação
+foram deslocadas respectivamente para as Fases 6 e 7.
 
-A proposta preserva o alvo de seis fases e o escopo não implementado da baseline:
-ela torna-se pré-requisito explícito e backlog de planejamento da Fase 5, antes
-da materialização de novos módulos. A entrega continua Fase 5 e a operação
-continua Fase 6. Não há migração de dados nem reescrita de eventos, pois não
-existem execuções da baseline; `10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md`
-permanece documento histórico de planejamento e recebe referência de
-correspondência quando a proposta for aprovada.
+A proposta preserva o escopo não implementado da baseline como a própria Fase 5,
+antes da materialização de novos módulos. A entrega é Fase 6 e a operação é
+Fase 7. Não há migração de dados nem reescrita de eventos, pois não existem
+execuções da baseline.
 
 Esta decisão precisa de aprovação humana antes de alterar o status aprovado do
 roadmap, renomear IDs publicados ou iniciar implementação.
@@ -47,11 +44,11 @@ roadmap, renomear IDs publicados ou iniciar implementação.
 
 | Local | Natureza | Ação proposta |
 | --- | --- | --- |
-| `00_PRODUCT_NORTH_STAR.md` | Documento vivo; ainda diz Release 4/Fase 4 como MVP completo e operação/Fase 5. | Atualizar releases, limite do MVP e desenho para contrato neutro. |
-| `01_DELIVERY_ROADMAP.md` | Documento vivo; contém baseline F4, entrega F5 e operação F6. | Inserir F4 multi-provider; consolidar baseline como pré-requisito F5; manter F5 entrega e F6 operação. |
-| `09_PHASE_3_PLANNING.md` | Planejamento vivo; encaminha PR/release à Fase 4. | Corrigir para Fase 5 e declarar dependência do contrato neutro. |
-| `10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md` | Planejamento não implementado. | Preservar como pré-requisito da Fase 5. |
-| `05_PHASE_1_PLATFORM_OPERATIONS_CONTRACT.md` | Referência de produção à Fase 5. | Confirmar se é entrega ou operação e ajustar somente após decisão aprovada. |
+| `00_PRODUCT_NORTH_STAR.md` | Documento vivo; refletia entrega como Fase 5 e operação como Fase 6. | Atualizar releases e limite do MVP para Fases 5–7. |
+| `01_DELIVERY_ROADMAP.md` | Documento vivo; associava Fase 5 à entrega. | Fazer da baseline a Fase 5; deslocar entrega para Fase 6 e operação para Fase 7. |
+| `09_PHASE_3_PLANNING.md` | Planejamento vivo; encaminhava PR/release à Fase 5. | Corrigir para Fase 6 e declarar dependência do contrato neutro. |
+| `10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md` | Planejamento não implementado. | Consolidar como plano normativo da Fase 5. |
+| `05_PHASE_1_PLATFORM_OPERATIONS_CONTRACT.md` | Referência de produção à Fase 5. | Corrigir a referência para a Fase 6. |
 | `08_FUTURE_IMPROVEMENTS_BACKLOG.md` | M-001 cita Codex e M-003 sugere separar histórico por adaptador/modelo. | Promover/referenciar no backlog F4, sem apagar a origem. |
 | `07_PHASE_2_AGENT_EXECUTION_GUIDE.md`, contratos, runtime Node, migrations e testes | Referências de execução Codex e contratos atuais. | Não renumerar dados históricos; migrar somente na F4 por contratos aditivos e testes de paridade. |
 | `orchestration/history/**` | Histórico certificado. | Imutável; acrescentar nota de mapeamento apenas se um documento histórico voltar a ser publicado. |
@@ -70,13 +67,12 @@ o fechamento do MVP.
    decisão e correspondência se sua leitura puder gerar ambiguidade.
 3. Documento vivo usa a nova sequência somente após aprovação.
 4. IDs novos da plataforma multi-provider são `F4-01` a `F4-12`.
-5. A conversão literal dos IDs antigos fica bloqueada pela colisão descrita
-   acima; a tabela final de IDs da baseline e da entrega deve ser aprovada junto
-   do roadmap, sem reutilizar ID com significado diferente.
+5. A baseline usa `F5-01` a `F5-06`; a entrega usa `F6-01` a `F6-08`; a
+   operação usa `F7-01` a `F7-05`. Nenhum ID é reutilizado com outro significado.
 
 ## Impacto técnico futuro
 
-Fases 5 e 6 só podem chamar `AgentExecutionService`; não podem importar
+Fases 5, 6 e 7 só podem chamar `AgentExecutionService`; não podem importar
 launcher, SDK, endpoint, credencial, provider ou modelo. Provider/modelo são
 metadados de tentativa de execução, não estados do domínio. A máquina de
 estados continua autorizando trabalho, gates e efeitos; o router decide somente
@@ -86,7 +82,7 @@ como executar trabalho já autorizado.
 
 | Risco | Mitigação |
 | --- | --- |
-| Colisão entre a baseline F4 já planejada e a nova F4. | Aprovar a consolidação da baseline como pré-requisito F5 antes de renomear. |
+| Inconsistência entre documentos vivos e a nova sequência. | Manter a baseline como Fase 5 e deslocar entrega/operação para Fases 6/7 no mesmo conjunto documental. |
 | Mudança de comportamento ao encapsular Codex. | Modo inicial Codex-only, adapter de paridade e testes de regressão. |
 | Fallback duplicar efeitos Git. | Intenção persistida, idempotência, worktree/SHA, reconciliação e resultado estruturado. |
 | Vazamento de contexto/credenciais. | Classificação, allowlist, sanitização antes do adapter e referências de segredo. |
