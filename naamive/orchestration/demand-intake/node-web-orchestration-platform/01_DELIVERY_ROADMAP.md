@@ -29,8 +29,9 @@ uma fase posterior para ter valor.
 | Release 2 | Fase 2 | Conduzir um projeto registrado até o compromisso de produto, com agentes e gate visíveis. |
 | Release 3 | Fase 3 | Conduzir um módulo por desenvolvimento, QA e rework rastreável. |
 | Release 4 | Fase 4 | Executar agentes por Codex ou DeepSeek, com seleção/fallback auditáveis e observabilidade de IA. |
-| Release 5 — **MVP completo** | Fase 5 | Concluir um projeto de referência até entrega, aceite e PR draft auditáveis. |
-| Release 6 | Fase 6 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
+| Release 5 | Fase 5 | Confirmar uma baseline tecnológica auditável antes da primeira materialização de módulo. |
+| Release 6 — **MVP completo** | Fase 6 | Concluir um projeto de referência até entrega, aceite e PR draft auditáveis. |
+| Release 7 | Fase 7 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
 
 ## Fundamentos comuns
 
@@ -69,13 +70,13 @@ permanecem `OPEN`.
 | P0-11 | Fase 1 | P0 | `RESOLVED` | Vínculo Git, branch-base e auditoria persistidos. |
 | P0-12 | Fase 1 | P0 | `RESOLVED` | Operador configurado no servidor e injetado na auditoria. |
 | P1-02 | Fase 1 | P1 | `RESOLVED` | Catálogo e único mapeamento de status versionado definidos. |
-| P1-03 | Fases 1–6 | P1 | `RESOLVED` | Releases incrementais e limite do MVP estão nomeados. |
-| P1-04 | Fases 1 e 6 | P1 | `RESOLVED` | Backup manual testado na Fase 1; automação fica na Fase 6. |
+| P1-03 | Fases 1–7 | P1 | `RESOLVED` | Releases incrementais e limite do MVP estão nomeados. |
+| P1-04 | Fases 1 e 7 | P1 | `RESOLVED` | Backup manual testado na Fase 1; automação fica na Fase 7. |
 | P2-05 | Fase 1 | P2 | `RESOLVED` | Compose, migrations e fluxo web completo validados em PostgreSQL local. |
 | P1-05 | Fase 3 | P1 | `RESOLVED` | Política Git isolada, recuperação e causas sanitizadas foram implementadas e validadas. |
 | P1-06 | Fase 1 | P1 | `RESOLVED` | Autoria de rascunho e submissão separadas no schema/runtime. |
 | P1-07 | Fase 1 | P1 | `RESOLVED` | Índices únicos parciais aplicados na migration de status. |
-| P1-08 | Fases 1–6 | P1 | `RESOLVED` | North Star e roadmap promovidos para aprovados na Fase 1. |
+| P1-08 | Fases 1–7 | P1 | `RESOLVED` | North Star e roadmap promovidos para aprovados na Fase 1. |
 | P1-09 | Fase 1 | P1 | `RESOLVED` | Bootstrap Node/Web/PostgreSQL e comandos operacionais criados. |
 | P1-10 | Fase 1 | P1 | `RESOLVED` | Configuração obrigatória validada no startup e documentada. |
 | P0-13 | Fase 4 | P0 | `RESOLVED` | Governança, responsáveis, alçadas, SLA e trilha de auditoria aprovados. |
@@ -86,7 +87,7 @@ permanecem `OPEN`.
 | P0-18 | Fase 4 | P0 | `RESOLVED` | DeepSeek, secrets, egress e redaction aprovados dentro dos limites registrados. |
 | P0-19 | Fase 4 | P0 | `RESOLVED` | Matriz de consumidores, flags, reversão e cenários de aceite aprovados. |
 | P1-11 | Fase 4 | P1 | `OPEN` | `projects.id` continua `text`; a implementação F4 usa `project_key` + UUID derivado em `agent_execution` até uma migração global de PK ser aprovada. |
-| P2-01 | Fase 5 | P2 | `OPEN` | Mecanismo de abertura de PR não está escolhido. |
+| P2-01 | Fase 6 | P2 | `OPEN` | Mecanismo de abertura de PR não está escolhido. |
 | P2-02 | Fase 3 | P2 | `RESOLVED` | Commits automatizados usam `naamive-bot` e trailers obrigatórios. |
 | P2-03 | Fase 3 | P2 | `RESOLVED` | Integração usa merge commit auditável com SHAs e resultado de push. |
 | P2-04 | Fase 3 | P2 | `RESOLVED` | Remoto bare temporário e smoke GitHub descartável com allowlist foram validados. |
@@ -147,19 +148,25 @@ vincular uma pendência explicável.
 | 4 | F4-10 | `DONE` | API/detail/web/SSE projetam execuções, tentativas, política, runtime efetivo e próxima ação sob flag, com replay sem duplicação e campos sensíveis filtrados. |
 | 4 | F4-11 | `DONE` | Suítes unitárias + E2E PostgreSQL agora cobrem contratos, paridade Codex-only, fallback para DeepSeek, bloqueio por quota e sanitização; `npm run migrate && npm test && npm run e2e` passaram em 2026-08-06. |
 | 4 | F4-12 | `DONE` | Worker/consumidores usam o serviço por flags desligadas por padrão, mantendo rollback para novos jobs sem reabrir dispatch incerto nem restaurar chamadas diretas. |
-| 5 | F5-01 | `TO DO` | — |
-| 5 | F5-02 | `TO DO` | — |
-| 5 | F5-03 | `TO DO` | — |
-| 5 | F5-04 | `TO DO` | — |
-| 5 | F5-05 | `TO DO` | — |
-| 5 | F5-06 | `TO DO` | — |
-| 5 | F5-07 | `TO DO` | — |
-| 5 | F5-08 | `TO DO` | — |
+| 5 | F5-01 | `TO DO` | Workflow v3 preserva o legado e introduz o gate de baseline. |
+| 5 | F5-02 | `TO DO` | Inventário read-only é sanitizado e vinculado ao SHA persistido. |
+| 5 | F5-03 | `TO DO` | Revisões e evidências imutáveis registram escolhas e decisões abertas. |
+| 5 | F5-04 | `TO DO` | Web e SSE expõem a revisão humana e o gate versionado. |
+| 5 | F5-05 | `TO DO` | Primeiro módulo exige baseline aprovada; projetos legados não são bloqueados. |
+| 5 | F5-06 | `TO DO` | A revisão aprovada propaga-se aos contratos de implementação. |
 | 6 | F6-01 | `TO DO` | — |
 | 6 | F6-02 | `TO DO` | — |
 | 6 | F6-03 | `TO DO` | — |
 | 6 | F6-04 | `TO DO` | — |
 | 6 | F6-05 | `TO DO` | — |
+| 6 | F6-06 | `TO DO` | — |
+| 6 | F6-07 | `TO DO` | — |
+| 6 | F6-08 | `TO DO` | — |
+| 7 | F7-01 | `TO DO` | — |
+| 7 | F7-02 | `TO DO` | — |
+| 7 | F7-03 | `TO DO` | — |
+| 7 | F7-04 | `TO DO` | — |
+| 7 | F7-05 | `TO DO` | — |
 
 ## Fase 1 — Projeto web iniciado e submetido
 
@@ -372,30 +379,51 @@ fluxo de negócio conhece um executor específico.
 2026-08-06, com responsáveis, limites de egress/custo e cenários de corte
 registrados. A implementação pode iniciar respeitando essas restrições.
 
-## Fase 5 — Projeto entregue e aceito pela web
+## Fase 5 — Baseline tecnológica antes dos módulos
 
-**Valor entregue:** o operador conduz um projeto de referência até entrega, incluindo integração, validação, risco, release, aceite e consulta completa de evidências/auditoria no navegador.
+**Valor entregue:** após o compromisso de produto, o operador revisa e aprova
+orientações técnicas auditáveis antes de materializar o primeiro módulo. A
+baseline registra fatos sanitizados do repositório, restrições, preferências e
+decisões explicitamente delegadas à arquitetura de cada módulo.
 
-**Demonstração ponta a ponta:** projeto criado pela web percorre gates aplicáveis, produz aplicação, testes e documentação, e alcança `DELIVERED` com pacote e aceite auditáveis.
-
-**Pré-requisito de baseline:** a baseline tecnológica planejada em
-`10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md` é preservada como trabalho
-prévio da Fase 5, sujeito à aprovação da reorganização em
-`11_PHASE_RENUMBERING_IMPACT_ANALYSIS.md`. Toda execução de agente nesta fase
-usa exclusivamente `AgentExecutionService` e políticas publicadas da Fase 4.
+**Demonstração ponta a ponta:** um projeto novo chega ao compromisso de produto,
+gera inventário read-only no SHA vinculado, recebe baseline com decisão aberta
+para o banco e só libera a criação do primeiro módulo após o gate humano. A
+revisão aprovada acompanha o módulo e seus contratos de implementação, sem
+alterar projetos legados ou módulos já autorizados.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F5-01 | Portar integração, validação de qualidade/segurança e relatórios. | Contratos entre módulos; validar versão e hash antes de integrar. |
-| F5-02 | Portar gates de risco, release, aceite e rejeição com rework guiado. | Regras de risco precisam ser acordadas; começar com políticas explícitas. |
-| F5-03 | Mostrar pacote, aplicação, testes, documentação e registros canônicos na web. | Artefatos grandes/sensíveis; servir apenas referências autorizadas. |
-| F5-04 | Abrir/atualizar um PR draft de `integration` → `main`, registrando URL, número, branch e SHAs. | GitHub exige credencial de push/PR com escopo mínimo. |
-| F5-05 | Tornar pausa, retomada, timeout, interrupção e cancelamento acionáveis e explicáveis na web. | Cancelamento deve ser atômico; testar falha antes de persistir evidência. |
-| F5-06 | Definir projeto de referência descartável e isolado. | Não reutilizar projeto real. |
-| F5-07 | Criar teste de aceite web completo até `DELIVERED`; merge em `main` permanece humano. | Combinar testes controlados e smoke autenticado. |
-| F5-08 | Executar corte controlado: confirmar matriz de paridade, arquivar evidência legada e remover runtime Python deprecated. | Não remover enquanto houver controle, teste, documentação ou operação sem substituto Node. |
+| F5-01 | Publicar `PROJECT_DISCOVERY` v3 com estados, guards e gate de baseline, preservando v2 para legados. | Não migrar silenciosamente projeto em andamento ou módulo já criado. |
+| F5-02 | Gerar inventário tecnológico read-only, sanitizado e vinculado ao SHA reservado. | Não executar código do repositório nem expor conteúdo sensível. |
+| F5-03 | Persistir baseline, revisões, decisões abertas e evidências imutáveis com schema versionado. | Rejeitar classificações ou ranges contraditórios antes do gate. |
+| F5-04 | Exibir inventário, orientações e gate humano por web/SSE com projeções sanitizadas. | O navegador não calcula nem envia fatos tecnológicos. |
+| F5-05 | Bloquear a primeira materialização até haver baseline aprovada e manter o fluxo legado explícito. | Rotas alternativas e workers obedecem ao mesmo guard transacional. |
+| F5-06 | Propagar a revisão aprovada a módulo, arquitetura, work item, QA, entrega e execução Dev. | FKs/guards impedem referência nula, divergente ou não aprovada. |
 
-## Fase 6 — Operação sustentável e expansão segura
+## Fase 6 — Projeto entregue e aceito pela web
+
+**Valor entregue:** o operador conduz um projeto de referência até entrega,
+incluindo integração, validação, risco, release, aceite e consulta completa de
+evidências/auditoria no navegador.
+
+**Demonstração ponta a ponta:** projeto criado pela web percorre gates
+aplicáveis, produz aplicação, testes e documentação, e alcança `DELIVERED` com
+pacote e aceite auditáveis. Toda execução de agente usa exclusivamente
+`AgentExecutionService` e políticas publicadas da Fase 4.
+
+| ID | Tarefa e definição de pronto | Impedimento / tratamento |
+| --- | --- | --- |
+| F6-01 | Portar integração, validação de qualidade/segurança e relatórios. | Contratos entre módulos; validar versão e hash antes de integrar. |
+| F6-02 | Portar gates de risco, release, aceite e rejeição com rework guiado. | Regras de risco precisam ser acordadas; começar com políticas explícitas. |
+| F6-03 | Mostrar pacote, aplicação, testes, documentação e registros canônicos na web. | Artefatos grandes/sensíveis; servir apenas referências autorizadas. |
+| F6-04 | Abrir/atualizar um PR draft de `integration` → `main`, registrando URL, número, branch e SHAs. | GitHub exige credencial de push/PR com escopo mínimo. |
+| F6-05 | Tornar pausa, retomada, timeout, interrupção e cancelamento acionáveis e explicáveis na web. | Cancelamento deve ser atômico; testar falha antes de persistir evidência. |
+| F6-06 | Definir projeto de referência descartável e isolado. | Não reutilizar projeto real. |
+| F6-07 | Criar teste de aceite web completo até `DELIVERED`; merge em `main` permanece humano. | Combinar testes controlados e smoke autenticado. |
+| F6-08 | Executar corte controlado: confirmar matriz de paridade, arquivar evidência legada e remover runtime Python deprecated. | Não remover enquanto houver controle, teste, documentação ou operação sem substituto Node. |
+
+## Fase 7 — Operação sustentável e expansão segura
 
 **Valor entregue:** a plataforma é operável com telemetria, backup, deploy e recuperação; fica preparada para evolução posterior a múltiplos usuários/organizações sem reescrita estrutural.
 
@@ -403,11 +431,11 @@ usa exclusivamente `AgentExecutionService` e políticas publicadas da Fase 4.
 
 | ID | Tarefa e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F6-01 | Instrumentar logs, métricas, tracing e alertas correlacionando API, worker, operação e evento. | Volume de eventos; definir retenção e agregação. |
-| F6-02 | Automatizar build, migração, backup, rollback e runbooks testados. | Infraestrutura indefinida; manter contrato independente de provedor. |
-| F6-03 | Formalizar segredos, configuração e operação dos adapters; somente ambiente atestado, sem credenciais em logs. | Ambientes locais heterogêneos; documentar suporte explícito. |
-| F6-04 | Preparar fronteira de organização/ator sem habilitar multitenancy no MVP. | Não antecipar telas ou permissões. |
-| F6-05 | Criar teste de resiliência: restart com volume persistente e restore de backup preservam estado, idempotência e auditoria. | Injetar falhas controladas; reconstrução por ledger não pertence ao MVP. |
+| F7-01 | Instrumentar logs, métricas, tracing e alertas correlacionando API, worker, operação e evento. | Volume de eventos; definir retenção e agregação. |
+| F7-02 | Automatizar build, migração, backup, rollback e runbooks testados. | Infraestrutura indefinida; manter contrato independente de provedor. |
+| F7-03 | Formalizar segredos, configuração e operação dos adapters; somente ambiente atestado, sem credenciais em logs. | Ambientes locais heterogêneos; documentar suporte explícito. |
+| F7-04 | Preparar fronteira de organização/ator sem habilitar multitenancy no MVP. | Não antecipar telas ou permissões. |
+| F7-05 | Criar teste de resiliência: restart com volume persistente e restore de backup preservam estado, idempotência e auditoria. | Injetar falhas controladas; reconstrução por ledger não pertence ao MVP. |
 
 ## Critérios transversais
 
@@ -710,22 +738,22 @@ separado e reutilizável.
 **Decisão aplicada:** cada fase é seu próprio release incremental e de valor
 ponta a ponta. A Fase 1 é o primeiro release utilizável: criação, submissão,
 validação e registro de projeto pela web. O MVP de entrega completa é formado
-pelas Fases 1–5; a Fase 6 é evolução operacional posterior ao MVP. A Fase 4
+pelas Fases 1–6; a Fase 7 é evolução operacional posterior ao MVP. A Fase 4
 é uma capacidade de runtime anterior ao fechamento funcional.
 
-### P1-04 — Backup manual da Fase 1 e automação da Fase 6 se confundem
+### P1-04 — Backup manual da Fase 1 e automação da Fase 7 se confundem
 
 **Prioridade:** alta; resolver antes de definir o aceite operacional da Fase 1.
 
 **Status:** `RESOLVED`.
 
 **Evidência:** backup/restore e dump antes de migration destrutiva aparecem na
-Fase 1 e novamente na automação operacional da Fase 6, sem separar o nível de
+Fase 1 e novamente na automação operacional da Fase 7, sem separar o nível de
 entrega esperado em cada uma.
 
 **Decisão aplicada:** `05_PHASE_1_PLATFORM_OPERATIONS_CONTRACT.md` limita a
 Fase 1 a backup/restore manual testado e reserva agendamento, retenção, rollback
-automatizado, alertas e runbooks para a Fase 6.
+automatizado, alertas e runbooks para a Fase 7.
 
 ### P1-06 — Nomenclatura de autoria do intake diverge entre jornada e schema
 
@@ -871,11 +899,11 @@ autenticado usa exclusivamente repositório GitHub descartável identificado por
 prefixo dedicado, com limpeza no término; falha de limpeza preserva evidência e
 abre alerta, nunca usa repositório real.
 
-### Fase 5 — Decisão necessária antes da entrega por PR
+### Fase 6 — Decisão necessária antes da entrega por PR
 
 ### P2-01 — Mecanismo de abertura de PR não está escolhido
 
-**Prioridade:** média; resolver antes da Fase 5.
+**Prioridade:** média; resolver antes da Fase 6.
 
 **Status:** `OPEN`.
 
