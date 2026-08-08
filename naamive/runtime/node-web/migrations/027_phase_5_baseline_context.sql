@@ -313,7 +313,9 @@ CREATE TRIGGER baseline_revisions_published_revision_guard BEFORE INSERT ON tech
 --      As igualdades garantidas são: modules = module_revisions (via
 --      current_revision_id), module_gates = sua module_revision, work_items =
 --      sua module_revision, deliveries = seu work_item, qa_matrices = sua
---      delivery/work_item, findings = sua delivery. Projetos legados
+--      delivery/work_item, findings = sua delivery, jobs = sua delivery (a
+--      origem normativa do job é a delivery; o branch jobs só atua quando
+--      delivery_id IS NOT NULL). Projetos legados
 --      (BASELINE_NOT_REQUIRED_LEGACY) permanecem com a referência nula.
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION enforce_baseline_reference_equality() RETURNS trigger LANGUAGE plpgsql AS $$
@@ -336,6 +338,10 @@ BEGIN
     ELSIF NEW.work_item_id IS NOT NULL THEN
       SELECT technology_baseline_revision_id INTO parent_ref FROM work_items WHERE id = NEW.work_item_id;
     END IF;
+  ELSIF TG_TABLE_NAME = 'jobs' THEN
+    IF NEW.delivery_id IS NOT NULL THEN
+      SELECT technology_baseline_revision_id INTO parent_ref FROM deliveries WHERE id = NEW.delivery_id;
+    END IF;
   END IF;
   IF NEW.technology_baseline_revision_id IS NULL AND parent_ref IS NOT NULL THEN
     NEW.technology_baseline_revision_id := parent_ref;
@@ -356,3 +362,73 @@ DROP TRIGGER IF EXISTS findings_baseline_reference_guard ON findings;
 CREATE TRIGGER findings_baseline_reference_guard BEFORE INSERT OR UPDATE ON findings FOR EACH ROW EXECUTE FUNCTION enforce_baseline_reference_equality();
 DROP TRIGGER IF EXISTS qa_matrices_baseline_reference_guard ON qa_matrices;
 CREATE TRIGGER qa_matrices_baseline_reference_guard BEFORE INSERT OR UPDATE ON qa_matrices FOR EACH ROW EXECUTE FUNCTION enforce_baseline_reference_equality();
+DROP TRIGGER IF EXISTS jobs_baseline_reference_guard ON jobs;
+CREATE TRIGGER jobs_baseline_reference_guard BEFORE INSERT OR UPDATE ON jobs FOR EACH ROW EXECUTE FUNCTION enforce_baseline_reference_equality();
+
+-- ---------------------------------------------------------------------------
+-- 10f) Guarda reversa da herança de baseline de module_revisions. A cadeia
+--      modules = module_revisions = module_gates passa a ser garantida nos
+--      dois sentidos: 10e garante module <- module_revisions (via
+--      current_revision_id) e module_gates <- module_revisions (via
+--      revision_id); esta guarda garante module_revision -> module, ou seja,
+--      uma module_revision não pode divergir do baseline do módulo que a
+--      referencia (modules.current_revision_id = id da revisão). No INSERT o
+--      módulo ainda não pode apontar para a nova revisão (o vínculo
+--      current_revision_id, NOT NULL FK, é gravado depois da revisão), então
+--      o INSERT é naturalmente tolerante; a exigência forte é aplicada no
+--      UPDATE, quando o módulo já existe. Projetos legados
+--      (BASELINE_NOT_REQUIRED_LEGACY) — módulo e revisão ambos com baseline
+--      nulo — seguem permitidos, sem preenchimento forçado.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION enforce_module_revision_baseline_inheritance() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  module_ref uuid;
+BEGIN
+  IF TG_OP = 'UPDATE' THEN
+    SELECT technology_baseline_revision_id INTO module_ref FROM modules WHERE current_revision_id IN (OLD.id, NEW.id) LIMIT 1;
+  END IF;
+  IF module_ref IS NOT NULL THEN
+    IF NEW.technology_baseline_revision_id IS NULL THEN
+      NEW.technology_baseline_revision_id := module_ref;
+    ELSIF NEW.technology_baseline_revision_id IS DISTINCT FROM module_ref THEN
+      RAISE EXCEPTION 'MODULE_REVISION_BASELINE_REFERENCE_MISMATCH: module_revision % must inherit technology_baseline_revision_id % from its module, not %', NEW.id, module_ref, NEW.technology_baseline_revision_id USING ERRCODE = 'check_violation';
+    END IF;
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS module_revisions_baseline_reference_guard ON module_revisions;
+CREATE TRIGGER module_revisions_baseline_reference_guard BEFORE INSERT OR UPDATE ON module_revisions FOR EACH ROW EXECUTE FUNCTION enforce_module_revision_baseline_inheritance();
+
+-- ---------------------------------------------------------------------------
+-- 10g) Guarda de numeração monotônica das revisões de baseline. A primeira
+--      revisão de um baseline deve ser 1 e cada revisão seguinte deve ser
+--      exatamente max(revision_number existente) + 1; saltos, regressões e
+--      duplicatas são rejeitados. Quando NEW.revision_number é NULL, a guarda
+--      o preenche automaticamente com o próximo número esperado (fill), de
+--      modo que o NOT NULL e a UNIQUE (baseline_id, revision_number) nunca
+--      sejam violados. Concorrência: a guarda toma um advisory
+--      lock transacional chaveado pelo baseline_id
+--      (pg_advisory_xact_lock) antes de computar o máximo, serializando
+--      inserções concorrentes por baseline e liberando o lock
+--      automaticamente no fim da transação (commit/rollback). (A opção B —
+--      SELECT ... FOR UPDATE na linha da technology_baselines — também seria
+--      segura, mas trava a linha do pai em vez de um lock dedicado à
+--      sequência; a opção A foi escolhida por ser autossuficiente.) A UNIQUE
+--      (baseline_id, revision_number) e o CHECK (revision_number >= 1)
+--      continuam valendo como defesa em profundidade.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION enforce_baseline_revision_monotonic_number() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  expected_number bigint;
+BEGIN
+  PERFORM pg_advisory_xact_lock(hashtext('baseline_revision_seq:' || NEW.baseline_id::text));
+  SELECT COALESCE(max(revision_number), 0) + 1 INTO expected_number FROM technology_baseline_revisions WHERE baseline_id = NEW.baseline_id;
+  IF NEW.revision_number IS NULL THEN
+    NEW.revision_number := expected_number;
+  ELSIF NEW.revision_number <> expected_number THEN
+    RAISE EXCEPTION 'BASELINE_REVISION_NUMBER_NOT_MONOTONIC: next baseline revision number for baseline % must be %, not %', NEW.baseline_id, expected_number, NEW.revision_number USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS baseline_revisions_monotonic_number_guard ON technology_baseline_revisions;
+CREATE TRIGGER baseline_revisions_monotonic_number_guard BEFORE INSERT ON technology_baseline_revisions FOR EACH ROW EXECUTE FUNCTION enforce_baseline_revision_monotonic_number();
