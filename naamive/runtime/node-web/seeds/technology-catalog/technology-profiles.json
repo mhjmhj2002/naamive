@@ -1,0 +1,1 @@
+{"schema_version":"technology-catalog/v1","catalog_revision":1,"records":[{"code":"TYPESCRIPT_MODULAR_MONOLITH","name":"TypeScript Modular Monolith","description":"Perfil da stack efetiva do repositório Node.js/TypeScript.","is_active":true},{"code":"MICROSERVICES","name":"Microsserviços","is_active":false}]}

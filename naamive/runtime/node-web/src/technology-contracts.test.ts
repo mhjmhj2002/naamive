@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 process.env.DATABASE_URL ??= 'postgres://unused:unused@127.0.0.1:1/unused';
 process.env.NAAMIVE_ARTIFACT_STORE_URI ??= `file://${process.cwd()}/.phase5-contract-tests`;
@@ -26,6 +28,7 @@ const {
   validateProfileItemsSeed,
   validateCompatibilityRulesSeed,
   validateCatalogRevisionSeedFile,
+  validateTechnologyCatalogSeedPackage,
   ContractValidationError,
   validateBaselineVersionGovernance,
   validateBaselineReferencesResolve,
@@ -452,5 +455,64 @@ test('rejects seed record with free-technology field', async () => {
       records: [{ category_code: 'LANGUAGE', code: 'TYPESCRIPT', name: 'TypeScript', is_active: true, display_order: 30, metadata: { version_governance: 'UNMANAGED' }, framework: 'NestJS' }]
     }),
     (error: any) => error instanceof ContractValidationError && error.code === 'CATALOG_ITEMS_SEED_INVALID'
+  );
+});
+
+test('versioned initial catalog seeds exactly match the Phase 5 publication', async () => {
+  const seedDirectory = join(process.cwd(), 'seeds', 'technology-catalog');
+  const readSeed = async (name: string) => JSON.parse(await readFile(join(seedDirectory, name), 'utf8'));
+  const seedPackage = {
+    categories: await readSeed('technology-categories.json'),
+    catalogItems: await readSeed('technology-catalog-items.json'),
+    profiles: await readSeed('technology-profiles.json'),
+    profileItems: await readSeed('technology-profile-items.json'),
+    compatibilityRules: await readSeed('technology-compatibility-rules.json'),
+    catalogRevision: await readSeed('technology-catalog-revision.json')
+  };
+  const seeds = await validateTechnologyCatalogSeedPackage(seedPackage);
+
+  assert.equal(seeds.categories.records.length, 20);
+  assert.deepEqual(seeds.categories.records.map(({ code, selection_mode, min_selections, max_selections, display_order }) => [code, selection_mode, min_selections, max_selections, display_order]), [
+    ['ARCHITECTURE_STYLE', 'SINGLE', 1, 1, 10], ['APPLICATION_STRUCTURE', 'SINGLE', 1, 1, 20], ['LANGUAGE', 'SINGLE', 1, 1, 30], ['RUNTIME', 'SINGLE', 1, 1, 40], ['APPLICATION_FRAMEWORK', 'SINGLE', 0, 1, 50], ['API_STYLE', 'SINGLE', 1, 1, 60], ['DATABASE', 'SINGLE', 0, 1, 70], ['DATA_ACCESS', 'SINGLE', 0, 1, 80], ['MODULE_COMMUNICATION', 'SINGLE', 1, 1, 90], ['PACKAGE_MANAGER', 'SINGLE', 1, 1, 100], ['BUILD_TOOL', 'SINGLE', 1, 1, 110], ['TEST_FRAMEWORK', 'SINGLE', 1, 1, 120], ['TEST_STRATEGY', 'MULTIPLE', 1, null, 130], ['API_DOCUMENTATION', 'SINGLE', 0, 1, 140], ['PACKAGING', 'MULTIPLE', 0, null, 150], ['CI_PLATFORM', 'SINGLE', 0, 1, 160], ['OBSERVABILITY', 'MULTIPLE', 1, null, 170], ['SECURITY_REQUIREMENT', 'MULTIPLE', 1, null, 180], ['MESSAGING', 'MULTIPLE', 0, null, 190], ['ORCHESTRATION', 'SINGLE', 0, 1, 200]
+  ]);
+  assert.deepEqual(seeds.categories.records.filter((record) => record.selection_mode === 'MULTIPLE').map((record) => record.code), ['TEST_STRATEGY', 'PACKAGING', 'OBSERVABILITY', 'SECURITY_REQUIREMENT', 'MESSAGING']);
+  assert.ok(seeds.categories.records.every((record) => record.is_active));
+
+  const activeItems = seeds.catalogItems.records.filter((record) => record.is_active);
+  const inactiveItems = seeds.catalogItems.records.filter((record) => !record.is_active);
+  assert.equal(activeItems.length, 18);
+  assert.equal(inactiveItems.length, 38);
+  assert.deepEqual(activeItems.map((record) => record.code), ['MODULAR_MONOLITH', 'LAYERED_MODULES', 'TYPESCRIPT', 'NODEJS_22', 'REST_JSON', 'POSTGRESQL', 'NODE_POSTGRES', 'IN_PROCESS_MODULE_CALL', 'NPM', 'TYPESCRIPT_COMPILER', 'NODE_TEST_RUNNER', 'UNIT_TESTS', 'INTEGRATION_TESTS', 'API_E2E_TESTS', 'STRUCTURED_LOGGING', 'INPUT_VALIDATION', 'CENTRALIZED_ERROR_HANDLING', 'ENVIRONMENT_SECRETS']);
+  assert.equal(activeItems.find((record) => record.code === 'NODEJS_22')?.metadata.version_governance, 'REQUIRED');
+  assert.deepEqual(inactiveItems.map((record) => record.code), ['MICROSERVICES', 'HEXAGONAL_ARCHITECTURE', 'CLEAN_ARCHITECTURE', 'JAVASCRIPT', 'JAVA', 'PYTHON', 'NODEJS_24', 'JVM_21', 'PYTHON_3_13', 'EXPRESS', 'FASTIFY', 'SPRING_BOOT', 'GRAPHQL', 'GRPC', 'MYSQL', 'MONGODB', 'SQLITE', 'TYPEORM', 'DRIZZLE', 'RAW_SQL', 'INTERNAL_HTTP', 'INTERNAL_EVENT_BUS', 'PNPM', 'YARN', 'SWC', 'ESBUILD', 'VITEST', 'JEST', 'CONTRACT_TESTS', 'PERFORMANCE_TESTS', 'ASYNCAPI', 'KAFKA', 'RABBITMQ', 'AWS_SQS', 'KUBERNETES', 'METRICS', 'DISTRIBUTED_TRACING', 'OPENTELEMETRY']);
+  assert.ok(seeds.catalogItems.records.filter((record) => record.code !== 'NODEJS_22').every((record) => record.metadata.version_governance === 'UNMANAGED'));
+  assert.ok(seeds.catalogItems.records.every((record) => record.code !== 'NONE' && record.code !== 'DEFER'));
+
+  assert.deepEqual(seeds.profiles.records.map((record) => [record.code, record.is_active]), [['TYPESCRIPT_MODULAR_MONOLITH', true], ['MICROSERVICES', false]]);
+  assert.equal(seeds.profileItems.records.length, 18);
+  assert.ok(seeds.profileItems.records.every((record) => record.profile_code === 'TYPESCRIPT_MODULAR_MONOLITH' && record.classification === 'REQUIRED'));
+  assert.deepEqual(seeds.profileItems.records.map((record) => record.display_order), Array.from({ length: 18 }, (_, index) => (index + 1) * 10));
+  assert.deepEqual(seeds.profileItems.records.find((record) => record.catalog_item_code === 'NODEJS_22')?.version_constraint, '>=22 <23');
+  assert.ok(seeds.profileItems.records.filter((record) => record.catalog_item_code !== 'NODEJS_22').every((record) => record.version_constraint === null));
+
+  assert.deepEqual(seeds.compatibilityRules.records.map((record) => [record.source_item_code, record.relationship_type, record.target_item_code, record.severity, record.is_active]), [
+    ['MODULAR_MONOLITH', 'REQUIRES', 'IN_PROCESS_MODULE_CALL', 'ERROR', true],
+    ['MICROSERVICES', 'CONFLICTS_WITH', 'IN_PROCESS_MODULE_CALL', 'ERROR', false]
+  ]);
+  assert.equal(seeds.catalogRevision.records[0].catalog_revision, 1);
+});
+
+test('rejects a divergent seed package envelope before publishing', async () => {
+  const valid = { schema_version: 'technology-catalog/v1', catalog_revision: 1, records: [] };
+  await assert.rejects(
+    () => validateTechnologyCatalogSeedPackage({
+      categories: valid,
+      catalogItems: valid,
+      profiles: valid,
+      profileItems: valid,
+      compatibilityRules: valid,
+      catalogRevision: { ...valid, catalog_revision: 2 }
+    }),
+    (error: any) => error instanceof ContractValidationError && error.code === 'SEED_ENVELOPE_MISMATCH'
   );
 });
