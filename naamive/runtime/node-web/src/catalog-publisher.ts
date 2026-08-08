@@ -4,6 +4,7 @@ import { dirname, join } from 'node:path';
 import { config } from './config.js';
 import { withTransaction } from './db.js';
 import { ContractValidationError, type TechnologyCatalogSeedPackage, type ValidatedTechnologyCatalogSeedPackage, validateTechnologyCatalogSeedPackage } from './technology-contracts.js';
+import { evaluateCompatibility, type CompatibilityRuleInput } from './compatibility-evaluator.js';
 
 export class CatalogPublicationError extends Error { constructor(readonly code: string, details: string) { super(details); } }
 export type CatalogPublication = { revisionId: string; revisionNumber: number; contentHash: string; packageHash: string; published: boolean };
@@ -55,14 +56,15 @@ const validateSemantics = (s: ValidatedTechnologyCatalogSeedPackage): void => {
     }
     for (const category of s.categories.records) { const count = counts.get(category.code) ?? 0; if (count < category.min_selections || (category.max_selections !== null && count > category.max_selections)) throw new CatalogPublicationError('PROFILE_CARDINALITY_INVALID', `Profile ${profile.code} violates cardinality for ${category.code}`); }
   }
-  duplicate(s.compatibilityRules.records.map((x) => `${x.source_item_code}/${x.relationship_type}/${x.target_item_code}/${x.constraint_expression ?? ''}`), 'compatibility rule');
+  const normalizedRules = s.compatibilityRules.records.map((rule) => rule.relationship_type === 'CONFLICTS_WITH' && rule.source_item_code > rule.target_item_code ? { ...rule, source_item_code: rule.target_item_code, target_item_code: rule.source_item_code } : rule);
+  duplicate(normalizedRules.map((x) => `${x.source_item_code}/${x.relationship_type}/${x.target_item_code}/${x.constraint_expression ?? ''}`), 'compatibility rule');
   for (const rule of s.compatibilityRules.records) { if (rule.source_item_code === rule.target_item_code) throw new CatalogPublicationError('COMPATIBILITY_SELF_REFERENCE', 'Compatibility rules require distinct items'); one(s.catalogItems.records, (x) => x.code === rule.source_item_code, 'RULE_SOURCE_UNRESOLVED', `Unknown source ${rule.source_item_code}`); one(s.catalogItems.records, (x) => x.code === rule.target_item_code, 'RULE_TARGET_UNRESOLVED', `Unknown target ${rule.target_item_code}`); }
   for (const profile of s.profiles.records.filter((x) => x.is_active)) {
     const selected = new Set(s.profileItems.records.filter((x) => x.profile_code === profile.code).map((x) => x.catalog_item_code));
-    for (const rule of s.compatibilityRules.records.filter((x) => x.is_active && x.severity === 'ERROR')) {
-      if (rule.relationship_type === 'REQUIRES' && selected.has(rule.source_item_code) && !selected.has(rule.target_item_code)) throw new CatalogPublicationError('PROFILE_COMPATIBILITY_ERROR', rule.message);
-      if (rule.relationship_type === 'CONFLICTS_WITH' && selected.has(rule.source_item_code) && selected.has(rule.target_item_code)) throw new CatalogPublicationError('PROFILE_COMPATIBILITY_ERROR', rule.message);
-    }
+    const codeToId = new Map(s.catalogItems.records.map((item, index) => [item.code, String(index)]));
+    const evaluation = evaluateCompatibility([...selected].map((code) => ({ catalog_item_id: codeToId.get(code)! })), s.compatibilityRules.records.map((rule, index) => ({ ...rule, id: String(index), source_item_id: codeToId.get(rule.source_item_code)!, target_item_id: codeToId.get(rule.target_item_code)! } satisfies CompatibilityRuleInput)));
+    const finding = evaluation.findings.find((item) => item.blocking);
+    if (finding) throw new CatalogPublicationError('PROFILE_COMPATIBILITY_ERROR', finding.message);
   }
 };
 
