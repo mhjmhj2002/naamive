@@ -9,6 +9,7 @@ import { log } from './log.js';
 import { prepareDevelopmentJob } from './phase3.js';
 import { persistDiscoveryAgentOutcome } from './discovery-agent-jobs.js';
 import { agentExecutionService } from './agent-execution-service.js';
+import { executeTechnologyInventory } from './inventory.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -101,6 +102,11 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
       if (job.kind === 'DEVELOP_WORK_ITEM') {
         step = 'prepare_isolated_worktree';
         await prepareDevelopmentJob(job);
+        step = 'persist_result';
+        await completeJob(job);
+      } else if (job.kind === 'START_TECHNOLOGY_INVENTORY') {
+        step = 'technology_inventory';
+        await withTransaction((client) => executeTechnologyInventory(client, job));
         step = 'persist_result';
         await completeJob(job);
       } else if (agentExecutionService.isEnabled() && agentExecutionService.handlesJob(job.kind)) {
