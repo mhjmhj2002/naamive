@@ -51,28 +51,57 @@ const compare = (a: number[], b: number[]) => {
   }
   return 0;
 };
-const satisfies = (version: number[], expression: string) => {
-  const terms = expression.trim().split(/\s+/);
-  return terms.every((term) => {
+type VersionBound = { value: number[]; inclusive: boolean };
+type VersionRange = { lower?: VersionBound; upper?: VersionBound };
+
+const tighterLower = (current: VersionBound | undefined, candidate: VersionBound): VersionBound => {
+  if (!current) return candidate;
+  const order = compare(current.value, candidate.value);
+  if (order < 0) return candidate;
+  if (order > 0) return current;
+  return { value: current.value, inclusive: current.inclusive && candidate.inclusive };
+};
+const tighterUpper = (current: VersionBound | undefined, candidate: VersionBound): VersionBound => {
+  if (!current) return candidate;
+  const order = compare(current.value, candidate.value);
+  if (order < 0) return current;
+  if (order > 0) return candidate;
+  return { value: current.value, inclusive: current.inclusive && candidate.inclusive };
+};
+
+const parseVersionRange = (expression: string): VersionRange | null => {
+  if (expression.trim() === '') return null;
+  const range: VersionRange = {};
+  for (const term of expression.trim().split(/\s+/)) {
     const match = term.match(/^(>=|<=|>|<|=)?(\d+(?:\.\d+){0,2})$/);
-    if (!match) return false;
-    const result = compare(version, versionParts(match[2])!);
-    switch (match[1] ?? '=') { case '>': return result > 0; case '>=': return result >= 0; case '<': return result < 0; case '<=': return result <= 0; default: return result === 0; }
-  });
+    if (!match) return null;
+    const value = versionParts(match[2]);
+    if (!value) return null;
+    switch (match[1] ?? '=') {
+      case '>': range.lower = tighterLower(range.lower, { value, inclusive: false }); break;
+      case '>=': range.lower = tighterLower(range.lower, { value, inclusive: true }); break;
+      case '<': range.upper = tighterUpper(range.upper, { value, inclusive: false }); break;
+      case '<=': range.upper = tighterUpper(range.upper, { value, inclusive: true }); break;
+      default:
+        range.lower = tighterLower(range.lower, { value, inclusive: true });
+        range.upper = tighterUpper(range.upper, { value, inclusive: true });
+    }
+  }
+  return range;
 };
 
 /** Returns whether two declarative version ranges have at least one common value. */
 export const versionConstraintsCompatible = (selected: string | null | undefined, required: string | null | undefined): boolean => {
-  if (!required || !selected) return !required;
-  const selectedTerms = selected.trim().split(/\s+/);
-  const requiredTerms = required.trim().split(/\s+/);
-  const exact = [...selectedTerms, ...requiredTerms].map((term) => term.match(/^=?(\d+(?:\.\d+){0,2})$/)?.[1]).filter((value): value is string => Boolean(value));
-  if (exact.length) return exact.every((value) => satisfies(versionParts(value)!, selected) && satisfies(versionParts(value)!, required));
-  // Determine intersection by testing all declared boundary versions and their
-  // immediate patch successor; this covers the supported comparator grammar.
-  const candidates = [...selectedTerms, ...requiredTerms].map((term) => term.match(/(?:>=|<=|>|<|=)?(\d+(?:\.\d+){0,2})$/)?.[1]).filter((value): value is string => Boolean(value));
-  if (!candidates.length) return false;
-  return candidates.some((value) => satisfies(versionParts(value)!, selected) && satisfies(versionParts(value)!, required));
+  if (required == null) return true;
+  if (selected == null) return false;
+  const selectedRange = parseVersionRange(selected);
+  const requiredRange = parseVersionRange(required);
+  if (!selectedRange || !requiredRange) return false;
+  const lower = selectedRange.lower && requiredRange.lower ? tighterLower(selectedRange.lower, requiredRange.lower) : selectedRange.lower ?? requiredRange.lower;
+  const upper = selectedRange.upper && requiredRange.upper ? tighterUpper(selectedRange.upper, requiredRange.upper) : selectedRange.upper ?? requiredRange.upper;
+  if (!lower || !upper) return true;
+  const order = compare(lower.value, upper.value);
+  return order < 0 || (order === 0 && lower.inclusive && upper.inclusive);
 };
 
 export const canonicalizeCompatibilityRule = <T extends CompatibilityRuleInput>(rule: T): T => {

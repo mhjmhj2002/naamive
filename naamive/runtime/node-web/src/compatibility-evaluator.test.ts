@@ -13,6 +13,25 @@ test('evaluates directional requires by scope and version constraint', () => {
   const versioned = evaluateCompatibility([{ catalog_item_id: 'a' }, { catalog_item_id: 'b', version_constraint: '>=2 <3' }], [rule('REQUIRES', 'a', 'b', 'ERROR', '>=2 <3')]);
   assert.equal(versioned.blocking, false);
   assert.equal(versionConstraintsCompatible('>=2 <3', '>=3 <4'), false);
+  const openRange = evaluateCompatibility([{ catalog_item_id: 'a' }, { catalog_item_id: 'b', version_constraint: '>2 <4' }], [rule('REQUIRES', 'a', 'b', 'ERROR', '>2 <4')]);
+  assert.deepEqual(openRange, { blocking: false, findings: [] });
+});
+
+test('calculates version-range intersections with inclusive and exclusive bounds', () => {
+  assert.equal(versionConstraintsCompatible('>2 <4', '>2 <4'), true);
+  assert.equal(versionConstraintsCompatible('>2 <5', '>3 <6'), true);
+  assert.equal(versionConstraintsCompatible('>2 <3', '>=3 <4'), false);
+  assert.equal(versionConstraintsCompatible('>=2 <=3', '>=3 <4'), true);
+  assert.equal(versionConstraintsCompatible('>=2 <3', '>=3 <4'), false);
+  assert.equal(versionConstraintsCompatible('3', '>2 <4'), true);
+  assert.equal(versionConstraintsCompatible('4', '>2 <4'), false);
+  assert.equal(versionConstraintsCompatible('=3', '>=3 <4'), true);
+  assert.equal(versionConstraintsCompatible('>=1 <2', '>=3 <4'), false);
+  assert.equal(versionConstraintsCompatible('>=2 <10', '>=4 <5'), true);
+  assert.equal(versionConstraintsCompatible('>2.1.0 <2.1.2', '=2.1.1'), true);
+  assert.equal(versionConstraintsCompatible('^2', '>=2 <3'), false);
+  assert.equal(versionConstraintsCompatible('', '>=2 <3'), false);
+  assert.equal(versionConstraintsCompatible('>=2 <3', ''), false);
 });
 
 test('canonicalizes and symmetrically evaluates conflicts', () => {
