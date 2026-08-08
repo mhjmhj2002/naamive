@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://technology-baseline/v1/technology-baseline",
+  "title": "TechnologyBaseline",
+  "description": "Contratos neutros da Technology Baseline: baseline, revisão de baseline, item de baseline e decisão por deferimento. A revisão referencia exclusivamente itens e revisões do Catálogo Tecnológico por IDs imutáveis; nenhum nome, fornecedor, linguagem, framework, banco ou versão concreta é representado em tipo, schema, API ou validação. Campos tecnológicos em texto livre (technology_name, ecosystem, technology_version, framework) são rejeitados.",
+  "type": "object",
+  "$defs": {
+    "baseline": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "project_id"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "project_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" }
+      }
+    },
+    "baselineItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog_item_id", "classification", "reason"],
+      "properties": {
+        "catalog_item_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "classification": { "$ref": "naamive://technology-catalog/v1/common#/$defs/classification" },
+        "version_constraint": { "$ref": "naamive://technology-catalog/v1/common#/$defs/versionConstraint" },
+        "reason": { "$ref": "naamive://technology-catalog/v1/common#/$defs/reason" },
+        "technology_profile_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "technology_compatibility_rule_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" }
+      }
+    },
+    "deferredDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["decision_type", "category_id", "question", "justification"],
+      "properties": {
+        "decision_type": { "$ref": "naamive://technology-catalog/v1/common#/$defs/deferDecisionType" },
+        "category_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "question": { "$ref": "naamive://technology-catalog/v1/common#/$defs/question" },
+        "justification": { "$ref": "naamive://technology-catalog/v1/common#/$defs/reason" }
+      }
+    },
+    "baselineRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "baseline_id", "project_id", "revision_number", "technology_catalog_revision_id", "status", "items", "deferred_decisions"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "baseline_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "project_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "revision_number": { "type": "integer", "minimum": 1 },
+        "technology_catalog_revision_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "selection_context_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "inventory_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "status": { "$ref": "naamive://technology-catalog/v1/common#/$defs/baselineRevisionStatus" },
+        "supersedes_revision_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/baselineItem" } },
+        "deferred_decisions": { "type": "array", "items": { "$ref": "#/$defs/deferredDecision" } }
+      }
+    },
+    "baselineRevisionPayload": {
+      "$comment": "Payload aceito para criar, complementar ou submeter uma revisão de baseline. Referencia apenas IDs de catálogo, classificação, restrição de versão e justificativa; rejeita propriedades extras e campos tecnológicos em texto livre.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["technology_catalog_revision_id", "items"],
+      "properties": {
+        "technology_catalog_revision_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "items": { "type": "array", "items": { "$ref": "#/$defs/baselineItem" } },
+        "deferred_decisions": { "type": "array", "items": { "$ref": "#/$defs/deferredDecision" } }
+      }
+    }
+  }
+}
