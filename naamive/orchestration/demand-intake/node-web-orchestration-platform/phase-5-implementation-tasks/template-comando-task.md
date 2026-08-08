@@ -1,7 +1,6 @@
 Implemente integralmente a implementation task:
 
 TASK: F5-XX
-TÍTULO: <TÍTULO DA TASK>
 
 A task está localizada em:
 
