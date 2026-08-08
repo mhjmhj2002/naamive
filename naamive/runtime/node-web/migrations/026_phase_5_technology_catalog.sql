@@ -260,3 +260,43 @@ DROP TRIGGER IF EXISTS revision_profile_items_frozen_guard ON technology_catalog
 CREATE TRIGGER revision_profile_items_frozen_guard BEFORE UPDATE OR DELETE ON technology_catalog_revision_profile_items FOR EACH ROW EXECUTE FUNCTION block_frozen_revision_association_mutations();
 DROP TRIGGER IF EXISTS revision_compatibility_rules_frozen_guard ON technology_catalog_revision_compatibility_rules;
 CREATE TRIGGER revision_compatibility_rules_frozen_guard BEFORE UPDATE OR DELETE ON technology_catalog_revision_compatibility_rules FOR EACH ROW EXECUTE FUNCTION block_frozen_revision_association_mutations();
+
+-- ---------------------------------------------------------------------------
+-- 7c) Guarda de somente-leitura do inventário tecnológico.
+--     technology_inventory é persistência read-only: INSERT é permitido
+--     (a task F5-08 apenas o popula), mas UPDATE e DELETE são vedados —
+--     o inventário é um snapshot sanitizado e imutável. Uma única função
+--     anexada a BEFORE UPDATE OR DELETE atende a ambos os eventos.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION block_technology_inventory_mutations() RETURNS trigger LANGUAGE plpgsql AS $$
+BEGIN
+  IF TG_OP IN ('UPDATE','DELETE') THEN
+    RAISE EXCEPTION 'TECHNOLOGY_INVENTORY_READ_ONLY: technology_inventory is read-only; updates and deletes are not allowed' USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS technology_inventory_read_only_guard ON technology_inventory;
+CREATE TRIGGER technology_inventory_read_only_guard BEFORE UPDATE OR DELETE ON technology_inventory FOR EACH ROW EXECUTE FUNCTION block_technology_inventory_mutations();
+
+-- ---------------------------------------------------------------------------
+-- 7d) Guarda de revisão de catálogo PUBLISHED no inventário.
+--     O inventário só aceita INSERT referenciando uma revisão de catálogo
+--     PUBLISHED; DRAFT e SUPERSEDED são rejeitados. A guarda apenas LÊ o
+--     status da revisão no momento do insert — não altera a máquina de
+--     estados DRAFT -> PUBLISHED -> SUPERSEDED (transições são da F5-05).
+--     Revisão inexistente deixa rev_status nula e a FK cuida do erro.
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION require_published_catalog_revision_for_inventory() RETURNS trigger LANGUAGE plpgsql AS $$
+DECLARE
+  rev_status text;
+BEGIN
+  SELECT status INTO rev_status FROM technology_catalog_revisions WHERE id = NEW.technology_catalog_revision_id;
+  IF rev_status = 'DRAFT' THEN
+    RAISE EXCEPTION 'TECHNOLOGY_INVENTORY_REQUIRES_PUBLISHED_CATALOG_REVISION: catalog revision % is DRAFT; only PUBLISHED revisions may be referenced by technology_inventory', NEW.technology_catalog_revision_id USING ERRCODE = 'check_violation';
+  ELSIF rev_status = 'SUPERSEDED' THEN
+    RAISE EXCEPTION 'TECHNOLOGY_INVENTORY_REQUIRES_PUBLISHED_CATALOG_REVISION: catalog revision % is SUPERSEDED; only PUBLISHED revisions may be referenced by technology_inventory', NEW.technology_catalog_revision_id USING ERRCODE = 'check_violation';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS technology_inventory_published_revision_guard ON technology_inventory;
+CREATE TRIGGER technology_inventory_published_revision_guard BEFORE INSERT ON technology_inventory FOR EACH ROW EXECUTE FUNCTION require_published_catalog_revision_for_inventory();
