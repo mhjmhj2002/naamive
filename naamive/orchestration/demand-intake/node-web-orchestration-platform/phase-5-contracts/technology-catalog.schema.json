@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://technology-catalog/v1/technology-catalog",
+  "title": "TechnologyCatalog",
+  "description": "Contratos neutros do Catálogo Tecnológico: categorias, itens, revisões, perfis, itens de perfil, regras de compatibilidade, contexto de seleção e inventário. A engine conhece somente enums genéricos de ciclo de vida, classificação, selection_mode, relationship_type, severity e resultado de resolução. Nenhum nome, fornecedor, linguagem, framework, banco ou versão concreta é representado em tipo, schema, API ou validação.",
+  "type": "object",
+  "$defs": {
+    "catalogItemRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog_item_id", "technology_catalog_revision_id"],
+      "properties": {
+        "catalog_item_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "technology_catalog_revision_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" }
+      }
+    },
+    "category": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "code", "name", "selection_mode", "min_selections", "max_selections", "is_active", "display_order"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "name": { "$ref": "naamive://technology-catalog/v1/common#/$defs/name" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "selection_mode": { "$ref": "naamive://technology-catalog/v1/common#/$defs/selectionMode" },
+        "min_selections": { "type": "integer", "minimum": 0 },
+        "max_selections": { "type": ["integer", "null"], "minimum": 0 },
+        "is_active": { "type": "boolean" },
+        "display_order": { "type": "integer" }
+      }
+    },
+    "catalogItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "category_id", "code", "name", "is_active", "display_order", "metadata"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "category_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "name": { "$ref": "naamive://technology-catalog/v1/common#/$defs/name" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "is_active": { "type": "boolean" },
+        "display_order": { "type": "integer" },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "catalogRevision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "revision_number", "status", "content_hash", "published_at", "published_by"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "revision_number": { "type": "integer", "minimum": 1 },
+        "status": { "$ref": "naamive://technology-catalog/v1/common#/$defs/catalogRevisionStatus" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "content_hash": { "$ref": "naamive://technology-catalog/v1/common#/$defs/contentHash" },
+        "published_at": { "type": ["string", "null"], "format": "date-time" },
+        "published_by": { "type": ["string", "null"], "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "code", "name", "is_active"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "name": { "$ref": "naamive://technology-catalog/v1/common#/$defs/name" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "is_active": { "type": "boolean" }
+      }
+    },
+    "profileItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "catalog_item_id", "classification", "version_constraint", "display_order"],
+      "properties": {
+        "profile_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "catalog_item_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "classification": { "$ref": "naamive://technology-catalog/v1/common#/$defs/classification" },
+        "version_constraint": { "$ref": "naamive://technology-catalog/v1/common#/$defs/versionConstraint" },
+        "justification": { "$ref": "naamive://technology-catalog/v1/common#/$defs/reason" },
+        "display_order": { "type": "integer" }
+      }
+    },
+    "compatibilityRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "source_item_id", "relationship_type", "target_item_id", "severity", "message", "is_active"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "source_item_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "relationship_type": { "$ref": "naamive://technology-catalog/v1/common#/$defs/relationshipType" },
+        "target_item_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "constraint_expression": { "type": ["string", "null"], "minLength": 1, "maxLength": 255 },
+        "severity": { "$ref": "naamive://technology-catalog/v1/common#/$defs/severity" },
+        "message": { "$ref": "naamive://technology-catalog/v1/common#/$defs/message" },
+        "is_active": { "type": "boolean" }
+      }
+    },
+    "selectionContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "project_id", "technology_catalog_revision_id", "technology_profile_id", "status"],
+      "properties": {
+        "id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "project_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "technology_catalog_revision_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "technology_profile_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "status": { "enum": ["PREPARING", "READY", "SUPERSEDED"] },
+        "hash": { "$ref": "naamive://technology-catalog/v1/common#/$defs/contentHash" }
+      }
+    },
+    "inventoryFact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_path", "detector_code", "confidence", "resolution_result"],
+      "properties": {
+        "source_path": { "type": "string", "minLength": 1, "maxLength": 1024 },
+        "detector_code": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+        "resolution_result": { "$ref": "naamive://technology-catalog/v1/common#/$defs/resolutionResult" },
+        "catalog_item_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["project_id", "repository_sha", "technology_catalog_revision_id", "facts", "content_hash"],
+      "properties": {
+        "project_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "repository_sha": { "type": "string", "pattern": "^[a-f0-9]{40,64}$" },
+        "technology_catalog_revision_id": { "$ref": "naamive://technology-catalog/v1/common#/$defs/uuid" },
+        "facts": { "type": "array", "items": { "$ref": "#/$defs/inventoryFact" } },
+        "content_hash": { "$ref": "naamive://technology-catalog/v1/common#/$defs/contentHash" }
+      }
+    },
+    "categorySeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "name", "selection_mode", "min_selections", "max_selections", "is_active", "display_order"],
+      "properties": {
+        "code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "name": { "$ref": "naamive://technology-catalog/v1/common#/$defs/name" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "selection_mode": { "$ref": "naamive://technology-catalog/v1/common#/$defs/selectionMode" },
+        "min_selections": { "type": "integer", "minimum": 0 },
+        "max_selections": { "type": ["integer", "null"], "minimum": 0 },
+        "is_active": { "type": "boolean" },
+        "display_order": { "type": "integer" }
+      }
+    },
+    "catalogItemSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["category_code", "code", "name", "is_active", "display_order", "metadata"],
+      "properties": {
+        "category_code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "name": { "$ref": "naamive://technology-catalog/v1/common#/$defs/name" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "is_active": { "type": "boolean" },
+        "display_order": { "type": "integer" },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "profileSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "name", "is_active"],
+      "properties": {
+        "code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "name": { "$ref": "naamive://technology-catalog/v1/common#/$defs/name" },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "is_active": { "type": "boolean" }
+      }
+    },
+    "profileItemSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_code", "catalog_item_code", "classification", "version_constraint", "display_order"],
+      "properties": {
+        "profile_code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "catalog_item_code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "classification": { "$ref": "naamive://technology-catalog/v1/common#/$defs/classification" },
+        "version_constraint": { "$ref": "naamive://technology-catalog/v1/common#/$defs/versionConstraint" },
+        "justification": { "$ref": "naamive://technology-catalog/v1/common#/$defs/reason" },
+        "display_order": { "type": "integer" }
+      }
+    },
+    "compatibilityRuleSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_item_code", "relationship_type", "target_item_code", "severity", "message", "is_active"],
+      "properties": {
+        "source_item_code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "relationship_type": { "$ref": "naamive://technology-catalog/v1/common#/$defs/relationshipType" },
+        "target_item_code": { "$ref": "naamive://technology-catalog/v1/common#/$defs/code" },
+        "constraint_expression": { "type": ["string", "null"], "minLength": 1, "maxLength": 255 },
+        "severity": { "$ref": "naamive://technology-catalog/v1/common#/$defs/severity" },
+        "message": { "$ref": "naamive://technology-catalog/v1/common#/$defs/message" },
+        "is_active": { "type": "boolean" }
+      }
+    },
+    "catalogRevisionSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["catalog_revision", "description", "content_hash"],
+      "properties": {
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "description": { "$ref": "naamive://technology-catalog/v1/common#/$defs/description" },
+        "content_hash": { "$ref": "naamive://technology-catalog/v1/common#/$defs/contentHash" },
+        "published_by": { "type": "string", "minLength": 1, "maxLength": 128 }
+      }
+    },
+    "categoriesSeed": {
+      "$comment": "Envelope comum de seed: schema_version, catalog_revision e records.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/categorySeed" } }
+      }
+    },
+    "catalogItemsSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/catalogItemSeed" } }
+      }
+    },
+    "profilesSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/profileSeed" } }
+      }
+    },
+    "profileItemsSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/profileItemSeed" } }
+      }
+    },
+    "compatibilityRulesSeed": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/compatibilityRuleSeed" } }
+      }
+    },
+    "catalogRevisionSeedFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 },
+        "records": { "type": "array", "items": { "$ref": "#/$defs/catalogRevisionSeed" } }
+      }
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://technology-catalog/v1/common",
+  "title": "TechnologyCatalogBaselineCommon",
+  "description": "Definições compartilhadas e neutras dos contratos do Catálogo Tecnológico e da Technology Baseline. Nenhum nome, fornecedor, linguagem, framework, banco ou versão concreta aparece neste schema.",
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "code": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "description": { "type": ["string", "null"], "maxLength": 4000 },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 4000 },
+    "question": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "message": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "versionConstraint": { "type": ["string", "null"], "minLength": 1, "maxLength": 255 },
+    "classification": { "enum": ["REQUIRED", "ALLOWED", "PREFERRED", "PROHIBITED"] },
+    "selectionMode": { "enum": ["SINGLE", "MULTIPLE"] },
+    "relationshipType": { "enum": ["REQUIRES", "CONFLICTS_WITH", "RECOMMENDS"] },
+    "severity": { "enum": ["ERROR", "WARNING", "INFO"] },
+    "catalogRevisionStatus": { "enum": ["DRAFT", "PUBLISHED", "SUPERSEDED"] },
+    "baselineRevisionStatus": { "enum": ["DRAFT", "PENDING_APPROVAL", "APPROVED", "REJECTED", "SUPERSEDED"] },
+    "resolutionResult": { "enum": ["RESOLVED_ACTIVE", "RESOLVED_INACTIVE", "UNKNOWN_CATALOG_ITEM", "AMBIGUOUS_CATALOG_ITEM"] },
+    "versionGovernance": { "enum": ["REQUIRED", "UNMANAGED"] },
+    "deferDecisionType": { "const": "DEFER_TO_MODULE_ARCHITECTURE" },
+    "seedEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_version", "catalog_revision", "records"],
+      "properties": {
+        "schema_version": { "const": "technology-catalog/v1" },
+        "catalog_revision": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}
