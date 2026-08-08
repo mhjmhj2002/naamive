@@ -258,6 +258,24 @@ export type ProfileItemsSeed = SeedEnvelope<ProfileItemSeed>;
 export type CompatibilityRulesSeed = SeedEnvelope<CompatibilityRuleSeed>;
 export type CatalogRevisionSeedFile = SeedEnvelope<CatalogRevisionSeed>;
 
+export interface TechnologyCatalogSeedPackage {
+  categories: unknown;
+  catalogItems: unknown;
+  profiles: unknown;
+  profileItems: unknown;
+  compatibilityRules: unknown;
+  catalogRevision: unknown;
+}
+
+export interface ValidatedTechnologyCatalogSeedPackage {
+  categories: CategoriesSeed;
+  catalogItems: CatalogItemsSeed;
+  profiles: ProfilesSeed;
+  profileItems: ProfileItemsSeed;
+  compatibilityRules: CompatibilityRulesSeed;
+  catalogRevision: CatalogRevisionSeedFile;
+}
+
 // ---------------------------------------------------------------------------
 // Carregamento dos schemas e validators
 // ---------------------------------------------------------------------------
@@ -566,4 +584,30 @@ export const validateCatalogRevisionSeedFile = async (value: unknown): Promise<C
   if (!validateCatalogRevisionSeedFile(value)) throw new ContractValidationError('CATALOG_REVISION_SEED_INVALID', validationMessage(validateCatalogRevisionSeedFile.errors));
   assertNoFreeTechnologyFields(value);
   return value as CatalogRevisionSeedFile;
+};
+
+/**
+ * Valida estruturalmente todos os seis arquivos do pacote antes de o
+ * publicador iniciar qualquer escrita e garante que compartilham o mesmo
+ * envelope versionado.
+ */
+export const validateTechnologyCatalogSeedPackage = async (
+  seedPackage: TechnologyCatalogSeedPackage
+): Promise<ValidatedTechnologyCatalogSeedPackage> => {
+  const [categories, catalogItems, profiles, profileItems, compatibilityRules, catalogRevision] = await Promise.all([
+    validateCategoriesSeed(seedPackage.categories),
+    validateCatalogItemsSeed(seedPackage.catalogItems),
+    validateProfilesSeed(seedPackage.profiles),
+    validateProfileItemsSeed(seedPackage.profileItems),
+    validateCompatibilityRulesSeed(seedPackage.compatibilityRules),
+    validateCatalogRevisionSeedFile(seedPackage.catalogRevision)
+  ]);
+  const envelopes = [categories, catalogItems, profiles, profileItems, compatibilityRules, catalogRevision];
+  if (envelopes.some((seed) => seed.schema_version !== categories.schema_version || seed.catalog_revision !== categories.catalog_revision)) {
+    throw new ContractValidationError('SEED_ENVELOPE_MISMATCH', 'All technology catalog seed files must declare the same schema_version and catalog_revision');
+  }
+  if (catalogRevision.records.some((record) => record.catalog_revision !== catalogRevision.catalog_revision)) {
+    throw new ContractValidationError('CATALOG_REVISION_SEED_INVALID', 'catalog revision records must match the seed envelope catalog_revision');
+  }
+  return { categories, catalogItems, profiles, profileItems, compatibilityRules, catalogRevision };
 };
