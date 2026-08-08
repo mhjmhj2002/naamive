@@ -1,0 +1,26 @@
+{
+  "schema_version": "technology-catalog/v1",
+  "catalog_revision": 1,
+  "records": [
+    {"code":"ARCHITECTURE_STYLE","name":"Estilo arquitetural","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":10},
+    {"code":"APPLICATION_STRUCTURE","name":"Estrutura da aplicação","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":20},
+    {"code":"LANGUAGE","name":"Linguagem","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":30},
+    {"code":"RUNTIME","name":"Runtime","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":40},
+    {"code":"APPLICATION_FRAMEWORK","name":"Framework de aplicação","selection_mode":"SINGLE","min_selections":0,"max_selections":1,"is_active":true,"display_order":50},
+    {"code":"API_STYLE","name":"Estilo de API","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":60},
+    {"code":"DATABASE","name":"Banco de dados","selection_mode":"SINGLE","min_selections":0,"max_selections":1,"is_active":true,"display_order":70},
+    {"code":"DATA_ACCESS","name":"Acesso a dados","selection_mode":"SINGLE","min_selections":0,"max_selections":1,"is_active":true,"display_order":80},
+    {"code":"MODULE_COMMUNICATION","name":"Comunicação entre módulos","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":90},
+    {"code":"PACKAGE_MANAGER","name":"Gerenciador de pacotes","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":100},
+    {"code":"BUILD_TOOL","name":"Ferramenta de build","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":110},
+    {"code":"TEST_FRAMEWORK","name":"Framework de testes","selection_mode":"SINGLE","min_selections":1,"max_selections":1,"is_active":true,"display_order":120},
+    {"code":"TEST_STRATEGY","name":"Estratégias de teste","selection_mode":"MULTIPLE","min_selections":1,"max_selections":null,"is_active":true,"display_order":130},
+    {"code":"API_DOCUMENTATION","name":"Documentação de API","selection_mode":"SINGLE","min_selections":0,"max_selections":1,"is_active":true,"display_order":140},
+    {"code":"PACKAGING","name":"Empacotamento","selection_mode":"MULTIPLE","min_selections":0,"max_selections":null,"is_active":true,"display_order":150},
+    {"code":"CI_PLATFORM","name":"Integração contínua","selection_mode":"SINGLE","min_selections":0,"max_selections":1,"is_active":true,"display_order":160},
+    {"code":"OBSERVABILITY","name":"Observabilidade","selection_mode":"MULTIPLE","min_selections":1,"max_selections":null,"is_active":true,"display_order":170},
+    {"code":"SECURITY_REQUIREMENT","name":"Requisitos de segurança","selection_mode":"MULTIPLE","min_selections":1,"max_selections":null,"is_active":true,"display_order":180},
+    {"code":"MESSAGING","name":"Mensageria","selection_mode":"MULTIPLE","min_selections":0,"max_selections":null,"is_active":true,"display_order":190},
+    {"code":"ORCHESTRATION","name":"Orquestração","selection_mode":"SINGLE","min_selections":0,"max_selections":1,"is_active":true,"display_order":200}
+  ]
+}
