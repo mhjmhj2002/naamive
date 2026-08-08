@@ -30,6 +30,31 @@ test('enforces min and finite max without treating null max as zero', () => {
   assert.ok(max.findings.some((finding) => finding.code === 'BASELINE_CATEGORY_MAX_SELECTIONS_EXCEEDED' && finding.category_id === 'optional'));
 });
 
+test('excludes PROHIBITED items from category cardinality while still resolving them', () => {
+  const evaluate = (selection_mode: 'SINGLE' | 'MULTIPLE', min_selections: number, max_selections: number | null, classifications: Array<'REQUIRED' | 'ALLOWED' | 'PREFERRED' | 'PROHIBITED'>) => {
+    const categoryRule = category('governed', selection_mode, min_selections, max_selections);
+    const governedItems = classifications.map((classification, index) => ({ id: `governed-${index}`, category_id: 'governed' }));
+    return evaluateBaselineCardinality({ items: classifications.map((classification, index) => item(`governed-${index}`, classification)), deferred_decisions: [] }, [categoryRule], governedItems);
+  };
+
+  const prohibitedOnly = evaluate('MULTIPLE', 1, null, ['PROHIBITED']);
+  assert.ok(prohibitedOnly.findings.some((finding) => finding.code === 'BASELINE_CATEGORY_MIN_SELECTIONS_UNSATISFIED'));
+
+  const single = evaluate('SINGLE', 1, 1, ['REQUIRED', 'PROHIBITED']);
+  assert.ok(!single.findings.some((finding) => finding.code === 'BASELINE_CATEGORY_SINGLE_SELECTION_EXCEEDED'));
+
+  const maxIgnored = evaluate('MULTIPLE', 0, 2, ['ALLOWED', 'PROHIBITED', 'PROHIBITED']);
+  assert.ok(!maxIgnored.findings.some((finding) => finding.code === 'BASELINE_CATEGORY_MAX_SELECTIONS_EXCEEDED'));
+
+  const maxCounted = evaluate('MULTIPLE', 0, 1, ['ALLOWED', 'ALLOWED', 'PROHIBITED']);
+  assert.ok(maxCounted.findings.some((finding) => finding.code === 'BASELINE_CATEGORY_MAX_SELECTIONS_EXCEEDED'));
+
+  assert.equal(evaluate('MULTIPLE', 1, null, ['PROHIBITED', 'PREFERRED']).valid, true);
+  assert.equal(evaluate('MULTIPLE', 1, null, ['PROHIBITED', 'REQUIRED']).valid, true);
+  assert.equal(evaluate('MULTIPLE', 1, null, ['PROHIBITED', 'ALLOWED']).valid, true);
+  assert.equal(evaluate('MULTIPLE', 0, null, ['PROHIBITED']).valid, true);
+});
+
 test('deferment is explicit, auditable, eligible, exclusive and does not consume a selection', () => {
   const valid = evaluateBaselineCardinality({ items: [item('one')], deferred_decisions: [deferred('many')] }, categories, catalogItems, { deferEligibleCategoryIds: new Set(['many']) });
   assert.equal(valid.valid, true);

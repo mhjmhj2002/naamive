@@ -89,7 +89,9 @@ export const evaluateBaselineCardinality = (
       continue;
     }
     itemCategoryIds.add(categoryId);
-    itemCountByCategory.set(categoryId, (itemCountByCategory.get(categoryId) ?? 0) + 1);
+    if (item.classification !== 'PROHIBITED') {
+      itemCountByCategory.set(categoryId, (itemCountByCategory.get(categoryId) ?? 0) + 1);
+    }
   }
 
   const deferredByCategory = new Set<string>();
