@@ -7,6 +7,9 @@ process.env.NAAMIVE_ARTIFACT_STORE_URI ??= `file://${process.cwd()}/.catalog-pub
 process.env.NAAMIVE_REPOSITORY_ROOTS ??= process.cwd();
 process.env.NAAMIVE_OPERATOR_ID ??= 'catalog-publisher-tester';
 
+if (process.env.NAAMIVE_REQUIRE_CATALOG_PUBLISHER_DATABASE === 'true' && (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('unused'))) {
+  throw new Error('DATABASE_URL is required for catalog publisher integration tests');
+}
 if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('unused')) {
   test('catalog publisher integration requires DATABASE_URL', { skip: 'set DATABASE_URL' }, () => {});
 } else {
@@ -84,12 +87,26 @@ if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('unused')) {
   });
 
   test('rolls back every catalog write when a snapshot insert fails', async () => {
-    const seed = await packageFor();
+    let rollbackCategory = ''; let rollbackItem = '';
+    const seed = await packageFor((value) => {
+      rollbackCategory = `ROLLBACK_CATEGORY_${value.catalog_revision}`;
+      rollbackItem = `ROLLBACK_ITEM_${value.catalog_revision}`;
+      value.categories.records.push({ code: rollbackCategory, name: 'Rollback category', selection_mode: 'MULTIPLE', min_selections: 0, max_selections: null, is_active: true, display_order: 999 });
+      value.catalogItems.records.push({ category_code: rollbackCategory, code: rollbackItem, name: 'Rollback item', is_active: true, display_order: 1, metadata: { version_governance: 'UNMANAGED' } });
+    });
     await pool.query(`CREATE OR REPLACE FUNCTION test_catalog_snapshot_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'test snapshot failure'; END $$`);
     await pool.query(`CREATE TRIGGER test_catalog_snapshot_failure BEFORE INSERT ON technology_catalog_revision_categories FOR EACH ROW EXECUTE FUNCTION test_catalog_snapshot_failure()`);
     try { await assert.rejects(() => publishTechnologyCatalog(seed, 'actor', randomUUID())); }
     finally { await pool.query(`DROP TRIGGER IF EXISTS test_catalog_snapshot_failure ON technology_catalog_revision_categories`); await pool.query(`DROP FUNCTION IF EXISTS test_catalog_snapshot_failure()`); }
-    const rows = await pool.query(`SELECT count(*)::int AS count FROM technology_catalog_revisions WHERE revision_number=$1`, [seed.catalog_revision]);
-    assert.equal(rows.rows[0].count, 0);
+    const revisionRows = await pool.query(`SELECT count(*)::int AS count FROM technology_catalog_revisions WHERE revision_number=$1`, [seed.catalog_revision]);
+    assert.equal(revisionRows.rows[0].count, 0);
+    for (const table of ['technology_catalog_revision_categories', 'technology_catalog_revision_items', 'technology_catalog_revision_profiles', 'technology_catalog_revision_profile_items', 'technology_catalog_revision_compatibility_rules']) {
+      const rows = await pool.query(`SELECT count(*)::int AS count FROM ${table} snapshot JOIN technology_catalog_revisions revision ON revision.id=snapshot.revision_id WHERE revision.revision_number=$1`, [seed.catalog_revision]);
+      assert.equal(rows.rows[0].count, 0, `${table} must not retain a snapshot`);
+    }
+    const evidence = await pool.query(`SELECT count(*)::int AS count FROM technology_catalog_publication_evidence WHERE evidence->>'revision_number'=$1`, [String(seed.catalog_revision)]);
+    assert.equal(evidence.rows[0].count, 0);
+    assert.equal((await pool.query(`SELECT count(*)::int AS count FROM technology_categories WHERE code=$1`, [rollbackCategory])).rows[0].count, 0);
+    assert.equal((await pool.query(`SELECT count(*)::int AS count FROM technology_catalog_items WHERE code=$1`, [rollbackItem])).rows[0].count, 0);
   });
 }
