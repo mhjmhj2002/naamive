@@ -11,6 +11,7 @@
     "migrate": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/migrate.ts",
     "reconcile": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/reconcile.ts",
     "test": "npm run build && node --env-file-if-exists=.env --test --test-concurrency=1 dist/**/*.test.js",
+    "test:catalog-publisher:integration": "node scripts/run-catalog-publisher-integration.mjs",
     "git:smoke": "node --env-file-if-exists=.env dist/git-delivery-smoke.js",
     "e2e": "npm run build && node --env-file-if-exists=.env scripts/run-e2e.mjs"
   },
