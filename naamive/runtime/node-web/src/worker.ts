@@ -10,6 +10,7 @@ import { prepareDevelopmentJob } from './phase3.js';
 import { persistDiscoveryAgentOutcome } from './discovery-agent-jobs.js';
 import { agentExecutionService } from './agent-execution-service.js';
 import { executeTechnologyInventory } from './inventory.js';
+import { prepareTechnologySelectionContext } from './selection-context.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -73,7 +74,7 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
   await client.query(`UPDATE jobs SET status=$2,last_error=$3,available_at=clock_timestamp()+($4||' seconds')::interval,completed_at=CASE WHEN $2='FAILED' THEN clock_timestamp() END WHERE id=$1`, [job.id, permanent ? 'FAILED' : 'RETRYABLE', code, String(delay)]);
   if (permanent) {
     await client.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id, code]);
-    if (job.kind !== 'VALIDATE_INTAKE' && job.kind !== 'RECONCILE_AGENT_EXECUTION' && job.kind !== 'START_TECHNOLOGY_INVENTORY') {
+    if (job.kind !== 'VALIDATE_INTAKE' && job.kind !== 'RECONCILE_AGENT_EXECUTION' && job.kind !== 'START_TECHNOLOGY_INVENTORY' && job.kind !== 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
       const target = await transitionTarget(client, job.project_id, 'AGENT_EXECUTION_FAILED');
       await client.query(`UPDATE projects SET state=$2,failure_stage=$3,failure_code=$4,updated_at=clock_timestamp() WHERE id=$1`, [job.project_id, target, job.kind, code]);
     }
@@ -107,6 +108,11 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
       } else if (job.kind === 'START_TECHNOLOGY_INVENTORY') {
         step = 'technology_inventory';
         await withTransaction((client) => executeTechnologyInventory(client, job));
+        step = 'persist_result';
+        await completeJob(job);
+      } else if (job.kind === 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
+        step = 'technology_selection_context';
+        await withTransaction((client) => prepareTechnologySelectionContext(client, job));
         step = 'persist_result';
         await completeJob(job);
       } else if (agentExecutionService.isEnabled() && agentExecutionService.handlesJob(job.kind)) {
