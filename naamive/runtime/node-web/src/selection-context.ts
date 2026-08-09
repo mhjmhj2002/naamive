@@ -10,6 +10,11 @@ export const prepareTechnologySelectionContext = async (client: pg.PoolClient, j
   if (!correlationId) throw new Error('TECHNOLOGY_SELECTION_CONTEXT_CORRELATION_REQUIRED');
   const project = (await client.query(`SELECT * FROM projects WHERE id=$1 FOR UPDATE`, [job.project_id])).rows[0];
   if (!project || project.archived_at || project.workflow_code !== 'PROJECT_DISCOVERY' || project.workflow_version !== 3 || project.state !== 'TECHNOLOGY_SELECTION_PREPARING') throw new Error('TECHNOLOGY_SELECTION_CONTEXT_STATE_INVALID');
+  const predecessorId = job.technology_baseline_revision_id ?? null;
+  if (predecessorId) {
+    const predecessor = (await client.query(`SELECT id FROM technology_baseline_revisions WHERE id=$1 AND project_id=$2 AND status IN ('APPROVED','REJECTED') FOR SHARE`, [predecessorId, project.id])).rows[0];
+    if (!predecessor) throw new Error('TECHNOLOGY_SELECTION_CONTEXT_PREDECESSOR_INVALID');
+  }
   // A selectable publication must contain a frozen active profile; malformed
   // historical publications are never silently used as a baseline snapshot.
   const revision = (await client.query(`SELECT r.id,r.revision_number,r.content_hash FROM technology_catalog_revisions r
@@ -38,8 +43,8 @@ export const prepareTechnologySelectionContext = async (client: pg.PoolClient, j
   const hash = createHash('sha256').update(JSON.stringify(snapshot)).digest('hex');
   const contextId = randomUUID();
   await client.query(`UPDATE technology_selection_contexts SET status='SUPERSEDED',updated_at=clock_timestamp() WHERE project_key=$1 AND status='READY'`, [project.id]);
-  await client.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,technology_profile_id,hash,status,actor,correlation_id)
-    VALUES($1,$2,$3,$4,$5,$6,'PREPARING',$7,$8)`, [contextId, project.id, project.id, revision.id, profile.profile_id, hash, config().operatorId, correlationId]);
+  await client.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,technology_profile_id,hash,status,actor,correlation_id,supersedes_baseline_revision_id)
+    VALUES($1,$2,$3,$4,$5,$6,'PREPARING',$7,$8,$9)`, [contextId, project.id, project.id, revision.id, profile.profile_id, hash, config().operatorId, correlationId, predecessorId]);
   await putArtifact(client, project.id, 'technology-selection-context', JSON.stringify({ ...snapshot, selection_context_id: contextId, hash }), job.id);
   const target = await transitionTarget(client, project.id, 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT');
   await client.query(`UPDATE technology_selection_contexts SET status='READY',updated_at=clock_timestamp() WHERE id=$1`, [contextId]);
