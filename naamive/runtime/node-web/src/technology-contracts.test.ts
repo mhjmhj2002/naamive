@@ -470,6 +470,10 @@ test('versioned initial catalog seeds exactly match the Phase 5 publication', as
     catalogRevision: await readSeed('technology-catalog-revision.json')
   };
   const seeds = await validateTechnologyCatalogSeedPackage(seedPackage);
+  const { catalogPackageHash } = await import('./catalog-publisher.js');
+
+  assert.equal(seeds.catalogRevision.records[0].content_hash, catalogPackageHash(seeds));
+  assert.match(seeds.catalogRevision.records[0].content_hash, /^[a-f0-9]{64}$/);
 
   assert.equal(seeds.categories.records.length, 20);
   assert.deepEqual(seeds.categories.records.map(({ code, selection_mode, min_selections, max_selections, display_order }) => [code, selection_mode, min_selections, max_selections, display_order]), [
