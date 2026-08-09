@@ -8,7 +8,34 @@ import type pg from 'pg';
 
 export class ArtifactStorageError extends Error { constructor(readonly code:string) { super(code); } }
 
+const forbiddenEvidenceField = /(?:^|_)(?:token|password|secret|api_key|authorization|configuration|config|content|stdout|stderr|prompt)(?:$|_)/i;
+const credentialUrl = /:\/\/[^/\s:@]+:[^@\s/]+@/;
+const sensitiveAssignment = /(?:token|password|secret|api[_ -]?key|authorization)\s*[=:]/i;
+const isForbiddenEvidenceField = (key: string) => !['content_hash', 'evidence_hash'].includes(key) && forbiddenEvidenceField.test(key);
+
+/** F5 evidence is an operational reference, never a configuration or prompt archive. */
+export const sanitizeTechnologyEvidence = (value: unknown): unknown => {
+  if (typeof value === 'string') return credentialUrl.test(value) || sensitiveAssignment.test(value) ? undefined : value;
+  if (Array.isArray(value)) return value.map(sanitizeTechnologyEvidence).filter(item => item !== undefined);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(Object.entries(value as Record<string, unknown>)
+    .filter(([key]) => !isForbiddenEvidenceField(key))
+    .map(([key, item]) => [key, sanitizeTechnologyEvidence(item)])
+    .filter(([, item]) => item !== undefined));
+};
+
+export const hasForbiddenTechnologyEvidence = (value: unknown): boolean => {
+  if (typeof value === 'string') return credentialUrl.test(value) || sensitiveAssignment.test(value);
+  if (Array.isArray(value)) return value.some(hasForbiddenTechnologyEvidence);
+  return !!value && typeof value === 'object' && Object.entries(value as Record<string, unknown>).some(([key, item]) => isForbiddenEvidenceField(key) || hasForbiddenTechnologyEvidence(item));
+};
+
 export const putArtifact = async (client: pg.PoolClient, projectId: string, type: string, content: string, executionId?: string, gateId?: string) => {
+  if (type.startsWith('technology-')) {
+    let parsed: unknown;
+    try { parsed = JSON.parse(content); } catch { throw new ArtifactStorageError('TECHNOLOGY_EVIDENCE_INVALID'); }
+    content = JSON.stringify(sanitizeTechnologyEvidence(parsed));
+  }
   const hash = createHash('sha256').update(content).digest('hex');
   const section = gateId ? `gates/${gateId}` : `executions/${executionId ?? 'submission'}`;
   const extension = type.endsWith('-markdown') ? 'md' : 'json';
