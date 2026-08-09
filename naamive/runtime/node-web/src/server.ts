@@ -13,6 +13,7 @@ import { log } from './log.js';
 import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, revalidateCandidate, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
 import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
 import { agentExecutionService } from './agent-execution-service.js';
+import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-gate.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -37,6 +38,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition|architecture|plan|revision))?)?$/);
   const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|qa|rework|rework-decision|merge|reconcile)$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
+  const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
   const runtimeValidateMatch = url.pathname.match(/^\/api\/admin\/ai-runtimes\/([^/]+)\/validate$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
@@ -55,6 +57,8 @@ export const createApiServer = () => createServer(async (request, response) => {
   }
   if (match && request.method === 'GET' && url.searchParams.get('phase3') === 'true') return respond(response, 200, await phase3Detail(match[1]));
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));
+  if (baselineMatch && request.method === 'POST' && baselineMatch[3] === 'submit') return respond(response, 202, await submitTechnologyBaseline(baselineMatch[1], baselineMatch[2], request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (baselineMatch && request.method === 'POST' && baselineMatch[3] === 'decision') return respond(response, 202, await decideTechnologyBaseline(baselineMatch[1], baselineMatch[2], await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (phase3Match && request.method === 'POST' && !phase3Match[2]) return respond(response,202,await materializeModule(phase3Match[1],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'decision') return respond(response,202,await decideModule(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'definition') return respond(response,202,await completeDefinition(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
