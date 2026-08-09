@@ -1,6 +1,6 @@
 ---
 task: F5-10
-status: TODO
+status: DONE
 ---
 
 # F5-10 — Workflow `PROJECT_DISCOVERY` v3 e seleção de versão

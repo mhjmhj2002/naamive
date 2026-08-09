@@ -1,6 +1,6 @@
 ---
 task: F5-09
-status: TODO
+status: DONE
 ---
 
 # F5-09 — Contexto de seleção tecnológica imutável

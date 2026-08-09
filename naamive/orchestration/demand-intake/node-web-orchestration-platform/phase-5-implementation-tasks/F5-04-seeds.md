@@ -1,6 +1,6 @@
 ---
 task: F5-04
-status: TODO
+status: DONE
 ---
 
 # F5-04 — Seeds versionados do Catálogo Tecnológico

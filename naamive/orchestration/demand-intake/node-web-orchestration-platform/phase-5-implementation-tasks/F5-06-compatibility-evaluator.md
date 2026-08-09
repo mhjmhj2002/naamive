@@ -1,6 +1,6 @@
 ---
 task: F5-06
-status: TODO
+status: DONE
 ---
 
 # F5-06 — Avaliador genérico de compatibilidades do Catálogo

@@ -1,6 +1,6 @@
 ---
 task: F5-08
-status: TODO
+status: DONE
 ---
 
 # F5-08 — Comando `START_TECHNOLOGY_INVENTORY` e inventário read-only

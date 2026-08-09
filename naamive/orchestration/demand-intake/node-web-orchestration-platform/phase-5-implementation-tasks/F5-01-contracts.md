@@ -1,6 +1,6 @@
 ---
 task: F5-01
-status: TODO
+status: DONE
 ---
 
 # F5-01 — Contratos neutros do Technology Catalog e da Baseline
