@@ -42,6 +42,9 @@ else {
     assert.equal(await runOnce(p.id), true);
     const rows = (await pool.query(`SELECT * FROM technology_inventory WHERE project_key=$1 ORDER BY value`, [p.id])).rows;
     assert.equal((await pool.query(`SELECT status FROM jobs WHERE operation_id=$1`, [first.operation_id])).rows[0].status, 'COMPLETED'); assert.equal((await pool.query(`SELECT status FROM operations WHERE id=$1`, [first.operation_id])).rows[0].status, 'SUCCEEDED');
+    const timeline = (await pool.query(`SELECT event_type,payload FROM events WHERE project_id=$1 AND event_type IN ('TECHNOLOGY_INVENTORY_STARTED','TECHNOLOGY_INVENTORY_READY') ORDER BY id`, [p.id])).rows;
+    assert.deepEqual(timeline.map((event: any) => event.event_type), ['TECHNOLOGY_INVENTORY_STARTED', 'TECHNOLOGY_INVENTORY_READY']);
+    assert.equal(timeline[1].payload.technology_catalog_revision_id, published.revisionId); assert.match(timeline[1].payload.evidence_hash, /^[a-f0-9]{64}$/); assert.ok(Number(timeline[1].payload.duration_ms) >= 0);
     assert.ok(rows.some((r: any) => r.resolution_result === 'RESOLVED_ACTIVE' && r.catalog_item_id)); assert.ok(rows.some((r: any) => r.resolution_result === 'RESOLVED_INACTIVE' && r.catalog_item_id)); assert.ok(rows.some((r: any) => r.resolution_result === 'UNKNOWN_CATALOG_ITEM' && !r.catalog_item_id));
     assert.ok(rows.every((r: any) => r.repository_sha === repo.sha && r.project_id === p.id && r.project_key === p.id && r.technology_catalog_revision_id === published.revisionId)); assert.ok(!rows.some((r: any) => r.value === 'ONLY_IN_HEAD_B'));
     const artifact: any = (await pool.query(`SELECT storage_uri FROM artifacts WHERE project_id=$1 AND artifact_type='technology-inventory' ORDER BY created_at DESC LIMIT 1`, [p.id])).rows[0]; const snapshot = JSON.parse(readFileSync(new URL(artifact.storage_uri), 'utf8'));
