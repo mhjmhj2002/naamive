@@ -45,11 +45,11 @@ export const prepareTechnologySelectionContext = async (client: pg.PoolClient, j
   await client.query(`UPDATE technology_selection_contexts SET status='SUPERSEDED',updated_at=clock_timestamp() WHERE project_key=$1 AND status='READY'`, [project.id]);
   await client.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,technology_profile_id,hash,status,actor,correlation_id,supersedes_baseline_revision_id)
     VALUES($1,$2,$3,$4,$5,$6,'PREPARING',$7,$8,$9)`, [contextId, project.id, project.id, revision.id, profile.profile_id, hash, config().operatorId, correlationId, predecessorId]);
-  await putArtifact(client, project.id, 'technology-selection-context', JSON.stringify({ ...snapshot, selection_context_id: contextId, hash }), job.id);
+  const artifact = await putArtifact(client, project.id, 'technology-selection-context', JSON.stringify({ ...snapshot, selection_context_id: contextId, hash }), job.id);
   const target = await transitionTarget(client, project.id, 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT');
   await client.query(`UPDATE technology_selection_contexts SET status='READY',updated_at=clock_timestamp() WHERE id=$1`, [contextId]);
   await client.query(`UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1`, [project.id, target]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,job_id,payload,actor_id,workflow_code,workflow_version)
-    VALUES($1,'TECHNOLOGY_SELECTION_CONTEXT_READY',$2,$3,$4,$5,$6,$7,$8)`, [project.id, correlationId, job.operation_id, job.id, { selection_context_id: contextId, technology_catalog_revision_id: revision.id }, config().operatorId, project.workflow_code, project.workflow_version]);
+    VALUES($1,'TECHNOLOGY_SELECTION_CONTEXT_READY',$2,$3,$4,$5,$6,$7,$8)`, [project.id, correlationId, job.operation_id, job.id, { summary: 'Contexto de seleção tecnológica preparado.', selection_context_id: contextId, technology_catalog_revision_id: revision.id, evidence_hash: artifact.hash, next_action: 'Solicitar o inventário tecnológico.' }, config().operatorId, project.workflow_code, project.workflow_version]);
   return { contextId, revisionId: revision.id };
 };

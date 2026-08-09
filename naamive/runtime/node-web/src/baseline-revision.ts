@@ -29,6 +29,6 @@ export const startTechnologyBaselineRevision = async (projectId: string, revisio
   const target = await transitionTarget(client, projectId, 'START_TECHNOLOGY_BASELINE_REVISION');
   await client.query(`UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1`, [projectId, target]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
-    VALUES($1,'TECHNOLOGY_BASELINE_REVISION_STARTED',$2,$3,$4,$5,$6,$7,$8)`, [projectId, correlationId, operationId, predecessor.id, { baseline_revision_id: predecessor.id, job_id: jobId }, config().operatorId, project.workflow_code, project.workflow_version]);
+    VALUES($1,'TECHNOLOGY_BASELINE_REVISION_STARTED',$2,$3,$4,$5,$6,$7,$8)`, [projectId, correlationId, operationId, predecessor.id, { summary: 'Revisão da Technology Baseline iniciada.', baseline_revision_id: predecessor.id, job_id: jobId, technology_catalog_revision_id: predecessor.technology_catalog_revision_id, next_action: 'Aguardar a preparação do novo contexto de seleção.' }, config().operatorId, project.workflow_code, project.workflow_version]);
   return { operation_id: operationId, status: 'ACCEPTED', job_id: jobId };
 });

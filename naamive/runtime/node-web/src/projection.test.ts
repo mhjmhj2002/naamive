@@ -7,3 +7,8 @@ test('public projections retain operational facts but remove execution internals
   assert.deepEqual(value,{head_sha:'abc',nested:{evidence_hash:'hash'},findings:[{description:'safe'}]});
   assert.deepEqual(publicEvent({id:4,event_type:'QA_APPROVED',occurred_at:'now',payload:{worktree_path:'/host',head_sha:'abc'}}),{id:4,event_type:'QA_APPROVED',occurred_at:'now',payload:{head_sha:'abc'}});
 });
+
+test('public projections remove baseline configuration, content and credential-bearing URLs', () => {
+  const value = publicValue({ technology_catalog_revision_id: 'catalog-revision', configuration: { body: 'private' }, content: 'private', evidence_url: 'https://user:password@example.invalid/evidence', evidence_hash: 'hash' });
+  assert.deepEqual(value, { technology_catalog_revision_id: 'catalog-revision', evidence_hash: 'hash' });
+});

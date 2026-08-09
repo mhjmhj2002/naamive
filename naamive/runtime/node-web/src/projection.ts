@@ -1,12 +1,14 @@
 /** Public read model helpers. Canonical execution data must never cross this boundary. */
-const forbidden = /(?:^|_)(?:path|worktree|prompt|secret|token|password|stdout|stderr|output|command|cwd|branch|authorization|header|environment|signed_url|api_key)(?:$|_)/i;
+const forbidden = /(?:^|_)(?:path|worktree|prompt|secret|token|password|stdout|stderr|output|command|cwd|branch|authorization|header|environment|signed_url|api_key|configuration|config|content)(?:$|_)/i;
+const credentialUrl = /:\/\/[^/\s:@]+:[^@\s/]+@/;
 
 export const publicValue = (value: unknown): unknown => {
-  if (Array.isArray(value)) return value.map(publicValue);
+  if (typeof value === 'string' && credentialUrl.test(value)) return undefined;
+  if (Array.isArray(value)) return value.map(publicValue).filter(item => item !== undefined);
   if (!value || typeof value !== 'object') return value;
   return Object.fromEntries(Object.entries(value as Record<string, unknown>)
     .filter(([name]) => !forbidden.test(name))
-    .map(([name, item]) => [name, publicValue(item)]));
+    .map(([name, item]) => [name, publicValue(item)]).filter(([, item]) => item !== undefined));
 };
 
 export const publicEvent = (row: Record<string, unknown>) => ({ id: row.id, event_type: row.event_type, occurred_at: row.occurred_at, payload: publicValue(row.payload) });

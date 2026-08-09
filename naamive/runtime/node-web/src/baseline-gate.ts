@@ -1,6 +1,6 @@
 import { createHash, randomUUID } from 'node:crypto';
 import type pg from 'pg';
-import { putArtifact } from './artifacts.js';
+import { hasForbiddenTechnologyEvidence, putArtifact, sanitizeTechnologyEvidence } from './artifacts.js';
 import { evaluateBaselineCardinality } from './cardinality-validator.js';
 import { evaluateCompatibility } from './compatibility-evaluator.js';
 import { config } from './config.js';
@@ -77,7 +77,7 @@ export const submitTechnologyBaseline = async (projectId: string, baselineRevisi
   const target = await transitionTarget(client, projectId, 'SUBMIT_TECHNOLOGY_BASELINE');
   await client.query(`UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1`, [projectId, target]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
-    VALUES($1,'TECHNOLOGY_BASELINE_SUBMITTED',$2,$3,$4,$5,$6,$7,$8)`, [projectId, correlationId, operationId, revision.id, { baseline_revision_id: revision.id, gate_id: gateId }, config().operatorId, project.workflow_code, project.workflow_version]);
+    VALUES($1,'TECHNOLOGY_BASELINE_SUBMITTED',$2,$3,$4,$5,$6,$7,$8)`, [projectId, correlationId, operationId, revision.id, { summary: 'Technology Baseline enviada para decisão.', baseline_revision_id: revision.id, gate_id: gateId, technology_catalog_revision_id: revision.technology_catalog_revision_id, next_action: 'Aguardar a decisão do operador.' }, config().operatorId, project.workflow_code, project.workflow_version]);
   return { operation_id: operationId, status: 'ACCEPTED', gate_id: gateId };
 });
 
@@ -91,6 +91,7 @@ export const decideTechnologyBaseline = async (projectId: string, baselineRevisi
   const gate = (await client.query(`SELECT * FROM technology_baseline_gates WHERE baseline_revision_id=$1 AND status='OPEN' FOR UPDATE`, [revision.id])).rows[0];
   if (!gate) throw new ApiError(409, 'GATE_VERSION_CONFLICT');
   const { approved, feedback } = validateBaselineGateDecision(body, gate);
+  if (hasForbiddenTechnologyEvidence(feedback)) throw new ApiError(422, 'TECHNOLOGY_EVIDENCE_SENSITIVE_DATA_FORBIDDEN');
   const correlationId = randomUUID(), operationId = await operation(client, projectId, 'DECIDE_TECHNOLOGY_BASELINE', key, correlationId), hash = baselineRevisionHash(revision.payload);
   const artifact = await putArtifact(client, projectId, 'technology-baseline-decision', JSON.stringify({ schema_version: 1, baseline_revision_id: revision.id, gate_id: gate.id, gate_version: gate.version, decision: body.decision, feedback, revision_hash: hash, actor: config().operatorId, correlation_id: correlationId }), operationId, gate.id);
   await client.query(`UPDATE technology_baseline_gates SET status=$2,decision=$3,feedback=$4,revision_hash=$5,decision_artifact_hash=$6,decided_at=clock_timestamp() WHERE id=$1`, [gate.id, approved ? 'APPROVED' : 'REJECTED', body.decision, feedback || null, hash, artifact.hash]);
@@ -99,6 +100,6 @@ export const decideTechnologyBaseline = async (projectId: string, baselineRevisi
   const target = await transitionTarget(client, projectId, trigger);
   await client.query(`UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1`, [projectId, target]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [projectId, approved ? 'TECHNOLOGY_BASELINE_APPROVED' : 'TECHNOLOGY_BASELINE_ADJUSTMENTS_REQUESTED', correlationId, operationId, revision.id, { baseline_revision_id: revision.id, gate_id: gate.id, gate_version: gate.version, feedback, revision_hash: hash, evidence_hash: artifact.hash }, config().operatorId, project.workflow_code, project.workflow_version]);
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [projectId, approved ? 'TECHNOLOGY_BASELINE_APPROVED' : 'TECHNOLOGY_BASELINE_ADJUSTMENTS_REQUESTED', correlationId, operationId, revision.id, sanitizeTechnologyEvidence({ summary: approved ? 'Technology Baseline aprovada.' : 'Ajustes na Technology Baseline solicitados.', baseline_revision_id: revision.id, gate_id: gate.id, gate_version: gate.version, feedback, revision_hash: hash, evidence_hash: artifact.hash, technology_catalog_revision_id: revision.technology_catalog_revision_id, next_action: approved ? 'A baseline pode ser usada para materializar módulos.' : 'Iniciar uma nova revisão da baseline.' }), config().operatorId, project.workflow_code, project.workflow_version]);
   return { operation_id: operationId, status: 'ACCEPTED' };
 });

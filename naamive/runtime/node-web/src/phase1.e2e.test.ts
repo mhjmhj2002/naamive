@@ -36,5 +36,11 @@ if (!databaseUrl) {
     const artifacts = await pool.query('SELECT artifact_type FROM artifacts WHERE project_id=$1 ORDER BY artifact_type', [projectId]); assert.deepEqual(artifacts.rows.map((row) => row.artifact_type), ['gate-opened', 'validation-report']);
     const timeline = await projectTimeline(projectId); assert.deepEqual(timeline.map((row) => row.event_type), ['INTAKE_VALIDATED', 'GATE_OPENED']);
     assert.deepEqual(await projectTimeline(projectId, Number(timeline[1].id)), []);
+    await pool.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,'REPLAY_CURSOR_CHECK',$2,$3,$4)`, [projectId, randomUUID(), { summary: 'cursor replay' }, 'test']);
+    const replay = await projectTimeline(projectId, Number(timeline[0].id));
+    assert.deepEqual(replay.map((row: any) => row.id), [timeline[1].id, replay[1].id]);
+    assert.deepEqual((await projectTimeline(projectId, Number(timeline[1].id))).map((row: any) => row.id), [replay[1].id]);
+    const reconnectSeen = new Set<number>(); for (const row of [...replay, ...await projectTimeline(projectId, Number(timeline[0].id))]) reconnectSeen.add(Number(row.id));
+    assert.equal(reconnectSeen.size, replay.length);
   });
 }

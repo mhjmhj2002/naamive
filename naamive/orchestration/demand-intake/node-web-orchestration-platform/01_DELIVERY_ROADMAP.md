@@ -917,6 +917,12 @@ repositório alvo e não é registrada em logs; o adaptador localiza PR draft
 existente por branches e cria ou atualiza idempotentemente. Falhas de
 autenticação, permissão ou rede são sanitizadas, auditadas e não avançam estado.
 
+## Dívidas técnicas
+
+| ID | Categoria | Origem | Status | Descrição | Critério de encerramento |
+| --- | --- | --- | --- | --- | --- |
+| TD-F5-001 — Consolidar cenário E2E da sequência completa dos eventos da Technology Baseline | `Technical Debt / Test Coverage` | F5-16 — SSE e projeção da Technology Baseline | `OPEN` | A implementação funcional da F5-16 está concluída. A cobertura automatizada permanece distribuída entre os testes de contexto de seleção, inventário, baseline gate, baseline revision, replay por cursor e ArtifactStore. Durante a implementação foi tentada a criação de um cenário E2E único para a Technology Baseline; problemas de isolamento do harness levaram à reversão dessa tentativa para preservar a estabilidade da suíte. Permanece como melhoria futura um cenário dedicado que valide `TECHNOLOGY_SELECTION_CONTEXT_READY`, `TECHNOLOGY_INVENTORY_STARTED`, `TECHNOLOGY_INVENTORY_READY`, `TECHNOLOGY_BASELINE_SUBMITTED`, `TECHNOLOGY_BASELINE_APPROVED`, `TECHNOLOGY_BASELINE_ADJUSTMENTS_REQUESTED` e `TECHNOLOGY_BASELINE_REVISION_STARTED`, além de replay por cursor, ausência de duplicação e consistência dos `evidence_hash`. Esta dívida técnica **não representa limitação funcional da Fase 5**; registra exclusivamente uma melhoria futura de cobertura automatizada de integração. | Criar cenário E2E isolado que percorra integralmente o fluxo da Technology Baseline e valide a sequência completa dos eventos da F5-16. |
+
 ## Issues encontradas durante a implementação
 
 Esta seção registra problemas reais descobertos durante a execução das tarefas
