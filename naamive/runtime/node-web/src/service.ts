@@ -142,6 +142,7 @@ export const archiveProject = async (projectId: string, body: Record<string, unk
   await client.query(`UPDATE jobs SET status='FAILED',completed_at=now(),last_error='PROJECT_ARCHIVED' WHERE project_id=$1 AND status IN ('PENDING','RETRYABLE','LEASED')`,[projectId]);
   await client.query(`UPDATE operations SET status='FAILED',failure_code='PROJECT_ARCHIVED',completed_at=now() WHERE project_id=$1 AND status IN ('ACCEPTED','QUEUED','RUNNING')`,[projectId]);
   await client.query(`UPDATE gates SET status='CANCELLED',decided_at=now() WHERE project_id=$1 AND status='OPEN'`,[projectId]);
+  await client.query(`UPDATE technology_selection_contexts SET status='SUPERSEDED',updated_at=clock_timestamp() WHERE project_key=$1 AND status='PREPARING'`,[projectId]);
   const record={schema_version:1,project_id:projectId,archived_by:config().operatorId,archive_reason:body.reason.trim(),archived_from_state:row.state,archived_at:new Date().toISOString()};
   const artifact=await putArchiveRecord(client,projectId,JSON.stringify(record));
   const target=await transitionTarget(client,projectId,'ARCHIVING_COMPLETED');
