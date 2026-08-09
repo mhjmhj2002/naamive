@@ -17,7 +17,7 @@ export const listTechnologyCategories = async () => {
   const revision = (await (await import('./db.js')).pool.query(published)).rows[0];
   if (!revision) throw new ApiError(404, 'TECHNOLOGY_CATALOG_PUBLISHED_REVISION_NOT_FOUND');
   const { pool } = await import('./db.js');
-  const items = (await pool.query(`SELECT category_id AS id,code,name,description,selection_mode,min_selections,max_selections,is_active,display_order
+  const items = (await pool.query(`SELECT category_id AS id,code,name,selection_mode,min_selections,max_selections,is_active,display_order
     FROM technology_catalog_revision_categories WHERE revision_id=$1 AND is_active ORDER BY display_order,code`, [revision.id])).rows;
   return { catalog_revision: revision, items };
 };
@@ -28,7 +28,7 @@ export const listTechnologyCatalogItems = async (categoryId: string | null, stat
   if (!revision) throw new ApiError(404, 'TECHNOLOGY_CATALOG_PUBLISHED_REVISION_NOT_FOUND');
   const values: unknown[] = [revision.id]; let where = 'WHERE i.revision_id=$1';
   if (categoryId) { values.push(categoryId); where += ` AND i.category_id=$${values.length}`; }
-  if (status === 'ACTIVE') where += ' AND i.is_active AND c.is_active';
+  where += ' AND i.is_active AND c.is_active';
   const items = (await pool.query(`SELECT i.catalog_item_id AS id,i.category_id,i.code,i.name,i.description,i.is_active,i.display_order,i.metadata
     FROM technology_catalog_revision_items i JOIN technology_catalog_revision_categories c ON c.revision_id=i.revision_id AND c.category_id=i.category_id
     ${where} ORDER BY c.display_order,i.display_order,i.code`, values)).rows;
@@ -37,10 +37,10 @@ export const listTechnologyCatalogItems = async (categoryId: string | null, stat
 
 export const technologyCatalogRevision = async (revisionId: string) => {
   const { pool } = await import('./db.js');
-  const revision = (await pool.query(`SELECT id,revision_number,status,description,content_hash,published_at,published_by FROM technology_catalog_revisions WHERE id=$1`, [revisionId])).rows[0];
+  const revision = (await pool.query(`SELECT id,revision_number,status,description,content_hash,published_at,published_by FROM technology_catalog_revisions WHERE id=$1 AND status='PUBLISHED'`, [revisionId])).rows[0];
   if (!revision) throw new ApiError(404, 'TECHNOLOGY_CATALOG_REVISION_NOT_FOUND');
   const [categories, items, profiles, profileItems, rules] = await Promise.all([
-    pool.query('SELECT category_id AS id,code,name,description,selection_mode,min_selections,max_selections,is_active,display_order FROM technology_catalog_revision_categories WHERE revision_id=$1 ORDER BY display_order,code', [revisionId]),
+    pool.query('SELECT category_id AS id,code,name,selection_mode,min_selections,max_selections,is_active,display_order FROM technology_catalog_revision_categories WHERE revision_id=$1 ORDER BY display_order,code', [revisionId]),
     pool.query('SELECT catalog_item_id AS id,category_id,code,name,description,is_active,display_order,metadata FROM technology_catalog_revision_items WHERE revision_id=$1 ORDER BY display_order,code', [revisionId]),
     pool.query('SELECT profile_id AS id,code,name,description,is_active FROM technology_catalog_revision_profiles WHERE revision_id=$1 ORDER BY code', [revisionId]),
     pool.query('SELECT profile_id,catalog_item_id,classification,version_constraint,justification,display_order FROM technology_catalog_revision_profile_items WHERE revision_id=$1 ORDER BY profile_id,display_order', [revisionId]),
@@ -55,7 +55,7 @@ const profiles = async (profileId?: string, status?: string | null) => {
   if (!revision) throw new ApiError(404, 'TECHNOLOGY_CATALOG_PUBLISHED_REVISION_NOT_FOUND');
   const params: unknown[] = [revision.id]; let where = 'WHERE p.revision_id=$1';
   if (profileId) { params.push(profileId); where += ` AND p.profile_id=$${params.length}`; }
-  if (status === 'ACTIVE') where += ' AND p.is_active';
+  where += ' AND p.is_active';
   const result = await pool.query(`SELECT p.profile_id AS id,p.code,p.name,p.description,p.is_active FROM technology_catalog_revision_profiles p ${where} ORDER BY p.code`, params);
   const expanded = await Promise.all(result.rows.map(async profile => ({ ...profile,
     items: (await pool.query(`SELECT pi.catalog_item_id,pi.classification,pi.version_constraint,pi.justification,pi.display_order,
@@ -85,8 +85,8 @@ export const technologySelectionContext = async (projectId: string) => withTrans
 export const requestTechnologyInventory = (projectId: string, key: string) => withTransaction(async client => { await requireProject(client, projectId); return startTechnologyInventory(client, projectId, key); });
 
 export const createTechnologyBaselineRevision = async (projectId: string, body: Record<string, unknown>, key: string) => withTransaction(async client => {
-  const prior = (await client.query('SELECT id,revision_id FROM operations WHERE idempotency_key=$1 FOR SHARE', [key])).rows[0];
-  if (prior) return { operation_id: prior.id, revisionId: prior.revision_id, status: 'ACCEPTED' };
+  const prior = (await client.query('SELECT id FROM operations WHERE idempotency_key=$1 FOR SHARE', [key])).rows[0];
+  if (prior) return { operation_id: prior.id, status: 'ACCEPTED' };
   try { assertNoFreeTechnologyFields(body); } catch (error) { if (error instanceof ContractValidationError) throw new ApiError(422, error.code); throw error; }
   const allowed = new Set(['selection_context_id', 'technology_catalog_revision_id', 'items', 'deferred_decisions']);
   if (Object.keys(body).some(key => !allowed.has(key))) throw new ApiError(422, 'TECHNOLOGY_BASELINE_REVISION_PAYLOAD_INVALID');
@@ -115,7 +115,7 @@ export const createTechnologyBaselineRevision = async (projectId: string, body: 
     SELECT $1,$2,'CREATE_TECHNOLOGY_BASELINE_DRAFT','RUNNING',$3,$4,workflow_code,workflow_version FROM projects WHERE id=$2`, [operationId, projectId, key, correlationId]);
   try {
     const created = await createTechnologyBaselineDraft(client, projectId, payload, selectionContextId);
-    await client.query(`UPDATE operations SET status='SUCCEEDED',revision_id=$2,completed_at=clock_timestamp() WHERE id=$1`, [operationId, created.revisionId]);
+    await client.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`, [operationId]);
     return { ...created, operation_id: operationId, status: 'ACCEPTED' };
   }
   catch (error) { if (error instanceof ApiError) throw error; throw new ApiError(422, error instanceof Error ? error.message : 'TECHNOLOGY_BASELINE_DRAFT_INVALID'); }
