@@ -15,6 +15,7 @@ import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPoli
 import { agentExecutionService } from './agent-execution-service.js';
 import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-gate.js';
 import { startTechnologyBaselineRevision } from './baseline-revision.js';
+import { createTechnologyBaselineRevision, listTechnologyCatalogItems, listTechnologyCategories, listTechnologyProfiles, requestTechnologyInventory, technologyBaseline, technologyCatalogRevision, technologyProfile, technologySelectionContext } from './technology-api.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -41,10 +42,22 @@ export const createApiServer = () => createServer(async (request, response) => {
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
   const baselineRevisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/revisions\/([^/]+)\/start-revision$/);
+  const technologyCatalogRevisionMatch = url.pathname.match(/^\/api\/technology\/catalog-revisions\/([^/]+)$/);
+  const technologyProfileMatch = url.pathname.match(/^\/api\/technology\/profiles\/([^/]+)$/);
+  const technologyBaselineRootMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline$/);
+  const technologySelectionContextMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/selection-context$/);
+  const technologyInventoryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/inventory$/);
+  const technologyBaselineRevisionsMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/revisions$/);
+  const technologyBaselineDecisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/decision$/);
   const materializationBaselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/materialization-options$/);
   const runtimeValidateMatch = url.pathname.match(/^\/api\/admin\/ai-runtimes\/([^/]+)\/validate$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
+  if (request.method === 'GET' && url.pathname === '/api/technology/categories') return respond(response, 200, await listTechnologyCategories());
+  if (request.method === 'GET' && url.pathname === '/api/technology/catalog-items') return respond(response, 200, await listTechnologyCatalogItems(url.searchParams.get('category_id'), url.searchParams.get('status')));
+  if (technologyCatalogRevisionMatch && request.method === 'GET') return respond(response, 200, await technologyCatalogRevision(technologyCatalogRevisionMatch[1]));
+  if (request.method === 'GET' && url.pathname === '/api/technology/profiles') return respond(response, 200, await listTechnologyProfiles(url.searchParams.get('status')));
+  if (technologyProfileMatch && request.method === 'GET') return respond(response, 200, await technologyProfile(technologyProfileMatch[1]));
   if (request.method === 'GET' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 200, { items: await listRuntimeCatalogue() });
   if (request.method === 'POST' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 202, await registerRuntime(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (request.method === 'POST' && url.pathname === '/api/admin/agent-execution-policies') return respond(response, 202, await publishAgentExecutionPolicy(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
@@ -62,6 +75,11 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));
   if (baselineMatch && request.method === 'POST' && baselineMatch[3] === 'submit') return respond(response, 202, await submitTechnologyBaseline(baselineMatch[1], baselineMatch[2], request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (baselineMatch && request.method === 'POST' && baselineMatch[3] === 'decision') return respond(response, 202, await decideTechnologyBaseline(baselineMatch[1], baselineMatch[2], await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (technologyBaselineRootMatch && request.method === 'GET') return respond(response, 200, await technologyBaseline(technologyBaselineRootMatch[1]));
+  if (technologySelectionContextMatch && request.method === 'GET') return respond(response, 200, await technologySelectionContext(technologySelectionContextMatch[1]));
+  if (technologyInventoryMatch && request.method === 'POST') return respond(response, 202, await requestTechnologyInventory(technologyInventoryMatch[1], request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (technologyBaselineRevisionsMatch && request.method === 'POST') return respond(response, 201, await createTechnologyBaselineRevision(technologyBaselineRevisionsMatch[1], await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (technologyBaselineDecisionMatch && request.method === 'POST') { const body = await json(request); const revisionId = typeof body.baseline_revision_id === 'string' ? body.baseline_revision_id : ''; if (!revisionId) throw new ApiError(422, 'TECHNOLOGY_BASELINE_REVISION_REQUIRED'); return respond(response, 202, await decideTechnologyBaseline(technologyBaselineDecisionMatch[1], revisionId, body, request.headers['idempotency-key']?.toString() ?? randomUUID())); }
   if (baselineRevisionMatch && request.method === 'POST') return respond(response, 202, await startTechnologyBaselineRevision(baselineRevisionMatch[1], baselineRevisionMatch[2], request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (materializationBaselineMatch && request.method === 'GET') return respond(response, 200, await materializationBaselineOptions(materializationBaselineMatch[1]));
   if (phase3Match && request.method === 'POST' && !phase3Match[2]) return respond(response,202,await materializeModule(phase3Match[1],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));

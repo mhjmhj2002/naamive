@@ -7,11 +7,11 @@ import { evaluateCompatibility } from './compatibility-evaluator.js';
 import { validateTechnologyBaselineRevisionPayload } from './technology-contracts.js';
 
 /** Creates the immutable, profile-expanded first draft for a v3 project. */
-export const createTechnologyBaselineDraft = async (client: pg.PoolClient, projectId: string) => {
+export const createTechnologyBaselineDraft = async (client: pg.PoolClient, projectId: string, requestedPayload?: any, requestedContextId?: string) => {
   const project = (await client.query(`SELECT * FROM projects WHERE id=$1 FOR UPDATE`, [projectId])).rows[0];
   if (!project) throw new Error('PROJECT_NOT_FOUND');
   if (project.archived_at || project.workflow_code !== 'PROJECT_DISCOVERY' || project.workflow_version !== 3 || project.state !== 'TECHNOLOGY_BASELINE_IN_REVIEW') throw new Error('TECHNOLOGY_BASELINE_DRAFT_STATE_INVALID');
-  const context = (await client.query(`SELECT * FROM technology_selection_contexts WHERE project_key=$1 AND status='READY' ORDER BY created_at DESC LIMIT 1 FOR SHARE`, [projectId])).rows[0];
+  const context = (await client.query(`SELECT * FROM technology_selection_contexts WHERE project_key=$1 AND status='READY' ${requestedContextId ? 'AND id=$2' : ''} ORDER BY created_at DESC LIMIT 1 FOR SHARE`, requestedContextId ? [projectId, requestedContextId] : [projectId])).rows[0];
   if (!context) throw new Error('TECHNOLOGY_BASELINE_DRAFT_SELECTION_CONTEXT_REQUIRED');
   const catalog = (await client.query(`SELECT id FROM technology_catalog_revisions WHERE id=$1 AND status='PUBLISHED' FOR SHARE`, [context.technology_catalog_revision_id])).rows[0];
   if (!catalog) throw new Error('TECHNOLOGY_BASELINE_DRAFT_PUBLISHED_CATALOG_REQUIRED');
@@ -28,12 +28,20 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
     JOIN technology_catalog_revision_categories c ON c.revision_id=i.revision_id AND c.category_id=i.category_id
     WHERE pi.revision_id=$1 AND pi.profile_id=$2 ORDER BY pi.display_order,pi.catalog_item_id`, [context.technology_catalog_revision_id, context.technology_profile_id])).rows;
   if (!rows.length || rows.some((row: any) => !row.is_active || !row.category_active)) throw new Error('TECHNOLOGY_BASELINE_DRAFT_PROFILE_ITEM_INVALID');
-  const items = rows.map((row: any) => ({ catalog_item_id: row.catalog_item_id, classification: row.classification, version_constraint: row.version_constraint, reason: row.justification?.trim() || 'Expanded from the approved technology profile.', technology_profile_id: context.technology_profile_id }));
-  if (rows.some((row: any) => row.metadata?.version_governance === 'REQUIRED' && !row.version_constraint)) throw new Error('TECHNOLOGY_BASELINE_DRAFT_VERSION_CONSTRAINT_REQUIRED');
-  if (rows.some((row: any) => row.metadata?.version_governance !== 'REQUIRED' && row.metadata?.version_governance !== 'UNMANAGED')) throw new Error('TECHNOLOGY_BASELINE_DRAFT_VERSION_GOVERNANCE_INVALID');
-  const payload = await validateTechnologyBaselineRevisionPayload({ technology_catalog_revision_id: context.technology_catalog_revision_id, items, deferred_decisions: [] });
+  const defaultItems = rows.map((row: any) => ({ catalog_item_id: row.catalog_item_id, classification: row.classification, version_constraint: row.version_constraint, reason: row.justification?.trim() || 'Expanded from the approved technology profile.', technology_profile_id: context.technology_profile_id }));
+  const payload = await validateTechnologyBaselineRevisionPayload(requestedPayload ?? { technology_catalog_revision_id: context.technology_catalog_revision_id, items: defaultItems, deferred_decisions: [] });
+  if (payload.technology_catalog_revision_id !== context.technology_catalog_revision_id) throw new Error('TECHNOLOGY_BASELINE_DRAFT_CONTEXT_CATALOG_MISMATCH');
+  const selectableRows = requestedPayload ? (await client.query(`SELECT i.catalog_item_id,i.category_id,i.is_active,i.metadata,c.is_active AS category_active
+    FROM technology_catalog_revision_items i JOIN technology_catalog_revision_categories c ON c.revision_id=i.revision_id AND c.category_id=i.category_id
+    WHERE i.revision_id=$1 AND i.is_active AND c.is_active`, [context.technology_catalog_revision_id])).rows : rows;
+  const itemSnapshot = new Map(selectableRows.map((row: any) => [row.catalog_item_id, row]));
+  if (payload.items.some(item => !itemSnapshot.has(item.catalog_item_id))) throw new Error('TECHNOLOGY_BASELINE_DRAFT_ITEM_SNAPSHOT_INVALID');
+  const items = payload.items;
+  if (items.some(item => itemSnapshot.get(item.catalog_item_id).metadata?.version_governance === 'REQUIRED' && !item.version_constraint)) throw new Error('TECHNOLOGY_BASELINE_DRAFT_VERSION_CONSTRAINT_REQUIRED');
+  if (items.some(item => itemSnapshot.get(item.catalog_item_id).metadata?.version_governance !== 'REQUIRED' && itemSnapshot.get(item.catalog_item_id).metadata?.version_governance !== 'UNMANAGED')) throw new Error('TECHNOLOGY_BASELINE_DRAFT_VERSION_GOVERNANCE_INVALID');
+  if (rows.some((row: any) => { const item = items.find(item => item.catalog_item_id === row.catalog_item_id); return !item || item.classification !== row.classification || (item.version_constraint ?? null) !== row.version_constraint; })) throw new Error('TECHNOLOGY_BASELINE_DRAFT_PROFILE_COMPOSITION_INVALID');
   const categories = (await client.query(`SELECT category_id AS id,code,name,selection_mode,min_selections,max_selections,is_active,display_order FROM technology_catalog_revision_categories WHERE revision_id=$1 AND is_active`, [context.technology_catalog_revision_id])).rows;
-  const cardinality = evaluateBaselineCardinality(payload, categories, rows.map((row: any) => ({ id: row.catalog_item_id, category_id: row.category_id })));
+  const cardinality = evaluateBaselineCardinality(payload, categories, items.map(item => ({ id: item.catalog_item_id, category_id: itemSnapshot.get(item.catalog_item_id).category_id })));
   if (!cardinality.valid) throw new Error(`TECHNOLOGY_BASELINE_DRAFT_CARDINALITY_INVALID:${cardinality.findings[0].code}`);
   const rules = (await client.query(`SELECT compatibility_rule_id AS id,source_item_id,relationship_type,target_item_id,constraint_expression,severity,message,is_active FROM technology_catalog_revision_compatibility_rules WHERE revision_id=$1 AND is_active`, [context.technology_catalog_revision_id])).rows;
   const compatibility = evaluateCompatibility(items.filter((item) => item.classification !== 'PROHIBITED'), rules);
@@ -55,8 +63,8 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
   }
   await client.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,inventory_id,revision_number,status,payload,schema_version,actor,correlation_id,supersedes_revision_id)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,'DRAFT',$9,'technology-baseline/v1',$10,$11,$12)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory.id, revisionNumber, payload, config().operatorId, correlationId, predecessorId]);
-  for (const [index, item] of items.entries()) await client.query(`INSERT INTO technology_baseline_revision_items(id,baseline_revision_id,technology_catalog_revision_id,catalog_item_id,classification,version_constraint,reason,source_profile_id,display_order)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [randomUUID(), revisionId, context.technology_catalog_revision_id, item.catalog_item_id, item.classification, item.version_constraint ?? null, item.reason, context.technology_profile_id, index]);
+  for (const [index, item] of items.entries()) await client.query(`INSERT INTO technology_baseline_revision_items(id,baseline_revision_id,technology_catalog_revision_id,catalog_item_id,classification,version_constraint,reason,source_profile_id,compatibility_rule_id,display_order)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [randomUUID(), revisionId, context.technology_catalog_revision_id, item.catalog_item_id, item.classification, item.version_constraint ?? null, item.reason, item.technology_profile_id ?? context.technology_profile_id, item.technology_compatibility_rule_id ?? null, index]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
     VALUES($1,'TECHNOLOGY_BASELINE_DRAFT_CREATED',$2,$3,$4,$5,$6,$7)`, [projectId, correlationId, revisionId, { baseline_id: baselineId, technology_catalog_revision_id: context.technology_catalog_revision_id, selection_context_id: context.id }, config().operatorId, project.workflow_code, project.workflow_version]);
   if (predecessor) {
