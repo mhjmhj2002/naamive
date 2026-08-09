@@ -99,11 +99,13 @@ export const startProductDiscovery = async (projectId: string, key: string) => {
   const existing = await client.query('SELECT id FROM operations WHERE idempotency_key=$1', [key]); if (existing.rowCount) return { operation_id: existing.rows[0].id, status: 'ACCEPTED' };
   if (row.state !== 'REGISTERED' || row.archived_at) throw new ApiError(409, 'WORKFLOW_TRANSITION_NOT_ALLOWED');
   const operationId=randomUUID(), jobId=randomUUID(), correlation=randomUUID();
-  await client.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=2,state='ANALYSIS_IN_PROGRESS',updated_at=now() WHERE id=$1`, [projectId]);
-  await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id) VALUES($1,$2,'PRODUCT_DISCOVERY','QUEUED',$3,$4,$5)`, [operationId,projectId,key,correlation,row.id ? (await client.query('SELECT id FROM intake_revisions WHERE project_id=$1 ORDER BY submitted_at DESC LIMIT 1',[projectId])).rows[0]?.id ?? null : null]);
+  const workflowVersion=3;
+  await client.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=$2,state='ANALYSIS_IN_PROGRESS',updated_at=now() WHERE id=$1`, [projectId,workflowVersion]);
+  await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id,workflow_code,workflow_version) VALUES($1,$2,'PRODUCT_DISCOVERY','QUEUED',$3,$4,$5,'PROJECT_DISCOVERY',$6)`, [operationId,projectId,key,correlation,row.id ? (await client.query('SELECT id FROM intake_revisions WHERE project_id=$1 ORDER BY submitted_at DESC LIMIT 1',[projectId])).rows[0]?.id ?? null : null,workflowVersion]);
   const revisionId=(await client.query('SELECT revision_id FROM operations WHERE id=$1',[operationId])).rows[0].revision_id;
   await client.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,idempotency_key) VALUES($1,$2,$3,$4,'ANALYZE_PRODUCT_NEED',$5)`,[jobId,operationId,projectId,revisionId,`analysis:${projectId}:${operationId}`]);
-  await event(client,projectId,'PRODUCT_DISCOVERY_STARTED',correlation,{stage:'ANALYZE_PRODUCT_NEED'},operationId,jobId,revisionId); return {operation_id:operationId,status:'ACCEPTED'};
+  await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,operation_id,job_id,revision_id,actor_id,workflow_code,workflow_version)
+    VALUES($1,'PRODUCT_DISCOVERY_STARTED',$2,$3,$4,$5,$6,$7,'PROJECT_DISCOVERY',$8)`, [projectId,correlation,{stage:'ANALYZE_PRODUCT_NEED',workflow_version:workflowVersion},operationId,jobId,revisionId,config().operatorId,workflowVersion]); return {operation_id:operationId,status:'ACCEPTED'};
   });
 };
 
