@@ -9,10 +9,10 @@ import { ApiError } from './service.js';
 import { validateTechnologyBaselineRevisionPayload } from './technology-contracts.js';
 import { transitionTarget } from './workflow.js';
 
-const operation = async (client: pg.PoolClient, projectId: string, kind: string, key: string, correlationId: string, revisionId: string) => {
+const operation = async (client: pg.PoolClient, projectId: string, kind: string, key: string, correlationId: string) => {
   const id = randomUUID();
   await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id,workflow_code,workflow_version)
-    SELECT $1,$2,$3,'SUCCEEDED',$4,$5,$6,workflow_code,workflow_version FROM projects WHERE id=$2`, [id, projectId, kind, key, correlationId, revisionId]);
+    SELECT $1,$2,$3,'SUCCEEDED',$4,$5,NULL,workflow_code,workflow_version FROM projects WHERE id=$2`, [id, projectId, kind, key, correlationId]);
   return id;
 };
 
@@ -33,7 +33,7 @@ const revalidate = async (client: pg.PoolClient, revision: any) => {
   const profile = (await client.query(`SELECT profile_id FROM technology_catalog_revision_profiles
     WHERE revision_id=$1 AND profile_id=$2 AND is_active FOR SHARE`, [context.technology_catalog_revision_id, context.technology_profile_id])).rows[0];
   if (!profile) throw new ApiError(409, 'TECHNOLOGY_BASELINE_PROFILE_INVALID');
-  const items = (await client.query(`SELECT i.catalog_item_id,i.category_id,i.is_active,i.metadata,c.is_active AS category_active
+  const items = (await client.query(`SELECT i.catalog_item_id,si.category_id,si.is_active,si.metadata,c.is_active AS category_active
     FROM technology_baseline_revision_items i
     JOIN technology_catalog_revision_items si ON si.revision_id=i.technology_catalog_revision_id AND si.catalog_item_id=i.catalog_item_id
     JOIN technology_catalog_revision_categories c ON c.revision_id=si.revision_id AND c.category_id=si.category_id
@@ -69,10 +69,10 @@ export const submitTechnologyBaseline = async (projectId: string, baselineRevisi
   if (!revision) throw new ApiError(404, 'TECHNOLOGY_BASELINE_REVISION_NOT_FOUND');
   if (revision.status !== 'DRAFT') throw new ApiError(409, 'TECHNOLOGY_BASELINE_REVISION_NOT_DRAFT');
   await revalidate(client, revision);
-  const correlationId = randomUUID(), operationId = await operation(client, projectId, 'SUBMIT_TECHNOLOGY_BASELINE', key, correlationId, revision.id);
+  const correlationId = randomUUID(), operationId = await operation(client, projectId, 'SUBMIT_TECHNOLOGY_BASELINE', key, correlationId);
   const gateId = randomUUID();
   await client.query(`INSERT INTO technology_baseline_gates(id,project_id,project_key,baseline_revision_id,status)
-    VALUES($1,$2,$2,$3,'OPEN')`, [gateId, projectId, revision.id]);
+    VALUES($1,$2::uuid,$2,$3,'OPEN')`, [gateId, projectId, revision.id]);
   await client.query(`UPDATE technology_baseline_revisions SET status='PENDING_APPROVAL',updated_at=clock_timestamp() WHERE id=$1`, [revision.id]);
   const target = await transitionTarget(client, projectId, 'SUBMIT_TECHNOLOGY_BASELINE');
   await client.query(`UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1`, [projectId, target]);
@@ -91,7 +91,7 @@ export const decideTechnologyBaseline = async (projectId: string, baselineRevisi
   const gate = (await client.query(`SELECT * FROM technology_baseline_gates WHERE baseline_revision_id=$1 AND status='OPEN' FOR UPDATE`, [revision.id])).rows[0];
   if (!gate) throw new ApiError(409, 'GATE_VERSION_CONFLICT');
   const { approved, feedback } = validateBaselineGateDecision(body, gate);
-  const correlationId = randomUUID(), operationId = await operation(client, projectId, 'DECIDE_TECHNOLOGY_BASELINE', key, correlationId, revision.id), hash = baselineRevisionHash(revision.payload);
+  const correlationId = randomUUID(), operationId = await operation(client, projectId, 'DECIDE_TECHNOLOGY_BASELINE', key, correlationId), hash = baselineRevisionHash(revision.payload);
   const artifact = await putArtifact(client, projectId, 'technology-baseline-decision', JSON.stringify({ schema_version: 1, baseline_revision_id: revision.id, gate_id: gate.id, gate_version: gate.version, decision: body.decision, feedback, revision_hash: hash, actor: config().operatorId, correlation_id: correlationId }), operationId, gate.id);
   await client.query(`UPDATE technology_baseline_gates SET status=$2,decision=$3,feedback=$4,revision_hash=$5,decision_artifact_hash=$6,decided_at=clock_timestamp() WHERE id=$1`, [gate.id, approved ? 'APPROVED' : 'REJECTED', body.decision, feedback || null, hash, artifact.hash]);
   await client.query(`UPDATE technology_baseline_revisions SET status=$2,updated_at=clock_timestamp() WHERE id=$1`, [revision.id, approved ? 'APPROVED' : 'REJECTED']);
