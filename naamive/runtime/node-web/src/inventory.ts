@@ -45,6 +45,11 @@ export const startTechnologyInventory = async (client: pg.PoolClient, projectId:
 };
 
 export const executeTechnologyInventory = async (client: pg.PoolClient, job: any) => {
+  // The inventory transaction may have committed before a worker crashes while
+  // completing its job.  A retried lease must preserve that immutable snapshot
+  // instead of collecting it a second time.
+  const ready = await client.query(`SELECT 1 FROM events WHERE job_id=$1 AND event_type='TECHNOLOGY_INVENTORY_READY' LIMIT 1`, [job.id]);
+  if (ready.rowCount) return;
   const project=(await client.query('SELECT id,repository_path,initial_sha FROM projects WHERE id=$1', [job.project_id])).rows[0];
   const context=(await client.query(`SELECT id,technology_catalog_revision_id FROM technology_selection_contexts WHERE project_key=$1 AND status='READY' ORDER BY created_at DESC LIMIT 1`,[job.project_id])).rows[0];
   if (!project || !context) throw new Error('TECHNOLOGY_SELECTION_CONTEXT_INVALID'); const repo=containedPath(project.repository_path, config().repositoryRoots), sha=project.initial_sha;

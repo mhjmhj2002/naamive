@@ -106,6 +106,22 @@ else {
     await runOnce(p.id); const job = (await pool.query(`SELECT status,last_error FROM jobs WHERE operation_id=$1`, [accepted.operation_id])).rows[0]; assert.equal(job.status, 'FAILED'); assert.equal(job.last_error, 'AGENT_EXECUTION_FAILED'); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE project_key=$1`, [p.id])).rows[0].n), 0);
   });
 
+  test('retries safely both before inventory persistence and after its immutable snapshot was written', async (t) => {
+    const published: any = await publish(); const repo = fixtureRepo({ dependencies: { 'modular-monolith': '1' } }); const p = await project(repo, published.revisionId); t.after(() => rmSync(repo.root, { recursive: true, force: true }));
+    const accepted = await withTransaction(c => startTechnologyInventory(c, p.id, `retry:${p.id}`));
+    await pool.query(`CREATE FUNCTION test_inventory_retry_before_write() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'retry before write'; END $$`);
+    await pool.query(`CREATE TRIGGER test_inventory_retry_before_write BEFORE INSERT ON technology_inventory FOR EACH ROW EXECUTE FUNCTION test_inventory_retry_before_write()`);
+    try { assert.equal(await runOnce(p.id), true); } finally { await pool.query(`DROP TRIGGER test_inventory_retry_before_write ON technology_inventory`); await pool.query(`DROP FUNCTION test_inventory_retry_before_write()`); }
+    let job: any = (await pool.query(`SELECT id,status FROM jobs WHERE operation_id=$1`, [accepted.operation_id])).rows[0]; assert.equal(job.status, 'FAILED'); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE job_id=$1`, [job.id])).rows[0].n), 0);
+    await pool.query(`UPDATE jobs SET status='PENDING',attempts=0,available_at=clock_timestamp(),completed_at=NULL WHERE id=$1`, [job.id]); assert.equal(await runOnce(p.id), true);
+    job = (await pool.query(`SELECT id,status FROM jobs WHERE operation_id=$1`, [accepted.operation_id])).rows[0]; assert.equal(job.status, 'COMPLETED'); const persisted = Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE job_id=$1`, [job.id])).rows[0].n); assert.ok(persisted > 0);
+
+    await pool.query(`UPDATE jobs SET status='RETRYABLE',available_at=clock_timestamp(),completed_at=NULL WHERE id=$1`, [job.id]);
+    assert.equal(await runOnce(p.id), true);
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE job_id=$1`, [job.id])).rows[0].n), persisted);
+    assert.equal((await pool.query(`SELECT status FROM jobs WHERE id=$1`, [job.id])).rows[0].status, 'COMPLETED');
+  });
+
   test('parser enforces closed allowlist safety limits without inspecting secrets or scripts', () => {
     const root = mkdtempSync(join(tmpdir(), 'naamive-inventory-parser-')); try {
       const file = join(root, 'package.json'); writeFileSync(file, JSON.stringify({ dependencies: { 'safe-item': '1' }, secret: 'token=hidden', scripts: { test: 'exit 1' } })); assert.deepEqual(parsePackageInventoryFacts(file).map((f: any) => f.value), ['SAFE_ITEM']);
