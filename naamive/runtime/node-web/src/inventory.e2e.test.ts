@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { createHash, randomUUID } from 'node:crypto';
-import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -29,6 +29,7 @@ else {
     await pool.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,hash,status) VALUES($1,$2,$3,$4,$5,$6)`, [context, id, id, catalogRevisionId, 'c'.repeat(64), status]);
     return { id, context };
   };
+  const expectWorkerFailure = async (repo: { root: string; sha: string }, revisionId: string, t: test.TestContext) => { const p = await project(repo, revisionId); t.after(() => cleanup(p.id, repo.root)); const accepted = await withTransaction(c => startTechnologyInventory(c, p.id, `failure:${p.id}`)); await runOnce(p.id); assert.equal((await pool.query(`SELECT status FROM jobs WHERE operation_id=$1`, [accepted.operation_id])).rows[0].status, 'FAILED'); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE project_key=$1`, [p.id])).rows[0].n), 0); return p; };
   const cleanup = async (id: string, repo: string) => { for (const table of ['technology_inventory','technology_selection_contexts']) await pool.query(`DELETE FROM ${table} WHERE project_key=$1`, [id]); for (const table of ['events','artifacts','artifact_intents','jobs','operations','intake_revisions']) await pool.query(`DELETE FROM ${table} WHERE project_id=$1`, [id]); await pool.query('DELETE FROM projects WHERE id=$1', [id]); rmSync(repo, { recursive: true, force: true }); };
   test.after(async () => pool.end());
 
@@ -53,6 +54,35 @@ else {
     const before = await pool.query(`SELECT (SELECT count(*) FROM technology_catalog_items) items,(SELECT count(*) FROM technology_catalog_revisions) revisions`);
     await assert.rejects(() => withTransaction(c => startTechnologyInventory(c, p.id, 'invalid-context')), /TECHNOLOGY_SELECTION_CONTEXT_INVALID/);
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM operations WHERE project_id=$1`, [p.id])).rows[0].n), 0); assert.deepEqual((await pool.query(`SELECT (SELECT count(*) FROM technology_catalog_items) items,(SELECT count(*) FROM technology_catalog_revisions) revisions`)).rows[0], before.rows[0]);
+  });
+
+  test('rejects a SUPERSEDED context without creating an operation, job, or inventory', async (t) => {
+    const published: any = await publish(); const repo = fixtureRepo({ dependencies: { unknown: '1' } }); const p = await project(repo, published.revisionId, 'SUPERSEDED'); t.after(() => cleanup(p.id, repo.root));
+    await assert.rejects(() => withTransaction(c => startTechnologyInventory(c, p.id, `superseded:${p.id}`)), /TECHNOLOGY_SELECTION_CONTEXT_INVALID/);
+    for (const table of ['operations','jobs','technology_inventory']) assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM ${table} WHERE project_id::text=$1 OR project_key=$1`, [p.id]).catch(() => ({ rows: [{ n: 0 }] }))).rows[0].n), 0);
+  });
+
+  test('resolves a genuinely ambiguous published snapshot without assigning a catalog item', async (t) => {
+    const repo = fixtureRepo({ dependencies: { ambiguous: '1' } }); const revisionId=randomUUID(), categoryA=randomUUID(), categoryB=randomUUID(), itemA=randomUUID(), itemB=randomUUID(), suffix=randomUUID().replaceAll('-','').slice(0,10).toUpperCase(), codeA=`AMBIG_A_${suffix}`,codeB=`AMBIG_B_${suffix}`;
+    await pool.query(`INSERT INTO technology_categories(id,code,name,selection_mode,min_selections,max_selections,is_active,display_order) VALUES($1,$3,'A','MULTIPLE',0,NULL,true,900),($2,$4,'B','MULTIPLE',0,NULL,true,901)`,[categoryA,categoryB,codeA,codeB]);
+    await pool.query(`INSERT INTO technology_catalog_items(id,category_id,code,name,is_active,display_order,metadata) VALUES($1,$3,'AMBIGUOUS','A',true,1,'{}'),($2,$4,'AMBIGUOUS','B',true,1,'{}')`,[itemA,itemB,categoryA,categoryB]);
+    await pool.query(`INSERT INTO technology_catalog_revisions(id,revision_number,status,content_hash) VALUES($1,$2,'DRAFT',$3)`,[revisionId,Date.now()*1000+Math.floor(Math.random()*999),'d'.repeat(64)]);
+    await pool.query(`INSERT INTO technology_catalog_revision_categories(revision_id,category_id,code,name,selection_mode,min_selections,max_selections,is_active,display_order) VALUES($1,$2,$4,'A','MULTIPLE',0,NULL,true,1),($1,$3,$5,'B','MULTIPLE',0,NULL,true,2)`,[revisionId,categoryA,categoryB,codeA,codeB]);
+    await pool.query(`INSERT INTO technology_catalog_revision_items(revision_id,catalog_item_id,category_id,code,name,is_active,display_order,metadata) VALUES($1,$2,$4,'AMBIGUOUS','A',true,1,'{}'),($1,$3,$5,'AMBIGUOUS','B',true,1,'{}')`,[revisionId,itemA,itemB,categoryA,categoryB]); await pool.query(`UPDATE technology_catalog_revisions SET status='PUBLISHED',published_at=clock_timestamp(),published_by='inventory-tester' WHERE id=$1`,[revisionId]);
+    const p=await project(repo,revisionId); t.after(() => rmSync(repo.root,{recursive:true,force:true})); await withTransaction(c=>startTechnologyInventory(c,p.id,`ambiguous:${p.id}`)); await runOnce(p.id);
+    const row=(await pool.query(`SELECT resolution_result,catalog_item_id FROM technology_inventory WHERE project_key=$1`,[p.id])).rows[0]; assert.deepEqual(row,{resolution_result:'AMBIGUOUS_CATALOG_ITEM',catalog_item_id:null});
+  });
+
+  test('rejects committed Git symlinks and submodules before parsing repository content', async (t) => {
+    const published:any=await publish(); const symlinkRepo=fixtureRepo({dependencies:{'modular-monolith':'1'}}); writeFileSync(join(symlinkRepo.root,'target'),'x'); symlinkSync('target',join(symlinkRepo.root,'tracked-link')); git(symlinkRepo.root,['add','tracked-link']); git(symlinkRepo.root,['commit','-m','symlink']); symlinkRepo.sha=git(symlinkRepo.root,['rev-parse','HEAD']); await expectWorkerFailure(symlinkRepo,published.revisionId,t);
+    const module=fixtureRepo({}); const submoduleRepo=fixtureRepo({dependencies:{'modular-monolith':'1'}}); git(submoduleRepo.root,['-c','protocol.file.allow=always','submodule','add',module.root,'vendor/module']); git(submoduleRepo.root,['commit','-m','submodule']); submoduleRepo.sha=git(submoduleRepo.root,['rev-parse','HEAD']); t.after(()=>rmSync(module.root,{recursive:true,force:true})); await expectWorkerFailure(submoduleRepo,published.revisionId,t);
+  });
+
+  test('uses only package.json and rolls back all final persistence when its insert fails', async (t) => {
+    const published:any=await publish(); const repo=fixtureRepo({dependencies:{'modular-monolith':'1'}}); writeFileSync(join(repo.root,'.env'),'secret=hidden'); writeFileSync(join(repo.root,'package-lock.json'),'{}'); mkdirSync(join(repo.root,'foo')); writeFileSync(join(repo.root,'foo','bar.json'),'{}'); git(repo.root,['add','.']); git(repo.root,['commit','-m','outside']); repo.sha=git(repo.root,['rev-parse','HEAD']); const p=await project(repo,published.revisionId); t.after(()=>cleanup(p.id,repo.root));
+    const accepted=await withTransaction(c=>startTechnologyInventory(c,p.id,`rollback:${p.id}`)); await pool.query(`CREATE FUNCTION test_inventory_persist_failure() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'inventory persistence failure'; END $$`); await pool.query(`CREATE TRIGGER test_inventory_persist_failure BEFORE INSERT ON technology_inventory FOR EACH ROW EXECUTE FUNCTION test_inventory_persist_failure()`);
+    try { await runOnce(p.id); } finally { await pool.query(`DROP TRIGGER test_inventory_persist_failure ON technology_inventory`); await pool.query(`DROP FUNCTION test_inventory_persist_failure()`); }
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE project_key=$1`,[p.id])).rows[0].n),0); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM artifacts WHERE project_id=$1 AND artifact_type='technology-inventory'`,[p.id])).rows[0].n),1); assert.equal((await pool.query(`SELECT status FROM jobs WHERE operation_id=$1`,[accepted.operation_id])).rows[0].status,'FAILED');
   });
 
   test('reserves operation, job and evidence before a malformed manifest fails without final inventory', async (t) => {
