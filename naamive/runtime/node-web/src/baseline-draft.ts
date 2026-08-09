@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import { config } from './config.js';
+import { putArtifact } from './artifacts.js';
 import { evaluateBaselineCardinality } from './cardinality-validator.js';
 import { evaluateCompatibility } from './compatibility-evaluator.js';
 import { validateTechnologyBaselineRevisionPayload } from './technology-contracts.js';
@@ -37,15 +38,35 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
   const rules = (await client.query(`SELECT compatibility_rule_id AS id,source_item_id,relationship_type,target_item_id,constraint_expression,severity,message,is_active FROM technology_catalog_revision_compatibility_rules WHERE revision_id=$1 AND is_active`, [context.technology_catalog_revision_id])).rows;
   const compatibility = evaluateCompatibility(items.filter((item) => item.classification !== 'PROHIBITED'), rules);
   if (compatibility.blocking) throw new Error(`TECHNOLOGY_BASELINE_DRAFT_COMPATIBILITY_INVALID:${compatibility.findings.find(x => x.blocking)?.code}`);
-  const existing = await client.query(`SELECT id FROM technology_baselines WHERE project_key=$1 FOR UPDATE`, [projectId]);
-  if (existing.rowCount) throw new Error('TECHNOLOGY_BASELINE_DRAFT_ALREADY_EXISTS');
-  const baselineId = randomUUID(), revisionId = randomUUID(), correlationId = randomUUID();
-  await client.query(`INSERT INTO technology_baselines(id,project_id,project_key) VALUES($1,$2,$3)`, [baselineId, projectId, projectId]);
-  await client.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,inventory_id,revision_number,status,payload,schema_version,actor,correlation_id)
-    VALUES($1,$2,$3,$4,$5,$6,$7,1,'DRAFT',$8,'technology-baseline/v1',$9,$10)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory.id, payload, config().operatorId, correlationId]);
+  // Locking the stable baseline root serializes successor allocation for this
+  // project.  The MAX query below is therefore safe against concurrent drafts.
+  const existing = (await client.query(`SELECT id FROM technology_baselines WHERE project_key=$1 FOR UPDATE`, [projectId])).rows[0];
+  const predecessorId = context.supersedes_baseline_revision_id ?? null;
+  if (existing && !predecessorId) throw new Error('TECHNOLOGY_BASELINE_DRAFT_ALREADY_EXISTS');
+  const baselineId = existing?.id ?? randomUUID(), revisionId = randomUUID(), correlationId = randomUUID();
+  if (!existing) await client.query(`INSERT INTO technology_baselines(id,project_id,project_key) VALUES($1,$2,$3)`, [baselineId, projectId, projectId]);
+  let revisionNumber = 1;
+  let predecessor: any;
+  if (predecessorId) {
+    predecessor = (await client.query(`SELECT id,baseline_id,revision_number,status,payload FROM technology_baseline_revisions WHERE id=$1 AND baseline_id=$2 AND project_id=$3 AND status IN ('APPROVED','REJECTED') FOR SHARE`, [predecessorId, baselineId, projectId])).rows[0];
+    if (!predecessor) throw new Error('TECHNOLOGY_BASELINE_DRAFT_PREDECESSOR_INVALID');
+    revisionNumber = Number((await client.query(`SELECT COALESCE(MAX(revision_number),0)+1 AS revision_number
+      FROM technology_baseline_revisions WHERE baseline_id=$1`, [baselineId])).rows[0].revision_number);
+  }
+  await client.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,inventory_id,revision_number,status,payload,schema_version,actor,correlation_id,supersedes_revision_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,'DRAFT',$9,'technology-baseline/v1',$10,$11,$12)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory.id, revisionNumber, payload, config().operatorId, correlationId, predecessorId]);
   for (const [index, item] of items.entries()) await client.query(`INSERT INTO technology_baseline_revision_items(id,baseline_revision_id,technology_catalog_revision_id,catalog_item_id,classification,version_constraint,reason,source_profile_id,display_order)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [randomUUID(), revisionId, context.technology_catalog_revision_id, item.catalog_item_id, item.classification, item.version_constraint ?? null, item.reason, context.technology_profile_id, index]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
     VALUES($1,'TECHNOLOGY_BASELINE_DRAFT_CREATED',$2,$3,$4,$5,$6,$7)`, [projectId, correlationId, revisionId, { baseline_id: baselineId, technology_catalog_revision_id: context.technology_catalog_revision_id, selection_context_id: context.id }, config().operatorId, project.workflow_code, project.workflow_version]);
+  if (predecessor) {
+    const priorItems = new Map<string, any>((predecessor.payload?.items ?? []).map((item: any) => [item.catalog_item_id, item]));
+    const currentItems = new Map<string, any>(items.map((item: any) => [item.catalog_item_id, item]));
+    const changed = [...currentItems].filter(([id, item]) => { const old = priorItems.get(id); return old && (old.classification !== item.classification || (old.version_constraint ?? null) !== (item.version_constraint ?? null)); }).length;
+    const summary = { added: [...currentItems.keys()].filter(id => !priorItems.has(id)).length, removed: [...priorItems.keys()].filter(id => !currentItems.has(id)).length, reclassified_or_reversioned: changed, unchanged: [...currentItems].filter(([id, item]) => { const old = priorItems.get(id); return old && old.classification === item.classification && (old.version_constraint ?? null) === (item.version_constraint ?? null); }).length };
+    const artifact = await putArtifact(client, projectId, 'technology-baseline-revision', JSON.stringify({ schema_version: 1, previous_revision_id: predecessor.id, previous_revision_number: predecessor.revision_number, baseline_revision_id: revisionId, revision_number: revisionNumber, differences: summary, applicable_decision: predecessor.status, correlation_id: correlationId }), undefined, revisionId);
+    await client.query(`INSERT INTO events(project_id,event_type,correlation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
+      VALUES($1,'TECHNOLOGY_BASELINE_REVISION_CREATED',$2,$3,$4,$5,$6,$7)`, [projectId, correlationId, revisionId, { supersedes_revision_id: predecessor.id, differences: summary, evidence_hash: artifact.hash }, config().operatorId, project.workflow_code, project.workflow_version]);
+  }
   return { baselineId, revisionId, technologyCatalogRevisionId: context.technology_catalog_revision_id };
 };
