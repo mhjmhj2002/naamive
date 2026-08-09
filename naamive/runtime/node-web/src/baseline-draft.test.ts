@@ -47,8 +47,10 @@ test('creates the monotonic successor draft from the context predecessor', async
   responses[1] = response([{ id: contextId, technology_catalog_revision_id: revisionId, technology_profile_id: profileId, supersedes_baseline_revision_id: predecessorId }]);
   responses[9] = response([{ id: baselineId }]);
   responses.splice(10, 0, response([{ id: predecessorId, baseline_id: baselineId, revision_number: 4, status: 'REJECTED', payload: { items: [] } }]));
+  responses.splice(11, 0, response([{ revision_number: 6 }]));
   const result = await run(responses);
   assert.equal(result.baselineId, baselineId);
   assert.ok(mock.calls.some((sql: string) => sql.includes('supersedes_revision_id')));
+  assert.ok(mock.calls.some((sql: string) => sql.includes('MAX(revision_number)')));
   assert.ok(mock.calls.filter((sql: string) => sql.startsWith('INSERT INTO events')).length >= 2);
 });

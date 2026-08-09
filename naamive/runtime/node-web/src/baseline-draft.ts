@@ -38,6 +38,8 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
   const rules = (await client.query(`SELECT compatibility_rule_id AS id,source_item_id,relationship_type,target_item_id,constraint_expression,severity,message,is_active FROM technology_catalog_revision_compatibility_rules WHERE revision_id=$1 AND is_active`, [context.technology_catalog_revision_id])).rows;
   const compatibility = evaluateCompatibility(items.filter((item) => item.classification !== 'PROHIBITED'), rules);
   if (compatibility.blocking) throw new Error(`TECHNOLOGY_BASELINE_DRAFT_COMPATIBILITY_INVALID:${compatibility.findings.find(x => x.blocking)?.code}`);
+  // Locking the stable baseline root serializes successor allocation for this
+  // project.  The MAX query below is therefore safe against concurrent drafts.
   const existing = (await client.query(`SELECT id FROM technology_baselines WHERE project_key=$1 FOR UPDATE`, [projectId])).rows[0];
   const predecessorId = context.supersedes_baseline_revision_id ?? null;
   if (existing && !predecessorId) throw new Error('TECHNOLOGY_BASELINE_DRAFT_ALREADY_EXISTS');
@@ -48,11 +50,11 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
   if (predecessorId) {
     predecessor = (await client.query(`SELECT id,baseline_id,revision_number,status,payload FROM technology_baseline_revisions WHERE id=$1 AND baseline_id=$2 AND project_id=$3 AND status IN ('APPROVED','REJECTED') FOR SHARE`, [predecessorId, baselineId, projectId])).rows[0];
     if (!predecessor) throw new Error('TECHNOLOGY_BASELINE_DRAFT_PREDECESSOR_INVALID');
-    revisionNumber = Number(predecessor.revision_number) + 1;
+    revisionNumber = Number((await client.query(`SELECT COALESCE(MAX(revision_number),0)+1 AS revision_number
+      FROM technology_baseline_revisions WHERE baseline_id=$1`, [baselineId])).rows[0].revision_number);
   }
-  await client.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,inventory_id,revision_number,status,payload,schema_version,actor,correlation_id)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,'DRAFT',$9,'technology-baseline/v1',$10,$11)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory.id, revisionNumber, payload, config().operatorId, correlationId]);
-  if (predecessorId) await client.query(`UPDATE technology_baseline_revisions SET supersedes_revision_id=$2 WHERE id=$1`, [revisionId, predecessorId]);
+  await client.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,inventory_id,revision_number,status,payload,schema_version,actor,correlation_id,supersedes_revision_id)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,'DRAFT',$9,'technology-baseline/v1',$10,$11,$12)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory.id, revisionNumber, payload, config().operatorId, correlationId, predecessorId]);
   for (const [index, item] of items.entries()) await client.query(`INSERT INTO technology_baseline_revision_items(id,baseline_revision_id,technology_catalog_revision_id,catalog_item_id,classification,version_constraint,reason,source_profile_id,display_order)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)`, [randomUUID(), revisionId, context.technology_catalog_revision_id, item.catalog_item_id, item.classification, item.version_constraint ?? null, item.reason, context.technology_profile_id, index]);
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
