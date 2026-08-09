@@ -1,6 +1,6 @@
 ---
 document_type: delivery-roadmap
-status: APPROVED_FOR_PHASE_4
+status: APPROVED_FOR_PHASE_5
 created_at: 2026-07-30
 approved_at: 2026-07-30
 approved_by: NAAMIVE product and engineering
@@ -148,12 +148,16 @@ vincular uma pendência explicável.
 | 4 | F4-10 | `DONE` | API/detail/web/SSE projetam execuções, tentativas, política, runtime efetivo e próxima ação sob flag, com replay sem duplicação e campos sensíveis filtrados. |
 | 4 | F4-11 | `DONE` | Suítes unitárias + E2E PostgreSQL agora cobrem contratos, paridade Codex-only, fallback para DeepSeek, bloqueio por quota e sanitização; `npm run migrate && npm test && npm run e2e` passaram em 2026-08-06. |
 | 4 | F4-12 | `DONE` | Worker/consumidores usam o serviço por flags desligadas por padrão, mantendo rollback para novos jobs sem reabrir dispatch incerto nem restaurar chamadas diretas. |
-| 5 | F5-01 | `TO DO` | Workflow v3 preserva o legado e introduz o gate de baseline. |
-| 5 | F5-02 | `TO DO` | Inventário read-only é sanitizado e vinculado ao SHA persistido. |
-| 5 | F5-03 | `TO DO` | Revisões e evidências imutáveis registram escolhas e decisões abertas. |
-| 5 | F5-04 | `TO DO` | Web e SSE expõem a revisão humana e o gate versionado. |
-| 5 | F5-05 | `TO DO` | Primeiro módulo exige baseline aprovada; projetos legados não são bloqueados. |
-| 5 | F5-06 | `TO DO` | A revisão aprovada propaga-se aos contratos de implementação. |
+| 5 | F5-01 | `DONE` | Contratos neutros TypeScript e JSON Schema Draft 2020-12 publicados, com validação de payload, enums canônicos e rejeição de texto tecnológico livre. |
+| 5 | F5-02 | `DONE` | Migration `026_phase_5_technology_catalog.sql` criou catálogo versionado, snapshots e inventário read-only sanitizado, com guards de imutabilidade. |
+| 5 | F5-03 | `DONE` | Migration `027_phase_5_baseline_context.sql` persiste contextos, baselines, revisões, gates e referências propagadas com FKs e invariantes. |
+| 5 | F5-04 | `DONE` | Seis seeds versionados validam envelope comum, categorias, itens, perfis e regras da revisão inicial. |
+| 5 | F5-05 | `DONE` | Publicador transacional/idempotente valida o pacote, congela o snapshot publicado e registra hash, ator, correlação e evidência. |
+| 5 | F5-06 | `DONE` | Avaliador genérico aplica `REQUIRES`, `CONFLICTS_WITH` e `RECOMMENDS` por severidade, direção, escopo e versão. |
+| 5 | F5-07 | `DONE` | Validador genérico cobre cardinalidade, precedência de classificação e deferimento explícito sem item tecnológico sentinela. |
+| 5 | F5-08 | `DONE` | `START_TECHNOLOGY_INVENTORY` inspeciona worktree detached no SHA reservado e persiste somente fatos sanitizados resolvidos no snapshot publicado. |
+| 5 | F5-09 | `DONE` | `PREPARE_TECHNOLOGY_SELECTION_CONTEXT` fixa snapshot publicado, perfil e regras imutáveis antes da criação da baseline. |
+| 5 | F5-10 | `DONE` | Migration `029_phase_5_workflow_v3.sql` publicou `PROJECT_DISCOVERY` v3 e a seleção atômica preserva projetos v2 existentes. |
 | 6 | F6-01 | `TO DO` | — |
 | 6 | F6-02 | `TO DO` | — |
 | 6 | F6-03 | `TO DO` | — |

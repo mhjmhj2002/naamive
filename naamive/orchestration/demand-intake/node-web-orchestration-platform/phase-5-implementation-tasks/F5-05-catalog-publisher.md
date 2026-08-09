@@ -1,6 +1,6 @@
 ---
 task: F5-05
-status: TODO
+status: DONE
 ---
 
 # F5-05 — Publicação transacional e idempotente da revisão do Catálogo

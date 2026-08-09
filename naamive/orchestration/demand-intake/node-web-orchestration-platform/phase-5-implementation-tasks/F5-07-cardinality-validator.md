@@ -1,6 +1,6 @@
 ---
 task: F5-07
-status: TODO
+status: DONE
 ---
 
 # F5-07 — Validador de cardinalidade, classificação e deferimento

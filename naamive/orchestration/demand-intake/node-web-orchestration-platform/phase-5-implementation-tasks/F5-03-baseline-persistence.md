@@ -1,6 +1,6 @@
 ---
 task: F5-03
-status: TODO
+status: DONE
 ---
 
 # F5-03 — Persistência do contexto de seleção, baseline e propagação de referência

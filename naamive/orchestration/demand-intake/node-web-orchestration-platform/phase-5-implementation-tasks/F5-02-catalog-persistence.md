@@ -1,6 +1,6 @@
 ---
 task: F5-02
-status: TODO
+status: DONE
 ---
 
 # F5-02 — Persistência versionada do Catálogo Tecnológico e do Inventário read-only
