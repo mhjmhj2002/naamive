@@ -37,8 +37,9 @@ else {
     const expanded = await get(`/api/technology/profiles/${f.profile}`); assert.ok(expanded.items.every((item: any) => item.catalog_item_id));
     await get(`/api/technology/catalog-revisions/${f.catalog.revisionId}`);
     const draft = randomUUID(); await pool.query(`INSERT INTO technology_catalog_revisions(id,revision_number,status,content_hash) VALUES($1,$2,'DRAFT',$3)`, [draft, Date.now(), 'd'.repeat(64)]); await get(`/api/technology/catalog-revisions/${draft}`, 404);
-    const superseded = randomUUID(); await pool.query(`INSERT INTO technology_catalog_revisions(id,revision_number,status,content_hash) VALUES($1,$2,'SUPERSEDED',$3)`, [superseded, Date.now() + 1, 'e'.repeat(64)]); await get(`/api/technology/catalog-revisions/${superseded}`, 404);
+    const superseded = randomUUID(); await pool.query(`INSERT INTO technology_catalog_revisions(id,revision_number,status,content_hash,published_at,published_by) VALUES($1,$2,'SUPERSEDED',$3,clock_timestamp(),'tester')`, [superseded, Date.now() + 1, 'e'.repeat(64)]); await get(`/api/technology/catalog-revisions/${superseded}`, 404);
     await get(`/api/projects/${f.project}/technology-baseline`); await get(`/api/projects/${f.project}/technology-baseline/selection-context`);
+    const inventoryKey = `f5-15-http-inventory:${f.project}`, inventory = await post(`/api/projects/${f.project}/technology-baseline/inventory`, {}, inventoryKey, 202), repeatedInventory = await post(`/api/projects/${f.project}/technology-baseline/inventory`, {}, inventoryKey, 202); assert.equal(inventory.operation_id, repeatedInventory.operation_id);
     const key = `f5-15-create:${f.project}`, created = await post(`/api/projects/${f.project}/technology-baseline/revisions`, f.payload, key), repeated = await post(`/api/projects/${f.project}/technology-baseline/revisions`, f.payload, key);
     assert.equal(created.operation_id, repeated.operation_id); assert.equal((await pool.query('SELECT revision_id FROM operations WHERE id=$1', [created.operation_id])).rows[0].revision_id, null);
     for (const field of ['technology_name','ecosystem','technology_version','framework']) await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, [field]: 'forbidden' }, randomUUID(), 422);
@@ -49,6 +50,8 @@ else {
     const inactiveContext = randomUUID(); await pool.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,technology_profile_id,hash,status) VALUES($1,$2::uuid,$2,$3,$4,$5,'SUPERSEDED')`, [inactiveContext,f.project,f.catalog.revisionId,f.profile,'f'.repeat(64)]);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, selection_context_id: inactiveContext }, randomUUID(), 409);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, items: [{ ...f.payload.items[0], catalog_item_id: randomUUID() }] }, randomUUID(), 422);
+    const inactiveItem = (await pool.query(`SELECT catalog_item_id FROM technology_catalog_revision_items WHERE revision_id=$1 AND NOT is_active LIMIT 1`, [f.catalog.revisionId])).rows[0].catalog_item_id;
+    await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, items: [{ ...f.payload.items[0], catalog_item_id: inactiveItem }] }, randomUUID(), 422);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, items: [{ ...f.payload.items[0], classification: 'ALLOWED' }, ...f.payload.items.slice(1)] }, randomUUID(), 422);
   });
 }
