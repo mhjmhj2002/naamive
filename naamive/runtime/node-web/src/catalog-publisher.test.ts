@@ -72,6 +72,18 @@ if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('unused')) {
     await expects('PROFILE_VERSION_CONSTRAINT_REQUIRED', () => publishTechnologyCatalog(version, 'actor', randomUUID()));
   });
 
+  test('rejects profiles that cannot be safely expanded', async () => {
+    const noItems = await packageFor((x) => {
+      x.profileItems.records = x.profileItems.records.filter((item: any) => item.profile_code !== 'TYPESCRIPT_MODULAR_MONOLITH');
+    });
+    await expects('PROFILE_CARDINALITY_INVALID', () => publishTechnologyCatalog(noItems, 'actor', randomUUID()));
+
+    const duplicate = await packageFor((x) => {
+      x.profileItems.records.push(structuredClone(x.profileItems.records[0]));
+    });
+    await expects('SEED_DUPLICATE_CODE', () => publishTechnologyCatalog(duplicate, 'actor', randomUUID()));
+  });
+
   test('rejects profile cardinality violations', async () => {
     const min = await packageFor((x) => { const category = x.categories.records.find((c: any) => c.code === 'DATABASE'); category.min_selections = 2; category.max_selections = 2; });
     await expects('PROFILE_CARDINALITY_INVALID', () => publishTechnologyCatalog(min, 'actor', randomUUID()));
@@ -84,6 +96,30 @@ if (!process.env.DATABASE_URL || process.env.DATABASE_URL.includes('unused')) {
     await expects('PROFILE_COMPATIBILITY_ERROR', () => publishTechnologyCatalog(requires, 'actor', randomUUID()));
     const conflicts = await packageFor((x) => { const rule = x.compatibilityRules.records[0]; rule.relationship_type = 'CONFLICTS_WITH'; rule.target_item_code = 'LAYERED_MODULES'; });
     await expects('PROFILE_COMPATIBILITY_ERROR', () => publishTechnologyCatalog(conflicts, 'actor', randomUUID()));
+  });
+
+  test('rejects incompatible and non-canonical compatibility rule combinations', async () => {
+    const selfReference = await packageFor((x) => {
+      x.compatibilityRules.records[0].target_item_code = x.compatibilityRules.records[0].source_item_code;
+    });
+    await expects('COMPATIBILITY_SELF_REFERENCE', () => publishTechnologyCatalog(selfReference, 'actor', randomUUID()));
+
+    const duplicateConflict = await packageFor((x) => {
+      const original = x.compatibilityRules.records[0];
+      x.compatibilityRules.records.push({
+        ...original,
+        relationship_type: 'CONFLICTS_WITH',
+        source_item_code: 'MODULAR_MONOLITH',
+        target_item_code: 'IN_PROCESS_MODULE_CALL',
+        is_active: false
+      });
+      x.compatibilityRules.records.push({
+        ...x.compatibilityRules.records.at(-1),
+        source_item_code: 'IN_PROCESS_MODULE_CALL',
+        target_item_code: 'MODULAR_MONOLITH'
+      });
+    });
+    await expects('SEED_DUPLICATE_CODE', () => publishTechnologyCatalog(duplicateConflict, 'actor', randomUUID()));
   });
 
   test('rolls back every catalog write when a snapshot insert fails', async () => {
