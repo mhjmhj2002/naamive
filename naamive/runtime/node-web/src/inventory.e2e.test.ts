@@ -85,6 +85,18 @@ else {
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE project_key=$1`,[p.id])).rows[0].n),0); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM artifacts WHERE project_id=$1 AND artifact_type='technology-inventory'`,[p.id])).rows[0].n),1); assert.equal((await pool.query(`SELECT status FROM jobs WHERE operation_id=$1`,[accepted.operation_id])).rows[0].status,'FAILED');
   });
 
+  test('successfully inventories only package.json and never persists allowlist-external markers', async (t) => {
+    const markers = ['ENV_ONLY_MARKER','LOCK_ONLY_MARKER','SECRET_ONLY_MARKER','NESTED_ONLY_MARKER'];
+    const published: any = await publish(); const repo = fixtureRepo({ dependencies: { 'modular-monolith': '1' } });
+    writeFileSync(join(repo.root, '.env'), markers[0]); writeFileSync(join(repo.root, 'package-lock.json'), markers[1]); writeFileSync(join(repo.root, 'secret.json'), markers[2]); mkdirSync(join(repo.root, 'foo')); writeFileSync(join(repo.root, 'foo', 'bar.json'), markers[3]);
+    git(repo.root, ['add', '.']); git(repo.root, ['commit', '-m', 'allowlist fixture']); repo.sha = git(repo.root, ['rev-parse', 'HEAD']);
+    const p = await project(repo, published.revisionId); t.after(() => rmSync(repo.root, { recursive: true, force: true })); const accepted = await withTransaction(c => startTechnologyInventory(c, p.id, `allowlist:${p.id}`));
+    assert.equal(await runOnce(p.id), true); assert.equal((await pool.query(`SELECT status FROM jobs WHERE operation_id=$1`, [accepted.operation_id])).rows[0].status, 'COMPLETED'); assert.equal((await pool.query(`SELECT status FROM operations WHERE id=$1`, [accepted.operation_id])).rows[0].status, 'SUCCEEDED');
+    const rows = (await pool.query(`SELECT source_path,value FROM technology_inventory WHERE project_key=$1`, [p.id])).rows; assert.ok(rows.length > 0); assert.ok(rows.every((row: any) => row.source_path === 'package.json')); assert.ok(rows.some((row: any) => row.value === 'MODULAR_MONOLITH'));
+    const values = JSON.stringify(rows); const artifact: any = (await pool.query(`SELECT storage_uri FROM artifacts WHERE project_id=$1 AND artifact_type='technology-inventory' ORDER BY created_at DESC LIMIT 1`, [p.id])).rows[0]; const snapshot = readFileSync(new URL(artifact.storage_uri), 'utf8');
+    for (const marker of markers) { assert.ok(!values.includes(marker)); assert.ok(!snapshot.includes(marker)); }
+  });
+
   test('reserves operation, job and evidence before a malformed manifest fails without final inventory', async (t) => {
     const published: any = await publish(); const repo = fixtureRepo({ dependencies: { 'modular-monolith': '1' } }); writeFileSync(join(repo.root, 'package.json'), '{'); git(repo.root, ['add', 'package.json']); git(repo.root, ['commit', '-m', 'bad']); const badSha = git(repo.root, ['rev-parse', 'HEAD']); const p = await project({ ...repo, sha: badSha }, published.revisionId); t.after(() => cleanup(p.id, repo.root));
     const accepted = await withTransaction(c => startTechnologyInventory(c, p.id, `malformed:${p.id}`)); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM artifacts WHERE project_id=$1 AND artifact_type='technology-inventory'`, [p.id])).rows[0].n), 1);
