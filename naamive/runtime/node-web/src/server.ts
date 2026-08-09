@@ -10,7 +10,7 @@ import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
-import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, revalidateCandidate, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
+import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializationBaselineOptions, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, revalidateCandidate, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
 import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
 import { agentExecutionService } from './agent-execution-service.js';
 import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-gate.js';
@@ -41,6 +41,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
   const baselineRevisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/revisions\/([^/]+)\/start-revision$/);
+  const materializationBaselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/materialization-options$/);
   const runtimeValidateMatch = url.pathname.match(/^\/api\/admin\/ai-runtimes\/([^/]+)\/validate$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
@@ -62,6 +63,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (baselineMatch && request.method === 'POST' && baselineMatch[3] === 'submit') return respond(response, 202, await submitTechnologyBaseline(baselineMatch[1], baselineMatch[2], request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (baselineMatch && request.method === 'POST' && baselineMatch[3] === 'decision') return respond(response, 202, await decideTechnologyBaseline(baselineMatch[1], baselineMatch[2], await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (baselineRevisionMatch && request.method === 'POST') return respond(response, 202, await startTechnologyBaselineRevision(baselineRevisionMatch[1], baselineRevisionMatch[2], request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (materializationBaselineMatch && request.method === 'GET') return respond(response, 200, await materializationBaselineOptions(materializationBaselineMatch[1]));
   if (phase3Match && request.method === 'POST' && !phase3Match[2]) return respond(response,202,await materializeModule(phase3Match[1],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'decision') return respond(response,202,await decideModule(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'definition') return respond(response,202,await completeDefinition(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));

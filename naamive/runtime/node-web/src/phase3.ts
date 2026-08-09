@@ -49,6 +49,14 @@ export const phase3Detail=async(projectId:string)=>{
   return {modules:expose(modules.rows),work_items:expose(workItems.rows),deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),jobs:expose(jobs.rows),evidence:artifacts.rows};
 };
 
+export const materializationBaselineOptions=async(projectId:string)=>{
+  const project=(await pool.query(`SELECT workflow_code,workflow_version FROM projects WHERE id=$1`,[projectId])).rows[0];
+  if(!project)throw new ApiError(404,'PROJECT_NOT_FOUND');
+  const v3=project.workflow_code==='PROJECT_DISCOVERY'&&Number(project.workflow_version)===3;
+  const revisions=v3?(await pool.query(`SELECT id,revision_number FROM technology_baseline_revisions WHERE project_key=$1 AND status='APPROVED' ORDER BY revision_number DESC`,[projectId])).rows:[];
+  return { baseline_required:v3, approved_revisions:revisions };
+};
+
 export const findingFingerprint=(description:string)=>createHash('sha256').update(description.trim().toLowerCase()).digest('hex');
 
 const legacyStartDevelopment=async(projectId:string,workItemId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{throw new ApiError(410,'PHASE3_LEGACY_COMMAND_DISABLED');});
