@@ -1,6 +1,6 @@
 ---
 task: F5-12
-status: TODO
+status: DONE
 ---
 
 # F5-12 — Submissão da baseline e gate versionado de aprovação

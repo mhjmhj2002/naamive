@@ -1,6 +1,6 @@
 ---
 task: F5-21
-status: TODO
+status: DONE
 ---
 
 # F5-21 — Aceite consolidado da Fase 5

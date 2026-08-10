@@ -1,6 +1,6 @@
 ---
 task: F5-13
-status: TODO
+status: DONE
 ---
 
 # F5-13 — Nova revisão da Technology Baseline e reformulação

@@ -385,6 +385,10 @@ registrados. A implementação pode iniciar respeitando essas restrições.
 
 ## Fase 5 — Baseline tecnológica antes dos módulos
 
+**Status:** concluída e validada. As implementation tasks F5-01 a F5-21
+estão `DONE`; a dívida TD-F5-001 permanece `OPEN` exclusivamente como melhoria
+futura de cobertura automatizada, sem pendência funcional da Fase 5.
+
 **Valor entregue:** após o compromisso de produto, o operador revisa e aprova
 orientações técnicas auditáveis antes de materializar o primeiro módulo. A
 baseline registra fatos sanitizados do repositório, restrições, preferências e

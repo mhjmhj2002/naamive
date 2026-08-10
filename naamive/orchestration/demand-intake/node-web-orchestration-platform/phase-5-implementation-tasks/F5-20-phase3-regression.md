@@ -1,6 +1,6 @@
 ---
 task: F5-20
-status: TODO
+status: DONE
 ---
 
 # F5-20 — Regressão Fase 3, coexistência v2/v3 e legado sem baseline

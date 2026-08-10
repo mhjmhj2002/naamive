@@ -1,6 +1,6 @@
 ---
 task: F5-14
-status: TODO
+status: DONE
 ---
 
 # F5-14 — Bloqueio da primeira materialização e propagação da revisão aprovada
