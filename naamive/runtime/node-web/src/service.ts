@@ -151,7 +151,7 @@ export const archiveProject = async (projectId: string, body: Record<string, unk
 });
 
 export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
-const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,sd.label AS status,sd.next_action,
+const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,p.draft,sd.label AS status,sd.next_action,
   (SELECT event_type FROM events e WHERE e.project_id=p.id ORDER BY id DESC LIMIT 1) AS last_event
  FROM projects p
  LEFT JOIN workflow_definitions wd ON wd.code=p.workflow_code AND wd.version=p.workflow_version
