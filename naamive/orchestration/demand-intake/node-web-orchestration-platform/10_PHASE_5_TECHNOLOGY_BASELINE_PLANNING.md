@@ -10,7 +10,7 @@ primary_roadmap: 01_DELIVERY_ROADMAP.md
 
 > **Nota de reorganização — 2026-08-06:** a baseline foi renumerada para Fase 5
 > para liberar a Fase 4 ao runtime multi-provider. O escopo deste plano
-> permanece inalterado e continua sem autorização de implementação.
+> permaneceu inalterado; sua implementação foi concluída e validada.
 
 ## Objetivo
 
@@ -589,16 +589,18 @@ SSE publica `TECHNOLOGY_SELECTION_CONTEXT_READY`, `TECHNOLOGY_INVENTORY_STARTED`
 
 ## Sequência F5-01 a F5-06
 
-| Ordem | Tarefa | Resultado verificável |
-| --- | --- | --- |
-| 1 | F5-01 | Seeds versionados publicam transacionalmente a revisão inicial do catálogo, categorias, itens, perfil, cardinalidade e regras; v2 permanece intacto. |
-| 2 | F5-02 | Workflow v3 fixa uma revisão `PUBLISHED`; inventário seguro e read-only resolve fatos exclusivamente nesse snapshot e gera evidência sanitizada no SHA vinculado. |
-| 3 | F5-03 | Baseline/revisões/evidências imutáveis persistem `technology_catalog_revision_id`, `catalog_item_id`, classificações, restrições e decisões abertas. |
-| 4 | F5-04 | API, web e SSE consultam o snapshot publicado e permitem revisão humana dirigida por dados, payload sem tecnologia livre e gate versionado. |
-| 5 | F5-05 | Novo projeto não materializa o primeiro módulo sem baseline aprovada composta somente por itens ativos da revisão publicada; legado não é bloqueado. |
-| 6 | F5-06 | A revisão aplicada permanece referenciada por todos os contratos de implementação relevantes; evolução futura ocorre por capacidade implementada e nova revisão de catálogo. |
+| Ordem | Tarefa | Resultado verificável | Status |
+| --- | --- | --- | --- |
+| 1 | F5-01 | Seeds versionados publicam transacionalmente a revisão inicial do catálogo, categorias, itens, perfil, cardinalidade e regras; v2 permanece intacto. | `DONE` |
+| 2 | F5-02 | Workflow v3 fixa uma revisão `PUBLISHED`; inventário seguro e read-only resolve fatos exclusivamente nesse snapshot e gera evidência sanitizada no SHA vinculado. | `DONE` |
+| 3 | F5-03 | Baseline/revisões/evidências imutáveis persistem `technology_catalog_revision_id`, `catalog_item_id`, classificações, restrições e decisões abertas. | `DONE` |
+| 4 | F5-04 | API, web e SSE consultam o snapshot publicado e permitem revisão humana dirigida por dados, payload sem tecnologia livre e gate versionado. | `DONE` |
+| 5 | F5-05 | Novo projeto não materializa o primeiro módulo sem baseline aprovada composta somente por itens ativos da revisão publicada; legado não é bloqueado. | `DONE` |
+| 6 | F5-06 | A revisão aplicada permanece referenciada por todos os contratos de implementação relevantes; evolução futura ocorre por capacidade implementada e nova revisão de catálogo. | `DONE` |
 
-Os status no roadmap só mudam de `TO DO` para `DOING` após autorização de implementação. Este plano não altera status nem cria issues.
+Esta sequência foi concluída e validada. O roadmap consolidado registra F5-01 a
+F5-21 como `DONE`; a TD-F5-001 continua `OPEN` exclusivamente como melhoria
+futura de cobertura automatizada, sem pendência funcional da Fase 5.
 
 ## Critério de aceite da Fase 5
 

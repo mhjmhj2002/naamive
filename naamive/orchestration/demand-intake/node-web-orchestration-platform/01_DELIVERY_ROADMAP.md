@@ -158,6 +158,17 @@ vincular uma pendência explicável.
 | 5 | F5-08 | `DONE` | `START_TECHNOLOGY_INVENTORY` inspeciona worktree detached no SHA reservado e persiste somente fatos sanitizados resolvidos no snapshot publicado. |
 | 5 | F5-09 | `DONE` | `PREPARE_TECHNOLOGY_SELECTION_CONTEXT` fixa snapshot publicado, perfil e regras imutáveis antes da criação da baseline. |
 | 5 | F5-10 | `DONE` | Migration `029_phase_5_workflow_v3.sql` publicou `PROJECT_DISCOVERY` v3 e a seleção atômica preserva projetos v2 existentes. |
+| 5 | F5-11 | `DONE` | Baseline `DRAFT` expande o perfil do contexto imutável, valida referências, cardinalidade e compatibilidade e registra evidência auditável. |
+| 5 | F5-12 | `DONE` | Submissão e gate versionado aprovam ou rejeitam a baseline com decisão, hash e evidência imutáveis. |
+| 5 | F5-13 | `DONE` | Revisões sucessoras preservam linhagem, numeração monotônica, contextos superseded e contratos já aprovados. |
+| 5 | F5-14 | `DONE` | A baseline aprovada bloqueia a primeira materialização e é propagada a módulo, work item, QA, entrega, findings e Dev, preservando o legado v2. |
+| 5 | F5-15 | `DONE` | API expõe somente snapshots e opções selecionáveis e aceita payloads de baseline apenas por referências catalogadas. |
+| 5 | F5-16 | `DONE` | Projeções e SSE publicam eventos sanitizados e auditáveis da baseline; a TD-F5-001 permanece aberta somente para consolidar a cobertura E2E desses eventos. |
+| 5 | F5-17 | `DONE` | Interface web dirigida por dados apresenta inventário, baseline, gate e bloqueio de materialização, mantendo a jornada legada disponível. |
+| 5 | F5-18 | `DONE` | Testes unitários e de persistência cobrem contratos, imutabilidade, idempotência, cardinalidade e compatibilidade. |
+| 5 | F5-19 | `DONE` | Testes de integração cobrem inventário, workflow, gate e evolução por nova revisão sem alterar registros autorizados. |
+| 5 | F5-20 | `DONE` | Regressões da Fase 3 confirmam coexistência do legado e propagação obrigatória da baseline em projetos v3. |
+| 5 | F5-21 | `DONE` | Aceite consolidado validou a jornada versionada Catálogo → Perfil → Projeto → Baseline → Módulo e a preservação do legado. |
 | 6 | F6-01 | `TO DO` | — |
 | 6 | F6-02 | `TO DO` | — |
 | 6 | F6-03 | `TO DO` | — |
@@ -400,14 +411,14 @@ para o banco e só libera a criação do primeiro módulo após o gate humano. A
 revisão aprovada acompanha o módulo e seus contratos de implementação, sem
 alterar projetos legados ou módulos já autorizados.
 
-| ID | Tarefa e definição de pronto | Impedimento / tratamento |
-| --- | --- | --- |
-| F5-01 | Publicar `PROJECT_DISCOVERY` v3 com estados, guards e gate de baseline, preservando v2 para legados. | Não migrar silenciosamente projeto em andamento ou módulo já criado. |
-| F5-02 | Gerar inventário tecnológico read-only, sanitizado e vinculado ao SHA reservado. | Não executar código do repositório nem expor conteúdo sensível. |
-| F5-03 | Persistir baseline, revisões, decisões abertas e evidências imutáveis com schema versionado. | Rejeitar classificações ou ranges contraditórios antes do gate. |
-| F5-04 | Exibir inventário, orientações e gate humano por web/SSE com projeções sanitizadas. | O navegador não calcula nem envia fatos tecnológicos. |
-| F5-05 | Bloquear a primeira materialização até haver baseline aprovada e manter o fluxo legado explícito. | Rotas alternativas e workers obedecem ao mesmo guard transacional. |
-| F5-06 | Propagar a revisão aprovada a módulo, arquitetura, work item, QA, entrega e execução Dev. | FKs/guards impedem referência nula, divergente ou não aprovada. |
+| ID | Tarefa e definição de pronto | Impedimento / tratamento | Status |
+| --- | --- | --- | --- |
+| F5-01 | Publicar `PROJECT_DISCOVERY` v3 com estados, guards e gate de baseline, preservando v2 para legados. | Não migrar silenciosamente projeto em andamento ou módulo já criado. | `DONE` |
+| F5-02 | Gerar inventário tecnológico read-only, sanitizado e vinculado ao SHA reservado. | Não executar código do repositório nem expor conteúdo sensível. | `DONE` |
+| F5-03 | Persistir baseline, revisões, decisões abertas e evidências imutáveis com schema versionado. | Rejeitar classificações ou ranges contraditórios antes do gate. | `DONE` |
+| F5-04 | Exibir inventário, orientações e gate humano por web/SSE com projeções sanitizadas. | O navegador não calcula nem envia fatos tecnológicos. | `DONE` |
+| F5-05 | Bloquear a primeira materialização até haver baseline aprovada e manter o fluxo legado explícito. | Rotas alternativas e workers obedecem ao mesmo guard transacional. | `DONE` |
+| F5-06 | Propagar a revisão aprovada a módulo, arquitetura, work item, QA, entrega e execução Dev. | FKs/guards impedem referência nula, divergente ou não aprovada. | `DONE` |
 
 ## Fase 6 — Projeto entregue e aceito pela web
 
