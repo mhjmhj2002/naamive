@@ -27,3 +27,5 @@ Execute uma task por vez e atualize o roadmap somente após seu aceite. A Fase 5
 | 21 | [F5-21 — Aceite consolidado](F5-21-acceptance.md) | F5-01 a F5-20 |
 
 Fontes canônicas: [roadmap](../01_DELIVERY_ROADMAP.md), [planning Fase 5](../10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md), [auditoria Fase 5](../PHASE_5_TECHNOLOGY_BASELINE_AUDIT.md), [planning Fase 4](../13_PHASE_4_MULTI_PROVIDER_AGENT_RUNTIME_PLANNING.md), [prontidão Fase 4](../14_PHASE_4_IMPLEMENTATION_READINESS_PACKAGE.md) e [contratos Fase 4](../phase-4-contracts/).
+
+Ocorrências encontradas durante o teste manual: [Bugs de teste da Fase 5](BUGS_PHASE_5_TESTING.md).
