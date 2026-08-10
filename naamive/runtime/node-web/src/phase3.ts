@@ -54,7 +54,7 @@ export const materializationBaselineOptions=async(projectId:string)=>{
   if(!project)throw new ApiError(404,'PROJECT_NOT_FOUND');
   const v3=project.workflow_code==='PROJECT_DISCOVERY'&&Number(project.workflow_version)===3;
   const revisions=v3?(await pool.query(`SELECT id,revision_number FROM technology_baseline_revisions WHERE project_key=$1 AND status='APPROVED' ORDER BY revision_number DESC`,[projectId])).rows:[];
-  return { baseline_required:v3, approved_revisions:revisions };
+  return { baseline_required:v3, baseline_requirement:v3?'BASELINE_REQUIRED':'BASELINE_NOT_REQUIRED_LEGACY', approved_revisions:revisions };
 };
 
 export const findingFingerprint=(description:string)=>createHash('sha256').update(description.trim().toLowerCase()).digest('hex');
