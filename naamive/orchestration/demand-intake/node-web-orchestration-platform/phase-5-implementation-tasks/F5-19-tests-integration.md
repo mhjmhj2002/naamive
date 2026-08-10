@@ -1,6 +1,6 @@
 ---
 task: F5-19
-status: TODO
+status: DONE
 ---
 
 # F5-19 — Testes de integração de inventário, workflow e múltiplas revisões
