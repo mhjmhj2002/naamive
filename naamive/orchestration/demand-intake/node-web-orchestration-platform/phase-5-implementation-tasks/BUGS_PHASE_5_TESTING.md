@@ -19,3 +19,41 @@ Registro incremental dos problemas encontrados durante o teste manual da Fase 5.
 | F5-BUG-013 | F5-17 / proposta de módulo | O formulário liberado após a baseline aprovada pedia somente um identificador técnico e chamava a ação de “Novo módulo”, sem explicar qual capacidade do produto deveria ser proposta. | O formulário passou a pedir identificador, nome e objetivo, com orientação e exemplo focados na capacidade de negócio. | DONE |
 | F5-BUG-014 | F5-17 / contexto de negócio do módulo | A melhoria inicial do formulário ainda pedia que o operador definisse o assunto do módulo sem apresentar a necessidade e o resultado já aprovados para o projeto. | O primeiro módulo agora apresenta o problema, resultado desejado e uma proposta explícita de registro e acompanhamento de solicitações, derivada do contexto do projeto. | DONE |
 | F5-BUG-015 | F5-17 / campos da proposta | A revisão de módulo apresentava escopo, exclusões, dependências e critérios como “Não informado”, mas o formulário de proposta não continha campos para preenchê-los. | O formulário passou a coletar esses quatro grupos, em linhas separadas, e a enviá-los na proposta para revisão. | DONE |
+| F5-BUG-016 | Revisão de módulo / retorno para ajustes | Ao usar “Solicitar ajustes” em uma proposta de módulo, o feedback é persistido e o gate é fechado como `REJECTED`, mas a mesma proposta não retorna para edição. O módulo fica em `WAITING_FOR_MODULE_APPROVAL`, a revisão continua `PENDING_APPROVAL`, e não há UI nem rota de negócio para corrigir e reenviar a proposta. | **PENDENTE — implementar.** Reabrir a proposta como uma nova revisão do mesmo módulo, preservar e pré-preencher os dados já enviados, exibir o feedback da revisão e abrir um novo gate de aprovação após o reenvio. Não criar outro módulo nem reutilizar o gate rejeitado. | OPEN |
+
+## F5-BUG-016 — especificação para implementação
+
+### Cenário reproduzido
+
+- Projeto: `Centralizar solicitações de atendimento (recuperado)`.
+- Módulo: `registro-de-solicitacoes`.
+- Proposta enviada sem `out_of_scope`, `dependencies` e `acceptance_criteria`.
+- A decisão **Solicitar ajustes** foi enviada com o feedback:
+  - `O que não faz parte`
+  - `Dependências`
+  - `Como saberemos que deu certo?`
+- Persistência observada: gate `MODULE_APPROVAL` com `status=REJECTED`; módulo em `WAITING_FOR_MODULE_APPROVAL`; revisão 1 em `PENDING_APPROVAL`.
+
+### Comportamento esperado
+
+Após solicitar ajustes, o operador deve voltar automaticamente para uma tela de edição da **mesma proposta**, identificada como revisão posterior do módulo existente. A tela deve mostrar o feedback recebido e pré-preencher, no mínimo:
+
+- identificador técnico;
+- nome;
+- objetivo;
+- escopo;
+- itens fora de escopo;
+- dependências;
+- critérios de aceite;
+- referência à Technology Baseline aprovada.
+
+Ao reenviar, o sistema deve superseder a revisão rejeitada, manter o mesmo `module_id` e `module_key`, registrar uma nova `module_revision` e abrir um novo gate `MODULE_APPROVAL`. O gate rejeitado é histórico e não pode ser reaberto nem reutilizado.
+
+### Critérios de aceite
+
+1. Solicitar ajustes exige feedback e não deixa a proposta sem ação possível.
+2. A tela de edição apresenta o feedback e todos os dados previamente enviados.
+3. O reenvio não cria um segundo módulo com o mesmo propósito.
+4. A nova revisão mantém a referência à baseline aprovada.
+5. A linha do tempo registra a solicitação de ajustes, o início da revisão e a nova submissão.
+6. A aprovação da nova revisão segue o fluxo normal para detalhamento do módulo.
