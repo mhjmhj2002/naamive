@@ -20,6 +20,42 @@ Registro incremental dos problemas encontrados durante o teste manual da Fase 5.
 | F5-BUG-014 | F5-17 / contexto de negócio do módulo | A melhoria inicial do formulário ainda pedia que o operador definisse o assunto do módulo sem apresentar a necessidade e o resultado já aprovados para o projeto. | O primeiro módulo agora apresenta o problema, resultado desejado e uma proposta explícita de registro e acompanhamento de solicitações, derivada do contexto do projeto. | DONE |
 | F5-BUG-015 | F5-17 / campos da proposta | A revisão de módulo apresentava escopo, exclusões, dependências e critérios como “Não informado”, mas o formulário de proposta não continha campos para preenchê-los. | O formulário passou a coletar esses quatro grupos, em linhas separadas, e a enviá-los na proposta para revisão. | DONE |
 | F5-BUG-016 | Revisão de módulo / retorno para ajustes | Ao usar “Solicitar ajustes” em uma proposta de módulo, o feedback é persistido e o gate é fechado como `REJECTED`, mas a mesma proposta não retorna para edição. O módulo fica em `WAITING_FOR_MODULE_APPROVAL`, a revisão continua `PENDING_APPROVAL`, e não há UI nem rota de negócio para corrigir e reenviar a proposta. | **PENDENTE — implementar.** Reabrir a proposta como uma nova revisão do mesmo módulo, preservar e pré-preencher os dados já enviados, exibir o feedback da revisão e abrir um novo gate de aprovação após o reenvio. Não criar outro módulo nem reutilizar o gate rejeitado. | OPEN |
+| F5-BUG-017 | F5-17 / renderização do painel de módulo | Ao abrir um projeto, renderizadores concorrentes observavam `phase3Panel`. Um deles fazia `fetch` e `replaceChildren()` em resposta a mutações do próprio painel; o formulário manual de planejamento adicionava outro observador com o mesmo padrão. A cascata podia repetir requisições e renderizações sem estabilizar, consumindo CPU e deixando a máquina sem resposta. | **Aplicada contenção.** O renderizador manual F5-18 e seus observers foram desativados, pois contradizem F5-22. Um corta-circuito mantém o normalizador legado inativo para que ele não observe a própria renderização. A substituição definitiva por um único renderizador é requisito da F5-22. | DONE |
+
+## F5-BUG-017 — ciclo de renderização concorrente
+
+### Evidência e causa
+
+- `normalizePhase3Panel` observava `phase3Panel` e, após cada mutação,
+  consultava `/api/projects/:id?phase3=true` e executava `replaceChildren()`.
+- `replaceChildren()` é uma nova mutação observada pelo mesmo callback; sem
+  uma condição estável de saída, a rotina podia se agendar novamente.
+- O formulário de planejamento incluído posteriormente criou mais observers
+  no mesmo painel e outro caminho `fetch → replaceChildren`. A concorrência
+  tornava o ciclo muito mais frequente e também alterava títulos fora de
+  sincronia com o estado persistido.
+
+### Decisão de correção
+
+O formulário manual e a autorização individual de work items não devem ser
+mantidos: eles foram substituídos pelo desenho ativo da F5-22, em que o agente
+propõe o plano completo e a pessoa revisa uma única proposta. Como contenção
+imediata, a tela não registra os observers F5-18 e instala um sentinel que
+impede o normalizador legado de reagir às mutações do próprio painel.
+
+O detalhe do projeto agora prioriza o estado do módulo quando ele existe. Por
+isso, `PLANNING_IN_PROGRESS` é apresentado como planejamento pendente, em vez
+de mostrar o estado agregado `READY_FOR_MODULE_MATERIALIZATION` com a mensagem
+enganosa “Sem ação necessária”.
+
+### Critérios de aceite da correção
+
+1. Abrir o projeto não cria um observer que faça `fetch` + `replaceChildren`
+   em reação à própria mutação.
+2. Não há formulário para criação ou autorização manual de work item.
+3. O painel permanece responsivo quando recebe eventos SSE ou é atualizado.
+4. A implementação F5-22 substitui esta contenção por um único dono explícito
+   da renderização, com testes de regressão para mutações e SSE.
 
 ## F5-BUG-016 — especificação para implementação
 

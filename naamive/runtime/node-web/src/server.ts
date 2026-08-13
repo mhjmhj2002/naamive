@@ -10,7 +10,8 @@ import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
-import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializationBaselineOptions, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, revalidateCandidate, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
+import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializationBaselineOptions, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, resolveExternalBlocker, revalidateCandidate, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
+import { requestPlanAdjustment, retryModulePlan } from './module-planning.js';
 import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
 import { agentExecutionService } from './agent-execution-service.js';
 import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-gate.js';
@@ -37,8 +38,8 @@ const decide = async (projectId: string, body: Record<string, unknown>) => withT
 export const createApiServer = () => createServer(async (request, response) => { try {
   if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': settings.webOrigin, 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'content-type,idempotency-key' }); return response.end(); }
   const url = new URL(request.url ?? '/', settings.webOrigin); const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|retry-discovery|apply-review-adjustments|archive))?$/);
-  const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition|architecture|plan|revision))?)?$/);
-  const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|qa|rework|rework-decision|merge|reconcile)$/);
+  const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition|architecture|plan|revision|plan-adjustment|retry-plan))?)?$/);
+  const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|qa|rework|rework-decision|merge|reconcile|resolve-external-blocker)$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
   const baselineRevisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/revisions\/([^/]+)\/start-revision$/);
@@ -87,9 +88,19 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'definition') return respond(response,202,await completeDefinition(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'architecture') return respond(response,202,await decideArchitecture(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'plan') return respond(response,202,await approveModulePlan(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (phase3Match && request.method === 'POST' && phase3Match[3] === 'plan-adjustment') return respond(response,202,await requestPlanAdjustment(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (phase3Match && request.method === 'POST' && phase3Match[3] === 'retry-plan') {
+    // F5-23 pendency 12: the retry endpoint REQUIRES the Idempotency-Key header — no
+    // random-key fallback — and is exclusive to the authorized operator.
+    const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();
+    if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
+    const operatorId=request.headers['x-naamive-operator']?.toString()?.trim()||config().operatorId;
+    return respond(response,202,await retryModulePlan(phase3Match[1],phase3Match[2],await json(request),idempotencyKey,operatorId));
+  }
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'revision') return respond(response,202,await startModuleRevision(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'work-items') return respond(response,202,await authorizeWorkItem(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'development') return respond(response,202,await startDevelopment(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'resolve-external-blocker') return respond(response,202,await resolveExternalBlocker(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'qa') return respond(response,202,await submitQa(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'rework') return respond(response,202,await authorizeRework(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'rework-decision') return respond(response,202,await decideReworkGate(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
@@ -113,7 +124,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (match && request.method === 'POST' && match[2] === 'decision') return respond(response, 200, await decide(match[1], await json(request)));
   if (match && request.method === 'GET' && match[2] === 'events') { response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache, no-transform', connection: 'keep-alive', 'access-control-allow-origin': settings.webOrigin }); const requested=Number(url.searchParams.get('after') ?? request.headers['last-event-id'] ?? 0); let after=Number.isSafeInteger(requested)&&requested>0?requested:0,closed=false,polling=false; const publish=async()=>{if(polling||closed)return;polling=true;try{for(const item of await projectTimeline(match[1],after)){if(closed)return;after=Number(item.id);response.write(`id: ${item.id}\nevent: ${item.event_type}\ndata: ${JSON.stringify(item)}\n\n`);}}finally{polling=false;}}; await publish(); const timer=setInterval(()=>void publish(),750),heartbeat=setInterval(()=>{if(!closed)response.write(': heartbeat\n\n');},15000); request.on('close', ()=>{closed=true;clearInterval(timer);clearInterval(heartbeat);}); return; }
   if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
-  if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
+  if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html','cache-control':'no-store'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
 } catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : error instanceof AgentRuntimeAdminError ? new ApiError(error.status, error.code, error.message) : new ApiError(500, 'INTERNAL_ERROR');
   log('server',known.status>=500?'error':'warn',known.status>=500?'request_failed':'request_rejected',{request_id:requestId,method:request.method,route:new URL(request.url ?? '/',settings.webOrigin).pathname,status:known.status,code:known.code,error_kind:error instanceof Error?error.constructor.name:'UnknownError',database_code:typeof (error as { code?: unknown })?.code==='string'?(error as { code:string }).code:undefined,database_column:typeof (error as { column?: unknown })?.column==='string'?(error as { column:string }).column:undefined,database_message:typeof (error as { message?: unknown })?.message==='string'?(error as { message:string }).message.replace(/[^A-Za-z0-9_. -]/g,'').slice(0,160):undefined});

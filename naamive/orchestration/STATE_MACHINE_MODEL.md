@@ -37,6 +37,7 @@ Agente atua somente no escopo e transição autorizados
 
 ## Documentos normativos
 
+- [Bússola visual do ciclo de vida](LIFECYCLE_COMPASS.md) — visão visual do funcionamento do ciclo de vida
 - [Máquina de estados pré-projeto](PRE_PROJECT_LIFECYCLE.md)
 - [Máquina de estados de projeto](PROJECT_LIFECYCLE.md)
 - [Máquina de estados de módulo](MODULE_LIFECYCLE.md)

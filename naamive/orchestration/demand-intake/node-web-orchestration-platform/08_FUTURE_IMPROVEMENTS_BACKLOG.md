@@ -91,6 +91,16 @@ Cada item deve conter:
 - **Impacto nas fases atuais:** não bloqueia as fases em andamento, pois a Fase 2 já possui revisão, ajustes humanos e gate de compromisso. Este item amplia o contrato para tornar a revisão independente, orientada por artefato e mensurável; deve ser planejado sem alterar retroativamente workflows publicados.
 - **Perguntas para decisão futura:** a independência exige modelo/identidade/configuração distinta ou basta papel/prompt isolado e ausência de escrita no plano? Quais dimensões e pesos compõem a rubrica v1? Quais severidades são bloqueantes independentemente da pontuação? O limiar é global, por tipo de projeto ou por nível de risco? Como evitar otimização artificial da pontuação e como apresentar score, achados e incerteza sem induzir falsa precisão?
 
+### M-007 — Sugestões contextuais para completar uma proposta de módulo
+
+- **Status:** `CAPTURED`
+- **Contexto observado:** na revisão de uma proposta de módulo, o operador recebeu feedback para informar itens fora de escopo, dependências e critérios de aceite. Os campos estavam vazios, embora o intake aprovado já contivesse problema de negócio, resultado desejado, métricas de sucesso, stakeholders e questões em aberto que permitiam formular um ponto de partida consistente.
+- **Problema ou oportunidade:** o operador precisa buscar ou interpretar manualmente o contexto do projeto para completar a proposta. Isso aumenta a chance de campos genéricos, inconsistentes com a necessidade aprovada ou simplesmente esquecidos em revisões posteriores.
+- **Proposta inicial:** na tela de criação e, principalmente, de ajuste de proposta de módulo, exibir sugestões editáveis e pré-preenchidas para `scope`, `out_of_scope`, `dependencies` e `acceptance_criteria`. As sugestões devem ser derivadas somente de fatos já aprovados ou registrados no projeto — intake, requisitos, baseline aprovada e feedback do gate — e indicar sua origem. O operador continua responsável por revisar, alterar ou remover cada sugestão antes de reenviar; nenhuma sugestão deve ser persistida automaticamente nem apresentada como requisito aprovado.
+- **Valor esperado:** reduz atrito para responder ao feedback, melhora a rastreabilidade entre necessidade, escopo e critérios de aceite, e aumenta a qualidade da primeira revisão sem retirar a decisão humana.
+- **Impacto nas fases atuais:** não bloqueia o fluxo vigente de revisão e reenvio; os campos já podem ser preenchidos manualmente e os dados-fonte já existem no projeto.
+- **Perguntas para decisão futura:** quais fontes têm precedência quando divergirem? Como distinguir visualmente sugestão, conteúdo aprovado e conteúdo digitado pelo operador? As sugestões devem ser recalculadas a cada revisão ou congeladas junto com a revisão anterior para auditoria?
+
 ## Processo de revisão posterior
 
 1. Revisar os itens `CAPTURED` e confirmar se o problema ainda existe.

@@ -1,0 +1,48 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import test from 'node:test';
+
+const page = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
+
+test('F5-23 shows a failed autonomous plan and offers its auditable retry action', () => {
+  assert.match(page, /planning\.state==='PLANNING'/);
+  assert.match(page, /Planejamento do módulo em andamento/);
+  assert.match(page, /planning\.executor_status==='em execução'/);
+  assert.match(page, /MODULE_PLAN_FAILED/);
+  assert.match(page, /planning\.state==='PLANNING_PROPOSED'\)return f523RenderProposal\?\.\(id\)/);
+  assert.match(page, /MODULE_PLAN_PROPOSED',\(\)=>void f523RenderProposal\?\.\(id\)/);
+  assert.match(page, /const f523RenderProposal=async id=>/);
+  assert.match(page, /item\.depends_on_ids/);
+  assert.match(page, /work item\$\{items\.length===1\?'':'s'\}/);
+  assert.match(page, /Bloqueio externo:/);
+  assert.match(page, /MODULE_PLAN_TELEMETRY_COMPLETED/);
+  assert.match(page, /openProject=f523OpenProjectFinal/);
+  assert.match(page, /const f523RenderActiveWorkItems=async id=>/);
+  assert.match(page, /Work items materializados/);
+  assert.match(page, /Autorizar desenvolvimento/);
+  assert.match(page, /work-items\/\$\{item\.id\}\/development/);
+  assert.match(page, /Desenvolvimento autorizado\. O item foi enfileirado para o worker\./);
+  assert.match(page, /list\.dataset\.f523ActiveWorkItems='true'/);
+  assert.match(page, /const f523KeepActiveWorkItems=/);
+  assert.match(page, /UI 2026\.08\.12-f5-23\.19/);
+  assert.match(page, /const f523CompatRender=async\(\)=>/);
+  assert.match(page, /list\.dataset\.f523CompatActive='true'/);
+  assert.match(page, /item\.dependency_blocked/);
+  assert.match(page, /Aguardando dependência/);
+  assert.match(page, /Resolver bloqueio externo/);
+  assert.match(page, /resolve-external-blocker/);
+  assert.match(page, /const f523RenderDevelopmentTelemetry=async\(\)=>/);
+  assert.match(page, /Executor: \$\{status\}/);
+  assert.match(page, /Etapa: \$\{stage\}/);
+  assert.match(page, /Eventos operacionais/);
+  assert.match(page, /O worker não está mais ativo: ele preparou o worktree/);
+  assert.match(page, /openProject=f523OpenProjectAfterApproval/);
+  assert.match(page, /f517Refresh=async id=>\{await f523RefreshWithPlanningState\(id\)/);
+  assert.match(page, /openProject=f523OpenProjectStable/);
+  assert.match(page, /planning\.state!=='PLANNING_FAILED'/);
+  assert.match(page, /Planejamento do módulo interrompido/);
+  assert.match(page, /planning\.failed_operation\?\.failure_code/);
+  assert.match(page, /\/retry-plan/);
+  assert.match(page, /failed_operation_id:planning\.retry_action\.failed_operation_id/);
+  assert.match(page, /Não há dados a preencher manualmente nesta etapa/);
+});

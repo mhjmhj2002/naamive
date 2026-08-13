@@ -22,10 +22,10 @@ test('enforces only the incremental work-item path policy',()=>{
 test('rejects uncommitted paths outside the work-item allowlist',()=>{
  const root=mkdtempSync(join(tmpdir(),'naamive-untracked-path-')),repo=join(root,'repo');try {execFileSync('git',['init',repo]);run(repo,['config','user.name','tester']);run(repo,['config','user.email','tester@localhost']);writeFileSync(join(repo,'allowed.ts'),'ok');run(repo,['add','.']);run(repo,['commit','-m','base']);const base=run(repo,['rev-parse','HEAD']);writeFileSync(join(repo,'secret.ts'),'no');assert.throws(()=>assertIncrementalPaths(repo,base,['allowed.ts']),GitDeliveryError);}finally{rmSync(root,{recursive:true,force:true});}
 });
-test('creates one auditable worktree and reconciles its lifecycle',()=>{
+test('creates independent auditable worktrees and reconciles each lifecycle',()=>{
  const root=mkdtempSync(join(tmpdir(),'naamive-worktree-')),bare=join(root,'remote.git'),repo=join(root,'repo'),tree=join(root,'worktree'),secondTree=join(root,'worktree-2');try {
   execFileSync('git',['init','--bare',bare]);execFileSync('git',['clone',bare,repo]);run(repo,['config','user.name','tester']);run(repo,['config','user.email','tester@localhost']);writeFileSync(join(repo,'base.txt'),'base');run(repo,['add','.']);run(repo,['commit','-m','base']);const base=run(repo,['rev-parse','HEAD']);initializePhaseRefs(repo,base);
-  const created=createWorktree(repo,tree,'work-items/wi-1',base);assert.equal(created.baseSha,base);assert.equal(reconcileWorktree(repo,tree,'work-items/wi-1',base),'ACTIVE');assert.throws(()=>createWorktree(repo,secondTree,'work-items/wi-2',base),GitDeliveryError);
+  const created=createWorktree(repo,tree,'work-items/wi-1',base);assert.equal(created.baseSha,base);assert.equal(reconcileWorktree(repo,tree,'work-items/wi-1',base),'ACTIVE');const second=createWorktree(repo,secondTree,'work-items/wi-2',base);assert.equal(second.baseSha,base);assert.equal(reconcileWorktree(repo,secondTree,'work-items/wi-2',base),'ACTIVE');
   writeFileSync(join(tree,'draft.txt'),'draft');assert.equal(reconcileWorktree(repo,tree,'work-items/wi-1',base),'DIRTY');assert.throws(()=>removeWorktree(repo,tree),GitDeliveryError);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
