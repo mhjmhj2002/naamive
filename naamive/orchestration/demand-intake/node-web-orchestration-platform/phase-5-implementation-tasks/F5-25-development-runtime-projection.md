@@ -55,7 +55,7 @@ canônica, sanitizada e read-only da tentativa de desenvolvimento. Um job
 6. [ ] **DOING:** Exigir `NAAMIVE_BUILD_ID` no server/worker, registrar heartbeats em
    `runtime_processes`, expor `GET /health/runtime` como `runtime-health/v1`
    (503 quando não saudável) e criar smoke que inicia ambos com a mesma build.
-7. [ ] **DOING:** Fazer a UI apresentar apenas stage/health/next action derivados; recuperação e retry
+7. [x] **DONE:** Fazer a UI apresentar apenas stage/health/next action derivados; recuperação e retry
    continuam exclusivamente nos comandos governados.
 
 ## Testes de aceite
