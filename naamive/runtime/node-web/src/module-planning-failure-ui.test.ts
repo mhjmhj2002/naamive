@@ -32,10 +32,10 @@ test('F5-23 shows a failed autonomous plan and offers its auditable retry action
   assert.match(page, /Resolver bloqueio externo/);
   assert.match(page, /resolve-external-blocker/);
   assert.match(page, /const f523RenderDevelopmentTelemetry=async\(\)=>/);
-  assert.match(page, /Executor: \$\{status\}/);
-  assert.match(page, /Etapa: \$\{stage\}/);
-  assert.match(page, /Eventos operacionais/);
-  assert.match(page, /O worker não está mais ativo: ele preparou o worktree/);
+  assert.match(page, /development-runtime/);
+  assert.match(page, /attempt\.stage/);
+  assert.match(page, /attempt\.health/);
+  assert.match(page, /attempt\.next_action/);
   assert.match(page, /openProject=f523OpenProjectAfterApproval/);
   assert.match(page, /f517Refresh=async id=>\{await f523RefreshWithPlanningState\(id\)/);
   assert.match(page, /openProject=f523OpenProjectStable/);
