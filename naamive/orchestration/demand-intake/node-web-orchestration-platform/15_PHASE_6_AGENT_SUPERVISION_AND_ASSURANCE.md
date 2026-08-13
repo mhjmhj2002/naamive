@@ -32,7 +32,7 @@ Esta fase não implementa runtime, altera contratos certificados ou simula revie
 na Fase 5. A compatibilidade será desenhada de forma aditiva no detalhamento e
 na implementação posteriores.
 
-## Micro-lifecycle universal
+## F6-01 — Micro-lifecycle universal
 
 O lifecycle macro de projeto e módulo continua inalterado. Não haverá uma fase
 macro artificial de auditoria entre análise, definição, arquitetura, planning,
@@ -52,7 +52,7 @@ deverá preservar `EVIDENCE_REVIEW`, gates e estados já publicados: validação
 evidência, review de completude, review especializado, aceite técnico e decisão
 de gate são controles diferentes e não devem ser colapsados.
 
-## Independent Work Assurance
+## F6-02 — Work acceptance e Independent Work Assurance
 
 Todo review é independente do produtor. O reviewer recebe, no mínimo, o
 despacho original, atividade autorizada, `input_artifacts`, `expected_outputs`,
@@ -70,7 +70,7 @@ final deve respeitar separação de responsabilidades e pode selecionar outro
 reviewer quando a independência ou especialidade o exigir. Self-check do
 produtor é útil, mas nunca substitui esse review.
 
-## Findings, rework e limites
+## F6-03 — Findings, rework, re-review e limites
 
 Findings serão entidades rastreáveis, não texto perdido na resposta de LLM. O
 modelo físico será definido depois, mas deve correlacionar origem, execução e
@@ -86,7 +86,7 @@ rework, findings recorrentes, problema repetido e ausência de progresso; ao
 atingir os critérios definidos, escala em vez de permitir ciclos infinitos.
 Não se fixa nesta fase um número universal de tentativas.
 
-## Block management e assistência
+## F6-04 — Block management, assistência e escalonamento
 
 `BLOCK` será conceito explícito, distinto de `FAILED` e de texto livre. O
 registro conceitual conterá `block_id`, `execution_id`, `dispatch_id`, alvo
@@ -104,7 +104,7 @@ com impactos/trade-offs e confiança quando aplicável, recomenda uma opção e
 indica especialista ou decisão humana. Não pode mudar silenciosamente requisito,
 arquitetura, política ou decisão reservada à autoridade humana.
 
-## Routing e responsabilidades
+## F6-05 — Ownership, routing e advisory especializado
 
 O orquestrador controla lifecycle, routing, política de retry/rework, loop
 detection, escalonamento e retorno ao fluxo normal. `governance-assurance`
@@ -121,7 +121,7 @@ e problema operacional para o papel operacional aplicável. A necessidade de um
 agente oficial `engineering-advisor` fica aberta: primeiro será avaliado se uma
 capability/task type satisfaz a responsabilidade sem aumentar a taxonomia.
 
-## Aceite, autoridade e evolução
+## F6-06 — Migração aditiva, observabilidade, auditoria e critérios de aceite
 
 Review automático pode aceitar tecnicamente uma saída, pedir rework, registrar
 findings, assistir block e recomendar ou rotear resolução. Não substitui nem

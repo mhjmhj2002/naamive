@@ -27,7 +27,8 @@ Execute uma task por vez e atualize o roadmap somente após seu aceite. A Fase 5
 | 21 | [F5-21 — Aceite consolidado](F5-21-acceptance.md) | F5-01 a F5-20 |
 | 22 | [F5-22 — Planejamento autônomo de módulos](F5-22-autonomous-module-planning.md) | F5-17, F5-20 |
 | 23 | [F5-23 — Decomposição autônoma e auditável do plano](F5-23-autonomous-plan-decomposition.md) | F5-22 |
-| 24 | [F5-24 — Revisão visual e auditável do plano](F5-24-module-plan-review-ui.md) | F5-22, F5-23 |
+| 24 | [F5-24 — Revisão visual e auditável do plano de módulo](F5-24-module-plan-review-ui.md) | F5-22, F5-23 |
+| 25 | [F5-25 — Projeção fiel e diagnóstico do runtime de desenvolvimento](F5-25-development-runtime-projection.md) | F5-23 |
 
 Fontes canônicas: [roadmap](../01_DELIVERY_ROADMAP.md), [planning Fase 5](../10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md), [auditoria Fase 5](../PHASE_5_TECHNOLOGY_BASELINE_AUDIT.md), [planning Fase 4](../13_PHASE_4_MULTI_PROVIDER_AGENT_RUNTIME_PLANNING.md), [prontidão Fase 4](../14_PHASE_4_IMPLEMENTATION_READINESS_PACKAGE.md) e [contratos Fase 4](../phase-4-contracts/).
 

@@ -1,6 +1,6 @@
 ---
 task: F5-23
-status: TODO
+status: DONE
 ---
 
 # F5-23 — Decomposição autônoma e auditável do plano de módulo
@@ -357,9 +357,9 @@ risco.
     items nesta etapa. Coberto pelo teste de interface
     `src/module-planning-failure-ui.test.ts`; suíte `npm test` aprovada.
 
-## Pendências de observabilidade e recuperação do agente
+## Itens concluídos: observabilidade e recuperação do agente
 
-| Pendência | Status |
+| Item concluído | Status |
 | --- | --- |
 | 19. Capturar o stream JSONL do Codex durante o planejamento, sem persistir conteúdo sensível ou raciocínio bruto. | DONE |
 | 20. Persistir sinais de atividade e saúde do planejamento como evidência e eventos auditáveis. | DONE |
@@ -406,7 +406,7 @@ risco.
 | Bug | Status |
 | --- | --- |
 | 24. A autorização materializa delivery/worktree e marca `DEVELOPMENT_IN_PROGRESS`, mas `DEVELOP_WORK_ITEM` encerra após o preparo sem despachar agente de implementação. | DONE |
-| 25. A projeção de desenvolvimento chama qualquer job `COMPLETED` de “preparo concluído” e afirma que só o worktree foi preparado; ela não representa o despacho/evidência reais nem detecta a regressão de runtime do bug 24. | TODO |
+| 25. Escopo de projeção fiel e detecção de regressão do runtime de desenvolvimento. | TRANSFERRED TO F5-25 |
 
 24. **[DONE][BLOQUEANTE][TASK PRÓPRIA] Runtime de execução autônoma de work
 items.** Esta é uma descoberta legítima de F5-23, mas altera substancialmente
@@ -421,8 +421,8 @@ canônico precisar mudar.
    `COMPLETED`, nenhum processo Codex ativo, nenhum diff/commit e WI em
    `DEVELOPMENT_IN_PROGRESS`.
 
-   **Checklist de implementação e auditoria.** O bug permanece `TODO` até que
-   todos os itens abaixo estejam `DONE`.
+   **Checklist de implementação e auditoria.** O bug foi concluído; todos os
+   itens abaixo estão `DONE`.
 
    - [DONE] O worker prepara o worktree e despacha `executeDevelopmentAgent()`
      com `cwd` no worktree reservado.
@@ -542,208 +542,6 @@ canônico precisar mudar.
      agente → evidência validada → `SUBMIT_QA`, incluindo regressão “worktree
      preparado sem agente despachado”.
 
-25. **[TODO][BLOQUEANTE] Projeção fiel e detecção de regressão do runtime de
-desenvolvimento.** A tela atual reduz todo `DEVELOP_WORK_ITEM` com
-`jobs.status='COMPLETED'` a `PREPARE_WORKTREE_COMPLETED` / “preparo concluído”
-e exibe que o worker apenas preparou o worktree. A conclusão é derivada somente
-do status do job e ignora os fatos canônicos de delivery e work item. Isso é
-incorreto após o bug 24: uma execução bem-sucedida deve ter passado por despacho
-do agente, commit validado e evidência antes de chegar a `QA_IN_PROGRESS`.
-Também torna invisível a regressão mais grave: `COMPLETED` combinado com
-`DEVELOPMENT_IN_PROGRESS` é um estado impossível no contrato corrigido e deve
-ser diagnosticado, não explicado como normal.
+## Escopo transferido para F5-25
 
-   **Evidência observada.** No teste “Centralizar solicitações de atendimento
-(recuperado)”, o job terminou em cerca de um segundo, a UI apresentou
-`PREPARE_WORKTREE_COMPLETED` e “O worker não está mais ativo: ele preparou o
-worktree”, enquanto o work item permaneceu em `DEVELOPMENT_IN_PROGRESS`. Esse
-conjunto reproduz o sintoma histórico do bug 24. Não há um estado adicional a
-ser inserido para disparar o worker: o job já foi leased e concluído. A hipótese
-operacional prioritária é worker/build implantado desatualizado ou não
-reiniciado; a aplicação deve fornecer fatos suficientes para confirmá-la sem
-interpretar a telemetria manualmente.
-
-   **Contrato de correlação e seleção da tentativa.** `delivery.id` é a chave
-   canônica da tentativa (`attempt_id` na projeção). Cada `jobs.delivery_id`
-   deve referenciar essa mesma delivery e cada delivery referencia exatamente um
-   `worktree_id` e um `work_item_id`. A projeção primeiro conta deliveries
-   daquele WI com job `LEASED`: se houver duas ou mais, deriva imediatamente
-   `INCONSISTENT_TERMINAL_STATE` (não ordena nem escolhe uma); se houver uma,
-   ela é selecionada. Se houver zero, seleciona a delivery não terminal mais
-   recente (`RESERVED`, `RUNNING` ou `EVIDENCE_REVIEW`) e, inexistindo esta, a
-   delivery mais recente por `created_at DESC, id DESC`. Dentro da delivery
-   selecionada, seleciona o job mais recente por `available_at DESC, id DESC`.
-   Deliveries e jobs anteriores
-   permanecem somente em `attempt_history`; nunca podem sobrescrever a tentativa
-   selecionada. Retry cria nova `delivery.id`, salvo a reconciliação governada
-   que reutiliza explicitamente a delivery original; neste caso o novo job
-   mantém o mesmo `attempt_id` e incrementa `job.attempts`. FK ausente é
-   `INCONSISTENT_TERMINAL_STATE`, não uma escolha implícita.
-
-   **Migration de integridade e compatibilidade histórica.** A migration
-   `042_phase_5_development_retry_runtime.sql` deve ser mantida/aplicada antes
-   deste bug: ela substitui `one_development_job_per_delivery` por
-   `one_active_development_job_per_delivery`, único em `delivery_id` somente
-   para `kind='DEVELOP_WORK_ITEM'` e status `PENDING`, `RETRYABLE` ou `LEASED`.
-   Assim, uma delivery pode reter jobs terminais auditáveis e receber um retry,
-   mas nunca possui dois jobs executáveis. Uma nova migration `043` deve criar
-   constraints `NOT VALID` para novas escritas: `DEVELOP_WORK_ITEM` exige
-   `jobs.delivery_id IS NOT NULL`, e toda nova delivery exige
-   `deliveries.worktree_id IS NOT NULL`; após saneamento, validar as constraints.
-   Linhas históricas nulas não são reescritas nem associadas por inferência: se
-   forem selecionáveis por um WI, projetam a inconsistência; se não houver WI
-   correlacionável, ficam fora de `development_runtime` e aparecem apenas na
-   auditoria de migração. A migration deve emitir relatório dos IDs legados
-   antes da validação final.
-
-   **Matriz normativa fechada da projeção.** A matriz abaixo é exaustiva para
-   combinações alcançáveis. Qualquer combinação não listada, referência ausente,
-   ou `COMPLETED` com WI `DEVELOPMENT_IN_PROGRESS`, deriva
-   `INCONSISTENT_TERMINAL_STATE` / saúde `DEGRADED` / próxima ação
-   `DIAGNOSE_RUNTIME_AND_RECONCILE`; ela não altera estado persistido.
-
-   | Job | Delivery | Worktree | WI | Etapa | Saúde | Próxima ação |
-   | --- | --- | --- | --- | --- | --- | --- |
-   | `PENDING` | `RESERVED` | `RESERVED` ou `PREPARED` | `WAITING_FOR_WORK_ITEM_AUTHORIZATION` ou `REWORK_ELIGIBLE` | `QUEUED` | `QUEUED` | `WAIT_FOR_WORKER` |
-   | `LEASED` | `RESERVED` | `RESERVED` ou `PREPARED` | `WAITING_FOR_WORK_ITEM_AUTHORIZATION` ou `REWORK_ELIGIBLE` | `PREPARING_WORKTREE` | `ALIVE` | `WAIT_FOR_DISPATCH` |
-   | `LEASED` | `RUNNING` | `ACTIVE` | `DEVELOPMENT_IN_PROGRESS` | `DISPATCHING_AGENT` quando não há evento operacional; `EXECUTING_AGENT` quando há evento operacional | `ALIVE` ou `NO_RECENT_SIGNAL` conforme timeout | `WAIT_FOR_AGENT` |
-   | `COMPLETED` | `EVIDENCE_REVIEW` | `ACTIVE` | `QA_IN_PROGRESS` | `READY_FOR_QA` | `COMPLETED` | `SUBMIT_QA` |
-   | `RETRYABLE` | `RESERVED` | `PREPARED` | `WAITING_FOR_WORK_ITEM_AUTHORIZATION` | `RETRY_SCHEDULED` | `QUEUED` | `WAIT_FOR_RETRY` |
-   | `FAILED` | `FAILED` | `RELEASED` | `REWORK_ELIGIBLE` | `FAILED` | `FAILED` | `AUTHORIZE_REWORK_OR_RETRY_DEVELOP_WORK_ITEM` |
-   | `COMPLETED` | `QA_APPROVED` | `ACTIVE` | `READY_FOR_PHASE_MERGE` | `QA_COMPLETED` | `COMPLETED` | `MERGE_WORK_ITEM_TO_PHASE` |
-   | `COMPLETED` | `QA_REJECTED` | `RELEASED` | `REWORK_ELIGIBLE` | `QA_COMPLETED` | `COMPLETED` | `AUTHORIZE_REWORK` |
-
-   `NO_RECENT_SIGNAL` é derivado somente para `LEASED` quando
-   `clock_timestamp - last_signal_at > developmentHeartbeatSeconds * 2`; não
-   muda a etapa nem autoriza retry. A UI mostra apenas os rótulos derivados
-   desta tabela; não implementa uma tabela alternativa.
-
-   **Contrato HTTP/JSON.** `GET /api/projects/:projectId?phase3=true` deve
-   expor, em cada `work_items[].development_runtime`, somente o schema fechado
-   `development-runtime/v1`:
-
-   ```json
-   {"schema_version":"development-runtime/v1","attempt_id":"uuid","job_id":"uuid","operation_id":"uuid","job_status":"LEASED","delivery_state":"RUNNING","worktree_state":"ACTIVE","work_item_state":"DEVELOPMENT_IN_PROGRESS","attempt":1,"stage":"EXECUTING_AGENT","health":"ALIVE","next_action":"WAIT_FOR_AGENT","started_at":"RFC3339|null","completed_at":"RFC3339|null","last_signal_at":"RFC3339|null","last_operational_event_at":"RFC3339|null","operational_event_count":1,"failure_code":null,"runtime":{"server_build_id":"string","worker_build_id":"string|null"},"diagnostic_id":null}
-   ```
-
-   `attempt_history` contém no máximo as três tentativas imediatamente
-   anteriores, com `attempt_id`, `job_id`, status, estados, timestamps e código
-   sanitizado; nunca paths, JSONL, prompt, conteúdo ou segredo. Campos extras
-   são proibidos. A projeção antiga `development_job` é removida na mesma
-   mudança, para não deixar consumidores inferirem `COMPLETED` isoladamente.
-
-   **Contrato de diagnóstico read-only.** A migration `043` acrescenta
-   `artifacts.metadata jsonb NOT NULL DEFAULT '{}'::jsonb` e o índice único
-   parcial `development_runtime_inconsistency_dedupe` em
-   `(project_id, artifact_type, (metadata->>'fingerprint'))` para
-   `artifact_type IN ('development-runtime-inconsistency-report',
-   'development-runtime-inconsistency-report-markdown')`, e o índice único
-   parcial `development_runtime_inconsistency_event_dedupe` em
-   `(project_id, (payload->>'fingerprint'))` para
-   `event_type='DEVELOPMENT_RUNTIME_INCONSISTENCY_DETECTED'`. Para cada fingerprint SHA-256 de
-   `{attempt_id,job_id,delivery_state,worktree_state,work_item_state,stage}`
-   em estado inconsistente, inserir no máximo uma vez o evento
-   `DEVELOPMENT_RUNTIME_INCONSISTENCY_DETECTED` e os artefatos
-   `development-runtime-inconsistency-report` e
-   `development-runtime-inconsistency-report-markdown`. O JSON é
-   `development-runtime-inconsistency-report/v1` e contém schema, fingerprint,
-   project/work-item/delivery/job/operation IDs, estados correlacionados,
-   timestamps, build IDs, `next_action` e `detected_at`; o fingerprint também
-   é gravado em `metadata.fingerprint`. Não contém dados sensíveis. A
-   deduplicação é pelos índices acima e uma transação de detecção só pode inserir
-   evento/artefato: é proibido fazer
-   `UPDATE` em jobs, deliveries, worktrees, WIs, operações ou leases. Retry e
-   reconciliação continuam exclusivamente nos comandos governados.
-
-   **Versão, health e smoke operacional.** `NAAMIVE_BUILD_ID` é obrigatório no
-   server e no worker; o pipeline o define ao SHA imutável da imagem/commit
-   implantado e falha se ausente. A migration `043` cria
-   `runtime_processes(process_id uuid PRIMARY KEY, role text NOT NULL CHECK
-   (role IN ('server','worker')), build_id text NOT NULL, started_at timestamptz
-   NOT NULL, last_seen_at timestamptz NOT NULL, stopped_at timestamptz NULL)` e
-   índice em `(role,last_seen_at DESC)`. Cada processo gera `process_id` no boot;
-   server e worker fazem `INSERT ... ON CONFLICT (process_id) DO UPDATE SET
-   last_seen_at=EXCLUDED.last_seen_at, stopped_at=NULL` no boot e a cada
-   heartbeat/lease; no encerramento gracioso gravam `stopped_at`. Um processo é
-   vivo somente se `stopped_at IS NULL` e `last_seen_at >= now() -
-   developmentHeartbeatSeconds * 2`.
-
-   O server expõe a resposta fechada de `GET /health/runtime`:
-
-   ```json
-   {"schema_version":"runtime-health/v1","server":{"process_id":"uuid","build_id":"string","started_at":"RFC3339","last_seen_at":"RFC3339","alive":true},"workers":[{"process_id":"uuid","build_id":"string","started_at":"RFC3339","last_seen_at":"RFC3339","alive":true}],"worker_count":1,"expected_build_id":"string","healthy":true}
-   ```
-
-   `workers` inclui somente workers vivos, em ordem `last_seen_at DESC`; zero
-   workers retorna `[]` e `worker_count:0`. `healthy` é verdadeiro somente se o
-   server estiver vivo, houver ao menos um worker vivo e todos os `build_id`
-   retornados forem iguais a `expected_build_id`; o endpoint retorna HTTP 503
-   quando `healthy=false`, preservando o mesmo corpo. O script
-   `scripts/smoke-development-runtime.sh` inicia `npm run build`, `npm start` e
-   `npm run worker` usando o mesmo `NAAMIVE_BUILD_ID` e `.env` de teste, consulta
-   o endpoint e falha se faltar processo, schema/role divergir ou build IDs
-   forem distintos. O procedimento de deploy para ambos é: build único, parar
-   server e worker anteriores, iniciar server e worker com a mesma imagem/env,
-   executar esse smoke antes de aceitar tráfego.
-
-   **Ajustes necessários.**
-
-   - [ ] Substituir a classificação client-side baseada somente em
-     `job.status` por uma projeção canônica de desenvolvimento no backend,
-     correlacionando `job`, `delivery`, `worktree` e `work_item` pela mesma
-     tentativa. A UI não deve inferir etapa de execução a partir de
-     `COMPLETED` isoladamente.
-   - [ ] Expor uma etapa derivada explícita e fechada, por exemplo:
-     `QUEUED`, `PREPARING_WORKTREE`, `DISPATCHING_AGENT`, `EXECUTING_AGENT`,
-     `VALIDATING_EVIDENCE`, `READY_FOR_QA`, `RETRY_SCHEDULED`, `FAILED` e
-     `INCONSISTENT_TERMINAL_STATE`. Esses são valores de projeção/telemetria,
-     não novos estados de workflow; a fonte de verdade dos estados permanece
-     em job/delivery/work item e no Compass.
-   - [ ] Fazer a projeção retornar o `delivery_state`, `worktree_state`,
-     `work_item_state`, `job.status`, tentativa, timestamps de início/fim,
-     último sinal, último evento operacional, erro sanitizado e próxima ação.
-     Não expor prompt, JSONL bruto, argumentos de ferramenta, paths privados,
-     conteúdo de arquivo ou segredos.
-   - [ ] Tratar `job=COMPLETED` + `work_item=QA_IN_PROGRESS` +
-     `delivery=EVIDENCE_REVIEW` como “evidência pronta; aguardar `SUBMIT_QA`”,
-     nunca como “preparo concluído”. Tratar `COMPLETED` +
-     `DEVELOPMENT_IN_PROGRESS` como inconsistência bloqueante, com próxima ação
-     “verificar versão/reinício do worker e reconciliar a tentativa”; não
-     afirmar que a situação é esperada.
-   - [ ] Implementar literalmente a matriz normativa desta task e testá-la como
-     tabela de casos. Combinações sem transição permitida devem resultar em
-     diagnóstico explícito, preservando evidência e sem alterar dados por meio
-     da UI.
-   - [ ] Remover a mensagem compatível que diz que o worker apenas preparou o
-     worktree, ou restringi-la ao único caso canônico que a justifique (se esse
-     caso existir após o contrato do bug 24). Atualizar os rótulos para refletir
-     a etapa derivada e a próxima ação real.
-   - [ ] Implementar o contrato de versão/health/smoke desta task, exibindo a
-     identidade somente no diagnóstico de divergência.
-   - [ ] Implementar a evidência e deduplicação read-only desta task; recovery e
-     retry continuam exigindo o comando governado existente, nunca alteração
-     direta de status pela tela.
-
-   **Critérios de aceite e regressões obrigatórias.**
-
-   - Um E2E com adaptador `controlled` comprova:
-     `PENDING → LEASED → execução do agente → commit/evidência → COMPLETED`,
-     com delivery `EVIDENCE_REVIEW`, WI `QA_IN_PROGRESS` e UI “pronto para QA”.
-   - Um teste de projeção fixa que `COMPLETED` não é sinônimo de “worktree
-     preparado”; deve cobrir explicitamente os pares `COMPLETED`/
-     `EVIDENCE_REVIEW` e `COMPLETED`/`DEVELOPMENT_IN_PROGRESS`.
-   - Testes de contrato validam `development-runtime/v1`, a precedência da
-     tentativa selecionada, o histórico limitado e a rejeição de campos
-     sensíveis/adicionais; testes de tabela cobrem cada linha da matriz e ao
-     menos uma combinação não listada.
-   - O segundo par é exibido como inconsistência degradada, contém próxima ação
-     de diagnóstico e jamais informa que “nenhuma ação é necessária”.
-   - Testes de worker simulam falha antes e depois do despacho, timeout e retry,
-     verificando que nenhum deles termina como `COMPLETED` com WI ainda em
-     `DEVELOPMENT_IN_PROGRESS`.
-   - Os testes de UI deixam de procurar a frase “ele preparou o worktree” como
-     comportamento esperado e verificam etapa, estados correlacionados,
-     sanitização e ação correta para cada combinação.
-   - Um smoke de implantação inicia server e worker da mesma build e falha caso
-     suas versões/identidades publicadas divergam, segundo o endpoint e script
-     prescritos nesta task.
+O escopo remanescente de projeção, diagnóstico, health/smoke e testes do runtime de desenvolvimento foi transferido integralmente para [F5-25 — Projeção fiel e diagnóstico do runtime de desenvolvimento](F5-25-development-runtime-projection.md). F5-23 permanece concluída com os itens de planejamento autônomo e observabilidade já entregues.
