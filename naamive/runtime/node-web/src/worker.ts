@@ -15,6 +15,8 @@ import { prepareTechnologySelectionContext } from './selection-context.js';
 import { controlledPlanFixture, persistPlan, buildPlanContext, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_SANITIZER_VERSION, canonicalHash, sanitizePlan, validatePlan } from './module-planning.js';
 import { recordPlanRunBoundaries, createPlanTelemetrySink, terminatePlanTelemetry, completePlanTelemetry } from './plan-telemetry.js';
 import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } from './development-telemetry.js';
+import { detectDevelopmentRuntimeInconsistencies } from './development-runtime.js';
+import { startRuntimeProcess } from './runtime-process.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -32,9 +34,9 @@ const leaseJob = (projectId?: string) => withTransaction(async (client) => {
       LIMIT 1
     )
     UPDATE jobs
-    SET status='LEASED',attempts=attempts+1,lease_expires_at=clock_timestamp()+($1||' seconds')::interval,heartbeat_at=clock_timestamp(),started_at=coalesce(started_at,clock_timestamp()),last_signal_at=clock_timestamp()
+    SET status='LEASED',attempts=attempts+1,lease_expires_at=clock_timestamp()+($1||' seconds')::interval,heartbeat_at=clock_timestamp(),started_at=coalesce(started_at,clock_timestamp()),last_signal_at=clock_timestamp(),metadata=CASE WHEN kind='DEVELOP_WORK_ITEM' THEN jsonb_set(metadata,'{build_id}',to_jsonb($3::text),true) ELSE metadata END
     WHERE id IN (SELECT id FROM candidate)
-    RETURNING *`, [String(leaseSeconds()), projectId ?? null]);
+    RETURNING *`, [String(leaseSeconds()), projectId ?? null, config().buildId]);
   if (!leased.rowCount) return null;
   const job = leased.rows[0];
   await client.query(`UPDATE operations SET status='RUNNING' WHERE id=$1`, [job.operation_id]);
@@ -147,6 +149,7 @@ const heartbeat = (job: any) => setInterval(() => {
 }, (job.kind === 'DEVELOP_WORK_ITEM' ? config().developmentHeartbeatSeconds : config().planHeartbeatSeconds) * 1000);
 
 export const runOnce = async (projectId?: string): Promise<boolean> => {
+  await detectDevelopmentRuntimeInconsistencies();
   const lock = await pool.connect();
   try {
     const lockKey=projectId??randomUUID();
@@ -243,8 +246,9 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
 };
 
 if (process.argv[1]?.endsWith('worker.ts') || process.argv[1]?.endsWith('worker.js')) {
+  const stopRuntime=await startRuntimeProcess('WORKER');
   log('worker', 'info', 'worker_started', { poll_interval_seconds: 1 });
-  process.on('SIGTERM', () => { log('worker', 'info', 'worker_stopped'); process.exit(0); });
+  process.on('SIGTERM', async () => { log('worker', 'info', 'worker_stopped'); await stopRuntime(); await pool.end(); process.exit(0); });
   while (true) {
     try { await runOnce(); }
     catch (error) { log('worker', 'error', 'worker_cycle_failed', { error_kind: error instanceof Error ? error.constructor.name : 'UnknownError' }); }

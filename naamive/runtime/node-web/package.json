@@ -9,6 +9,7 @@
     "dev": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs watch src/server.ts",
     "worker": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/worker.ts",
     "migrate": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/migrate.ts",
+    "migrate:validate-043": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/migrate-validate-043.ts",
     "reconcile": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/reconcile.ts",
     "test": "npm run build && node --env-file-if-exists=.env scripts/run-tests.mjs",
     "test:catalog-publisher:integration": "node scripts/run-catalog-publisher-integration.mjs",
