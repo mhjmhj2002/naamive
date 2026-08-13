@@ -123,6 +123,15 @@ if (!databaseUrl) {
       { title: 'Approved HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] },
       { title: 'Reworked but pending HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'grep -q reworked README.md', cwd: '.', timeout_seconds: 10 }] }
     ]);
+    const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`);
+    assert.equal(reviewResponse.status, 200);
+    const reviewProjection: any = await reviewResponse.json();
+    assert.equal('plans' in reviewProjection, false);
+    assert.equal(JSON.stringify(reviewProjection).includes('idempotency_key'), false);
+    const review = reviewProjection.module_plan_review[0];
+    assert.equal(review.schema_version, 'module-plan-review/v1');
+    assert.deepEqual(Object.keys(review).sort(), ['alerts','business_dependencies','criterion_coverage','current_gate','current_revision','history_truncated','module','revision_history','schema_version','summary','work_items']);
+    assert.equal(JSON.stringify(review).includes('context_payload'), false);
     const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version });
     const [item, rejectedItem] = plan.work_item_ids;
 
