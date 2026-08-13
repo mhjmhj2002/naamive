@@ -339,12 +339,13 @@ preserva a jornada já utilizável e a amplia. Não há uma fundação isolada n
 | Release 3 / Fase 3 | Levar um módulo por Dev, QA, finding, correção e revalidação pela web. |
 | Release 4 / Fase 4 | Runtime multi-provider de agentes, routing governado e observabilidade de IA. |
 | Release 5 / Fase 5 | Aprovar uma baseline tecnológica auditável antes da primeira materialização de módulo. |
-| Release 6 / Fase 6 — **MVP completo** | Entregar um projeto de referência até aceite, evidências e PR draft para `main`. |
-| Release 7 / Fase 7 | Sustentar operação, recuperação e futura expansão depois do MVP. |
+| Release 6 / Fase 6 | Supervisionar trabalho delegado, aceite técnico independente e assistência estruturada a bloqueios. |
+| Release 7 / Fase 7 — **MVP completo** | Entregar um projeto de referência até aceite, evidências e PR draft para `main`. |
+| Release 8 / Fase 8 | Sustentar operação, recuperação e futura expansão depois do MVP. |
 
-PORTANTO, o MVP de entrega de projeto compreende as Fases 1–6. A Fase 4 cria a
+PORTANTO, o MVP de entrega de projeto compreende as Fases 1–7. A Fase 4 cria a
 capacidade de execução independente de provider; a Fase 5 fixa a baseline
-tecnológica antes dos módulos; a Fase 7 é posterior ao MVP.
+tecnológica antes dos módulos; a Fase 6 assegura as entregas delegadas; a Fase 8 é posterior ao MVP.
 A Fase 1 já é o
 primeiro release operacional e não inclui `PRODUCT_COMMITMENT`, que é o valor
 incremental específico da Fase 2.

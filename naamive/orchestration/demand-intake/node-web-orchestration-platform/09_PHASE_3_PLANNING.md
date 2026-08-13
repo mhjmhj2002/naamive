@@ -18,7 +18,7 @@ A demonstração de aceite parte de um projeto em `PRODUCT_COMMITMENT`: aprovar 
 
 Inclui F3-01 a F3-09: materialização de módulos, rounds de definição, arquitetura e planejamento, work items, branches/worktrees, Dev, QA, findings, rework, integração em `integration`, projeções web/SSE e aceite.
 
-Não inclui PR draft para `main`, release, aceite final do projeto ou remoção do runtime Python: pertencem à Fase 6. Embora este plano tenha previsto o consumo do contrato neutro, a Fase 3 foi encerrada com paridade Codex-only e não será reaberta para essa migração. A Fase 4 executa o corte controlado de worker, agentes e demais consumidores para `AgentExecutionService` em F4-12, preservando essa paridade. M-001 a M-005 do backlog futuro também não entram como requisito: diagnóstico ampliado de agente, área de documentos, previsão de duração, programa geral de observabilidade e semântica visual da timeline.
+Não inclui PR draft para `main`, release, aceite final do projeto ou remoção do runtime Python: pertencem à Fase 7. Embora este plano tenha previsto o consumo do contrato neutro, a Fase 3 foi encerrada com paridade Codex-only e não será reaberta para essa migração. A Fase 4 executa o corte controlado de worker, agentes e demais consumidores para `AgentExecutionService` em F4-12, preservando essa paridade. M-001 a M-005 do backlog futuro também não entram como requisito: diagnóstico ampliado de agente, área de documentos, previsão de duração, programa geral de observabilidade e semântica visual da timeline.
 
 ## Pré-requisitos para iniciar implementação
 

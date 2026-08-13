@@ -24,7 +24,7 @@ Em um novo projeto com compromisso de produto aprovado, o inventário seguro ofe
 
 Inclui F5-01 a F5-06: a governança versionada de Catálogo Tecnológico, Perfis Tecnológicos e compatibilidades; publicação transacional da primeira revisão por seeds; workflow e gate da baseline; inventário read-only como evidência; revisões e evidências imutáveis; experiência web; bloqueio da primeira materialização e propagação da revisão contratual aos objetos de entrega.
 
-Não inclui decidir automaticamente a arquitetura de um módulo, executar instalação, migration, deploy ou comandos arbitrários no repositório; criar PR/release/aceite final, que pertencem à Fase 6; nem reescrever projetos ou módulos já materializados na Fase 3. Também não inclui tela ou endpoint administrativo para alterar o catálogo. A baseline não é um inventário nem uma especificação de implementação: ela é o contrato que delimita as decisões arquiteturais legítimas para o projeto.
+Não inclui decidir automaticamente a arquitetura de um módulo, executar instalação, migration, deploy ou comandos arbitrários no repositório; criar PR/release/aceite final, que pertencem à Fase 7; nem reescrever projetos ou módulos já materializados na Fase 3. Também não inclui tela ou endpoint administrativo para alterar o catálogo. A baseline não é um inventário nem uma especificação de implementação: ela é o contrato que delimita as decisões arquiteturais legítimas para o projeto.
 
 ### Separação de responsabilidades
 
