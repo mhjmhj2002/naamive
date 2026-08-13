@@ -31,6 +31,11 @@ export const config = () => {
     agentReadinessTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_TIMEOUT_SECONDS ?? 20),
     agentReadinessCacheSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_CACHE_SECONDS ?? 300),
     agentMaxRetries: Number(process.env.NAAMIVE_AGENT_MAX_RETRIES ?? 2),
+    // Operator initiated development retries are a separate, bounded recovery
+    // path.  Keeping the limit in configuration makes the decision auditable
+    // and prevents an indefinitely growing retry lineage.
+    developmentRetryMaxAttempts: Number(process.env.NAAMIVE_DEVELOPMENT_RETRY_MAX_ATTEMPTS ?? 3),
+    developmentHeartbeatSeconds: Number(process.env.NAAMIVE_DEVELOPMENT_HEARTBEAT_SECONDS ?? 60),
     agentHeartbeatSeconds: Number(process.env.NAAMIVE_AGENT_HEARTBEAT_SECONDS ?? 30),
     // F5-23 pendency 22: observable timeout & degradation policy. The planning
     // timeout may only be elevated once telemetry is available, is configurable

@@ -161,6 +161,12 @@ Para todos os estados ativos do módulo, valem os mesmos trilhos de `PAUSED` e
 `CANCELLED` mostrados acima. O módulo só é materializado após o compromisso de
 produto; ele é uma capacidade de negócio, e não uma camada técnica.
 
+> **Alinhamento com o runtime:** a máquina normativa de módulo chama a etapa
+> planejada de `PLANNED`. O runtime web detalha essa mesma etapa como
+> `PLANNING_IN_PROGRESS` (proposta em elaboração ou revisão) e
+> `WORK_ITEMS_ACTIVE` (proposta aprovada e itens autorizados). Esses nomes de
+> projeção não criam gates extras nem substituem os estados normativos.
+
 ## Como interpretar o fluxo
 
 - **Começo correto:** sem `--project` ou `--request`, nada é criado; uma
@@ -214,50 +220,59 @@ sem avanço de estado.
 
 ## Referência de todos os status do mapa
 
-Esta tabela cobre os status das máquinas desenhadas acima. **Caixa no mapa**
-indica a caixinha onde o status aparece; o texto entre parênteses ajuda a
-localizá-la rapidamente.
+Esta tabela cobre os status normativos das máquinas desenhadas acima. O mapa
+de módulo também mostra as projeções operacionais explicadas na nota de
+alinhamento. **Caixa no mapa** indica a caixinha onde o status aparece; o
+texto entre parênteses ajuda a localizá-la rapidamente. A responsabilidade
+por uma fase não transfere para um agente a decisão de um gate humano.
+`governance-assurance` acompanha os controles e a rastreabilidade de qualquer
+etapa quando necessário.
 
-| # | Máquina | Status | Mensagem amigável | Motivo / condição | Caixa no mapa | Timeline da tela |
-| ---: | --- | --- | --- | --- | --- | --- |
-| 1 | Intake | `DRAFT` | Rascunho pronto para ser completado. | A necessidade foi criada, mas ainda não foi enviada. | Mapa geral — `DRAFT` | Sim — “Projeto criado” |
-| 2 | Intake | `SUBMITTED` | Necessidade enviada; vamos verificar as informações. | A pessoa enviou o rascunho para validação. | Mapa geral — `SUBMITTED` | Sim — “Necessidade enviada” |
-| 3 | Intake | `VALIDATING` | Validando campos, formato e fontes. | A solicitação está sob verificação. | Mapa geral — `VALIDATING` | Não |
-| 4 | Intake | `REJECTED` | São necessários ajustes antes de continuar. | Há campo ausente, formato inválido, fonte insuficiente ou escolha técnica indevida. | Mapa geral — `REJECTED` | Não |
-| 5 | Intake | `WAITING_FOR_REGISTRATION` | Solicitação válida; aguardando decisão de registro. | A validação passou e o gate `REGISTER_PROJECT` ainda não foi decidido. | Mapa geral — `WAITING_FOR_REGISTRATION` | Sim — “Necessidade validada” |
-| 6 | Intake | `REGISTERED` | Projeto registrado e pronto para descoberta. | O gate `REGISTER_PROJECT` foi aprovado. | Caminho após `GATE 1 — REGISTRO` | Sim — “Projeto registrado” |
-| 7 | Intake | `CANCELLED` | Solicitação encerrada; evidências preservadas. | Cancelamento humano registrado antes de criar o projeto. | Mapa geral — `CANCELLED` da solicitação | Não |
-| 8 | Projeto | `ANALYSIS` | Entendendo o problema, valor e restrições. | O projeto foi registrado ou a evolução exige nova descoberta. | Mapa geral — `ANALYSIS` | Sim — “Descoberta iniciada” |
-| 9 | Projeto | `DEFINITION` | Definindo requisitos e capacidades candidatas. | A análise possui evidência suficiente para avançar. | Mapa geral — `DEFINITION` | Sim — “Necessidade analisada” / “Requisitos definidos” |
-| 10 | Projeto | `ARCHITECTURE` | Decidindo arquitetura e integrações. | O compromisso de produto foi aprovado. | Mapa geral — `ARCHITECTURE` | Não |
-| 11 | Projeto | `PLANNING` | Planejando entrega, riscos e dependências. | A arquitetura está registrada e apta a ser planejada. | Mapa geral — `PLANNING` | Sim — “Arquitetura aprovada” |
-| 12 | Projeto | `IMPLEMENTATION` | Construindo os itens autorizados. | O plano, dependências e controles necessários foram aprovados. | Mapa geral — `IMPLEMENTATION` | Sim — “Desenvolvimento iniciado” |
-| 13 | Projeto | `VALIDATION` | Validando o produto integrado. | A implementação e a integração estão disponíveis para verificação. | Mapa geral — `VALIDATION` | Sim — “QA aprovado” / “QA encontrou pendência” |
-| 14 | Projeto | `DELIVERY` | Preparando release, implantação e handover. | A validação passou, com qualidade e risco residual explícitos. | Mapa geral — `DELIVERY` | Não |
-| 15 | Projeto | `DELIVERED` | Entrega aceita e registrada. | O aceite de entrega foi aprovado. | Mapa geral — `DELIVERED` | Não |
-| 16 | Projeto | `EVOLUTION` | Avaliando uma mudança controlada. | Surgiu uma nova necessidade rastreável após a entrega. | Mapa geral — `EVOLUTION` | Não |
-| 17 | Projeto | `PAUSED` | Trabalho pausado; aguardando remoção do impedimento. | Pausa humana registrada com motivo e evidência. | Trilhos laterais — `PAUSED` | Não |
-| 18 | Projeto | `CANCELLED` | Projeto encerrado; artefatos preservados. | Cancelamento humano registrado em qualquer estado ativo. | Mapa geral / Trilhos laterais — `CANCELLED` | Não |
-| 19 | Execução | `RECEIVED` | Solicitação de trabalho recebida. | A orquestração recebeu uma nova execução. | Trilha de auditoria — `RECEIVED` | Não |
-| 20 | Execução | `VALIDATING` | Conferindo contexto, escopo e transição. | A execução ainda precisa passar pelas pré-condições. | Trilha de auditoria — `VALIDATING` | Não |
-| 21 | Execução | `DISPATCHED` | Trabalho encaminhado ao agente elegível. | Contexto e despacho foram validados. | Trilha de auditoria — `DISPATCHED` | Não |
-| 22 | Execução | `EVIDENCE_REVIEW` | Conferindo as evidências produzidas. | O agente devolveu saídas que precisam ser verificadas. | Trilha de auditoria — `EVIDENCE_REVIEW` | Não |
-| 23 | Execução | `WAITING_FOR_GATE` | Evidências prontas; aguardando gate aplicável. | A revisão foi suficiente e a decisão ainda não ocorreu. | Trilha de auditoria — `WAITING_FOR_GATE` | Não |
-| 24 | Execução | `REWORK_REQUIRED` | Há ajustes a fazer antes de avançar. | Evidência ausente, incompatível, fora de escopo ou gate desfavorável. | Trilha de auditoria — `REWORK_REQUIRED` | Não |
-| 25 | Execução | `COMPLETED` | Trabalho concluído e registrado. | O gate aplicável foi favorável e o resultado foi gravado. | Trilha de auditoria — `COMPLETED` | Não |
-| 26 | Execução | `REJECTED` | Solicitação recusada; nada foi executado. | Contexto, escopo ou transição eram inválidos. | Trilha de auditoria — `REJECTED` | Não |
-| 27 | Execução | `FAILED` | A execução falhou sem condições de avançar. | Falha técnica ou ausência de saída suficiente do agente. | Trilha de auditoria — `FAILED` | Não |
-| 28 | Execução | `PAUSED` | Execução pausada; aguardando decisão de retomada. | Decisão registrada interrompeu a execução. | Trilha de auditoria — `PAUSED` | Não |
-| 29 | Execução | `CANCELLED` | Execução cancelada e auditada. | Decisão registrada encerrou a execução. | Trilha de auditoria — `CANCELLED` | Não |
-| 30 | Módulo | `IDENTIFIED` | Capacidade identificada; ainda precisa ser delimitada. | O módulo foi reconhecido após o compromisso de produto. | Mapa do módulo — `IDENTIFIED` | Sim — “Módulo criado” |
-| 31 | Módulo | `DEFINED` | Domínio, necessidade e requisitos do módulo estão definidos. | A capacidade passou por revisão independente. | Mapa do módulo — `DEFINED` | Sim — “Módulo aprovado” |
-| 32 | Módulo | `ARCHITECTED` | Interfaces e arquitetura interna estão definidas. | Requisitos e critérios de aceite estão consistentes. | Mapa do módulo — `ARCHITECTED` | Sim — “Definição concluída” |
-| 33 | Módulo | `PLANNED` | Trabalho, dependências e pronto para entrega foram planejados. | Arquitetura e dependências foram registradas. | Mapa do módulo — `PLANNED` | Sim — “Arquitetura aprovada” |
-| 34 | Módulo | `IMPLEMENTING` | Construindo os artefatos autorizados do módulo. | Itens, riscos e dependências foram tratados. | Mapa do módulo — `IMPLEMENTING` | Sim — “Desenvolvimento iniciado” |
-| 35 | Módulo | `INTEGRATING` | Verificando contratos e fluxos integrados. | Implementação e testes locais estão disponíveis. | Mapa do módulo — `INTEGRATING` | Sim — “Entrega incorporada à fase” |
-| 36 | Módulo | `VALIDATING` | Validando requisitos, qualidade e segurança do módulo. | Contratos e fluxos integrados foram verificados. | Mapa do módulo — `VALIDATING` | Sim — “QA aprovado” / “QA encontrou pendência” |
-| 37 | Módulo | `READY_FOR_DELIVERY` | Módulo pronto para compor a entrega. | Requisitos, qualidade e segurança têm evidências suficientes. | Mapa do módulo — `READY_FOR_DELIVERY` | Sim — “QA aprovado” |
-| 38 | Módulo | `DELIVERED` | Módulo participou de uma entrega aceita. | O projeto concluiu o controle de entrega correspondente. | Mapa do módulo — `DELIVERED` | Sim — “Fase integrada” |
-| 39 | Módulo | `EVOLVING` | Módulo recebendo mudança controlada. | Há mudança rastreável após a entrega. | Mapa do módulo — `EVOLVING` | Não |
-| 40 | Módulo | `PAUSED` | Módulo pausado; aguardando remoção do impedimento. | Pausa humana registrada com motivo e evidência. | Trilhos laterais — `PAUSED` | Não |
-| 41 | Módulo | `CANCELLED` | Módulo encerrado; histórico preservado. | Cancelamento humano registrado em estado ativo. | Trilhos laterais — `CANCELLED` | Não |
+**Fase** é o trabalho realizado enquanto o item permanece no status indicado,
+até que haja evidência e controle para a próxima transição. **Ator
+responsável** é o dono primário desse trabalho; pode ser uma pessoa, a
+orquestração ou um agente do catálogo.
+
+| # | Máquina | Status | Mensagem amigável | Motivo / condição | Fase (até a próxima transição) | Ator responsável | Caixa no mapa | Timeline da tela |
+| ---: | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Intake | `DRAFT` | Rascunho pronto para ser completado. | A necessidade foi criada, mas ainda não foi enviada. | Preenchimento da solicitação | usuário; `business-intake` apoia | Mapa geral — `DRAFT` | Sim — “Projeto criado” |
+| 2 | Intake | `SUBMITTED` | Necessidade enviada; vamos verificar as informações. | A pessoa enviou o rascunho para validação. | Qualificação do intake | `business-intake` | Mapa geral — `SUBMITTED` | Sim — “Necessidade enviada” |
+| 3 | Intake | `VALIDATING` | Validando campos, formato e fontes. | A solicitação está sob verificação. | Validação do intake | `business-intake` | Mapa geral — `VALIDATING` | Não |
+| 4 | Intake | `REJECTED` | São necessários ajustes antes de continuar. | Há campo ausente, formato inválido, fonte insuficiente ou escolha técnica indevida. | Correção da solicitação | usuário | Mapa geral — `REJECTED` | Não |
+| 5 | Intake | `WAITING_FOR_REGISTRATION` | Solicitação válida; aguardando decisão de registro. | A validação passou e o gate `REGISTER_PROJECT` ainda não foi decidido. | Decisão de registro | pessoa autorizada; `governance-assurance` verifica | Mapa geral — `WAITING_FOR_REGISTRATION` | Sim — “Necessidade validada” |
+| 6 | Intake | `REGISTERED` | Projeto registrado e pronto para descoberta. | O gate `REGISTER_PROJECT` foi aprovado. | Materialização e repasse ao projeto | orquestração; `business-analysis` recebe o contexto | Caminho após `GATE 1 — REGISTRO` | Sim — “Projeto registrado” |
+| 7 | Intake | `CANCELLED` | Solicitação encerrada; evidências preservadas. | Cancelamento humano registrado antes de criar o projeto. | Encerramento auditável | pessoa autorizada; `governance-assurance` verifica | Mapa geral — `CANCELLED` da solicitação | Não |
+| 8 | Projeto | `ANALYSIS` | Entendendo o problema, valor e restrições. | O projeto foi registrado ou a evolução exige nova descoberta. | Análise de negócio | `business-analysis` (PM/BA) | Mapa geral — `ANALYSIS` | Sim — “Descoberta iniciada” |
+| 9 | Projeto | `DEFINITION` | Definindo requisitos e capacidades candidatas. | A análise possui evidência suficiente para avançar. | Definição de domínio e requisitos | `domain-modeling` + `requirements-engineering` | Mapa geral — `DEFINITION` | Sim — “Necessidade analisada” / “Requisitos definidos” |
+| 10 | Projeto | `ARCHITECTURE` | Decidindo arquitetura e integrações. | O compromisso de produto foi aprovado. | Arquitetura da solução | `solution-architecture` | Mapa geral — `ARCHITECTURE` | Não |
+| 11 | Projeto | `PLANNING` | Planejando entrega, riscos e dependências. | A arquitetura está registrada e apta a ser planejada. | Planejamento da entrega | `delivery-planning` (PM de entrega) | Mapa geral — `PLANNING` | Sim — “Arquitetura aprovada” |
+| 12 | Projeto | `IMPLEMENTATION` | Construindo os itens autorizados. | O plano, dependências e controles necessários foram aprovados. | Implementação | `implementation`; `integration-engineering` quando aplicável | Mapa geral — `IMPLEMENTATION` | Sim — “Desenvolvimento iniciado” |
+| 13 | Projeto | `VALIDATION` | Validando o produto integrado. | A implementação e a integração estão disponíveis para verificação. | Qualidade e segurança | `quality-assurance` (QA) + `security-assurance` conforme risco | Mapa geral — `VALIDATION` | Sim — “QA aprovado” / “QA encontrou pendência” |
+| 14 | Projeto | `DELIVERY` | Preparando release, implantação e handover. | A validação passou, com qualidade e risco residual explícitos. | Release e handover | `release-operations` | Mapa geral — `DELIVERY` | Não |
+| 15 | Projeto | `DELIVERED` | Entrega aceita e registrada. | O aceite de entrega foi aprovado. | Acompanhamento pós-entrega | pessoa dona do negócio | Mapa geral — `DELIVERED` | Não |
+| 16 | Projeto | `EVOLUTION` | Avaliando uma mudança controlada. | Surgiu uma nova necessidade rastreável após a entrega. | Triagem da evolução | `business-analysis` ou `delivery-planning`, conforme o retorno | Mapa geral — `EVOLUTION` | Não |
+| 17 | Projeto | `PAUSED` | Trabalho pausado; aguardando remoção do impedimento. | Pausa humana registrada com motivo e evidência. | Gestão de impedimento | pessoa autorizada; `governance-assurance` verifica | Trilhos laterais — `PAUSED` | Não |
+| 18 | Projeto | `CANCELLED` | Projeto encerrado; artefatos preservados. | Cancelamento humano registrado em qualquer estado ativo. | Encerramento auditável | pessoa autorizada; `governance-assurance` verifica | Mapa geral / Trilhos laterais — `CANCELLED` | Não |
+| 19 | Execução | `RECEIVED` | Solicitação de trabalho recebida. | A orquestração recebeu uma nova execução. | Recebimento da execução | orquestração | Trilha de auditoria — `RECEIVED` | Não |
+| 20 | Execução | `VALIDATING` | Conferindo contexto, escopo e transição. | A execução ainda precisa passar pelas pré-condições. | Validação de contexto | orquestração; `governance-assurance` quando necessário | Trilha de auditoria — `VALIDATING` | Não |
+| 21 | Execução | `DISPATCHED` | Trabalho encaminhado ao agente elegível. | Contexto e despacho foram validados. | Produção do trabalho despachado | agente definido no despacho | Trilha de auditoria — `DISPATCHED` | Não |
+| 22 | Execução | `EVIDENCE_REVIEW` | Conferindo as evidências produzidas. | O agente devolveu saídas que precisam ser verificadas. | Revisão independente de evidências | `governance-assurance` + revisor aplicável | Trilha de auditoria — `EVIDENCE_REVIEW` | Não |
+| 23 | Execução | `WAITING_FOR_GATE` | Evidências prontas; aguardando gate aplicável. | A revisão foi suficiente e a decisão ainda não ocorreu. | Decisão de gate | pessoa autorizada; `governance-assurance` verifica | Trilha de auditoria — `WAITING_FOR_GATE` | Não |
+| 24 | Execução | `REWORK_REQUIRED` | Há ajustes a fazer antes de avançar. | Evidência ausente, incompatível, fora de escopo ou gate desfavorável. | Retrabalho autorizado | agente do novo despacho | Trilha de auditoria — `REWORK_REQUIRED` | Não |
+| 25 | Execução | `COMPLETED` | Trabalho concluído e registrado. | O gate aplicável foi favorável e o resultado foi gravado. | Registro do resultado | orquestração | Trilha de auditoria — `COMPLETED` | Não |
+| 26 | Execução | `REJECTED` | Solicitação recusada; nada foi executado. | Contexto, escopo ou transição eram inválidos. | Recusa de contexto inválido | orquestração | Trilha de auditoria — `REJECTED` | Não |
+| 27 | Execução | `FAILED` | A execução falhou sem condições de avançar. | Falha técnica ou ausência de saída suficiente do agente. | Diagnóstico e recuperação | agente do despacho; orquestração registra | Trilha de auditoria — `FAILED` | Não |
+| 28 | Execução | `PAUSED` | Execução pausada; aguardando decisão de retomada. | Decisão registrada interrompeu a execução. | Gestão de impedimento | pessoa autorizada; `governance-assurance` verifica | Trilha de auditoria — `PAUSED` | Não |
+| 29 | Execução | `CANCELLED` | Execução cancelada e auditada. | Decisão registrada encerrou a execução. | Encerramento auditável | pessoa autorizada; `governance-assurance` verifica | Trilha de auditoria — `CANCELLED` | Não |
+| 30 | Módulo | `IDENTIFIED` | Capacidade identificada; ainda precisa ser delimitada. | O módulo foi reconhecido após o compromisso de produto. | Identificação da capacidade | `domain-modeling` | Mapa do módulo — `IDENTIFIED` | Sim — “Módulo criado” |
+| 31 | Módulo | `DEFINED` | Domínio, necessidade e requisitos do módulo estão definidos. | A capacidade passou por revisão independente. | Definição do módulo | `domain-modeling` + `requirements-engineering` | Mapa do módulo — `DEFINED` | Sim — “Módulo aprovado” |
+| 32 | Módulo | `ARCHITECTED` | Interfaces e arquitetura interna estão definidas. | Requisitos e critérios de aceite estão consistentes. | Arquitetura do módulo | `solution-architecture` | Mapa do módulo — `ARCHITECTED` | Sim — “Definição concluída” |
+| 33 | Módulo | `PLANNED` | Trabalho, dependências e pronto para entrega foram planejados. | Arquitetura e dependências foram registradas; no runtime, a etapa aparece como `PLANNING_IN_PROGRESS` ou `WORK_ITEMS_ACTIVE`. | Planejamento e ativação dos itens | `delivery-planning` (PM de entrega) | Mapa do módulo — `PLANNING_IN_PROGRESS` / `WORK_ITEMS_ACTIVE` | Sim — “Arquitetura aprovada” |
+| 34 | Módulo | `IMPLEMENTING` | Construindo os artefatos autorizados do módulo. | Itens, riscos e dependências foram tratados. | Desenvolvimento do módulo | `implementation` (Dev) | Mapa do módulo — `IMPLEMENTING` | Sim — “Desenvolvimento iniciado” |
+| 35 | Módulo | `INTEGRATING` | Verificando contratos e fluxos integrados. | Implementação e testes locais estão disponíveis. | Integração de contratos e fluxos | `integration-engineering` | Mapa do módulo — `INTEGRATING` | Sim — “Entrega incorporada à fase” |
+| 36 | Módulo | `VALIDATING` | Validando requisitos, qualidade e segurança do módulo. | Contratos e fluxos integrados foram verificados. | Qualidade e segurança do módulo | `quality-assurance` (QA) + `security-assurance` conforme risco | Mapa do módulo — `VALIDATING` | Sim — “QA aprovado” / “QA encontrou pendência” |
+| 37 | Módulo | `READY_FOR_DELIVERY` | Módulo pronto para compor a entrega. | Requisitos, qualidade e segurança têm evidências suficientes. | Preparação para entrega | `release-operations` | Mapa do módulo — `READY_FOR_DELIVERY` | Sim — “QA aprovado” |
+| 38 | Módulo | `DELIVERED` | Módulo participou de uma entrega aceita. | O projeto concluiu o controle de entrega correspondente. | Acompanhamento pós-entrega | pessoa dona do negócio | Mapa do módulo — `DELIVERED` | Sim — “Fase integrada” |
+| 39 | Módulo | `EVOLVING` | Módulo recebendo mudança controlada. | Há mudança rastreável após a entrega. | Triagem da evolução | `business-analysis` ou `delivery-planning`, conforme a mudança | Mapa do módulo — `EVOLVING` | Não |
+| 40 | Módulo | `PAUSED` | Módulo pausado; aguardando remoção do impedimento. | Pausa humana registrada com motivo e evidência. | Gestão de impedimento | pessoa autorizada; `governance-assurance` verifica | Trilhos laterais — `PAUSED` | Não |
+| 41 | Módulo | `CANCELLED` | Módulo encerrado; histórico preservado. | Cancelamento humano registrado em estado ativo. | Encerramento auditável | pessoa autorizada; `governance-assurance` verifica | Trilhos laterais — `CANCELLED` | Não |

@@ -14,6 +14,7 @@ import { executeTechnologyInventory } from './inventory.js';
 import { prepareTechnologySelectionContext } from './selection-context.js';
 import { controlledPlanFixture, persistPlan, buildPlanContext, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_SANITIZER_VERSION, canonicalHash, sanitizePlan, validatePlan } from './module-planning.js';
 import { recordPlanRunBoundaries, createPlanTelemetrySink, terminatePlanTelemetry, completePlanTelemetry } from './plan-telemetry.js';
+import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } from './development-telemetry.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -83,6 +84,7 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
     await client.query(`UPDATE deliveries SET state=$2 WHERE id=$1`, [job.delivery_id, permanent ? 'FAILED' : 'RESERVED']);
     await client.query(`UPDATE worktrees SET state=$2 WHERE id=(SELECT worktree_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent ? 'RELEASED' : 'PREPARED']);
     await client.query(`UPDATE work_items SET state=$2,version=version+1 WHERE id=(SELECT work_item_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent ? 'REWORK_ELIGIBLE' : 'WAITING_FOR_WORK_ITEM_AUTHORIZATION']);
+    if (permanent) await persistDevelopmentFailureEvidence(client, job, code);
   }
   if (permanent) {
     await client.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id, code]);
@@ -141,7 +143,8 @@ const heartbeat = (job: any) => setInterval(() => {
   // alive (last_signal_at) but NEVER counts as functional progress. Emitted as
   // a timeline event via the durable telemetry sink.
   if (job.kind === 'PLAN_MODULE_WORK_ITEMS') void createPlanTelemetrySink(job).recordHeartbeat();
-}, config().planHeartbeatSeconds * 1000);
+  if (job.kind === 'DEVELOP_WORK_ITEM') void createDevelopmentTelemetrySink(job).heartbeat();
+}, (job.kind === 'DEVELOP_WORK_ITEM' ? config().developmentHeartbeatSeconds : config().planHeartbeatSeconds) * 1000);
 
 export const runOnce = async (projectId?: string): Promise<boolean> => {
   const lock = await pool.connect();
@@ -159,7 +162,7 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
         step = 'prepare_isolated_worktree';
         const delivery=await prepareDevelopmentJob(job);
         step = 'dispatch_development_agent';
-        if (delivery) await executeDevelopmentAgent({project_id:job.project_id,work_item_id:delivery.work_item_id,objective:delivery.payload?.objective,inputs:delivery.payload?.inputs,output:delivery.payload?.output,acceptance_criteria:delivery.payload?.acceptance_criteria,allowlist:delivery.payload?.allowlist,denylist:delivery.payload?.denylist,qa_matrix:delivery.qa_matrix,branch:delivery.branch,base_sha:delivery.base_sha},delivery.path);
+        if (delivery) await executeDevelopmentAgent({project_id:job.project_id,work_item_id:delivery.work_item_id,objective:delivery.payload?.objective,inputs:delivery.payload?.inputs,output:delivery.payload?.output,acceptance_criteria:delivery.payload?.acceptance_criteria,allowlist:delivery.payload?.allowlist,denylist:delivery.payload?.denylist,qa_matrix:delivery.qa_matrix,branch:delivery.branch,base_sha:delivery.base_sha},delivery.path,job);
         await finalizeDevelopmentJob(job);
         await pool.query(`UPDATE jobs SET last_operational_event_at=clock_timestamp(),operational_event_count=operational_event_count+1,last_signal_at=clock_timestamp() WHERE id=$1 AND status='LEASED'`, [job.id]);
         step = 'persist_result';

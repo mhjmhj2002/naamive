@@ -29,6 +29,12 @@ export const createWorktree = (repository:string, worktree:string, branch:string
   return {path:realpathSync(worktree),baseSha};
 };
 export const removeWorktree = (repository:string, worktree:string) => { assertClean(worktree); git(repository,['worktree','remove',worktree]); };
+/** Recovery-only removal for a worktree already classified as untrusted. */
+export const discardWorktree = (repository:string, worktree:string) => {
+  if (!existsSync(worktree)) return;
+  try { git(repository,['worktree','remove','--force',worktree]); }
+  finally { rmSync(worktree,{recursive:true,force:true}); }
+};
 export const botCommit = (repository:string, files:string[], message:string) => {
   if(!files.length) throw new GitDeliveryError('GIT_DIVERGED'); git(repository,['add','--',...files]);
   if(!git(repository,['diff','--cached','--name-only'])) throw new GitDeliveryError('GIT_DIVERGED','no staged changes');
