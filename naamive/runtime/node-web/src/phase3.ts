@@ -110,7 +110,7 @@ export const phase3Detail=async(projectId:string)=>{
   const review=modulePlanReview(modules.rows,plans.rows,gates.rows);
   // The review endpoint intentionally does not expose raw plan payloads, prompt context,
   // job payloads or idempotency keys. module_plan_review is the sole public plan contract.
-  return {modules:expose(modules.rows),work_items:projectedWorkItems,deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),jobs:expose(jobs.rows),planning_jobs:expose(planningJobs.rows),module_plan_review:review,planning,planning_telemetry:planningTelemetry.rows.map((row:any)=>publicValue(row)),evidence:artifacts.rows};
+  return {modules:expose(modules.rows),work_items:projectedWorkItems,deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),jobs:expose(jobs.rows),planning_jobs:expose(planningJobs.rows),planning_operations:expose(planningOperations.rows),module_plan_review:review,planning,planning_telemetry:planningTelemetry.rows.map((row:any)=>publicValue(row)),evidence:artifacts.rows};
 };
 
 export const materializationBaselineOptions=async(projectId:string)=>{
