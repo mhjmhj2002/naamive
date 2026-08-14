@@ -173,20 +173,27 @@ vincular uma pendência explicável.
 | 6 | F6-01 | `DONE` | Contratos fechados e política opt-in de assurance. |
 | 6 | F6-02 | `DONE` | Persistência aditiva, constraints e sanitização. |
 | 6 | F6-03 | `DONE` | Seleção e independência verificável do reviewer. |
-| 6 | F6-04 | `DONE` | Handoff de produção para work acceptance. |
-| 6 | F6-05 | `DONE` | Serviço de review e decisões independentes. |
-| 6 | F6-06 | `DONE` | Findings, rework e re-review compatíveis com F3. |
+| 6 | F6-04 | `DOING` | Handoff de produção para work acceptance. |
+| 6 | F6-05 | `TODO` | Serviço de review e decisões independentes. |
+| 6 | F6-06 | `TODO` | Findings, rework e re-review compatíveis com F3. |
 | 6 | F6-07 | `DONE` | Gestão de blocks e assistência estruturada. |
-| 6 | F6-08 | `DONE` | Routing, advisory e gates humanos. |
-| 6 | F6-09 | `DONE` | Handoff de bloqueio e reconciliação. |
-| 6 | F6-10 | `DONE` | APIs e projeções sanitizadas. |
-| 6 | F6-11 | `DONE` | Auditoria, observabilidade e SSE. |
-| 6 | F6-12 | `DONE` | UI operacional de assurance e blocks. |
-| 6 | F6-13 | `DONE` | Migração, rollout e coexistência. |
-| 6 | F6-14 | `DONE` | Testes unitários e de persistência. |
-| 6 | F6-15 | `DONE` | Testes de integração e jornadas E2E. |
-| 6 | F6-16 | `DONE` | Regressão das Fases 3, 4 e 5. |
-| 6 | F6-17 | `DONE` | Aceite consolidado da Fase 6. |
+| 6 | F6-08 | `TODO` | Routing, advisory e gates humanos. |
+| 6 | F6-09 | `DOING` | Handoff de bloqueio e reconciliação; implementação concluída, aguardando regressão F3/F4/F5. |
+| 6 | F6-10 | `TODO` | APIs e projeções sanitizadas. |
+| 6 | F6-11 | `TODO` | Auditoria, observabilidade e SSE. |
+| 6 | F6-12 | `TODO` | UI operacional de assurance e blocks. |
+| 6 | F6-13 | `TODO` | Migração, rollout e coexistência. |
+| 6 | F6-14 | `TODO` | Testes unitários e de persistência. |
+| 6 | F6-15 | `TODO` | Testes de integração e jornadas E2E. |
+| 6 | F6-16 | `TODO` | Regressão das Fases 3, 4 e 5. |
+| 6 | F6-17 | `TODO` | Aceite consolidado da Fase 6. |
+
+> Impedimento em tratamento: a regressão F3 revelou que o adapter controlado
+> tentava reaplicar alteração sobre entrega anterior durante rework
+> (`DEVELOPMENT_AGENT_COMMIT_APPLY_FAILED`). O fixture foi ajustado para emitir
+> commit auditável sem conflitar quando o alvo já contém a entrega anterior.
+> A reserva de rework usa o `head_sha` da entrega rejeitada como base; nunca o
+> SHA-base original do work item.
 | 7 | F7-01 | `TO DO` | — |
 | 7 | F7-02 | `TO DO` | — |
 | 7 | F7-03 | `TO DO` | — |

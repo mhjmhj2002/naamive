@@ -55,6 +55,7 @@ if (!databaseUrl) {
       'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM integration_attempts WHERE project_id=$1',
       'DELETE FROM rework_gates WHERE project_id=$1', 'DELETE FROM rework_decisions WHERE project_id=$1',
       'DELETE FROM finding_work_items WHERE finding_id IN (SELECT id FROM findings WHERE project_id=$1)',
+      'DELETE FROM runtime_diagnostics WHERE work_item_id IN (SELECT id FROM work_items WHERE project_id=$1)',
       'DELETE FROM findings WHERE project_id=$1', 'DELETE FROM integration_candidates WHERE project_id=$1', 'DELETE FROM jobs WHERE project_id=$1',
       'DELETE FROM deliveries WHERE project_id=$1', 'DELETE FROM worktrees WHERE project_id=$1',
       'DELETE FROM work_items WHERE project_id=$1', 'DELETE FROM module_gates WHERE project_id=$1',
@@ -146,7 +147,10 @@ if (!databaseUrl) {
     writeFileSync(join(firstTree.path, 'outside.txt'), 'forbidden\n');
     const rejectedQa = await post(`/api/projects/${projectId}/work-items/${item}/qa`, { sha: 'untrusted', worktree_path: '/untrusted', results: ['untrusted'], commits: ['untrusted'] }, 409);
     assert.equal(rejectedQa.code, 'GIT_DIVERGED');
-    assert.equal((await pool.query('SELECT state FROM work_items WHERE id=$1', [item])).rows[0].state, 'DEVELOPMENT_IN_PROGRESS');
+    // The development worker already published evidence and moved the item to
+    // QA. A rejected, untrusted QA request must leave that canonical state
+    // untouched so a later governed QA submission can proceed.
+    assert.equal((await pool.query('SELECT state FROM work_items WHERE id=$1', [item])).rows[0].state, 'QA_IN_PROGRESS');
     rmSync(join(firstTree.path, 'outside.txt'));
 
     const firstCommit = commit(firstTree.path, item, 'execution-one', 'first delivery\n');

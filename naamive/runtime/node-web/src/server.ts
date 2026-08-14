@@ -19,7 +19,7 @@ import { startTechnologyBaselineRevision } from './baseline-revision.js';
 import { createTechnologyBaselineRevision, listTechnologyCatalogItems, listTechnologyCategories, listTechnologyProfiles, requestTechnologyInventory, technologyBaseline, technologyCatalogRevision, technologyProfile, technologySelectionContext } from './technology-api.js';
 import { developmentRuntime } from './development-runtime.js';
 import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
-import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, transitionBlock } from './assurance.js';
+import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -31,6 +31,10 @@ const assertAssuranceScope = async (projectId: string, resource: 'acceptance'|'r
       ? `SELECT 1 FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id WHERE r.id=$1 AND a.project_id=$2`
       : `SELECT 1 FROM work_blocks WHERE id=$1 AND project_id=$2`;
   if (!(await pool.query(sql, [id, projectId])).rowCount) throw new ApiError(404, 'ASSURANCE_RESOURCE_NOT_FOUND');
+};
+const assertOnCallOwner = (request: IncomingMessage) => {
+  if (String(request.headers['x-actor-role'] ?? '') !== 'ON_CALL_OWNER') throw new ApiError(403, 'ASSURANCE_ON_CALL_REQUIRED');
+  return String(request.headers['x-actor-id'] ?? settings.operatorId);
 };
 const decide = async (projectId: string, body: Record<string, unknown>) => withTransaction(async (client) => {
   const gate = await client.query(`SELECT * FROM gates WHERE project_id=$1 AND status='OPEN' FOR UPDATE`, [projectId]); if (!gate.rowCount) throw new ApiError(409, 'GATE_NOT_OPEN'); const row=gate.rows[0];
@@ -71,6 +75,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const assuranceProposalMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/blocks\/([^/]+)\/proposals$/);
   const assuranceGateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/gates$/);
   const assuranceCancelMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/acceptances\/([^/]+)\/cancel$/);
+  const assuranceReconcileMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/acceptances\/([^/]+)\/reconcile$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
   if (request.method === 'GET' && url.pathname === '/health/runtime') { const health=await runtimeHealth(); return respond(response,health.healthy?200:503,health); }
@@ -81,13 +86,14 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/api/technology/profiles') return respond(response, 200, await listTechnologyProfiles(url.searchParams.get('status')));
   if (technologyProfileMatch && request.method === 'GET') return respond(response, 200, await technologyProfile(technologyProfileMatch[1]));
   if (request.method === 'GET' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 200, { items: await listRuntimeCatalogue() });
-  if (assuranceMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceMatch[1],url.searchParams.get('cursor')));
+  if (assuranceMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceMatch[1],url.searchParams.get('cursor'),url.searchParams.get('state'),url.searchParams.get('category')));
   if (assuranceReviewMatch && request.method === 'POST') { await assertAssuranceScope(assuranceReviewMatch[1],'acceptance',assuranceReviewMatch[2]); const body=await json(request); return respond(response,202,await createIndependentReview(assuranceReviewMatch[2],body.producer as any,body.candidate as any,body.review_package,typeof body.independence_gate_id==='string'?body.independence_gate_id:undefined)); }
   if (assuranceDecisionMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'review',assuranceDecisionMatch[1]); const body=await json(request); return respond(response,202,await decideReview(assuranceDecisionMatch[1],body.decision as any,body.evidence,request.headers['idempotency-key']?.toString()??randomUUID())); }
-  if (assuranceBlockMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'block',assuranceBlockMatch[1]); const body=await json(request); return respond(response,202,await transitionBlock(assuranceBlockMatch[1],String(body.state??''),body.resolution)); }
+  if (assuranceBlockMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'block',assuranceBlockMatch[1]); const body=await json(request); if(['PAUSED','CANCELLED'].includes(String(body.state??''))) assertOnCallOwner(request); return respond(response,202,await transitionBlock(assuranceBlockMatch[1],String(body.state??''),body.resolution)); }
   if (assuranceProposalMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'block',assuranceProposalMatch[1]); return respond(response,202,await createAssistanceProposal(assuranceProposalMatch[1],await json(request),String(request.headers['x-actor-id']??settings.operatorId))); }
   if (assuranceGateMatch && request.method === 'POST') return respond(response,202,await recordHumanGate(assuranceGateMatch[1],await json(request),String(request.headers['x-actor-id']??settings.operatorId)));
-  if (assuranceCancelMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'acceptance',assuranceCancelMatch[1]); return respond(response,202,await cancelAcceptance(assuranceCancelMatch[1],await json(request))); }
+  if (assuranceCancelMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'acceptance',assuranceCancelMatch[1]); assertOnCallOwner(request); return respond(response,202,await cancelAcceptance(assuranceCancelMatch[1],await json(request))); }
+  if (assuranceReconcileMatch && request.method === 'POST') { await assertAssuranceScope(assuranceReconcileMatch[1],'acceptance',assuranceReconcileMatch[2]); return respond(response,202,await reconcileAcceptance(assuranceReconcileMatch[2],await json(request),assertOnCallOwner(request))); }
   if (request.method === 'POST' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 202, await registerRuntime(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (request.method === 'POST' && url.pathname === '/api/admin/agent-execution-policies') return respond(response, 202, await publishAgentExecutionPolicy(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (request.method === 'POST' && url.pathname === '/api/admin/assurance-policies') return respond(response, 202, await publishAssurancePolicy(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
