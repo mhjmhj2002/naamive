@@ -346,7 +346,8 @@ export class AgentExecutionService {
       const fallbackUsed = attempts.some((row) => row.attempt_kind === 'FALLBACK');
       const decision = await attemptDecision(client, execution, policy, runtime, outcome, sameRuntimeCount, fallbackUsed);
       if (result.status === 'SUCCEEDED' && decoded) {
-        const acceptance=await submitOutputForReview(client,execution.id,{artifact_hash:result.structuredOutputReference?.sha256 ?? null,validated:true});
+        const submitted=await putArtifact(client,job.project_id,'assurance-structured-output',JSON.stringify(decoded),execution.id);
+        const acceptance=await submitOutputForReview(client,execution.id,{artifact_id:submitted.id,artifact_hash:submitted.hash,schema_version:1,validated:true});
         if(acceptance) { await event(client, job.project_id, 'ASSURANCE_OUTPUT_SUBMITTED', job.operation_id, job.id, job.revision_id, { execution_id: execution.id, acceptance_id: acceptance.id }); return; }
         await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Aguardando a próxima etapa do workflow.' WHERE id=$1`, [execution.id]);
         await event(client, job.project_id, 'AGENT_EXECUTION_SUCCEEDED', job.operation_id, job.id, job.revision_id, { execution_id: execution.id, attempt_id: currentAttempt.id, runtime_name: runtime.name, adapter_type: runtime.adapter_type, usage: outcome.usage ?? null });
@@ -403,7 +404,7 @@ export class AgentExecutionService {
         const startedAt = attempt.dispatched_at ? new Date(attempt.dispatched_at).toISOString() : new Date().toISOString();
         const finishedAt = new Date().toISOString();
         const { decoded } = await persistAttemptOutcome(client, job, { id: attempt.execution_id }, attempt, runtimeRow, resolution.outcome, startedAt, finishedAt);
-        if (decoded) { const acceptance=await submitOutputForReview(client,attempt.execution_id,{validated:true}); if(acceptance) { await event(client,attempt.project_key,'ASSURANCE_OUTPUT_SUBMITTED',job.operation_id,job.id,job.revision_id,{execution_id:attempt.execution_id,acceptance_id:acceptance.id}); return; } await persistDiscoveryAgentOutcome(client, { id: job.id, kind: attempt.job_kind, project_id: attempt.project_key, operation_id: job.operation_id, revision_id: job.revision_id }, decoded); }
+        if (decoded) { const submitted=await putArtifact(client,attempt.project_key,'assurance-structured-output',JSON.stringify(decoded),attempt.execution_id); const acceptance=await submitOutputForReview(client,attempt.execution_id,{artifact_id:submitted.id,artifact_hash:submitted.hash,schema_version:1,validated:true}); if(acceptance) { await event(client,attempt.project_key,'ASSURANCE_OUTPUT_SUBMITTED',job.operation_id,job.id,job.revision_id,{execution_id:attempt.execution_id,acceptance_id:acceptance.id}); return; } await persistDiscoveryAgentOutcome(client, { id: job.id, kind: attempt.job_kind, project_id: attempt.project_key, operation_id: job.operation_id, revision_id: job.revision_id }, decoded); }
         await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Reconciliação concluída com sucesso.' WHERE id=$1`, [attempt.execution_id]);
         await event(client, attempt.project_key, 'AGENT_EXECUTION_RECONCILED', job.operation_id, job.id, job.revision_id, { execution_id: attempt.execution_id, attempt_id: attemptId, resolution: 'FOUND' });
         await markJobCompleted(client, job);

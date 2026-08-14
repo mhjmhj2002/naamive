@@ -14,8 +14,17 @@ else {
     await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,$3,$4,$5,$6,'test')`, [revisionId, projectId, payload, 'c'.repeat(64), 'd'.repeat(64), 'file:///tmp/intake.md']);
     await pool.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id) VALUES($1,$2,'VALIDATE_INTAKE','RUNNING',$3,$4,$5)`, [operationId, projectId, `restart-operation-${operationId}`, randomUUID(), revisionId]);
     await pool.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,status,available_at,lease_expires_at,idempotency_key) VALUES($1,$2,$3,$4,'VALIDATE_INTAKE','LEASED',now()-interval '1 minute',now()-interval '1 second',$5)`, [jobId, operationId, projectId, revisionId, `restart-job-${jobId}`]);
-    const worker = spawn(process.execPath, [resolve(process.cwd(), 'dist/worker.js')], { env: process.env, stdio: 'ignore' }); t.after(async () => { worker.kill('SIGTERM'); await pool.query('DELETE FROM events WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM artifacts WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM artifact_intents WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM gates WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM jobs WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM operations WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM intake_revisions WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM projects WHERE id=$1',[projectId]); await pool.end(); });
+    let workerOutput = '';
+    const workerEntry = resolve(process.cwd(), 'dist/worker.js');
+    const dbEntry = resolve(process.cwd(), 'dist/db.js');
+    const worker = spawn(process.execPath, ['--input-type=module', '--eval', `const { runOnce } = await import(${JSON.stringify(`file://${workerEntry}`)}); const { pool } = await import(${JSON.stringify(`file://${dbEntry}`)}); try { await runOnce(process.env.NAAMIVE_WORKER_RESTART_PROJECT_ID); } finally { await pool.end(); }`], {
+      env: { ...process.env, NAAMIVE_WORKER_RESTART_PROJECT_ID: projectId },
+      stdio: ['ignore', 'pipe', 'pipe']
+    });
+    worker.stdout.on('data', (chunk) => { workerOutput += chunk.toString(); });
+    worker.stderr.on('data', (chunk) => { workerOutput += chunk.toString(); });
+    t.after(async () => { worker.kill('SIGTERM'); await pool.query('DELETE FROM events WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM artifacts WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM artifact_intents WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM gates WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM jobs WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM operations WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM intake_revisions WHERE project_id=$1',[projectId]); await pool.query('DELETE FROM projects WHERE id=$1',[projectId]); await pool.end(); });
     for (let n = 0; n < 100; n++) { const row = await pool.query('SELECT status FROM jobs WHERE id=$1',[jobId]); if (row.rows[0]?.status === 'COMPLETED') break; await new Promise((done) => setTimeout(done, 100)); }
-    assert.equal((await pool.query('SELECT status FROM jobs WHERE id=$1',[jobId])).rows[0].status, 'COMPLETED'); assert.equal((await pool.query('SELECT state FROM projects WHERE id=$1',[projectId])).rows[0].state, 'WAITING_FOR_REGISTRATION');
+    assert.equal((await pool.query('SELECT status FROM jobs WHERE id=$1',[jobId])).rows[0].status, 'COMPLETED', workerOutput); assert.equal((await pool.query('SELECT state FROM projects WHERE id=$1',[projectId])).rows[0].state, 'WAITING_FOR_REGISTRATION');
   });
 }

@@ -70,7 +70,7 @@ else {
     assert.equal(await evaluate(`performance.getEntriesByType('navigation').length`), 1);
     await evaluate(`[...document.querySelectorAll('#f517Baseline button')].find(button=>button.textContent==='Aprovar orientações técnicas').click()`);
     await eventually(async () => await evaluate(`[...document.querySelectorAll('#f517Baseline')].some(panel=>panel.textContent.includes('Orientações técnicas aprovadas'))`), 'baseline approval reflected through SSE');
-    assert.equal(await evaluate(`document.querySelector('#f514Materialization button[type="submit"]')?.disabled===false`), true);
+    await eventually(async () => await evaluate(`document.querySelector('#f514Materialization button[type="submit"]')?.disabled===false`), 'materialization enabled after baseline approval');
     assert.equal(await evaluate(`performance.getEntriesByType('navigation').length`), 1);
     await evaluate(`f517OpenProject('${legacy}')`);
     await eventually(async () => await evaluate(`[...document.querySelectorAll('#f517Baseline')].some(panel=>panel.textContent.includes('Technology Baseline não é necessária'))`), 'legacy notice');

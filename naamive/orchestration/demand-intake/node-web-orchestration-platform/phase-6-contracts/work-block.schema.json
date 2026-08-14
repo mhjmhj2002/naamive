@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/work-block",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "blockId", "projectId", "sourceType", "sourceId", "blockCode", "category", "severity", "state", "cycle", "correlationId", "classification", "symptoms", "attempts", "suspectedCauses", "responsibleRole", "evidence", "idempotencyKey"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "blockId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "projectId": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "acceptanceId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "executionId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "sourceType": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "sourceId": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "blockCode": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "category": { "$ref": "naamive://assurance/v1/common#/$defs/blockCategory" },
+    "severity": { "$ref": "naamive://assurance/v1/common#/$defs/blockSeverity" },
+    "state": { "$ref": "naamive://assurance/v1/common#/$defs/blockState" },
+    "cycle": { "type": "integer", "minimum": 1 },
+    "previousBlockId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "correlationId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "classification": { "$ref": "naamive://assurance/v1/common#/$defs/classification" },
+    "symptoms": { "type": "array", "items": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" } },
+    "attempts": { "type": "array", "items": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" } },
+    "suspectedCauses": { "type": "array", "items": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" } },
+    "responsibleRole": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "evidence": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "resolution": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 255 }
+  }
+}

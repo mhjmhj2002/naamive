@@ -17,6 +17,7 @@ import { recordPlanRunBoundaries, createPlanTelemetrySink, terminatePlanTelemetr
 import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } from './development-telemetry.js';
 import { detectDevelopmentRuntimeInconsistencies } from './development-runtime.js';
 import { startRuntimeProcess } from './runtime-process.js';
+import { executeIndependentReview } from './assurance.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -79,6 +80,15 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
   const permanent = Number(current.attempts) > config().agentMaxRetries;
   const delay = delays[Math.min(Number(current.attempts) - 1, 2)];
   await client.query(`UPDATE jobs SET status=$2,last_error=$3,available_at=clock_timestamp()+($4||' seconds')::interval,completed_at=CASE WHEN $2='FAILED' THEN clock_timestamp() END WHERE id=$1`, [job.id, permanent ? 'FAILED' : 'RETRYABLE', code, String(delay)]);
+  if (job.kind === 'REVIEW') {
+    // REVIEW has a durable execution of its own.  Return that dispatch to a
+    // recoverable state on retry; a terminal reviewer failure is visible and
+    // never turns the producer output into an implicit acceptance.
+    await client.query(`UPDATE agent_execution SET state=$2,completed_at=CASE WHEN $2='FAILED' THEN clock_timestamp() ELSE NULL END,next_action=$3
+      WHERE job_id=$1 AND job_kind='REVIEW' AND state NOT IN ('SUCCEEDED','CANCELLED')`, [job.id, permanent ? 'FAILED' : 'SELECTED', permanent ? 'Reviewer indisponível; intervenção necessária.' : 'Reviewer será reexecutado pelo worker.']);
+    if (permanent) await client.query(`UPDATE work_acceptances SET state='WAITING_FOR_INDEPENDENT_REVIEWER',updated_at=clock_timestamp()
+      WHERE id=(SELECT acceptance_id FROM assurance_reviews WHERE dispatch_execution_id=(SELECT id FROM agent_execution WHERE job_id=$1 AND job_kind='REVIEW')) AND state NOT IN ('ACCEPTED','CANCELLED')`, [job.id]);
+  }
   if (job.kind === 'DEVELOP_WORK_ITEM') {
     // A failed executor never leaves a work item claiming active development
     // without a leased attempt.  The same reserved worktree is reconciled on
@@ -128,7 +138,7 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
         await putArtifact(client, job.project_id, 'module-plan-rejection-report-markdown', `# module-plan-rejection-report\n\n\`\`\`json\n${JSON.stringify(report, null, 2)}\n\`\`\`\n`, job.operation_id);
         await event(client, job.project_id, 'MODULE_PLAN_FAILED', job.operation_id, job.id, job.revision_id, { module_id: job.module_id, code, errors, next_action: 'RETRY_MODULE_PLAN', evidence_hash: evidence.hash });
       }
-    } else if (job.kind !== 'DEVELOP_WORK_ITEM' && job.kind !== 'VALIDATE_INTAKE' && job.kind !== 'RECONCILE_AGENT_EXECUTION' && job.kind !== 'START_TECHNOLOGY_INVENTORY' && job.kind !== 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
+  } else if (job.kind !== 'REVIEW' && job.kind !== 'DEVELOP_WORK_ITEM' && job.kind !== 'VALIDATE_INTAKE' && job.kind !== 'RECONCILE_AGENT_EXECUTION' && job.kind !== 'START_TECHNOLOGY_INVENTORY' && job.kind !== 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
       const target = await transitionTarget(client, job.project_id, 'AGENT_EXECUTION_FAILED');
       await client.query(`UPDATE projects SET state=$2,failure_stage=$3,failure_code=$4,updated_at=clock_timestamp() WHERE id=$1`, [job.project_id, target, job.kind, code]);
     }
@@ -161,7 +171,12 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
     const timer = heartbeat(job);
     let step = 'prepare_job';
     try {
-      if (job.kind === 'DEVELOP_WORK_ITEM') {
+      if (job.kind === 'REVIEW') {
+        step = 'independent_review';
+        await executeIndependentReview(job);
+        step = 'persist_result';
+        await completeJob(job);
+      } else if (job.kind === 'DEVELOP_WORK_ITEM') {
         step = 'prepare_isolated_worktree';
         const delivery=await prepareDevelopmentJob(job);
         step = 'dispatch_development_agent';

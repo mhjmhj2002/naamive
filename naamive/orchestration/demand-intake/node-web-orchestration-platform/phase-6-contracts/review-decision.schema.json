@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/review-decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "decisionId", "reviewId", "reviewVersion", "correlationId", "classification", "decision", "evidence", "idempotencyKey"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "decisionId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "reviewId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "reviewVersion": { "type": "integer", "minimum": 1 },
+    "correlationId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "classification": { "$ref": "naamive://assurance/v1/common#/$defs/classification" },
+    "decision": { "$ref": "naamive://assurance/v1/common#/$defs/reviewDecision" },
+    "evidence": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 255 }
+  }
+}

@@ -28,18 +28,40 @@ O mesmo formato funciona para `migrate`, `dev`, `reconcile`, `test` e `e2e`.
 
 ## Assurance (Fase 6)
 
-A migration `044_phase_6_assurance.sql` é aditiva. O rollout é opt-in:
+A sequência aditiva `044_phase_6_assurance.sql`,
+`045_phase_6_assurance_upgrade_compatibility.sql`,
+`046_phase_6_contract_completeness.sql` e
+`047_phase_6_rework_and_query_guards.sql` instala o modelo sem backfill do
+legado. O rollout é opt-in:
 publique uma política em `POST /api/admin/assurance-policies`; somente novos
 dispatches selecionados por `agentPolicyNames`, `taskTypes` e `classifications`
 entram no micro-lifecycle de assurance. Desabilitar a política interrompe novas
 seleções e não muda execuções ou aceites já existentes; não apague o histórico
 para fazer rollback.
 
+Cada política deve declarar `reviewer_runtime_ids`. O servidor só seleciona
+runtimes habilitados e atuais dessa lista, congela a identidade completa do
+produtor e rejeita reviewer igual ao produtor. Ao concluir um dispatch F6, o
+mesmo commit transacional cria `OUTPUT_SUBMITTED`, o `work_acceptance` e o job
+`REVIEW`; se nenhum reviewer independente estiver elegível, o aceite permanece
+em `WAITING_FOR_INDEPENDENT_REVIEWER` e nenhum efeito de negócio é promovido.
+O output estruturado fica no ArtifactStore por referência e hash, nunca dentro
+do payload público do aceite ou do pacote de review.
+
 `/api/projects/:projectId/assurance` é uma projeção sanitizada, inclusive para
 timeline por cursor. Nunca envie prompts, saída bruta, logs, segredos ou paths.
 On-call pode cancelar; exceção de independência, escopo, arquitetura, política,
 risco e fechamento escalado exigem gate humano de Tech Lead ou dono do
 repositório.
+
+O stream `GET /api/projects/:projectId/assurance/events` implementa
+`assurance-sse/v1`. Ele aceita o cursor numérico ascendente em `cursor` ou
+`Last-Event-ID`, reenvia somente eventos com id maior que o cursor e é
+estritamente de leitura — reconectar não cria dispatch, decisão ou rework. Cada
+evento `assurance` contém apenas o registro sanitizado da timeline; o cabeçalho
+`X-Assurance-Stream-Version: 1` fixa o contrato. A projeção inclui as métricas
+de tempo até review/aceite, rework, indisponibilidade de reviewer, bloqueios,
+escalonamentos e falhas de handoff.
 
 Os comandos `start`, `dev`, `worker`, `migrate` e `reconcile` carregam
 automaticamente o arquivo `.env` desse diretório quando ele existe.

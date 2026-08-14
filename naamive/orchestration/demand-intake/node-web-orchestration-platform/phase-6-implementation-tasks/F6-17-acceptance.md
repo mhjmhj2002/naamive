@@ -29,3 +29,15 @@ git -C /home/mhj/git/naamive diff --check
 ```
 
 Marcar F6-01 a F6-17 como `DONE` somente após todos os cenários acima passarem e o comportamento legado permanecer certificado.
+
+## Evidência consolidada executada — 2026-08-14 (final)
+
+Resultado: **aprovado para aceite F6**.
+
+- PostgreSQL: migrations aditivas 044–047 aplicadas e `npm run migrate` reaprovado de forma repetível antes do fechamento.
+- Contratos: oito JSON Schemas F6 fechados/versionados aprovados por fixtures válidas e rejeição de propriedades extras/dados proibidos.
+- Unidade/integração: `npm test` aprovado, incluindo F3 rework/QA, F4 runtime e F5 baseline/inventário.
+- E2E consolidado: `npm run e2e` aprovado contra PostgreSQL local, sem cenários obrigatórios ignorados.
+- E2E F6 dedicado: falha real do reviewer → retry do mesmo dispatch → restart → uma única decisão terminal; reviewer inelegível sem autoaceite; rework → revalidação → review independente v2; recorrência sem progresso escalada; lifecycle de blocks, gates e comandos idempotentes; cancelamento HTTP somente por `ON_CALL_OWNER`, com precedência sobre review e bloqueios; projeções por projeto/módulo/work item/correlação e SSE HTTP real com cursor, replay e reconexão idempotente, sem conteúdo sensível.
+- F3 na consolidação: deduplicação de finding/rework, teto de duas rodadas e fechamento exclusivamente pela QA posterior permanecem validados no fluxo proprietário.
+- UI F6: `web-ui-f6-12.e2e.test.ts` integrou a execução E2E e validou comandos por papel, confirmação, motivo/evidência, EventSource sem polling, degradação/reconexão, acessibilidade e sanitização.

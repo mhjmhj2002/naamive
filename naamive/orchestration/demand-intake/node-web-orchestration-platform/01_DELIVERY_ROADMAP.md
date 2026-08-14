@@ -1,6 +1,6 @@
 ---
 document_type: delivery-roadmap
-status: APPROVED_FOR_PHASE_5
+status: APPROVED_FOR_PHASE_6
 created_at: 2026-07-30
 approved_at: 2026-07-30
 approved_by: NAAMIVE product and engineering
@@ -170,30 +170,23 @@ vincular uma pendência explicável.
 | 5 | F5-19 | `DONE` | Testes de integração cobrem inventário, workflow, gate e evolução por nova revisão sem alterar registros autorizados. |
 | 5 | F5-20 | `DONE` | Regressões da Fase 3 confirmam coexistência do legado e propagação obrigatória da baseline em projetos v3. |
 | 5 | F5-21 | `DONE` | Aceite consolidado validou a jornada versionada Catálogo → Perfil → Projeto → Baseline → Módulo e a preservação do legado. |
-| 6 | F6-01 | `DONE` | Contratos fechados e política opt-in de assurance. |
-| 6 | F6-02 | `DONE` | Persistência aditiva, constraints e sanitização. |
-| 6 | F6-03 | `DONE` | Seleção e independência verificável do reviewer. |
-| 6 | F6-04 | `DOING` | Handoff de produção para work acceptance. |
-| 6 | F6-05 | `TODO` | Serviço de review e decisões independentes. |
-| 6 | F6-06 | `TODO` | Findings, rework e re-review compatíveis com F3. |
-| 6 | F6-07 | `DONE` | Gestão de blocks e assistência estruturada. |
-| 6 | F6-08 | `TODO` | Routing, advisory e gates humanos. |
-| 6 | F6-09 | `DOING` | Handoff de bloqueio e reconciliação; implementação concluída, aguardando regressão F3/F4/F5. |
-| 6 | F6-10 | `TODO` | APIs e projeções sanitizadas. |
-| 6 | F6-11 | `TODO` | Auditoria, observabilidade e SSE. |
-| 6 | F6-12 | `TODO` | UI operacional de assurance e blocks. |
-| 6 | F6-13 | `TODO` | Migração, rollout e coexistência. |
-| 6 | F6-14 | `TODO` | Testes unitários e de persistência. |
-| 6 | F6-15 | `TODO` | Testes de integração e jornadas E2E. |
-| 6 | F6-16 | `TODO` | Regressão das Fases 3, 4 e 5. |
-| 6 | F6-17 | `TODO` | Aceite consolidado da Fase 6. |
-
-> Impedimento em tratamento: a regressão F3 revelou que o adapter controlado
-> tentava reaplicar alteração sobre entrega anterior durante rework
-> (`DEVELOPMENT_AGENT_COMMIT_APPLY_FAILED`). O fixture foi ajustado para emitir
-> commit auditável sem conflitar quando o alvo já contém a entrega anterior.
-> A reserva de rework usa o `head_sha` da entrega rejeitada como base; nunca o
-> SHA-base original do work item.
+| 6 | F6-01 | `DONE` | Contratos JSON Schema fechados/versionados e política opt-in validados. |
+| 6 | F6-02 | `DONE` | Persistência aditiva, constraints, idempotência e sanitização completas nas migrations 044–047. |
+| 6 | F6-03 | `DONE` | Reviewer validado pelo servidor com identidade congelada e independência verificável. |
+| 6 | F6-04 | `DONE` | Handoff cria aceite e dispatch de review automaticamente na mesma transação. |
+| 6 | F6-05 | `DONE` | Worker de review aplica `ACCEPT`, `REWORK`, `BLOCK` e `ESCALATE` sem autoaceite. |
+| 6 | F6-06 | `DONE` | Findings, rework e re-review preservam a coleção e a autoridade da Fase 3. |
+| 6 | F6-07 | `DONE` | Gestão de blocks e assistência estruturada com decisões reservadas preservadas. |
+| 6 | F6-08 | `DONE` | Routing, advisory e gates humanos autenticados, limitados e auditados. |
+| 6 | F6-09 | `DONE` | Handoff de bloqueio e reconciliação idempotente certificados com regressão F3/F4/F5. |
+| 6 | F6-10 | `DONE` | APIs e comandos governados expõem somente projeções sanitizadas. |
+| 6 | F6-11 | `DONE` | Auditoria, métricas e SSE com cursor/replay/reconexão validados. |
+| 6 | F6-12 | `DONE` | UI operacional de assurance, blocks, gates e reconciliação validada em navegador real. |
+| 6 | F6-13 | `DONE` | Migration repetível, rollout opt-in e coexistência histórica certificados. |
+| 6 | F6-14 | `DONE` | Unitários, contratos, persistência e idempotência cobertos. |
+| 6 | F6-15 | `DONE` | Integração e 67 jornadas E2E obrigatórias aprovadas contra PostgreSQL. |
+| 6 | F6-16 | `DONE` | Regressões das Fases 3, 4 e 5 aprovadas sem alterar dispatches fora da política. |
+| 6 | F6-17 | `DONE` | Aceite consolidado aprovado em 2026-08-14 com build, migration, testes e E2E verdes. |
 | 7 | F7-01 | `TO DO` | — |
 | 7 | F7-02 | `TO DO` | — |
 | 7 | F7-03 | `TO DO` | — |

@@ -20,3 +20,11 @@ Não aceite regressão como efeito colateral da supervision. Isole a correção 
 ## Aceite
 
 Build, unitários, integração e E2E F3/F4/F5/F6 verdes; diferenças de comportamento somente nos dispatches explicitamente opt-in F6.
+
+## Evidência executada — 2026-08-14 (reexecução final)
+
+- `npm test`: aprovado após a correção de isolamento de falha do job `REVIEW`; preserva as regressões F3, F4 e F5, inclusive findings/rework/QA e os cenários F5 de manifesto malformado e retry antes/depois da persistência do inventário.
+- `npm run e2e`: aprovado contra PostgreSQL local. O cenário dedicado `assurance.e2e.test.ts` executou falha real do reviewer, retry do mesmo dispatch, restart sem segunda decisão terminal, reviewer inelegível sem autoaceite, rework com revalidação e review independente versionado, recorrência sem progresso escalada, lifecycle completo de blocks, gates humanos, comandos idempotentes, cancelamento HTTP autorizado com precedência sobre review, SSE HTTP com cursor e replay/reconexão idempotente e projeções sanitizadas por projeto/módulo/work item/correlação.
+- A cobertura F3 E2E consolidada continua validando deduplicação de findings, limite de duas rodadas e fechamento de finding somente pela QA posterior; F6 somente registra o handoff corretivo no domínio proprietário F3.
+- O contrato de UI F6 é executado como E2E (`web-ui-f6-12.e2e.test.ts`): papel restringe comandos, confirmação/motivo/evidência são obrigatórios, EventSource não usa polling, expõe degradação/reconexão, possui região acessível e não contém conteúdo sensível.
+- O caminho legado permanece opt-in: a política F6 só cria `work_acceptances` para seletores publicados; as execuções F3/F4/F5 sem essa política não recebem alteração de lifecycle.

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/human-gate-decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "gateId", "projectId", "gateType", "actorId", "actorRole", "decision", "reason", "evidence", "scope", "correlationId", "classification", "idempotencyKey"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "gateId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "projectId": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "blockId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "gateType": { "enum": ["INDEPENDENCE_EXCEPTION", "SCOPE_ARCHITECTURE_POLICY", "ACCEPTED_RISK", "ESCALATED_CLOSURE"] },
+    "actorId": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "actorRole": { "enum": ["TECH_LEAD", "REPOSITORY_OWNER", "ON_CALL_OWNER"] },
+    "decision": { "enum": ["APPROVED", "REJECTED"] },
+    "reason": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "evidence": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "scope": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "expiresAt": { "type": "string", "format": "date-time" },
+    "correlationId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "classification": { "$ref": "naamive://assurance/v1/common#/$defs/classification" },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 255 }
+  }
+}
