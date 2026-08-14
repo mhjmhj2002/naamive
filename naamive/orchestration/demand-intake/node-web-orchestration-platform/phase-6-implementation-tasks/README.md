@@ -2,11 +2,9 @@
 
 Execute uma task por vez; atualize o item correspondente no roadmap somente depois de seu aceite. A Fase 6 acrescenta assurance a dispatches selecionados por política, sem reinterpretar requests legados F4/F5 nem alterar o lifecycle macro.
 
-Antes de F6-01, registre `F6-GATE` no [roadmap](../01_DELIVERY_ROADMAP.md): ator autorizador, data, escopo aprovado, política inicial/versionamento e link ou hash da evidência. `F6-GATE` só pode ser marcado `DONE` quando todos esses dados estiverem registrados e a aprovação estiver verificável; sem isso, nenhuma task pode mudar para `DOING`.
-
 | Ordem | Task | Dependência |
 | --- | --- | --- |
-| 1 | [F6-01 — Contratos e política de assurance](F6-01-assurance-contracts.md) | F6-GATE aprovado e evidenciado |
+| 1 | [F6-01 — Contratos e política de assurance](F6-01-assurance-contracts.md) | — |
 | 2 | [F6-02 — Persistência aditiva e segurança](F6-02-assurance-persistence.md) | F6-01 |
 | 3 | [F6-03 — Seleção e independência do reviewer](F6-03-reviewer-independence.md) | F6-01, F6-02 |
 | 4 | [F6-04 — Handoff de produção e work acceptance](F6-04-production-handoff.md) | F6-01, F6-02 |

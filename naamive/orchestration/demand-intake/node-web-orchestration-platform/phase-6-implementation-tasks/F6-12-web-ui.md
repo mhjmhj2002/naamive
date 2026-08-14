@@ -1,6 +1,6 @@
 ---
 task: F6-12
-status: TODO
+status: DONE
 depends_on: [F6-10, F6-11]
 ---
 
@@ -12,10 +12,10 @@ Construa a UI exclusivamente sobre projeções sanitizadas e comandos governados
 
 ## Itens de implementação
 
-- [ ] **TO_DO:** Exibir o micro-lifecycle e a distinção explícita entre `OUTPUT_SUBMITTED` e `ACCEPTED`, com estado, reviewer, decisões, findings, evidência permitida e próxima ação.
-- [ ] **TO_DO:** Exibir lifecycle de block, diagnóstico, alternativas, impactos/trade-offs/confiança, routing e escalonamento, deixando claro quando há decisão humana pendente.
-- [ ] **TO_DO:** Oferecer somente ações autorizadas ao ator (selecionar resolução, pausar, cancelar, escalar, registrar gate ou reconciliar manualmente); reconciliação aparece exclusivamente ao On-call Owner, exige motivo/evidência/confirmação e informa resultado idempotente e sanitizado.
-- [ ] **TO_DO:** Atualizar por SSE com recuperação de cursor, estados de carregamento/degradação e acessibilidade; não derivar aceite, autoridade ou transição no client-side.
+- [x] **DONE:** Exibir o micro-lifecycle e a distinção explícita entre `OUTPUT_SUBMITTED` e `ACCEPTED`, com estado, reviewer, decisões, findings, evidência permitida e próxima ação.
+- [x] **DONE:** Exibir lifecycle de block, diagnóstico, alternativas, impactos/trade-offs/confiança, routing e escalonamento, deixando claro quando há decisão humana pendente.
+- [x] **DONE:** Oferecer somente ações autorizadas ao ator (selecionar resolução, pausar, cancelar, escalar, registrar gate ou reconciliar manualmente); reconciliação aparece exclusivamente ao On-call Owner, exige motivo/evidência/confirmação e informa resultado idempotente e sanitizado.
+- [x] **DONE:** Atualizar por SSE com recuperação de cursor, estados de carregamento/degradação e acessibilidade; não derivar aceite, autoridade ou transição no client-side.
 
 ## Aceite
 

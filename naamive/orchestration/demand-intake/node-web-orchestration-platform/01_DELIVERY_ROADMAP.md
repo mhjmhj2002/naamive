@@ -170,24 +170,23 @@ vincular uma pendência explicável.
 | 5 | F5-19 | `DONE` | Testes de integração cobrem inventário, workflow, gate e evolução por nova revisão sem alterar registros autorizados. |
 | 5 | F5-20 | `DONE` | Regressões da Fase 3 confirmam coexistência do legado e propagação obrigatória da baseline em projetos v3. |
 | 5 | F5-21 | `DONE` | Aceite consolidado validou a jornada versionada Catálogo → Perfil → Projeto → Baseline → Módulo e a preservação do legado. |
-| 6 | F6-GATE | `TO DO` | Aprovação registrada do escopo, política inicial, evidência e autoridade para iniciar a implementação F6. |
-| 6 | F6-01 | `TO DO` | Contratos fechados e política opt-in de assurance. |
-| 6 | F6-02 | `TO DO` | Persistência aditiva, constraints e sanitização. |
-| 6 | F6-03 | `TO DO` | Seleção e independência verificável do reviewer. |
-| 6 | F6-04 | `TO DO` | Handoff de produção para work acceptance. |
-| 6 | F6-05 | `TO DO` | Serviço de review e decisões independentes. |
-| 6 | F6-06 | `TO DO` | Findings, rework e re-review compatíveis com F3. |
-| 6 | F6-07 | `TO DO` | Gestão de blocks e assistência estruturada. |
-| 6 | F6-08 | `TO DO` | Routing, advisory e gates humanos. |
-| 6 | F6-09 | `TO DO` | Handoff de bloqueio e reconciliação. |
-| 6 | F6-10 | `TO DO` | APIs e projeções sanitizadas. |
-| 6 | F6-11 | `TO DO` | Auditoria, observabilidade e SSE. |
-| 6 | F6-12 | `TO DO` | UI operacional de assurance e blocks. |
-| 6 | F6-13 | `TO DO` | Migração, rollout e coexistência. |
-| 6 | F6-14 | `TO DO` | Testes unitários e de persistência. |
-| 6 | F6-15 | `TO DO` | Testes de integração e jornadas E2E. |
-| 6 | F6-16 | `TO DO` | Regressão das Fases 3, 4 e 5. |
-| 6 | F6-17 | `TO DO` | Aceite consolidado da Fase 6. |
+| 6 | F6-01 | `DONE` | Contratos fechados e política opt-in de assurance. |
+| 6 | F6-02 | `DONE` | Persistência aditiva, constraints e sanitização. |
+| 6 | F6-03 | `DONE` | Seleção e independência verificável do reviewer. |
+| 6 | F6-04 | `DONE` | Handoff de produção para work acceptance. |
+| 6 | F6-05 | `DONE` | Serviço de review e decisões independentes. |
+| 6 | F6-06 | `DONE` | Findings, rework e re-review compatíveis com F3. |
+| 6 | F6-07 | `DONE` | Gestão de blocks e assistência estruturada. |
+| 6 | F6-08 | `DONE` | Routing, advisory e gates humanos. |
+| 6 | F6-09 | `DONE` | Handoff de bloqueio e reconciliação. |
+| 6 | F6-10 | `DONE` | APIs e projeções sanitizadas. |
+| 6 | F6-11 | `DONE` | Auditoria, observabilidade e SSE. |
+| 6 | F6-12 | `DONE` | UI operacional de assurance e blocks. |
+| 6 | F6-13 | `DONE` | Migração, rollout e coexistência. |
+| 6 | F6-14 | `DONE` | Testes unitários e de persistência. |
+| 6 | F6-15 | `DONE` | Testes de integração e jornadas E2E. |
+| 6 | F6-16 | `DONE` | Regressão das Fases 3, 4 e 5. |
+| 6 | F6-17 | `DONE` | Aceite consolidado da Fase 6. |
 | 7 | F7-01 | `TO DO` | — |
 | 7 | F7-02 | `TO DO` | — |
 | 7 | F7-03 | `TO DO` | — |
@@ -455,13 +454,12 @@ política.
 
 O detalhamento normativo desta fase está em
 [15_PHASE_6_AGENT_SUPERVISION_AND_ASSURANCE.md](15_PHASE_6_AGENT_SUPERVISION_AND_ASSURANCE.md).
-Esta fase só pode iniciar após `F6-GATE` aprovado; a implementação é aditiva,
-opt-in e não retroaltera o runtime, contratos ou comportamento certificado das
+Esta fase é implementada de forma aditiva e opt-in; não retroaltera o runtime,
+contratos ou comportamento certificado das
 Fases 3, 4 e 5.
 
 | ID | Tarefa de implementação e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F6-GATE | Registrar aprovação da Fase 6, ator autorizador, data, escopo/política inicial e evidência da decisão antes de qualquer task entrar em `DOING`. | Sem evidência de gate, nenhuma implementação F6 é iniciada. |
 | F6-01 | Publicar contratos e política versionada, fechada e opt-in de assurance. | Não duplicar contratos nem mudar o caminho F4 legado. |
 | F6-02 | Criar persistência aditiva, constraints transacionais e limites de dados sanitizados. | Não reinterpretar legado nem introduzir cascata destrutiva. |
 | F6-03 | Selecionar reviewer com independência verificável e exceção humana limitada. | Nunca permitir auto-review ou exceção de `agent_id`. |

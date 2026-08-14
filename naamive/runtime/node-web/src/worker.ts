@@ -34,7 +34,7 @@ const leaseJob = (projectId?: string) => withTransaction(async (client) => {
       LIMIT 1
     )
     UPDATE jobs
-    SET status='LEASED',attempts=attempts+1,lease_expires_at=clock_timestamp()+($1||' seconds')::interval,heartbeat_at=clock_timestamp(),started_at=coalesce(started_at,clock_timestamp()),last_signal_at=clock_timestamp(),metadata=CASE WHEN kind='DEVELOP_WORK_ITEM' THEN jsonb_set(metadata,'{build_id}',to_jsonb($3::text),true) ELSE metadata END
+    SET status='LEASED',attempts=attempts+1,lease_expires_at=clock_timestamp()+($1||' seconds')::interval,heartbeat_at=clock_timestamp(),started_at=coalesce(started_at,clock_timestamp()),last_signal_at=clock_timestamp(),metadata=CASE WHEN kind='DEVELOP_WORK_ITEM' THEN jsonb_set(coalesce(metadata,'{}'::jsonb),'{build_id}',to_jsonb(coalesce($3::text,'unknown')),true) ELSE coalesce(metadata,'{}'::jsonb) END
     WHERE id IN (SELECT id FROM candidate)
     RETURNING *`, [String(leaseSeconds()), projectId ?? null, config().buildId]);
   if (!leased.rowCount) return null;

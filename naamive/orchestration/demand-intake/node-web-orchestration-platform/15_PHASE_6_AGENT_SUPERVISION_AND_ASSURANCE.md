@@ -1,8 +1,8 @@
 ---
 document_type: phase-planning
-status: PLANNING_COMPLETE_PENDING_IMPLEMENTATION_AUTHORIZATION
+status: IMPLEMENTATION_IN_PROGRESS
 created_at: 2026-08-13
-scope: conceptual planning of Phase 6 only; no runtime implementation authorization
+scope: normative planning and implementation of Phase 6
 primary_roadmap: 01_DELIVERY_ROADMAP.md
 related_protocol: ../../ORCHESTRATION_PROTOCOL.md
 related_compass: ../../LIFECYCLE_COMPASS.md
@@ -214,7 +214,7 @@ de reviewer e antecipação de riscos. Isso não é escopo desta fase.
 - A fronteira terminal de review, handoff transacional, independência verificável, coexistência F3/F4 e contexto seguro são normativos.
 - Findings, rework, blocks, assistência, routing e escalonamento são entidades/processos rastreáveis.
 - Ownership entre orquestrador, governance, especialista, advisory, QA e humano está delimitado.
-- A documentação declara que não há implementação antecipada nem alteração do comportamento certificado F4/F5.
+- A implementação preserva o comportamento certificado F4/F5 para dispatches fora da política F6 opt-in.
 
 ## Questões para o detalhamento/implementação da Fase 6
 

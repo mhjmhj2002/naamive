@@ -26,6 +26,21 @@ npm --prefix naamive/runtime/node-web run worker
 
 O mesmo formato funciona para `migrate`, `dev`, `reconcile`, `test` e `e2e`.
 
+## Assurance (Fase 6)
+
+A migration `044_phase_6_assurance.sql` é aditiva. O rollout é opt-in:
+publique uma política em `POST /api/admin/assurance-policies`; somente novos
+dispatches selecionados por `agentPolicyNames`, `taskTypes` e `classifications`
+entram no micro-lifecycle de assurance. Desabilitar a política interrompe novas
+seleções e não muda execuções ou aceites já existentes; não apague o histórico
+para fazer rollback.
+
+`/api/projects/:projectId/assurance` é uma projeção sanitizada, inclusive para
+timeline por cursor. Nunca envie prompts, saída bruta, logs, segredos ou paths.
+On-call pode cancelar; exceção de independência, escopo, arquitetura, política,
+risco e fechamento escalado exigem gate humano de Tech Lead ou dono do
+repositório.
+
 Os comandos `start`, `dev`, `worker`, `migrate` e `reconcile` carregam
 automaticamente o arquivo `.env` desse diretório quando ele existe.
 

@@ -12,17 +12,26 @@ import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
 import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializationBaselineOptions, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, resolveExternalBlocker, revalidateCandidate, retryDevelopmentWorkItem, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
 import { requestPlanAdjustment, retryModulePlan } from './module-planning.js';
-import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
+import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, publishAssurancePolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
 import { agentExecutionService } from './agent-execution-service.js';
 import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-gate.js';
 import { startTechnologyBaselineRevision } from './baseline-revision.js';
 import { createTechnologyBaselineRevision, listTechnologyCatalogItems, listTechnologyCategories, listTechnologyProfiles, requestTechnologyInventory, technologyBaseline, technologyCatalogRevision, technologyProfile, technologySelectionContext } from './technology-api.js';
 import { developmentRuntime } from './development-runtime.js';
 import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
+import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, transitionBlock } from './assurance.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
 const respond = (response: ServerResponse, status: number, body: object) => { response.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': settings.webOrigin }); response.end(JSON.stringify(body)); };
+const assertAssuranceScope = async (projectId: string, resource: 'acceptance'|'review'|'block', id: string) => {
+  const sql = resource === 'acceptance'
+    ? `SELECT 1 FROM work_acceptances WHERE id=$1 AND project_id=$2`
+    : resource === 'review'
+      ? `SELECT 1 FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id WHERE r.id=$1 AND a.project_id=$2`
+      : `SELECT 1 FROM work_blocks WHERE id=$1 AND project_id=$2`;
+  if (!(await pool.query(sql, [id, projectId])).rowCount) throw new ApiError(404, 'ASSURANCE_RESOURCE_NOT_FOUND');
+};
 const decide = async (projectId: string, body: Record<string, unknown>) => withTransaction(async (client) => {
   const gate = await client.query(`SELECT * FROM gates WHERE project_id=$1 AND status='OPEN' FOR UPDATE`, [projectId]); if (!gate.rowCount) throw new ApiError(409, 'GATE_NOT_OPEN'); const row=gate.rows[0];
   if (body.gate_id !== row.id) throw new ApiError(409, 'GATE_VERSION_CONFLICT');
@@ -55,6 +64,13 @@ export const createApiServer = () => createServer(async (request, response) => {
   const technologyBaselineDecisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/decision$/);
   const materializationBaselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/materialization-options$/);
   const runtimeValidateMatch = url.pathname.match(/^\/api\/admin\/ai-runtimes\/([^/]+)\/validate$/);
+  const assuranceMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance$/);
+  const assuranceReviewMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/acceptances\/([^/]+)\/reviews$/);
+  const assuranceDecisionMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/reviews\/([^/]+)\/decision$/);
+  const assuranceBlockMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/blocks\/([^/]+)$/);
+  const assuranceProposalMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/blocks\/([^/]+)\/proposals$/);
+  const assuranceGateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/gates$/);
+  const assuranceCancelMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/acceptances\/([^/]+)\/cancel$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
   if (request.method === 'GET' && url.pathname === '/health/runtime') { const health=await runtimeHealth(); return respond(response,health.healthy?200:503,health); }
@@ -65,8 +81,16 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/api/technology/profiles') return respond(response, 200, await listTechnologyProfiles(url.searchParams.get('status')));
   if (technologyProfileMatch && request.method === 'GET') return respond(response, 200, await technologyProfile(technologyProfileMatch[1]));
   if (request.method === 'GET' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 200, { items: await listRuntimeCatalogue() });
+  if (assuranceMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceMatch[1],url.searchParams.get('cursor')));
+  if (assuranceReviewMatch && request.method === 'POST') { await assertAssuranceScope(assuranceReviewMatch[1],'acceptance',assuranceReviewMatch[2]); const body=await json(request); return respond(response,202,await createIndependentReview(assuranceReviewMatch[2],body.producer as any,body.candidate as any,body.review_package,typeof body.independence_gate_id==='string'?body.independence_gate_id:undefined)); }
+  if (assuranceDecisionMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'review',assuranceDecisionMatch[1]); const body=await json(request); return respond(response,202,await decideReview(assuranceDecisionMatch[1],body.decision as any,body.evidence,request.headers['idempotency-key']?.toString()??randomUUID())); }
+  if (assuranceBlockMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'block',assuranceBlockMatch[1]); const body=await json(request); return respond(response,202,await transitionBlock(assuranceBlockMatch[1],String(body.state??''),body.resolution)); }
+  if (assuranceProposalMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'block',assuranceProposalMatch[1]); return respond(response,202,await createAssistanceProposal(assuranceProposalMatch[1],await json(request),String(request.headers['x-actor-id']??settings.operatorId))); }
+  if (assuranceGateMatch && request.method === 'POST') return respond(response,202,await recordHumanGate(assuranceGateMatch[1],await json(request),String(request.headers['x-actor-id']??settings.operatorId)));
+  if (assuranceCancelMatch && request.method === 'POST') { const projectId=url.pathname.split('/')[3]; await assertAssuranceScope(projectId,'acceptance',assuranceCancelMatch[1]); return respond(response,202,await cancelAcceptance(assuranceCancelMatch[1],await json(request))); }
   if (request.method === 'POST' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 202, await registerRuntime(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (request.method === 'POST' && url.pathname === '/api/admin/agent-execution-policies') return respond(response, 202, await publishAgentExecutionPolicy(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
+  if (request.method === 'POST' && url.pathname === '/api/admin/assurance-policies') return respond(response, 202, await publishAssurancePolicy(await json(request), request.headers['idempotency-key']?.toString() ?? randomUUID()));
   if (runtimeValidateMatch && request.method === 'POST') return respond(response, 200, await validateRuntime(runtimeValidateMatch[1]));
   if (request.method === 'POST' && url.pathname === '/api/agent/readiness') {
     try {
@@ -132,7 +156,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
   if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html','cache-control':'no-store'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
-} catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : error instanceof AgentRuntimeAdminError ? new ApiError(error.status, error.code, error.message) : new ApiError(500, 'INTERNAL_ERROR');
+} catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : error instanceof AgentRuntimeAdminError ? new ApiError(error.status, error.code, error.message) : error instanceof AssuranceError ? new ApiError(error.status,error.code) : new ApiError(500, 'INTERNAL_ERROR');
   log('server',known.status>=500?'error':'warn',known.status>=500?'request_failed':'request_rejected',{request_id:requestId,method:request.method,route:new URL(request.url ?? '/',settings.webOrigin).pathname,status:known.status,code:known.code,error_kind:error instanceof Error?error.constructor.name:'UnknownError',database_code:typeof (error as { code?: unknown })?.code==='string'?(error as { code:string }).code:undefined,database_column:typeof (error as { column?: unknown })?.column==='string'?(error as { column:string }).column:undefined,database_message:typeof (error as { message?: unknown })?.message==='string'?(error as { message:string }).message.replace(/[^A-Za-z0-9_. -]/g,'').slice(0,160):undefined});
   respond(response, known.status, { code: known.code, message: known.message, request_id: requestId }); } });
 if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.js')) {

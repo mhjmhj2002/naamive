@@ -1,6 +1,6 @@
 ---
 task: F6-07
-status: TODO
+status: DONE
 depends_on: [F6-01, F6-02, F6-04]
 ---
 
@@ -12,13 +12,12 @@ depends_on: [F6-01, F6-02, F6-04]
 
 ## Itens de implementação
 
-- [ ] **TO_DO:** Implementar o lifecycle `OPEN → DIAGNOSING → SOLUTION_PROPOSED → RESOLUTION_SELECTED → RESOLVING → RESOLVED`, mais `ESCALATED`, `PAUSED` e `CANCELLED`, com transições validadas.
-- [ ] **TO_DO:** Registrar fonte, execução/dispatch, alvo, categoria, sintomas, evidências, tentativas, causas suspeitas, severidade, responsável, resolução e evidência; implementar todas as categorias iniciais do planning.
-- [ ] **TO_DO:** Correlacionar sem substituir `BLOCKED_NO_EXECUTOR_AVAILABLE` F4 e `INTEGRATION_BLOCKED` F3, deduplicando block ativo; reabertura inicia ciclo novo ligado ao anterior.
-- [ ] **TO_DO:** Criar propostas de assistência baseadas em evidência/tentativas, alternativas, impactos, trade-offs, confiança, recomendação e especialista/decisão humana indicada, sem ação implícita.
-- [ ] **TO_DO:** Exigir resolução e evidência para `RESOLVED`; em pausa preservar block/executão e impedir dispatch; em cancelamento encerrar block e execução associada.
+- [x] **DONE:** Implementar o lifecycle `OPEN → DIAGNOSING → SOLUTION_PROPOSED → RESOLUTION_SELECTED → RESOLVING → RESOLVED`, mais `ESCALATED`, `PAUSED` e `CANCELLED`, com transições validadas.
+- [x] **DONE:** Registrar fonte, execução/dispatch, alvo, categoria, sintomas, evidências, tentativas, causas suspeitas, severidade, responsável, resolução e evidência; implementar todas as categorias iniciais do planning.
+- [x] **DONE:** Correlacionar sem substituir `BLOCKED_NO_EXECUTOR_AVAILABLE` F4 e `INTEGRATION_BLOCKED` F3, deduplicando block ativo; reabertura inicia ciclo novo ligado ao anterior.
+- [x] **DONE:** Criar propostas de assistência baseadas em evidência/tentativas, alternativas, impactos, trade-offs, confiança, recomendação e especialista/decisão humana indicada, sem ação implícita.
+- [x] **DONE:** Exigir resolução e evidência para `RESOLVED`; em pausa preservar block/executão e impedir dispatch; em cancelamento encerrar block e execução associada.
 
 ## Aceite
 
 Cobrir lifecycle, deduplicação, reabertura, pausa/cancelamento e assistência incapaz de executar decisão reservada.
-

@@ -5,6 +5,7 @@ import { EnvironmentSecretResolver, SecretResolutionError } from './secret-resol
 import { CodexCliAdapter } from './adapters/codex-cli-adapter.js';
 import type { AdapterType, AuthType, Classification, RuntimeConfigurationRecord, RuntimeValidationState } from './agent-runtime-contracts.js';
 import { sanitizeStructured } from './agent-runtime-redaction.js';
+import { validateAssurancePolicy } from './assurance.js';
 
 export class AgentRuntimeAdminError extends Error {
   constructor(readonly status: number, readonly code: string, message = code) { super(message); }
@@ -84,6 +85,23 @@ export const publishAgentExecutionPolicy = async (body: Record<string, unknown>,
     await client.query(`INSERT INTO agent_runtime_audit(id,entity_type,entity_id,action,actor_id,reason,before_value,after_value,idempotency_key)
       VALUES($1,'AGENT_EXECUTION_POLICY',$2,'PUBLISH_POLICY',$3,$4,$5,$6,$7)`, [randomUUID(), id, config().operatorId, reason, null, afterValue, idempotencyKey]);
     return afterValue;
+  });
+};
+
+/** Publishes a separate, opt-in assurance policy.  It never mutates an F4 policy. */
+export const publishAssurancePolicy = async (body: Record<string, unknown>, idempotencyKey: string) => {
+  const name=String(body.name??'').trim(), reason=String(body.change_reason??'').trim();
+  if(!name||!reason) throw new AgentRuntimeAdminError(422,'ASSURANCE_POLICY_FIELDS_REQUIRED');
+  const {selectors,configuration}=validateAssurancePolicy(body.selectors??{},body.configuration??{});
+  return withTransaction(async client => {
+    const replay=await client.query(`SELECT after_value FROM agent_runtime_audit WHERE idempotency_key=$1 AND action='PUBLISH_ASSURANCE_POLICY'`,[idempotencyKey]); if(replay.rowCount)return replay.rows[0].after_value;
+    const version=Number((await client.query(`SELECT COALESCE(max(version),0)+1 AS version FROM assurance_policies WHERE name=$1`,[name])).rows[0].version),id=randomUUID();
+    // Rollback is policy-only: superseding publication changes selection for
+    // future executions and leaves frozen acceptances on their original version.
+    await client.query(`UPDATE assurance_policies SET enabled=false WHERE name=$1 AND enabled=true`,[name]);
+    await client.query(`INSERT INTO assurance_policies(id,name,version,enabled,selectors,configuration,published_by) VALUES($1,$2,$3,true,$4,$5,$6)`,[id,name,version,selectors,configuration,config().operatorId]);
+    const value={policy_id:id,name,version,enabled:true,selectors,configuration};
+    await client.query(`INSERT INTO agent_runtime_audit(id,entity_type,entity_id,action,actor_id,reason,after_value,idempotency_key) VALUES($1,'ASSURANCE_POLICY',$2,'PUBLISH_ASSURANCE_POLICY',$3,$4,$5,$6)`,[randomUUID(),id,config().operatorId,reason,value,idempotencyKey]); return value;
   });
 };
 
