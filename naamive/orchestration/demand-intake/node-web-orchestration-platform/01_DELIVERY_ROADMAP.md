@@ -170,12 +170,24 @@ vincular uma pendência explicável.
 | 5 | F5-19 | `DONE` | Testes de integração cobrem inventário, workflow, gate e evolução por nova revisão sem alterar registros autorizados. |
 | 5 | F5-20 | `DONE` | Regressões da Fase 3 confirmam coexistência do legado e propagação obrigatória da baseline em projetos v3. |
 | 5 | F5-21 | `DONE` | Aceite consolidado validou a jornada versionada Catálogo → Perfil → Projeto → Baseline → Módulo e a preservação do legado. |
-| 6 | F6-01 | `TO DO` | — |
-| 6 | F6-02 | `TO DO` | — |
-| 6 | F6-03 | `TO DO` | — |
-| 6 | F6-04 | `TO DO` | — |
-| 6 | F6-05 | `TO DO` | — |
-| 6 | F6-06 | `TO DO` | — |
+| 6 | F6-GATE | `TO DO` | Aprovação registrada do escopo, política inicial, evidência e autoridade para iniciar a implementação F6. |
+| 6 | F6-01 | `TO DO` | Contratos fechados e política opt-in de assurance. |
+| 6 | F6-02 | `TO DO` | Persistência aditiva, constraints e sanitização. |
+| 6 | F6-03 | `TO DO` | Seleção e independência verificável do reviewer. |
+| 6 | F6-04 | `TO DO` | Handoff de produção para work acceptance. |
+| 6 | F6-05 | `TO DO` | Serviço de review e decisões independentes. |
+| 6 | F6-06 | `TO DO` | Findings, rework e re-review compatíveis com F3. |
+| 6 | F6-07 | `TO DO` | Gestão de blocks e assistência estruturada. |
+| 6 | F6-08 | `TO DO` | Routing, advisory e gates humanos. |
+| 6 | F6-09 | `TO DO` | Handoff de bloqueio e reconciliação. |
+| 6 | F6-10 | `TO DO` | APIs e projeções sanitizadas. |
+| 6 | F6-11 | `TO DO` | Auditoria, observabilidade e SSE. |
+| 6 | F6-12 | `TO DO` | UI operacional de assurance e blocks. |
+| 6 | F6-13 | `TO DO` | Migração, rollout e coexistência. |
+| 6 | F6-14 | `TO DO` | Testes unitários e de persistência. |
+| 6 | F6-15 | `TO DO` | Testes de integração e jornadas E2E. |
+| 6 | F6-16 | `TO DO` | Regressão das Fases 3, 4 e 5. |
+| 6 | F6-17 | `TO DO` | Aceite consolidado da Fase 6. |
 | 7 | F7-01 | `TO DO` | — |
 | 7 | F7-02 | `TO DO` | — |
 | 7 | F7-03 | `TO DO` | — |
@@ -439,17 +451,30 @@ política.
 
 O detalhamento normativo desta fase está em
 [15_PHASE_6_AGENT_SUPERVISION_AND_ASSURANCE.md](15_PHASE_6_AGENT_SUPERVISION_AND_ASSURANCE.md).
-Esta fase é planejamento futuro: não retroaltera o runtime, contratos ou o
-comportamento certificado da Fase 5.
+Esta fase só pode iniciar após `F6-GATE` aprovado; a implementação é aditiva,
+opt-in e não retroaltera o runtime, contratos ou comportamento certificado das
+Fases 3, 4 e 5.
 
-| ID | Tarefa e definição de pronto | Impedimento / tratamento |
+| ID | Tarefa de implementação e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F6-01 | Definir micro-lifecycle universal `DISPATCH → PRODUCE → OUTPUT/BLOCK → REVIEW/ASSIST → ACCEPT/REWORK/ESCALATE`, separado do lifecycle macro. | Não introduzir uma fase macro artificial nem mudar gates humanos. |
-| F6-02 | Modelar `WORK_ACCEPTANCE`, review independente, modos conceituais `PRODUCE`/`REVIEW` e compatibilidade com evidências e gates atuais. | Sucesso de execução não pode promover estado ou aceite por si só. |
-| F6-03 | Definir findings rastreáveis, rework delimitado, re-review, limites configuráveis e detecção de ausência de progresso. | Não permitir loop infinito ou autoateste do produtor. |
-| F6-04 | Modelar block, lifecycle, diagnóstico, opções, recomendação, confiança, roteamento e escalonamento. | Consultoria não muda decisão reservada a humano. |
-| F6-05 | Definir ownership entre orquestrador, governance, reviewer especialista, QA e advisory; avaliar necessidade de capability de engineering advisory. | Não criar agentes oficiais sem responsabilidade distinta. |
-| F6-06 | Planejar migração aditiva, observabilidade, auditoria e critérios de aceite, preservando contratos e fluxos certificados anteriores. | Nenhuma implementação antecipada nesta task documental. |
+| F6-GATE | Registrar aprovação da Fase 6, ator autorizador, data, escopo/política inicial e evidência da decisão antes de qualquer task entrar em `DOING`. | Sem evidência de gate, nenhuma implementação F6 é iniciada. |
+| F6-01 | Publicar contratos e política versionada, fechada e opt-in de assurance. | Não duplicar contratos nem mudar o caminho F4 legado. |
+| F6-02 | Criar persistência aditiva, constraints transacionais e limites de dados sanitizados. | Não reinterpretar legado nem introduzir cascata destrutiva. |
+| F6-03 | Selecionar reviewer com independência verificável e exceção humana limitada. | Nunca permitir auto-review ou exceção de `agent_id`. |
+| F6-04 | Converter sucesso de produção F6 em `OUTPUT_SUBMITTED` e `PENDING_REVIEW` de modo idempotente. | Não concluir job/operação nem promover workflow. |
+| F6-05 | Executar review independente e aplicar decisão terminal; `BLOCK` cria/correlaciona block na mesma transação. | Apenas `ACCEPT` promove efeito de negócio. |
+| F6-06 | Integrar findings e rework à coleção/autoridade F3. | Não criar fluxo paralelo, terceira rodada ou autoateste. |
+| F6-07 | Gerir blocks e assistência estruturada como fonte de verdade F6. | Assistência recomenda, mas não altera decisão reservada. |
+| F6-08 | Aplicar routing por categoria, advisory e gates humanos auditados. | Não criar papel/agente sem responsabilidade distinta. |
+| F6-09 | Executar handoff bloqueável e reconciliação idempotente. | Preservar terminação F4 fora da política F6. |
+| F6-10 | Expor APIs e comandos governados, incluindo reconciliação manual do On-call Owner. | Não expor dados brutos ou aceitar decisão sem autoridade. |
+| F6-11 | Publicar auditoria, métricas e SSE sanitizados. | Projeções não podem mutar estado canônico. |
+| F6-12 | Entregar UI de supervision, blocks e reconciliação manual autorizada. | Client não deriva aceite, autoridade ou transição. |
+| F6-13 | Executar migration, rollout e reversão controlada. | A reversão só alcança novos dispatches. |
+| F6-14 | Cobrir unitários, persistência e idempotência. | Sem serviços externos, credenciais ou casos não determinísticos. |
+| F6-15 | Demonstrar integração e E2E dos cenários normativos. | Nenhuma informação sensível em evidências/UI/SSE. |
+| F6-16 | Certificar regressão e coexistência F3/F4/F5. | Diferença de comportamento só em dispatch F6 opt-in. |
+| F6-17 | Consolidar aceite integral da Fase 6. | Não marcar `DONE` sem todos os cenários verdes. |
 
 ## Fase 7 — Projeto entregue e aceito pela web
 
