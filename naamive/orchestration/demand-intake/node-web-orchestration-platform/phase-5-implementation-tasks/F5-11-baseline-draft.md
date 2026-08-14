@@ -1,6 +1,6 @@
 ---
 task: F5-11
-status: TODO
+status: DONE
 ---
 
 # F5-11 — Criação do DRAFT da Technology Baseline

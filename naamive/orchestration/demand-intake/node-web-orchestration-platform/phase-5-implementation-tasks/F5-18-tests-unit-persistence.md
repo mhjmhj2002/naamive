@@ -1,6 +1,6 @@
 ---
 task: F5-18
-status: TODO
+status: DONE
 ---
 
 # F5-18 — Testes unitários, persistência, seeds e idempotência

@@ -415,6 +415,10 @@ registrados. A implementação pode iniciar respeitando essas restrições.
 
 ## Fase 5 — Baseline tecnológica antes dos módulos
 
+**Status:** concluída e validada. As implementation tasks F5-01 a F5-21
+estão `DONE`; a dívida TD-F5-001 permanece `OPEN` exclusivamente como melhoria
+futura de cobertura automatizada, sem pendência funcional da Fase 5.
+
 **Valor entregue:** após o compromisso de produto, o operador revisa e aprova
 orientações técnicas auditáveis antes de materializar o primeiro módulo. A
 baseline registra fatos sanitizados do repositório, restrições, preferências e
@@ -426,14 +430,14 @@ para o banco e só libera a criação do primeiro módulo após o gate humano. A
 revisão aprovada acompanha o módulo e seus contratos de implementação, sem
 alterar projetos legados ou módulos já autorizados.
 
-| ID | Tarefa e definição de pronto | Impedimento / tratamento |
-| --- | --- | --- |
-| F5-01 | Publicar `PROJECT_DISCOVERY` v3 com estados, guards e gate de baseline, preservando v2 para legados. | Não migrar silenciosamente projeto em andamento ou módulo já criado. |
-| F5-02 | Gerar inventário tecnológico read-only, sanitizado e vinculado ao SHA reservado. | Não executar código do repositório nem expor conteúdo sensível. |
-| F5-03 | Persistir baseline, revisões, decisões abertas e evidências imutáveis com schema versionado. | Rejeitar classificações ou ranges contraditórios antes do gate. |
-| F5-04 | Exibir inventário, orientações e gate humano por web/SSE com projeções sanitizadas. | O navegador não calcula nem envia fatos tecnológicos. |
-| F5-05 | Bloquear a primeira materialização até haver baseline aprovada e manter o fluxo legado explícito. | Rotas alternativas e workers obedecem ao mesmo guard transacional. |
-| F5-06 | Propagar a revisão aprovada a módulo, arquitetura, work item, QA, entrega e execução Dev. | FKs/guards impedem referência nula, divergente ou não aprovada. |
+| ID | Tarefa e definição de pronto | Impedimento / tratamento | Status |
+| --- | --- | --- | --- |
+| F5-01 | Publicar `PROJECT_DISCOVERY` v3 com estados, guards e gate de baseline, preservando v2 para legados. | Não migrar silenciosamente projeto em andamento ou módulo já criado. | `DONE` |
+| F5-02 | Gerar inventário tecnológico read-only, sanitizado e vinculado ao SHA reservado. | Não executar código do repositório nem expor conteúdo sensível. | `DONE` |
+| F5-03 | Persistir baseline, revisões, decisões abertas e evidências imutáveis com schema versionado. | Rejeitar classificações ou ranges contraditórios antes do gate. | `DONE` |
+| F5-04 | Exibir inventário, orientações e gate humano por web/SSE com projeções sanitizadas. | O navegador não calcula nem envia fatos tecnológicos. | `DONE` |
+| F5-05 | Bloquear a primeira materialização até haver baseline aprovada e manter o fluxo legado explícito. | Rotas alternativas e workers obedecem ao mesmo guard transacional. | `DONE` |
+| F5-06 | Propagar a revisão aprovada a módulo, arquitetura, work item, QA, entrega e execução Dev. | FKs/guards impedem referência nula, divergente ou não aprovada. | `DONE` |
 
 ## Fase 6 — Agent Supervision & Assurance
 

@@ -6,8 +6,14 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+const sourceFiles = new Set((await readdir(new URL('../src/', import.meta.url)))
+  .filter((file) => file.endsWith('.e2e.test.ts'))
+  .map((file) => file.replace(/\.ts$/, '.js')));
+
+// Ignore compiled E2E files left by a previous branch switch. Every executed
+// scenario must have a current source counterpart compiled by `npm run build`.
 const testFiles = (await readdir(new URL('../dist/', import.meta.url)))
-  .filter((file) => file.endsWith('.e2e.test.js'))
+  .filter((file) => sourceFiles.has(file))
   .map((file) => `dist/${file}`);
 
 if (testFiles.length === 0) {

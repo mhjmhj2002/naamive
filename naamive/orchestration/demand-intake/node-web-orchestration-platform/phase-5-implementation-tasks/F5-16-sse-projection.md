@@ -1,6 +1,6 @@
 ---
 task: F5-16
-status: TODO
+status: DONE
 ---
 
 # F5-16 — SSE e projeção da baseline na timeline

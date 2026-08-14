@@ -1,6 +1,6 @@
 ---
 task: F5-15
-status: TODO
+status: DONE
 ---
 
 # F5-15 — API do Catálogo Tecnológico e da Technology Baseline
