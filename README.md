@@ -8,3 +8,4 @@ A plataforma global fica em `naamive/`; os produtos originados por necessidades 
 
 - [Modelo do repositório](REPOSITORY_MODEL.md)
 - [Visão oficial do NAAMIVE](naamive/vision/PROJECT_VISION.md)
+- [Bússola visual do ciclo de vida](naamive/orchestration/LIFECYCLE_COMPASS.md)

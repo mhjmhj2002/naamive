@@ -19,8 +19,9 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
   if (!profile) throw new Error('TECHNOLOGY_BASELINE_DRAFT_PROFILE_INVALID');
   const inventoryJob = (await client.query(`SELECT j.id FROM jobs j JOIN operations o ON o.id=j.operation_id WHERE j.project_id=$1 AND j.kind='START_TECHNOLOGY_INVENTORY' AND j.status='COMPLETED' AND o.status='SUCCEEDED' ORDER BY j.completed_at DESC LIMIT 1 FOR SHARE`, [projectId])).rows[0];
   if (!inventoryJob) throw new Error('TECHNOLOGY_BASELINE_DRAFT_INVENTORY_REQUIRED');
-  const inventory = (await client.query(`SELECT id FROM technology_inventory WHERE project_key=$1 AND job_id=$2 AND technology_catalog_revision_id=$3 ORDER BY created_at DESC LIMIT 1`, [projectId, inventoryJob.id, context.technology_catalog_revision_id])).rows[0];
-  if (!inventory) throw new Error('TECHNOLOGY_BASELINE_DRAFT_INVENTORY_SNAPSHOT_REQUIRED');
+  // A completed collection may validly contain no facts, for example when the
+  // clone has no supported manifest. The job is still the immutable snapshot.
+  const inventory = (await client.query(`SELECT id FROM technology_inventory WHERE project_key=$1 AND job_id=$2 AND technology_catalog_revision_id=$3 ORDER BY created_at DESC LIMIT 1`, [projectId, inventoryJob.id, context.technology_catalog_revision_id])).rows[0] ?? null;
   const rows = (await client.query(`SELECT pi.catalog_item_id,pi.classification,pi.version_constraint,pi.justification,pi.display_order,
       i.category_id,i.is_active,i.metadata,c.is_active AS category_active
     FROM technology_catalog_revision_profile_items pi
@@ -62,10 +63,10 @@ export const createTechnologyBaselineDraft = async (client: pg.PoolClient, proje
       FROM technology_baseline_revisions WHERE baseline_id=$1`, [baselineId])).rows[0].revision_number);
   }
   await client.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,inventory_id,revision_number,status,payload,schema_version,actor,correlation_id,supersedes_revision_id)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,'DRAFT',$9,'technology-baseline/v1',$10,$11,$12)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory.id, revisionNumber, payload, config().operatorId, correlationId, predecessorId]);
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,'DRAFT',$9,'technology-baseline/v1',$10,$11,$12)`, [revisionId, baselineId, projectId, projectId, context.technology_catalog_revision_id, context.id, inventory?.id ?? null, revisionNumber, payload, config().operatorId, correlationId, predecessorId]);
   for (const [index, item] of items.entries()) await client.query(`INSERT INTO technology_baseline_revision_items(id,baseline_revision_id,technology_catalog_revision_id,catalog_item_id,classification,version_constraint,reason,source_profile_id,compatibility_rule_id,display_order)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`, [randomUUID(), revisionId, context.technology_catalog_revision_id, item.catalog_item_id, item.classification, item.version_constraint ?? null, item.reason, item.technology_profile_id ?? context.technology_profile_id, item.technology_compatibility_rule_id ?? null, index]);
-  const artifact = await putArtifact(client, projectId, 'technology-baseline', JSON.stringify({ schema_version: 1, baseline_id: baselineId, baseline_revision_id: revisionId, revision_number: revisionNumber, technology_catalog_revision_id: context.technology_catalog_revision_id, selection_context_id: context.id, inventory_id: inventory.id, payload, correlation_id: correlationId }));
+  const artifact = await putArtifact(client, projectId, 'technology-baseline', JSON.stringify({ schema_version: 1, baseline_id: baselineId, baseline_revision_id: revisionId, revision_number: revisionNumber, technology_catalog_revision_id: context.technology_catalog_revision_id, selection_context_id: context.id, inventory_id: inventory?.id ?? null, payload, correlation_id: correlationId }));
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,revision_id,payload,actor_id,workflow_code,workflow_version)
     VALUES($1,'TECHNOLOGY_BASELINE_DRAFT_CREATED',$2,$3,$4,$5,$6,$7)`, [projectId, correlationId, revisionId, { baseline_id: baselineId, technology_catalog_revision_id: context.technology_catalog_revision_id, selection_context_id: context.id, evidence_hash: artifact.hash }, config().operatorId, project.workflow_code, project.workflow_version]);
   if (predecessor) {

@@ -39,7 +39,7 @@ Somente um gate `REGISTER_PROJECT` aprovado materializa o projeto. O detalhe da 
 3. Ler o `STATUS.md` do alvo e confirmar que seu `current_state` coincide com o contexto recebido. Para módulo, confirmar também a elegibilidade diante do estado do projeto.
 4. Localizar a máquina de projeto ou módulo e verificar que a transição, as evidências mínimas e o gate aplicável existem. Nenhuma transição implícita é permitida.
 5. Selecionar somente um agente elegível para a atividade solicitada. O despacho define o papel, os limites de escrita e os resultados esperados; o agente não amplia esse escopo.
-6. Receber as saídas do agente e verificar sua vinculação ao `execution_id`, ao item autorizado e às evidências exigidas. Evidência ausente, incompatível ou fora do escopo impede o avanço.
+6. Receber as saídas do agente e verificar sua vinculação ao `execution_id`, ao item autorizado e às evidências exigidas. Evidência ausente, incompatível ou fora do escopo impede o avanço. A presença de evidência não prova, por si só, completude do trabalho.
 7. Criar um resultado de gate. Quando houver `HUMAN_DECISION` exigida, a orquestração permanece em `WAITING_FOR_GATE`; para controles automatizados e revisões independentes, ela aplica os critérios definidos sem presumir aceite humano.
 8. Após decisão favorável, atualizar `STATUS.md`, registrar a transição e encerrar a execução como `COMPLETED`. Uma decisão desfavorável resulta em `REWORK_REQUIRED`, `PAUSED` ou `CANCELLED`, conforme a decisão registrada.
 
@@ -58,6 +58,23 @@ Somente um gate `REGISTER_PROJECT` aprovado materializa o projeto. O detalhe da 
 | `FAILED` | Execução falhou sem evidência suficiente para avançar. | `REWORK_REQUIRED`, `PAUSED`, `CANCELLED` |
 | `PAUSED` | Execução interrompida por decisão registrada. | `VALIDATING`, `CANCELLED` |
 | `CANCELLED` | Execução encerrada por decisão registrada. | nenhum |
+
+## Evolução planejada para a Fase 6 — supervision & assurance
+
+O protocolo atual permanece em vigor até a implementação autorizada da Fase 6.
+O estágio atual `EVIDENCE_REVIEW` valida vinculação e suficiência de evidências;
+ele não deve ser lido como aceite automático de completude. A evolução será
+aditiva e distinguirá `OUTPUT_SUBMITTED`, review independente de completude,
+review especializado, `WORK_ACCEPTANCE` e gate decision. O invariante é que uma
+execução bem-sucedida nunca implica automaticamente aceite do trabalho.
+
+Cada dispatch deverá passar por produção e review independente, com findings
+rastreáveis, rework delimitado e re-review. Block deixará de ser somente falha
+ou texto livre para ter diagnóstico, assistência, roteamento especializado,
+limites configuráveis de tentativa/progresso e escalonamento. O orquestrador
+controlará lifecycle e routing; governance verificará processo e autoridade;
+especialistas avaliarão sua área; advisory recomendará alternativas; e gates
+humanos continuarão soberanos. Ver o planejamento da Fase 6 no roadmap.
 
 ## Elegibilidade de papéis
 

@@ -142,7 +142,7 @@ Nota: o documento só nomeia F5-01..F5-06 em duas tabelas (Sequência e Roadmap)
 | "startProductDiscovery deixa de fixar workflow_version=2" | Hoje fixa `workflow_version=2` (`service.ts:102`). Mudança necessária e bem definida. | ✅ Definida (task futura) |
 | "ArtifactStore suporta intenção, hash, reconciliação" | `artifact_intents` (mig 003/004), `artifacts.ts`, reconciliação idempotente. | ✅ Coerente |
 | Baseline "não é um inventário" | Correto; o inventário é `technology_inventory`. | ✅ Coerente |
-| Fases renumeradas / roadmap mantém Fase 5 = baseline | `01_DELIVERY_ROADMAP.md` + `11_PHASE_RENUMBERING_IMPACT_ANALYSIS.md` confirmam que baseline é Fase 5, entrega Fase 6, operação Fase 7. | ✅ Coerente (docs vivos ainda `DRAFT_FOR_HUMAN_VALIDATION` em 11) |
+| Fases renumeradas / roadmap mantém Fase 5 = baseline | `01_DELIVERY_ROADMAP.md` + `11_PHASE_RENUMBERING_IMPACT_ANALYSIS.md` confirmam baseline na Fase 5, supervision & assurance na Fase 6, entrega na Fase 7 e operação na Fase 8. | ✅ Coerente |
 | Demonstração do roadmap: "baseline com decisão aberta para o banco" | O snapshot inicial **inclui** POSTGRESQL ativo/REQUIRED. Sem decisão aberta de banco na baseline real. | ⚠️ **Inconsistência conceptual** (ver C5) |
 | `qa_matrices` nova tabela substituindo matriz congelada | Já existe `deliveries.qa_matrix` congelado em F3. | ⚠️ Potencial conflito (I1) |
 | Trigger transacional de baseline em tabelas F3 | Tabelas F3 + FKs existentes já complexas; trigger rígido pode conflitar com migrações aditivas/reconciliação (mig 022 usa `ON DELETE SET NULL`). | ⚠️ Risco de regressão/conflito |

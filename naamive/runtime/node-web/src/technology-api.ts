@@ -75,13 +75,14 @@ export const technologyBaseline = async (projectId: string) => withTransaction(a
   await requireProject(client, projectId);
   const baseline = (await client.query('SELECT * FROM technology_baselines WHERE project_key=$1', [projectId])).rows[0];
   const context = (await client.query(`SELECT * FROM technology_selection_contexts WHERE project_key=$1 ORDER BY created_at DESC LIMIT 1`, [projectId])).rows[0] ?? null;
-  if (!baseline) return { baseline: null, selection_context: context, revisions: [], inventory: [] };
+  const completedInventory = Number((await client.query(`SELECT 1 FROM jobs j JOIN operations o ON o.id=j.operation_id WHERE j.project_id=$1 AND j.kind='START_TECHNOLOGY_INVENTORY' AND j.status='COMPLETED' AND o.status='SUCCEEDED' LIMIT 1`, [projectId])).rowCount) > 0;
+  if (!baseline) return { baseline: null, selection_context: context, revisions: [], inventory: [], inventory_completed: completedInventory };
   const revisions = (await client.query(`SELECT r.*,COALESCE(json_agg(json_build_object('catalog_item_id',i.catalog_item_id,'classification',i.classification,'version_constraint',i.version_constraint,'reason',i.reason,'technology_profile_id',i.source_profile_id,'technology_compatibility_rule_id',i.compatibility_rule_id,'display_order',i.display_order) ORDER BY i.display_order) FILTER (WHERE i.id IS NOT NULL),'[]') AS items
     FROM technology_baseline_revisions r LEFT JOIN technology_baseline_revision_items i ON i.baseline_revision_id=r.id WHERE r.baseline_id=$1 GROUP BY r.id ORDER BY r.revision_number DESC`, [baseline.id])).rows;
   const inventory = (await client.query(`SELECT id,repository_sha,technology_catalog_revision_id,source_path,detector_code,confidence,resolution_result,catalog_item_id,created_at FROM technology_inventory WHERE project_key=$1 ORDER BY created_at DESC`, [projectId])).rows;
   const gates = (await client.query(`SELECT id,baseline_revision_id,status,version,decision,feedback,opened_at,decided_at
     FROM technology_baseline_gates WHERE project_key=$1 ORDER BY opened_at DESC`, [projectId])).rows;
-  return { baseline, selection_context: context, revisions, inventory, gates };
+  return { baseline, selection_context: context, revisions, inventory, inventory_completed: completedInventory, gates };
 });
 export const technologySelectionContext = async (projectId: string) => withTransaction(async client => { await requireProject(client, projectId); const context = (await client.query(`SELECT * FROM technology_selection_contexts WHERE project_key=$1 ORDER BY created_at DESC LIMIT 1`, [projectId])).rows[0]; if (!context) throw new ApiError(404, 'TECHNOLOGY_SELECTION_CONTEXT_NOT_FOUND'); return context; });
 export const requestTechnologyInventory = (projectId: string, key: string) => withTransaction(async client => { await requireProject(client, projectId); return startTechnologyInventory(client, projectId, key); });

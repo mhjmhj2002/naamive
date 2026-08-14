@@ -12,10 +12,16 @@ if (!databaseUrl) {
 } else {
   process.env.NAAMIVE_ARTIFACT_STORE_URI ??= 'file:///tmp/naamive-phase3-http-artifacts';
   process.env.NAAMIVE_OPERATOR_ID ??= 'phase-three-http-operator';
+  // F5-23 removed the legacy manual plan approval: POST /modules/:id/plan now
+  // requires a plan_revision_id produced by the agent. The controlled adapter
+  // is the deterministic non-production fixture, so no real Codex call occurs.
+  process.env.NAAMIVE_AGENT_ADAPTER = 'controlled';
+  process.env.NAAMIVE_RUNTIME_ENVIRONMENT = 'test';
 
   const { pool } = await import('./db.js');
   const { createApiServer } = await import('./server.js');
   const { runOnce } = await import('./worker.js');
+  const { seedPlanRevision } = await import('./test-plan-helper.js');
 
   type DisposableRepo = { root: string; path: string; sha: string };
   const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
@@ -53,6 +59,7 @@ if (!databaseUrl) {
       'DELETE FROM deliveries WHERE project_id=$1', 'DELETE FROM worktrees WHERE project_id=$1',
       'DELETE FROM work_items WHERE project_id=$1', 'DELETE FROM module_gates WHERE project_id=$1',
       'DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)',
+      'DELETE FROM module_plan_revisions WHERE project_id=$1', 'DELETE FROM module_plan_job_context WHERE project_id=$1',
       'DELETE FROM modules WHERE project_id=$1', 'DELETE FROM module_revisions WHERE project_id=$1',
       'DELETE FROM operations WHERE project_id=$1', 'DELETE FROM projects WHERE id=$1'
     ]) await pool.query(sql, [projectId]);
@@ -108,10 +115,24 @@ if (!databaseUrl) {
     await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
     const architecture = (await pool.query("SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'", [moduleId])).rows[0];
     await post(`/api/projects/${projectId}/modules/${moduleId}/architecture`, { decision: 'APPROVED', version: architecture.version });
-    const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { work_items: [
-      { title: 'Approved HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], dependencies: [], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10, acceptance_criteria: ['passes'] }] },
-      { title: 'Reworked but pending HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], dependencies: [], qa_matrix: [{ command: 'grep -q reworked README.md', cwd: '.', timeout_seconds: 10, acceptance_criteria: ['rework is present'] }] }
-    ] });
+    // F5-23 two-step approval: the agent generates a plan revision (seeded
+    // deterministically through the controlled adapter contract), then the
+    // operator approves that exact revision over HTTP. Raw work_items are no
+    // longer accepted by POST /modules/:id/plan.
+    const seeded = await seedPlanRevision(projectId, moduleId, [
+      { title: 'Approved HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] },
+      { title: 'Reworked but pending HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'grep -q reworked README.md', cwd: '.', timeout_seconds: 10 }] }
+    ]);
+    const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`);
+    assert.equal(reviewResponse.status, 200);
+    const reviewProjection: any = await reviewResponse.json();
+    assert.equal('plans' in reviewProjection, false);
+    assert.equal(JSON.stringify(reviewProjection).includes('idempotency_key'), false);
+    const review = reviewProjection.module_plan_review[0];
+    assert.equal(review.schema_version, 'module-plan-review/v1');
+    assert.deepEqual(Object.keys(review).sort(), ['alerts','business_dependencies','criterion_coverage','current_gate','current_revision','history_truncated','module','revision_history','schema_version','summary','work_items']);
+    assert.equal(JSON.stringify(review).includes('context_payload'), false);
+    const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version });
     const [item, rejectedItem] = plan.work_item_ids;
 
     await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
@@ -185,7 +206,7 @@ if (!databaseUrl) {
     const module = await post(`/api/projects/${projectId}/modules`, { module_key: `reconcile-${expected.toLowerCase()}`, name: 'Reconcile', objective: 'prove', scope: ['runtime'], out_of_scope: [], dependencies: [], acceptance_criteria: ['passes'] }); const moduleId = module.module_id;
     const gate = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0]; await post(`/api/projects/${projectId}/modules/${moduleId}/decision`, { decision: 'APPROVED', version: gate.version }); await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
     const architecture = (await pool.query("SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'", [moduleId])).rows[0]; await post(`/api/projects/${projectId}/modules/${moduleId}/architecture`, { decision: 'APPROVED', version: architecture.version });
-    const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { work_items: [{ title: 'Reconcile item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], dependencies: [], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10, acceptance_criteria: ['passes'] }] }] }); const item = plan.work_item_ids[0]; await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
+    const seeded = await seedPlanRevision(projectId, moduleId, [{ title: 'Reconcile item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] }]); const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }); const item = plan.work_item_ids[0]; await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
     const tree = (await pool.query("SELECT path,branch FROM worktrees WHERE work_item_id=$1 AND state='ACTIVE'", [item])).rows[0];
     if (expected === 'DIRTY') writeFileSync(join(tree.path, 'README.md'), 'dirty\n', { flag: 'a' });
     if (expected === 'DIVERGED') {

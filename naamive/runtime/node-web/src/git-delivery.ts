@@ -22,12 +22,19 @@ export const commitMessage = (type:string, workItem:string, summary:string, meta
 export const assertClean = (repository:string) => { if(git(repository,['status','--porcelain'])) throw new GitDeliveryError('GIT_TREE_DIRTY'); };
 export const createWorktree = (repository:string, worktree:string, branch:string, baseSha:string) => {
   assertClean(repository); if(!safe(branch)||!existsSync(repository)||existsSync(worktree)) throw new GitDeliveryError('GIT_DIVERGED');
-  if (git(repository,['worktree','list','--porcelain']).split('\n').filter(line => line.startsWith('worktree ')).length > 1) throw new GitDeliveryError('GIT_DIVERGED','another delivery worktree is active');
+  // Independent work items may execute in parallel.  Database delivery leases,
+  // not a repository-wide worktree count, serialize a single work item.
   const refs=git(repository,['for-each-ref','--format=%(refname:short)','refs/heads']).split('\n').filter(Boolean); assertDistinctRefs(branch,...refs.filter(ref=>ref!==branch));
   if(refs.includes(branch)) git(repository,['worktree','add',worktree,branch]); else git(repository,['worktree','add','-b',branch,worktree,baseSha]);
   return {path:realpathSync(worktree),baseSha};
 };
 export const removeWorktree = (repository:string, worktree:string) => { assertClean(worktree); git(repository,['worktree','remove',worktree]); };
+/** Recovery-only removal for a worktree already classified as untrusted. */
+export const discardWorktree = (repository:string, worktree:string) => {
+  if (!existsSync(worktree)) return;
+  try { git(repository,['worktree','remove','--force',worktree]); }
+  finally { rmSync(worktree,{recursive:true,force:true}); }
+};
 export const botCommit = (repository:string, files:string[], message:string) => {
   if(!files.length) throw new GitDeliveryError('GIT_DIVERGED'); git(repository,['add','--',...files]);
   if(!git(repository,['diff','--cached','--name-only'])) throw new GitDeliveryError('GIT_DIVERGED','no staged changes');

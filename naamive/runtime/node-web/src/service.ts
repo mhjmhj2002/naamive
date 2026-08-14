@@ -151,7 +151,7 @@ export const archiveProject = async (projectId: string, body: Record<string, unk
 });
 
 export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
-const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,sd.label AS status,sd.next_action,
+const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,p.draft,sd.label AS status,sd.next_action,
   (SELECT event_type FROM events e WHERE e.project_id=p.id ORDER BY id DESC LIMIT 1) AS last_event
  FROM projects p
  LEFT JOIN workflow_definitions wd ON wd.code=p.workflow_code AND wd.version=p.workflow_version
@@ -159,7 +159,7 @@ const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,sd.label AS 
  LEFT JOIN status_definitions sd ON sd.code=sm.status_code AND sd.version=sm.status_definition_version`;
 export const listProjects = async (archived=false) => (await pool.query(`${projectedProjects} ${archived ? 'WHERE p.archived_at IS NOT NULL' : 'WHERE p.archived_at IS NULL'} ORDER BY p.updated_at DESC`)).rows;
 const display = (state:string, review:Record<string,unknown>|null) => {
-  const labels:Record<string,[string,string]>={ANALYSIS_IN_PROGRESS:['Analisando necessidade','Identificando problema e objetivos'],REQUIREMENTS_IN_PROGRESS:['Definindo requisitos','Detalhando escopo e critérios'],REVIEW_IN_PROGRESS:['Revisando proposta','Validando o pacote de produto'],WAITING_FOR_REVIEW_ADJUSTMENT:['Aguardando seus ajustes','A revisão pediu complementos'],WAITING_FOR_PRODUCT_COMMITMENT:['Aguardando sua decisão','Pacote pronto para aprovação'],DISCOVERY_FAILED:['Descoberta interrompida','Falha na etapa de descoberta'],PRODUCT_COMMITMENT:['Compromisso de produto','Pacote aprovado']}; const [display_status,default_reason]=labels[state]??[state,'Sem ação necessária']; const reason=state==='WAITING_FOR_REVIEW_ADJUSTMENT'?'A revisão pediu complementos.':default_reason; return {display_status,status_reason:reason};
+  const labels:Record<string,[string,string]>={ANALYSIS_IN_PROGRESS:['Analisando necessidade','Identificando problema e objetivos'],REQUIREMENTS_IN_PROGRESS:['Definindo requisitos','Detalhando escopo e critérios'],REVIEW_IN_PROGRESS:['Revisando proposta','Validando o pacote de produto'],WAITING_FOR_REVIEW_ADJUSTMENT:['Aguardando seus ajustes','A revisão pediu complementos'],WAITING_FOR_PRODUCT_COMMITMENT:['Aguardando sua decisão','Pacote pronto para aprovação'],DISCOVERY_FAILED:['Descoberta interrompida','Falha na etapa de descoberta'],PRODUCT_COMMITMENT:['Compromisso de produto','Pacote aprovado'],PLANNING_IN_PROGRESS:['Planejamento do módulo pendente','A proposta automática de work items ainda não foi gerada. Não há preenchimento manual nesta etapa.']}; const [display_status,default_reason]=labels[state]??[state,'Sem ação necessária']; const reason=state==='WAITING_FOR_REVIEW_ADJUSTMENT'?'A revisão pediu complementos.':default_reason; return {display_status,status_reason:reason};
 };
 export const projectDetail = async (projectId: string) => {
   const project = await pool.query(`${projectedProjects.replace('p.updated_at,','p.updated_at,p.failure_stage,p.failure_code,')} WHERE p.id=$1`, [projectId]);
@@ -169,7 +169,9 @@ export const projectDetail = async (projectId: string) => {
   const artifacts=await pool.query(`SELECT artifact_type,sha256,created_at FROM artifacts WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]);
   const review=await pool.query(`SELECT metadata FROM artifacts WHERE project_id=$1 AND artifact_type='product-commitment-review' ORDER BY created_at DESC LIMIT 1`,[projectId]);
   const activeJob=await pool.query(`SELECT kind,heartbeat_at,lease_expires_at,available_at FROM jobs WHERE project_id=$1 AND status='LEASED' ORDER BY available_at DESC LIMIT 1`,[projectId]);
+  const currentModule=await pool.query(`SELECT state FROM modules WHERE project_id=$1 ORDER BY version DESC LIMIT 1`,[projectId]);
   const reviewData=(review.rows[0]?.metadata??null) as Record<string,unknown>|null;
   const runtimeData = config().runtimeProjectionEnabled ? await listProjectExecutionData(projectId) : { executions: [], attempts: [] };
-  return { ...project.rows[0], ...display(project.rows[0].state,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts };
+  const effectiveState=currentModule.rows[0]?.state??project.rows[0].state;
+  return { ...project.rows[0], ...display(effectiveState,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts };
 };

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "development-runtime/v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "work_item_id", "attempt", "inconsistency", "history", "diagnostic_id"],
+  "properties": {
+    "schema_version": {"const": "development-runtime/v1"},
+    "work_item_id": {"$ref": "#/$defs/uuid"},
+    "attempt": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/attempt"}]},
+    "inconsistency": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/inconsistency"}]},
+    "history": {"type": "array", "maxItems": 3, "items": {"$ref": "#/$defs/history"}},
+    "diagnostic_id": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/uuid"}]}
+  },
+  "allOf": [{
+    "oneOf": [
+      {"properties": {"attempt": {"type": "null"}, "inconsistency": {"type": "null"}, "diagnostic_id": {"type": "null"}}},
+      {"properties": {"attempt": {"$ref": "#/$defs/attempt"}, "inconsistency": {"type": "null"}, "diagnostic_id": {"type": "null"}}},
+      {"properties": {"attempt": {"type": "null"}, "inconsistency": {"$ref": "#/$defs/inconsistency"}, "diagnostic_id": {"$ref": "#/$defs/uuid"}}},
+      {"properties": {"attempt": {"$ref": "#/$defs/attempt"}, "inconsistency": {"$ref": "#/$defs/inconsistency"}, "diagnostic_id": {"$ref": "#/$defs/uuid"}}}
+    ]
+  }],
+  "$defs": {
+    "uuid": {"type": "string", "format": "uuid"},
+    "timestamp": {"type": "string", "format": "date-time", "pattern": "Z$"},
+    "attempt": {
+      "type": "object", "additionalProperties": false,
+      "required": ["delivery_id", "worktree_id", "job_id", "delivery_state", "worktree_state", "work_item_state", "job_status", "stage", "health", "next_action", "created_at", "last_signal_at", "error", "build_id"],
+      "properties": {
+        "delivery_id": {"$ref": "#/$defs/uuid"}, "worktree_id": {"$ref": "#/$defs/uuid"}, "job_id": {"$ref": "#/$defs/uuid"},
+        "delivery_state": {"enum": ["RESERVED", "PREPARING", "DISPATCHED", "RUNNING", "DEVELOPMENT_IN_PROGRESS", "EVIDENCE_REVIEW", "QA_IN_PROGRESS", "QA_APPROVED", "QA_REJECTED", "FAILED"]},
+        "worktree_state": {"enum": ["RESERVED", "PREPARED", "ACTIVE", "RELEASED"]},
+        "work_item_state": {"enum": ["WAITING_FOR_WORK_ITEM_AUTHORIZATION", "DEVELOPMENT_IN_PROGRESS", "QA_IN_PROGRESS", "READY_FOR_PHASE_MERGE", "REWORK_ELIGIBLE", "MERGED_TO_PHASE"]},
+        "job_status": {"enum": ["PENDING", "RETRYABLE", "LEASED", "COMPLETED", "FAILED"]},
+        "stage": {"enum": ["QUEUED", "PREPARING_WORKTREE", "DISPATCHING_AGENT", "EXECUTING_AGENT", "VALIDATING_EVIDENCE", "READY_FOR_QA", "RETRY_SCHEDULED", "FAILED", "QA_APPROVED", "QA_REJECTED", "NO_RECENT_SIGNAL", "INCONSISTENT_TERMINAL_STATE"]},
+        "health": {"enum": ["HEALTHY", "DEGRADED", "FAILED"]},
+        "next_action": {"enum": ["WAIT_FOR_WORKER", "WAIT_FOR_AGENT", "SUBMIT_QA", "RETRY_GOVERNED_COMMAND", "MERGE_TO_PHASE", "DIAGNOSE_RUNTIME_AND_RECONCILE"]},
+        "created_at": {"$ref": "#/$defs/timestamp"},
+        "last_signal_at": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/timestamp"}]},
+        "error": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/error"}]},
+        "build_id": {"anyOf": [{"type": "null"}, {"type": "string", "maxLength": 128, "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"}]}
+      }
+    },
+    "inconsistency": {
+      "type": "object", "additionalProperties": false,
+      "required": ["rule_code", "stage", "health", "next_action", "delivery_id", "worktree_id", "job_id"],
+      "properties": {
+        "rule_code": {"type": "string", "maxLength": 128},
+        "stage": {"const": "INCONSISTENT_TERMINAL_STATE"},
+        "health": {"const": "DEGRADED"},
+        "next_action": {"const": "DIAGNOSE_RUNTIME_AND_RECONCILE"},
+        "delivery_id": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/uuid"}]},
+        "worktree_id": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/uuid"}]},
+        "job_id": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/uuid"}]}
+      }
+    },
+    "error": {
+      "type": "object", "additionalProperties": false, "required": ["code", "message"],
+      "oneOf": [
+        {"properties": {"code": {"const": "WORKER_FAILED"}, "message": {"const": "Worker encerrou com falha."}}},
+        {"properties": {"code": {"const": "AGENT_TIMEOUT"}, "message": {"const": "Agente excedeu o tempo permitido."}}},
+        {"properties": {"code": {"const": "EVIDENCE_INVALID"}, "message": {"const": "Evidência não passou na validação."}}},
+        {"properties": {"code": {"const": "RUNTIME_INCONSISTENCY"}, "message": {"const": "Estados do runtime exigem reconciliação."}}},
+        {"properties": {"code": {"const": "NO_SIGNAL"}, "message": {"const": "Worker sem sinal recente."}}}
+      ]
+    },
+    "history": {
+      "type": "object", "additionalProperties": false,
+      "required": ["delivery_id", "job_id", "job_status", "completed_at"],
+      "properties": {
+        "delivery_id": {"$ref": "#/$defs/uuid"}, "job_id": {"$ref": "#/$defs/uuid"},
+        "job_status": {"enum": ["COMPLETED", "FAILED"]}, "completed_at": {"$ref": "#/$defs/timestamp"}
+      }
+    }
+  }
+}

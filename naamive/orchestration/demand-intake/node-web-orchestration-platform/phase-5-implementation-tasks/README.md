@@ -25,5 +25,11 @@ Execute uma task por vez e atualize o roadmap somente após seu aceite. A Fase 5
 | 19 | [F5-19 — Testes de integração de inventário e workflow](F5-19-tests-integration.md) | F5-08, F5-09, F5-10, F5-11, F5-12, F5-13, F5-14 |
 | 20 | [F5-20 — Regressão Fase 3 e coexistência](F5-20-phase3-regression.md) | F5-10, F5-14, F5-16, F5-17, F5-18, F5-19 |
 | 21 | [F5-21 — Aceite consolidado](F5-21-acceptance.md) | F5-01 a F5-20 |
+| 22 | [F5-22 — Planejamento autônomo de módulos](F5-22-autonomous-module-planning.md) | F5-17, F5-20 |
+| 23 | [F5-23 — Decomposição autônoma e auditável do plano](F5-23-autonomous-plan-decomposition.md) | F5-22 |
+| 24 | [F5-24 — Revisão visual e auditável do plano de módulo](F5-24-module-plan-review-ui.md) | F5-22, F5-23 |
+| 25 | [F5-25 — Projeção fiel e diagnóstico do runtime de desenvolvimento](F5-25-development-runtime-projection.md) | F5-23 |
 
 Fontes canônicas: [roadmap](../01_DELIVERY_ROADMAP.md), [planning Fase 5](../10_PHASE_5_TECHNOLOGY_BASELINE_PLANNING.md), [auditoria Fase 5](../PHASE_5_TECHNOLOGY_BASELINE_AUDIT.md), [planning Fase 4](../13_PHASE_4_MULTI_PROVIDER_AGENT_RUNTIME_PLANNING.md), [prontidão Fase 4](../14_PHASE_4_IMPLEMENTATION_READINESS_PACKAGE.md) e [contratos Fase 4](../phase-4-contracts/).
+
+Ocorrências encontradas durante o teste manual: [Bugs de teste da Fase 5](BUGS_PHASE_5_TESTING.md).

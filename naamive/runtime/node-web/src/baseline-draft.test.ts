@@ -26,7 +26,6 @@ for (const [name, responses, code] of [
   ['unpublished catalog', [...base().slice(0, 2), response()], 'TECHNOLOGY_BASELINE_DRAFT_PUBLISHED_CATALOG_REQUIRED'],
   ['invalid profile', [...base().slice(0, 3), response()], 'TECHNOLOGY_BASELINE_DRAFT_PROFILE_INVALID'],
   ['missing inventory job', [...base().slice(0, 4), response()], 'TECHNOLOGY_BASELINE_DRAFT_INVENTORY_REQUIRED'],
-  ['missing persisted inventory snapshot', [...base().slice(0, 5), response()], 'TECHNOLOGY_BASELINE_DRAFT_INVENTORY_SNAPSHOT_REQUIRED'],
   ['inactive item', [...base(), response([{ ...validRows[0], is_active: false }])], 'TECHNOLOGY_BASELINE_DRAFT_PROFILE_ITEM_INVALID'],
   ['inactive category', [...base(), response([{ ...validRows[0], category_active: false }])], 'TECHNOLOGY_BASELINE_DRAFT_PROFILE_ITEM_INVALID'],
   ['required version missing', [...base(), response([{ ...validRows[0], metadata: { version_governance: 'REQUIRED' } }])], 'TECHNOLOGY_BASELINE_DRAFT_VERSION_CONSTRAINT_REQUIRED'],
@@ -34,6 +33,12 @@ for (const [name, responses, code] of [
   ['blocking compatibility', [...happy().slice(0, 8), response([{ id: id(), source_item_id: itemId, relationship_type: 'REQUIRES', target_item_id: id(), severity: 'ERROR', message: 'required', is_active: true }])], 'TECHNOLOGY_BASELINE_DRAFT_COMPATIBILITY_INVALID'],
   ['existing baseline', [...happy().slice(0, 9), response([{ id: id() }])], 'TECHNOLOGY_BASELINE_DRAFT_ALREADY_EXISTS']
 ] as const) test(`rejects ${name}`, async () => await assert.rejects(() => run([...responses]), new RegExp(code)));
+
+test('creates a draft after a completed inventory with zero facts', async () => {
+  const responses = happy();
+  responses[5] = response();
+  await assert.doesNotReject(() => run(responses));
+});
 
 test('does not treat a PROHIBITED profile item as present for compatibility', async () => {
   const prohibited = { ...validRows[0], catalog_item_id: id(), classification: 'PROHIBITED' };

@@ -32,6 +32,11 @@ export const startTechnologyInventory = async (client: pg.PoolClient, projectId:
   const project = (await client.query('SELECT id,initial_sha FROM projects WHERE id=$1 FOR UPDATE', [projectId])).rows[0];
   if (!project) throw new Error('PROJECT_NOT_FOUND');
   const existing = await client.query('SELECT id FROM operations WHERE idempotency_key=$1', [idempotencyKey]); if (existing.rowCount) return { operation_id: existing.rows[0].id, status: 'ACCEPTED' };
+  // A successful snapshot is immutable for the selection context. Reuse it
+  // instead of creating duplicate inventory events when the UI is refreshed
+  // or an operator clicks the action again.
+  const completed = (await client.query(`SELECT o.id FROM jobs j JOIN operations o ON o.id=j.operation_id WHERE j.project_id=$1 AND j.kind='START_TECHNOLOGY_INVENTORY' AND j.status='COMPLETED' AND o.status='SUCCEEDED' ORDER BY o.created_at DESC LIMIT 1`, [projectId])).rows[0];
+  if (completed) return { operation_id: completed.id, status: 'ACCEPTED' };
   const context = (await client.query(`SELECT id,technology_catalog_revision_id FROM technology_selection_contexts WHERE project_key=$1 AND status='READY' ORDER BY created_at DESC LIMIT 1`, [projectId])).rows[0];
   if (!context) throw new Error('TECHNOLOGY_SELECTION_CONTEXT_INVALID');
   const revision = (await client.query('SELECT id FROM intake_revisions WHERE project_id=$1 ORDER BY submitted_at DESC LIMIT 1', [projectId])).rows[0]; if (!revision) throw new Error('INVENTORY_INTAKE_REVISION_REQUIRED');
