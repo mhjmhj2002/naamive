@@ -28,7 +28,7 @@ canônica, sanitizada e read-only da tentativa de desenvolvimento. Um job
 
 ## Implementar
 
-1. [ ] **DOING:** Aplicar a migration 042 antes da nova migration 043. A 043 adiciona as
+1. [x] **DONE:** Aplicar a migration 042 antes da nova migration 043. A 043 adiciona as
    constraints graduais para `jobs.delivery_id` e `deliveries.worktree_id`,
    `artifacts.metadata`, deduplicação de diagnóstico e `runtime_processes`.
    Ela deve emitir relatório de legados; linhas nulas não são inferidas.
