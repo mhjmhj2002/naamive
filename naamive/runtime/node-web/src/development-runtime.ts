@@ -18,7 +18,7 @@ const matrix:Record<string,[string,string,string]>={
  'COMPLETED|QA_REJECTED|RELEASED|REWORK_ELIGIBLE':['QA_REJECTED','DEGRADED','RETRY_GOVERNED_COMMAND']
 };
 const iso=(x:any)=>x?new Date(x).toISOString():null;
-export const developmentRuntimeSanitize=(value:any):any=>{const walk=(v:any):void=>{if(typeof v==='string'&&(/\//.test(v)||/\w+:\/\//.test(v)||forbidden.test(v)))throw new Error('RUNTIME_VALUE_FORBIDDEN');if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(forbidden.test(k))throw new Error('RUNTIME_VALUE_FORBIDDEN');walk(x);}}};walk(value);return value;};
+export const developmentRuntimeSanitize=(value:any):any=>{const walk=(v:any):void=>{if(typeof v==='string'&&v!==VERSION&&(/\//.test(v)||/\w+:\/\//.test(v)||forbidden.test(v)))throw new Error('RUNTIME_VALUE_FORBIDDEN');if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(forbidden.test(k))throw new Error('RUNTIME_VALUE_FORBIDDEN');walk(x);}}};walk(value);return value;};
 const inconsistency=(workItemId:string,row:any,rule:string)=>({rule_code:rule,stage:'INCONSISTENT_TERMINAL_STATE',health:'DEGRADED',next_action:'DIAGNOSE_RUNTIME_AND_RECONCILE',delivery_id:row?.delivery_id??null,worktree_id:row?.worktree_id??null,job_id:row?.job_id??null});
 export const developmentRuntime=async(projectId:string,workItemId:string)=>{
  const wi=(await pool.query(`SELECT id,state FROM work_items WHERE id=$1 AND project_id=$2`,[workItemId,projectId])).rows[0];if(!wi)throw new ApiError(404,'WORK_ITEM_NOT_FOUND');
