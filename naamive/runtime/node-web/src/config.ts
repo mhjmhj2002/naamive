@@ -21,6 +21,9 @@ export const config = () => {
   if (!new URL(webOrigin).hostname || !isLoopback(new URL(webOrigin).hostname)) throw new Error('NAAMIVE_WEB_ORIGIN must be localhost-only');
   return {
     databaseUrl: required('DATABASE_URL'),
+    // Checked when a long-running SERVER/WORKER process is started.  Keeping
+    // configuration importable without it permits offline migrations and unit
+    // tests, neither of which is a runtime process.
     buildId: process.env.NAAMIVE_BUILD_ID ?? null,
     artifactRoot: fileURLToPath(artifactStore),
     repositoryRoots,

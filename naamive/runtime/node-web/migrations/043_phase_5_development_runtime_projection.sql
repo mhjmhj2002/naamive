@@ -16,6 +16,10 @@ INSERT INTO runtime_legacy_report(subject_type,subject_id,rule_code,details)
 INSERT INTO runtime_legacy_report(subject_type,subject_id,rule_code,details)
  SELECT 'JOB',j.id,'DEVELOPMENT_RELATION_CROSSED',jsonb_build_object('delivery_work_item_id',d.work_item_id) FROM jobs j JOIN deliveries d ON d.id=j.delivery_id
  WHERE j.kind='DEVELOP_WORK_ITEM' AND j.project_id<>d.project_id ON CONFLICT DO NOTHING;
+INSERT INTO runtime_legacy_report(subject_type,subject_id,rule_code,details)
+ SELECT 'DELIVERY',d.id,'DELIVERY_WORKTREE_RELATION_CROSSED',jsonb_build_object('worktree_work_item_id',t.work_item_id)
+ FROM deliveries d JOIN worktrees t ON t.id=d.worktree_id
+ WHERE t.project_id<>d.project_id OR t.work_item_id<>d.work_item_id ON CONFLICT DO NOTHING;
 
 DO $$ BEGIN ALTER TABLE jobs ADD CONSTRAINT jobs_development_delivery_required CHECK(kind <> 'DEVELOP_WORK_ITEM' OR delivery_id IS NOT NULL) NOT VALID; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 DO $$ BEGIN ALTER TABLE deliveries ADD CONSTRAINT deliveries_worktree_required CHECK(state NOT IN ('RESERVED','PREPARING','DISPATCHED','RUNNING','DEVELOPMENT_IN_PROGRESS','EVIDENCE_REVIEW','QA_IN_PROGRESS','QA_APPROVED','QA_REJECTED') OR worktree_id IS NOT NULL) NOT VALID; EXCEPTION WHEN duplicate_object THEN NULL; END $$;
