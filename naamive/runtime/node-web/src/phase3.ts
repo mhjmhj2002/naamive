@@ -6,7 +6,7 @@ import { ApiError } from './service.js';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { assertAuditableCommits, assertIncrementalPaths, createWorktree, discardWorktree, gitValue, initializePhaseRefs, mergeAndPushDetached, mergeWorkItem, reconcileIntegration, reconcileWorktree, removeWorktree } from './git-delivery.js';
+import { assertAuditableCommits, assertIncrementalPaths, createWorktree, discardDeliveryBranch, discardWorktree, gitValue, initializePhaseRefs, mergeAndPushDetached, mergeWorkItem, pruneWorktrees, reconcileIntegration, reconcileWorktree, removeWorktree } from './git-delivery.js';
 import { nextAction, publicValue } from './projection.js';
 import { enqueuePlan, MODULE_PLAN_VALIDATOR_VERSION, validatePlan, canonicalHash, revalidatePlanApproval } from './module-planning.js';
 import { derivePlanStatus } from './plan-telemetry.js';
@@ -145,6 +145,7 @@ const legacyStartIntegration=async(projectId:string,candidateId:string,body:Reco
 // Phase 3 commands derive every Git fact from the repository.  HTTP may request
 // a command but can never supply a worktree, SHA, QA result or integration ref.
 const projectRepository=async(projectId:string)=>{const r=await pool.query(`SELECT repository_path,initial_sha FROM projects WHERE id=$1`,[projectId]);if(!r.rowCount)throw new ApiError(404,'PROJECT_NOT_FOUND');return r.rows[0] as {repository_path:string;initial_sha:string};};
+const discardStaleWorktrees=async(projectId:string,repository:string,keep?:string)=>{const rows=(await pool.query(`SELECT t.id,t.path FROM worktrees t LEFT JOIN deliveries d ON d.worktree_id=t.id LEFT JOIN jobs j ON j.id=d.job_id WHERE t.project_id=$1 AND (t.state IN ('RELEASED','REMOVED','BLOCKED') OR (j.status IN ('FAILED','COMPLETED') AND d.state IN ('FAILED','DISCARDED','QA_REJECTED')))`,[projectId])).rows;for(const row of rows){if(row.path===keep)continue;try{discardWorktree(repository,row.path);await pool.query(`UPDATE worktrees SET state='REMOVED' WHERE id=$1`,[row.id]);}catch{throw new ApiError(409,'DEVELOPMENT_RESTART_CLEANUP_REQUIRED');}}};
 const qaMatrix=(payload:any)=>Array.isArray(payload?.qa_matrix)?payload.qa_matrix:[];
 const sanitizeQaOutput=(value:unknown)=>String(value??'').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g,'').replace(/((?:token|password|secret|authorization)\s*[:=]\s*)\S+/gi,'$1[REDACTED]').slice(0,4000);
 const qaSeverity=(entry:any)=>['CRITICAL','HIGH','MEDIUM','LOW'].includes(entry?.severity)?entry.severity:'HIGH';
@@ -164,6 +165,11 @@ export const startDevelopment=async(projectId:string,workItemId:string,_body:Rec
   const reserved=await withTransaction(async c=>{const old=await idem(c,idempotencyKey);if(old)return null;const correlation=randomUUID(),op=randomUUID(),matrix=qaMatrix(w.payload).map((entry:any)=>({...entry})),baselineRevisionId=baselineReference(w.technology_baseline_revision_id),matrixPayload={entries:matrix,technology_baseline_revision_id:baselineRevisionId};await c.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id) VALUES($1,$2,'START_DEVELOPMENT','QUEUED',$3,$4)`,[op,projectId,idempotencyKey,correlation]);await c.query(`INSERT INTO worktrees(id,project_id,work_item_id,path,branch,base_sha,lease_expires_at,state) VALUES($1,$2,$3,$4,$5,$6,clock_timestamp()+interval '10 minutes','RESERVED')`,[worktreeId,projectId,workItemId,worktree,branch,base]);await c.query(`INSERT INTO deliveries(id,project_id,work_item_id,revision_id,worktree_id,base_sha,qa_matrix,technology_baseline_revision_id) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8)`,[deliveryId,projectId,workItemId,w.revision_id,worktreeId,base,JSON.stringify(matrix),baselineRevisionId]);if(baselineRevisionId)await c.query(`INSERT INTO qa_matrices(id,project_id,project_key,delivery_id,technology_baseline_revision_id,payload,hash) VALUES($1,$2::uuid,$2,$3,$4,$5,$6)`,[randomUUID(),projectId,deliveryId,baselineRevisionId,matrixPayload,createHash('sha256').update(JSON.stringify(matrixPayload)).digest('hex')]);await c.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,delivery_id,kind,idempotency_key,technology_baseline_revision_id,metadata) VALUES($1,$2,$3,NULL,$4,'DEVELOP_WORK_ITEM',$5,$6,'{}')`,[jobId,op,projectId,deliveryId,`development:${deliveryId}`,baselineRevisionId]);await c.query(`UPDATE deliveries SET job_id=$2 WHERE id=$1`,[deliveryId,jobId]);await event(c,projectId,'DEVELOPMENT_RESERVED',correlation,{work_item_id:workItemId,delivery_id:deliveryId,job_id:jobId,branch,base_sha:base,qa_matrix:matrix,technology_baseline_revision_id:baselineRevisionId});return{op,correlation};});
   if(!reserved)return{operation_id:(await idem(pool,idempotencyKey))!,status:'ACCEPTED'};
   return{operation_id:reserved.op,status:'ACCEPTED',delivery_id:deliveryId};
+};
+
+/** Restarts only a completed attempt that has no delivery evidence to preserve. */
+export const restartDevelopmentOrchestration=async(projectId:string,workItemId:string,idempotencyKey:string)=>{
+  const recovery=await withTransaction(async c=>{const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,replayed:true};const row=(await c.query(`SELECT d.id delivery_id,d.head_sha,d.commits,t.id worktree_id,t.path,t.branch,p.repository_path,j.status job_status FROM work_items w JOIN deliveries d ON d.work_item_id=w.id JOIN worktrees t ON t.id=d.worktree_id JOIN jobs j ON j.id=d.job_id JOIN projects p ON p.id=w.project_id WHERE w.id=$1 AND w.project_id=$2 ORDER BY d.created_at DESC LIMIT 1 FOR UPDATE`,[workItemId,projectId])).rows[0];if(!row)throw new ApiError(409,'DEVELOPMENT_RESTART_NOT_ELIGIBLE');if(!['COMPLETED','FAILED'].includes(row.job_status)||row.head_sha||(Array.isArray(row.commits)&&row.commits.length))throw new ApiError(409,'DEVELOPMENT_RESTART_EVIDENCE_REQUIRES_REVIEW');try{discardWorktree(row.repository_path,row.path);discardDeliveryBranch(row.repository_path,row.branch)}catch{throw new ApiError(409,'DEVELOPMENT_RESTART_CLEANUP_REQUIRED')}const correlation=randomUUID(),op=await operation(c,projectId,'RESTART_DEVELOPMENT_ORCHESTRATION',idempotencyKey,correlation);await c.query(`UPDATE deliveries SET state='FAILED' WHERE id=$1`,[row.delivery_id]);await c.query(`UPDATE worktrees SET state='REMOVED' WHERE id=$1`,[row.worktree_id]);await c.query(`UPDATE work_items SET state='REWORK_ELIGIBLE',version=version+1 WHERE id=$1`,[workItemId]);await event(c,projectId,'DEVELOPMENT_ORCHESTRATION_RESTART_REQUESTED',correlation,{work_item_id:workItemId,previous_delivery_id:row.delivery_id});return{operation_id:op,replayed:false};});if(recovery.replayed)return{operation_id:recovery.operation_id,status:'ACCEPTED'};const dispatch=await startDevelopment(projectId,workItemId,{},`${idempotencyKey}:dispatch`);return{operation_id:recovery.operation_id,status:'ACCEPTED',dispatch_operation_id:dispatch.operation_id};
 };
 
 /** Operator recovery for a terminal implementation attempt.  It deliberately
@@ -235,10 +241,24 @@ export const prepareDevelopmentJob=async(job:any)=>{
   // A retry reuses the reserved attempt/worktree deterministically; it never
   // creates a competing delivery for the same work item.
   if(delivery.state==='RESERVED'&&delivery.worktree_state==='PREPARED'&&['WAITING_FOR_WORK_ITEM_AUTHORIZATION','REWORK_ELIGIBLE'].includes(delivery.work_item_state)){
+    // A failed dispatch can have already written an unrecorded or invalid
+    // commit before the worker lost control.  Reusing that branch makes every
+    // following agent attempt cherry-pick the same files into a changed tree,
+    // producing an endless DEVELOPMENT_AGENT_COMMIT_APPLY_FAILED loop.  This
+    // delivery has no persisted head/evidence yet, so rebuild its private
+    // worktree at the reserved base before giving it back to the executor.
+    try {
+      if(gitValue(delivery.path,'rev-parse','HEAD')!==delivery.base_sha){
+        discardWorktree(delivery.repository_path,delivery.path);
+        discardDeliveryBranch(delivery.repository_path,delivery.branch);
+        createWorktree(delivery.repository_path,delivery.path,delivery.branch,delivery.base_sha);
+      }
+    } catch(error) { throw gitFailure(error); }
     await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='RUNNING' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
     return delivery;
   }
   if(delivery.work_item_state!=='WAITING_FOR_WORK_ITEM_AUTHORIZATION'&&delivery.work_item_state!=='REWORK_ELIGIBLE') return;
+  await discardStaleWorktrees(delivery.project_id,delivery.repository_path,delivery.path); pruneWorktrees(delivery.repository_path);
   let base:string;
   try { const rejected=delivery.work_item_state==='REWORK_ELIGIBLE'?(await pool.query(`SELECT head_sha FROM deliveries WHERE work_item_id=$1 AND state='QA_REJECTED' AND head_sha IS NOT NULL ORDER BY created_at DESC LIMIT 1`,[delivery.work_item_id])).rows[0]:null; base=String(rejected?.head_sha??initializePhaseRefs(delivery.repository_path,delivery.initial_sha).phaseSha); const released=await pool.query(`SELECT id,path FROM worktrees WHERE project_id=$1 AND state='RELEASED' ORDER BY created_at LIMIT 1`,[delivery.project_id]); if(released.rowCount){removeWorktree(delivery.repository_path,released.rows[0].path);await pool.query(`UPDATE worktrees SET state='REMOVED' WHERE id=$1`,[released.rows[0].id]);} mkdirSync(join(delivery.repository_path,'.naamive-worktrees'),{recursive:true}); createWorktree(delivery.repository_path,delivery.path,delivery.branch,base); }
   catch(error) { throw gitFailure(error); }

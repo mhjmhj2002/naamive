@@ -2,9 +2,10 @@ import { createHash, randomUUID } from 'node:crypto';
 import { pool, withTransaction } from './db.js';
 import { ApiError } from './service.js';
 import { putArtifact } from './artifacts.js';
+import { config } from './config.js';
 
-const VERSION='development-runtime/v1', forbidden=/(path|uri|secret|token|prompt|command|stdout|stderr|content)/i;
-const errors:Record<string,[string,string]>={WORKER_FAILED:['WORKER_FAILED','Worker encerrou com falha.'],AGENT_TIMEOUT:['AGENT_TIMEOUT','Agente excedeu o tempo permitido.'],EVIDENCE_INVALID:['EVIDENCE_INVALID','Evidência não passou na validação.'],RUNTIME_INCONSISTENCY:['RUNTIME_INCONSISTENCY','Estados do runtime exigem reconciliação.'],NO_SIGNAL:['NO_SIGNAL','Worker sem sinal recente.']};
+const VERSION='development-runtime/v1', forbidden=/(path|uri|secret|token|prompt|command|stdout|stderr|content)/i, safeValues=new Set(['RETRY_GOVERNED_COMMAND']);
+const errors:Record<string,[string,string]>={WORKER_FAILED:['WORKER_FAILED','Worker encerrou com falha.'],DEVELOPMENT_AGENT_COMMIT_APPLY_FAILED:['DEVELOPMENT_AGENT_COMMIT_APPLY_FAILED','Não foi possível registrar o commit da entrega. Uma nova execução pode ser iniciada pela tela.'],AGENT_TIMEOUT:['AGENT_TIMEOUT','Agente excedeu o tempo permitido.'],EVIDENCE_INVALID:['EVIDENCE_INVALID','Evidência não passou na validação.'],RUNTIME_INCONSISTENCY:['RUNTIME_INCONSISTENCY','Estados do runtime exigem reconciliação.'],NO_SIGNAL:['NO_SIGNAL','Worker sem sinal recente.']};
 const matrix:Record<string,[string,string,string]>={
  'PENDING|RESERVED|RESERVED|WAITING_FOR_WORK_ITEM_AUTHORIZATION':['QUEUED','HEALTHY','WAIT_FOR_WORKER'],
  'LEASED|PREPARING|RESERVED|DEVELOPMENT_IN_PROGRESS':['PREPARING_WORKTREE','HEALTHY','WAIT_FOR_WORKER'],
@@ -18,7 +19,7 @@ const matrix:Record<string,[string,string,string]>={
  'COMPLETED|QA_REJECTED|RELEASED|REWORK_ELIGIBLE':['QA_REJECTED','DEGRADED','RETRY_GOVERNED_COMMAND']
 };
 const iso=(x:any)=>x?new Date(x).toISOString():null;
-export const developmentRuntimeSanitize=(value:any):any=>{const walk=(v:any):void=>{if(typeof v==='string'&&v!==VERSION&&(/\//.test(v)||/\w+:\/\//.test(v)||forbidden.test(v)))throw new Error('RUNTIME_VALUE_FORBIDDEN');if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(forbidden.test(k))throw new Error('RUNTIME_VALUE_FORBIDDEN');walk(x);}}};walk(value);return value;};
+export const developmentRuntimeSanitize=(value:any):any=>{const walk=(v:any):void=>{if(typeof v==='string'&&v!==VERSION&&!safeValues.has(v)&&(/\//.test(v)||/\w+:\/\//.test(v)||forbidden.test(v)))throw new Error('RUNTIME_VALUE_FORBIDDEN');if(v&&typeof v==='object'){for(const [k,x] of Object.entries(v)){if(forbidden.test(k))throw new Error('RUNTIME_VALUE_FORBIDDEN');walk(x);}}};walk(value);return value;};
 const inconsistency=(workItemId:string,row:any,rule:string)=>({rule_code:rule,stage:'INCONSISTENT_TERMINAL_STATE',health:'DEGRADED',next_action:'DIAGNOSE_RUNTIME_AND_RECONCILE',delivery_id:row?.delivery_id??null,worktree_id:row?.worktree_id??null,job_id:row?.job_id??null});
 export const developmentRuntime=async(projectId:string,workItemId:string)=>{
  const wi=(await pool.query(`SELECT id,state FROM work_items WHERE id=$1 AND project_id=$2`,[workItemId,projectId])).rows[0];if(!wi)throw new ApiError(404,'WORK_ITEM_NOT_FOUND');
@@ -32,8 +33,9 @@ export const developmentRuntime=async(projectId:string,workItemId:string)=>{
  if(!rule&&selected.job_status==='LEASED'&&selected.delivery_state==='RUNNING'&&selected.worktree_state==='ACTIVE'&&wi.state==='DEVELOPMENT_IN_PROGRESS'){if(!selected.last_signal_at)rule='SIGNAL_MISSING';else if(Date.now()-Date.parse(selected.last_signal_at)>120000){stage='NO_RECENT_SIGNAL';health='DEGRADED';next='DIAGNOSE_RUNTIME_AND_RECONCILE';error={code:errors.NO_SIGNAL[0],message:errors.NO_SIGNAL[1]};}}
  if(!rule&&!stage){const m=matrix[key];if(!m)rule='UNLISTED_STATE_COMBINATION';else [stage,health,next]=m;}
  if(rule){stage='INCONSISTENT_TERMINAL_STATE';health='DEGRADED';next='DIAGNOSE_RUNTIME_AND_RECONCILE';error={code:errors.RUNTIME_INCONSISTENCY[0],message:errors.RUNTIME_INCONSISTENCY[1]};}
- else if(selected.job_status==='FAILED')error={code:errors.WORKER_FAILED[0],message:errors.WORKER_FAILED[1]};
- const attempt={delivery_id:selected.delivery_id,worktree_id:selected.worktree_id,job_id:selected.job_id,delivery_state:selected.delivery_state,worktree_state:selected.worktree_state,work_item_state:wi.state,job_status:selected.job_status,stage,health,next_action:next,created_at:iso(selected.delivery_created_at),last_signal_at:iso(selected.last_signal_at),error,build_id:build};
+ else if(selected.job_status==='FAILED'){const known=typeof selected.last_error==='string'?errors[selected.last_error]:undefined;error={code:known?.[0]??errors.WORKER_FAILED[0],message:known?.[1]??errors.WORKER_FAILED[1]};}
+ const cfg=config(), executor=cfg.developmentExecutor==='controlled'?{kind:'CONTROLLED',role:'DEVELOPMENT',model:null,label:'Executor controlado · Desenvolvimento'}:cfg.developmentExecutor==='deepseek'?{kind:'DEEPSEEK_HTTP',role:'DEVELOPMENT',model:cfg.deepseekModel,label:`DeepSeek HTTP · Desenvolvimento · ${cfg.deepseekModel}`}:{kind:'CODEX_CLI',role:'DEVELOPMENT',model:cfg.codexModel,label:`Codex CLI · Desenvolvimento · ${cfg.codexModel??'modelo padrão da conta'}`};
+ const attempt={delivery_id:selected.delivery_id,worktree_id:selected.worktree_id,job_id:selected.job_id,delivery_state:selected.delivery_state,worktree_state:selected.worktree_state,work_item_state:wi.state,job_status:selected.job_status,stage,health,next_action:next,created_at:iso(selected.delivery_created_at),last_signal_at:iso(selected.last_signal_at),error,build_id:build,executor};
  const inc=rule?inconsistency(workItemId,selected,rule):null;
  // I01 must never publish a partial or malformed attempt.  M12 is the sole
  // exception: all three correlated IDs are known and its explicit purpose is

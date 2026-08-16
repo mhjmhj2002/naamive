@@ -19,6 +19,8 @@ export const config = () => {
   if (!isLoopback(host)) throw new Error('Phase 1 API must bind to loopback only');
   const webOrigin = process.env.NAAMIVE_WEB_ORIGIN ?? `http://${host}:${process.env.PORT ?? '3000'}`;
   if (!new URL(webOrigin).hostname || !isLoopback(new URL(webOrigin).hostname)) throw new Error('NAAMIVE_WEB_ORIGIN must be localhost-only');
+  const developmentExecutorRaw=process.env.NAAMIVE_DEVELOPMENT_EXECUTOR;
+  if(developmentExecutorRaw && !['codex','deepseek','controlled'].includes(developmentExecutorRaw)) throw new Error('NAAMIVE_DEVELOPMENT_EXECUTOR must be codex, deepseek or controlled');
   return {
     databaseUrl: required('DATABASE_URL'),
     // Checked when a long-running SERVER/WORKER process is started.  Keeping
@@ -53,8 +55,14 @@ export const config = () => {
     // stream. When disabled the closed-contract parser is not invoked.
     planTelemetryEnabled: process.env.NAAMIVE_PLAN_TELEMETRY_ENABLED !== 'false',
     codexCommand: process.env.NAAMIVE_CODEX_COMMAND ?? 'codex',
+    codexModel: /^[A-Za-z0-9._:-]{1,80}$/.test(process.env.NAAMIVE_CODEX_MODEL ?? '') ? process.env.NAAMIVE_CODEX_MODEL! : null,
     codexWorkdir: process.env.NAAMIVE_CODEX_WORKDIR,
     agentAdapter: process.env.NAAMIVE_AGENT_ADAPTER ?? 'codex',
+    // Development is intentionally selected independently from the legacy
+    // discovery adapter.  The selector is closed so a typo never silently
+    // falls back to a different provider.
+    developmentExecutor: (developmentExecutorRaw as 'codex'|'deepseek'|'controlled'|undefined) ?? ((process.env.NAAMIVE_AGENT_ADAPTER === 'controlled' ? 'controlled' : 'codex') as 'codex'|'deepseek'|'controlled'),
+    deepseekModel: /^[A-Za-z0-9._:-]{1,80}$/.test(process.env.NAAMIVE_DEEPSEEK_MODEL ?? '') ? process.env.NAAMIVE_DEEPSEEK_MODEL! : 'deepseek-v4-flash',
     runtimeEnvironment: process.env.NAAMIVE_RUNTIME_ENVIRONMENT ?? 'development',
     deepseekSecretEnvName: process.env.NAAMIVE_DEEPSEEK_SECRET_ENV_NAME ?? 'NAAMIVE_SECRET_DEEPSEEK_API_KEY',
     agentExecutionServiceEnabled: process.env.NAAMIVE_AGENT_EXECUTION_SERVICE_ENABLED === 'true',

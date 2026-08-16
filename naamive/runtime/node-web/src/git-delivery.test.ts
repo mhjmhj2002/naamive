@@ -29,6 +29,13 @@ test('creates independent auditable worktrees and reconciles each lifecycle',()=
   writeFileSync(join(tree,'draft.txt'),'draft');assert.equal(reconcileWorktree(repo,tree,'work-items/wi-1',base),'DIRTY');assert.throws(()=>removeWorktree(repo,tree),GitDeliveryError);
  }finally{rmSync(root,{recursive:true,force:true});}
 });
+test('rebuilds an inactive delivery branch at the requested base SHA',()=>{
+ const root=mkdtempSync(join(tmpdir(),'naamive-stale-delivery-')),repo=join(root,'repo'),first=join(root,'first'),second=join(root,'second');try {
+  execFileSync('git',['init',repo]);run(repo,['config','user.name','tester']);run(repo,['config','user.email','tester@localhost']);writeFileSync(join(repo,'base.txt'),'base');run(repo,['add','.']);run(repo,['commit','-m','base']);const base=run(repo,['rev-parse','HEAD']);
+  createWorktree(repo,first,'work-items/wi-stale',base);writeFileSync(join(first,'stale.txt'),'stale');run(first,['add','.']);run(first,['commit','-m','stale delivery']);removeWorktree(repo,first);
+  createWorktree(repo,second,'work-items/wi-stale',base);assert.equal(run(second,['rev-parse','HEAD']),base);assert.equal(run(second,['status','--porcelain']),'');
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
 test('rejects Git refs that would be a prefix of another delivery ref',()=>{
  const root=mkdtempSync(join(tmpdir(),'naamive-ref-')),repo=join(root,'repo');try {
   execFileSync('git',['init',repo]);run(repo,['config','user.name','tester']);run(repo,['config','user.email','tester@localhost']);writeFileSync(join(repo,'base.txt'),'base');run(repo,['add','.']);run(repo,['commit','-m','base']);const base=run(repo,['rev-parse','HEAD']);

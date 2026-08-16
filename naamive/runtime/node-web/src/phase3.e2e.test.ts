@@ -111,6 +111,10 @@ if (!databaseUrl) {
     assert.equal((await pool.query(`SELECT count(*)::int AS count FROM deliveries WHERE work_item_id=$1`,[workItemId])).rows[0].count,0);
     await pool.query(`UPDATE projects SET workflow_version=2 WHERE id=$1`,[id]);
     const started=await startDevelopment(id,workItemId,{},`dev-${randomUUID()}`); await runOnce(id); const firstTree=(await pool.query(`SELECT path FROM worktrees WHERE work_item_id=$1 AND state='ACTIVE'`,[workItemId])).rows[0].path;
+    // The final cherry-pick is made by the worker, not by the repository's
+    // configured developer identity. This keeps headless workers from
+    // rejecting valid agent commits when user.name/user.email are absent.
+    assert.equal(execFileSync('git',['-C',firstTree,'log','-1','--format=%cn <%ce>'],{encoding:'utf8'}).trim(),'naamive-bot <naamive-bot@localhost>');
     // Exercise the governed retry lineage from a terminal, clean failure. This
     // covers operator authorization, origin linkage, idempotency and the
     // redispatch into the controlled agent before the normal evidence -> QA flow.

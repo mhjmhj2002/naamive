@@ -7,23 +7,25 @@
  *   - thread.started   (thread_id)
  *   - turn.started     (no payload)
  *   - turn.completed   (usage token counts only)
+ *   - item.started / item.completed (type only; payload is always dropped)
  *
  * Prompts, chain of reasoning, tool arguments, file contents, secrets and raw
  * output are NEVER persisted or projected. Any line that does not match the
  * closed contract is dropped fail-closed: a sanitized DISCARD record (reason +
  * count, never the raw line) is emitted instead.
  *
- * Notably `item.completed` is deliberately EXCLUDED: for agent_message items it
- * carries the raw assistant text (the plan response / reasoning) and for
- * function_call items it carries tool arguments — both are forbidden.
+ * Item events are retained only as a liveness/progress pulse. Their payload can
+ * contain assistant text or tool arguments and is therefore always dropped.
  */
-export const CODEX_OPERATIONAL_EVENT_CONTRACT = ['thread.started', 'turn.started', 'turn.completed'] as const;
+export const CODEX_OPERATIONAL_EVENT_CONTRACT = ['thread.started', 'turn.started', 'turn.completed', 'item.started', 'item.completed'] as const;
 export type CodexOperationalEventType = (typeof CODEX_OPERATIONAL_EVENT_CONTRACT)[number];
 export type CodexUsage = { input_tokens?: number; cached_input_tokens?: number; cache_write_input_tokens?: number; output_tokens?: number; reasoning_output_tokens?: number };
 export type CodexOperationalEvent =
   | { type: 'thread.started'; thread_id?: string }
   | { type: 'turn.started' }
-  | { type: 'turn.completed'; usage?: CodexUsage };
+  | { type: 'turn.completed'; usage?: CodexUsage }
+  | { type: 'item.started' }
+  | { type: 'item.completed' };
 
 export type CodexEventParseResult =
   | { kind: 'operational'; event: CodexOperationalEvent }
@@ -54,6 +56,9 @@ export const parseCodexJsonlLine = (line: string): CodexEventParseResult => {
   }
   if (type === 'turn.started') {
     return { kind: 'operational', event: { type: 'turn.started' } };
+  }
+  if (type === 'item.started' || type === 'item.completed') {
+    return { kind: 'operational', event: { type } };
   }
   // turn.completed: only numeric usage counters survive; every other field
   // (turn contents, message ids, reasoning text) is dropped.

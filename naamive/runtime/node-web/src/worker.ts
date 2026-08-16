@@ -238,7 +238,7 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
       }
       log('worker', 'info', 'job_completed', { job_id: job.id, operation_id: job.operation_id, project_id: job.project_id, kind: job.kind, attempt: Number(job.attempts) });
     } catch (error) {
-      const cause = error as { code?: unknown; constraint?: unknown };
+      const cause = error as { code?: unknown; constraint?: unknown; exitCode?: unknown; signal?: unknown };
       log('worker', 'error', 'job_execution_failed', {
         job_id: job.id,
         operation_id: job.operation_id,
@@ -248,6 +248,8 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
         step,
         error_kind: error instanceof Error ? error.constructor.name : 'UnknownError',
         cause_code: typeof cause.code === 'string' ? cause.code : undefined,
+        exit_code: typeof cause.exitCode === 'number' ? cause.exitCode : undefined,
+        signal: typeof cause.signal === 'string' ? cause.signal : undefined,
         cause_constraint: typeof cause.constraint === 'string' ? cause.constraint : undefined
       });
       await failJob(job, error);
@@ -263,7 +265,8 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
 if (process.argv[1]?.endsWith('worker.ts') || process.argv[1]?.endsWith('worker.js')) {
   const stopRuntime=await startRuntimeProcess('WORKER');
   log('worker', 'info', 'worker_started', { poll_interval_seconds: 1 });
-  process.on('SIGTERM', async () => { log('worker', 'info', 'worker_stopped'); await stopRuntime(); await pool.end(); process.exit(0); });
+  let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('worker','info','worker_stopped');await stopRuntime();await pool.end();process.exit(0);};
+  process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
   while (true) {
     try { await runOnce(); }
     catch (error) { log('worker', 'error', 'worker_cycle_failed', { error_kind: error instanceof Error ? error.constructor.name : 'UnknownError' }); }

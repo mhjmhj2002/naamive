@@ -10,7 +10,7 @@ import { putArtifact } from './artifacts.js';
 import { randomUUID } from 'node:crypto';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
-import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializationBaselineOptions, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, resolveExternalBlocker, revalidateCandidate, retryDevelopmentWorkItem, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
+import { approveModulePlan, archiveIntegration, authorizeRework, authorizeWorkItem, completeDefinition, createCandidate, decideArchitecture, decideModule, decideReworkGate, materializationBaselineOptions, materializeModule, mergeWorkItemToPhase, phase3Detail, reconcileDevelopmentWorktree, reconcileIntegrationAttempt, resolveExternalBlocker, restartDevelopmentOrchestration, revalidateCandidate, retryDevelopmentWorkItem, retryIntegration, startDevelopment, startIntegration, startModuleRevision, submitQa, supersedeCandidate, validateCandidate } from './phase3.js';
 import { requestPlanAdjustment, retryModulePlan } from './module-planning.js';
 import { AgentRuntimeAdminError, listRuntimeCatalogue, publishAgentExecutionPolicy, publishAssurancePolicy, registerRuntime, validateRuntime } from './agent-execution-admin.js';
 import { agentExecutionService } from './agent-execution-service.js';
@@ -66,7 +66,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': settings.webOrigin, 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'content-type,idempotency-key,x-actor-id,x-actor-role,last-event-id' }); return response.end(); }
   const url = new URL(request.url ?? '/', settings.webOrigin); const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|retry-discovery|apply-review-adjustments|archive))?$/);
   const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition|architecture|plan|revision|plan-adjustment|retry-plan))?)?$/);
-  const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|retry-development|qa|rework|rework-decision|merge|reconcile|resolve-external-blocker)$/);
+  const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|restart-development|retry-development|qa|rework|rework-decision|merge|reconcile|resolve-external-blocker)$/);
   const developmentRuntimeMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/development-runtime$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
@@ -167,6 +167,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'revision') return respond(response,202,await startModuleRevision(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (phase3Match && request.method === 'POST' && phase3Match[3] === 'work-items') return respond(response,202,await authorizeWorkItem(phase3Match[1],phase3Match[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'development') return respond(response,202,await startDevelopment(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'restart-development') return respond(response,202,await restartDevelopmentOrchestration(workItemMatch[1],workItemMatch[2],request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'retry-development') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');const operatorId=request.headers['x-naamive-operator']?.toString()?.trim()||config().operatorId;return respond(response,202,await retryDevelopmentWorkItem(workItemMatch[1],workItemMatch[2],await json(request),idempotencyKey,operatorId)); }
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'resolve-external-blocker') return respond(response,202,await resolveExternalBlocker(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'qa') return respond(response,202,await submitQa(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
@@ -199,5 +200,6 @@ export const createApiServer = () => createServer(async (request, response) => {
   respond(response, known.status, { code: known.code, message: known.message, request_id: requestId }); } });
 if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.js')) {
   const stopRuntime=await startRuntimeProcess('SERVER'); const server = createApiServer(); server.listen(settings.port, settings.host, () => log('server','info','server_started',{url:`http://${settings.host}:${settings.port}`,artifact_store:'configured',repository_roots:settings.repositoryRoots.length}));
-  process.on('SIGTERM', async () => { log('server','info','server_stopping'); server.close(); await stopRuntime(); await pool.end(); log('server','info','server_stopped'); });
+  let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
+  process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }
