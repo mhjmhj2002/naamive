@@ -15,7 +15,7 @@ import { prepareTechnologySelectionContext } from './selection-context.js';
 import { controlledPlanFixture, persistPlan, buildPlanContext, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_SANITIZER_VERSION, canonicalHash, sanitizePlan, validatePlan } from './module-planning.js';
 import { recordPlanRunBoundaries, createPlanTelemetrySink, terminatePlanTelemetry, completePlanTelemetry } from './plan-telemetry.js';
 import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } from './development-telemetry.js';
-import { detectDevelopmentRuntimeInconsistencies } from './development-runtime.js';
+import { detectDevelopmentRuntimeInconsistencies, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { startRuntimeProcess } from './runtime-process.js';
 import { executeIndependentReview } from './assurance.js';
 
@@ -160,6 +160,7 @@ const heartbeat = (job: any) => setInterval(() => {
 
 export const runOnce = async (projectId?: string): Promise<boolean> => {
   await detectDevelopmentRuntimeInconsistencies();
+  await reconcileDevelopmentRuntime();
   const lock = await pool.connect();
   try {
     const lockKey=projectId??randomUUID();
@@ -179,8 +180,21 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
       } else if (job.kind === 'DEVELOP_WORK_ITEM') {
         step = 'prepare_isolated_worktree';
         const delivery=await prepareDevelopmentJob(job);
-        step = 'dispatch_development_agent';
-        if (delivery) await executeDevelopmentAgent({project_id:job.project_id,work_item_id:delivery.work_item_id,objective:delivery.payload?.objective,inputs:delivery.payload?.inputs,output:delivery.payload?.output,acceptance_criteria:delivery.payload?.acceptance_criteria,allowlist:delivery.payload?.allowlist,denylist:delivery.payload?.denylist,qa_matrix:delivery.qa_matrix,branch:delivery.branch,base_sha:delivery.base_sha},delivery.path,job);
+        // Real execution-start evidence: the orchestration layer marks the
+        // attempt RUNNING and emits a durable DEVELOPMENT_STARTED event only
+        // when it is about to genuinely invoke the agent.  A reserved or
+        // dispatched environment is NOT a running execution.
+        if (delivery) {
+          step = 'mark_agent_started';
+          await withTransaction(async (client) => {
+            const owned = await client.query(`SELECT 1 FROM jobs WHERE id=$1 AND status='LEASED' AND lease_expires_at>=clock_timestamp() FOR UPDATE`, [job.id]);
+            if (!owned.rowCount) throw new Error('JOB_LEASE_LOST');
+            await client.query(`UPDATE deliveries SET state='RUNNING' WHERE id=$1`, [delivery.id]);
+            await event(client, job.project_id, 'DEVELOPMENT_STARTED', job.operation_id, job.id, null, { work_item_id: delivery.work_item_id, delivery_id: delivery.id, job_id: job.id, branch: delivery.branch, base_sha: delivery.base_sha });
+          });
+          step = 'dispatch_development_agent';
+          await executeDevelopmentAgent({project_id:job.project_id,work_item_id:delivery.work_item_id,objective:delivery.payload?.objective,inputs:delivery.payload?.inputs,output:delivery.payload?.output,acceptance_criteria:delivery.payload?.acceptance_criteria,allowlist:delivery.payload?.allowlist,denylist:delivery.payload?.denylist,qa_matrix:delivery.qa_matrix,branch:delivery.branch,base_sha:delivery.base_sha},delivery.path,job);
+        }
         await finalizeDevelopmentJob(job);
         await pool.query(`UPDATE jobs SET last_operational_event_at=clock_timestamp(),operational_event_count=operational_event_count+1,last_signal_at=clock_timestamp() WHERE id=$1 AND status='LEASED'`, [job.id]);
         step = 'persist_result';

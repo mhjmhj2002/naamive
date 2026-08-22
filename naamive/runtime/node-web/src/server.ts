@@ -17,7 +17,7 @@ import { agentExecutionService } from './agent-execution-service.js';
 import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-gate.js';
 import { startTechnologyBaselineRevision } from './baseline-revision.js';
 import { createTechnologyBaselineRevision, listTechnologyCatalogItems, listTechnologyCategories, listTechnologyProfiles, requestTechnologyInventory, technologyBaseline, technologyCatalogRevision, technologyProfile, technologySelectionContext } from './technology-api.js';
-import { developmentRuntime } from './development-runtime.js';
+import { developmentRuntime, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
 import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
@@ -200,6 +200,10 @@ export const createApiServer = () => createServer(async (request, response) => {
   respond(response, known.status, { code: known.code, message: known.message, request_id: requestId }); } });
 if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.js')) {
   const stopRuntime=await startRuntimeProcess('SERVER'); const server = createApiServer(); server.listen(settings.port, settings.host, () => log('server','info','server_started',{url:`http://${settings.host}:${settings.port}`,artifact_store:'configured',repository_roots:settings.repositoryRoots.length}));
-  let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
+  // Server-side development reservation reconciliation runs OUTSIDE the worker
+  // so a RESERVED delivery whose job is never consumed (or whose worker died)
+  // is still reconciled to terminal/recoverable on a bounded schedule.
+  const reconcileTimer=setInterval(()=>{ void reconcileDevelopmentRuntime().catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
+  let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');clearInterval(reconcileTimer);server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }

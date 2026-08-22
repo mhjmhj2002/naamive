@@ -159,6 +159,12 @@ export const startDevelopment=async(projectId:string,workItemId:string,_body:Rec
   if(!w)throw new ApiError(404,'WORK_ITEM_NOT_FOUND');if(!['WAITING_FOR_WORK_ITEM_AUTHORIZATION','REWORK_ELIGIBLE'].includes(w.state))throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');
   if(w.payload?.external_blocked===true)throw new ApiError(409,'EXTERNAL_DEPENDENCY_BLOCKED');
   const dependencyReferences=Array.isArray(w.payload?.depends_on_ids)?w.payload.depends_on_ids.filter((value:any)=>typeof value==='string'):[];if(dependencyReferences.length){const dependencies=(await pool.query(`SELECT id,title,state FROM work_items WHERE project_id=$1 AND module_id=$2 AND (id::text=ANY($3::text[]) OR payload->>'work_item_id'=ANY($3::text[]))`,[projectId,w.module_id,dependencyReferences])).rows,unfinished=dependencies.filter((dependency:any)=>dependency.state!=='MERGED_TO_PHASE');if(dependencies.length!==dependencyReferences.length||unfinished.length)throw new ApiError(409,'WORK_ITEM_DEPENDENCY_NOT_COMPLETED');}
+  // A reservation is not a blank slate for concurrent dispatch.  Guard against
+  // a second request re-dispatching an already-active attempt with a clean
+  // conflict; the partial unique index on deliveries/worktrees is the atomic
+  // backstop that guarantees a single active attempt per work item.
+  const alreadyActive=(await pool.query(`SELECT 1 FROM deliveries WHERE work_item_id=$1 AND state IN ('RESERVED','PREPARING','DISPATCHED','RUNNING','DEVELOPMENT_IN_PROGRESS') LIMIT 1`,[workItemId])).rows[0];
+  if(alreadyActive)throw new ApiError(409,'DEVELOPMENT_ALREADY_ACTIVE');
   // The request records intent only.  Repository inspection, worktree creation
   // and any agent invocation are worker side effects and must be recoverable.
   const worktreeId=randomUUID(),deliveryId=randomUUID(),jobId=randomUUID(),branch=`work-items/${workItemId}`,worktree=join(repository.repository_path,'.naamive-worktrees',worktreeId),base=repository.initial_sha;
@@ -234,7 +240,23 @@ export const retryDevelopmentWorkItem=async(projectId:string,workItemId:string,b
 
 export const resolveExternalBlocker=async(projectId:string,workItemId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};const justification=typeof body.justification==='string'?body.justification.trim():'';if(!justification)throw new ApiError(422,'EXTERNAL_BLOCKER_RESOLUTION_REQUIRED');const item=(await c.query(`SELECT * FROM work_items WHERE id=$1 AND project_id=$2 FOR UPDATE`,[workItemId,projectId])).rows[0];if(!item)throw new ApiError(404,'WORK_ITEM_NOT_FOUND');if(item.payload?.external_blocked!==true)throw new ApiError(409,'EXTERNAL_BLOCKER_NOT_ACTIVE');const correlation=randomUUID(),op=await operation(c,projectId,'RESOLVE_EXTERNAL_BLOCKER',idempotencyKey,correlation),resolution={justification,resolved_at:new Date().toISOString(),resolved_by:config().operatorId};const payload={...item.payload,external_blocked:false,external_blocked_resolution:resolution};await c.query(`UPDATE work_items SET payload=$2,version=version+1 WHERE id=$1`,[workItemId,payload]);const artifact=await evidence(c,projectId,'external-blocker-resolution',{work_item_id:workItemId,resolution,correlation_id:correlation},op);await event(c,projectId,'WORK_ITEM_EXTERNAL_BLOCKER_RESOLVED',correlation,{work_item_id:workItemId,resolution,evidence_hash:artifact.json.hash});return{operation_id:op,status:'ACCEPTED'};});
 
-/** Worker-only Git side effect for a leased development job. */
+/** Rebuilds a delivery's private worktree at the reserved base so an
+ * unrecorded or invalid commit from a lost attempt can never be replayed into
+ * a changed tree (which would otherwise loop on COMMIT_APPLY_FAILED). */
+const rebuildReservedWorktree=(delivery:any)=>{
+  try {
+    if(gitValue(delivery.path,'rev-parse','HEAD')!==delivery.base_sha){
+      discardWorktree(delivery.repository_path,delivery.path);
+      discardDeliveryBranch(delivery.repository_path,delivery.branch);
+      createWorktree(delivery.repository_path,delivery.path,delivery.branch,delivery.base_sha);
+    }
+  } catch(error) { throw gitFailure(error); }
+};
+
+/** Worker-only Git side effect for a leased development job.  Reservation is
+ * not execution: this prepares the environment and marks the attempt
+ * DISPATCHED.  The attempt becomes RUNNING only when the orchestration layer
+ * emits real execution-start evidence (see executeDevelopmentAgent). */
 export const prepareDevelopmentJob=async(job:any)=>{
   const delivery=(await pool.query(`SELECT d.*,t.path,t.branch,t.base_sha,t.state worktree_state,w.id work_item_id,w.state work_item_state,w.payload,p.repository_path,p.initial_sha FROM deliveries d JOIN worktrees t ON t.id=d.worktree_id JOIN work_items w ON w.id=d.work_item_id JOIN projects p ON p.id=d.project_id WHERE d.id=$1`,[job.delivery_id])).rows[0];
   if(!delivery)throw new ApiError(409,'DELIVERY_NOT_FOUND');
@@ -247,22 +269,29 @@ export const prepareDevelopmentJob=async(job:any)=>{
     // producing an endless DEVELOPMENT_AGENT_COMMIT_APPLY_FAILED loop.  This
     // delivery has no persisted head/evidence yet, so rebuild its private
     // worktree at the reserved base before giving it back to the executor.
-    try {
-      if(gitValue(delivery.path,'rev-parse','HEAD')!==delivery.base_sha){
-        discardWorktree(delivery.repository_path,delivery.path);
-        discardDeliveryBranch(delivery.repository_path,delivery.branch);
-        createWorktree(delivery.repository_path,delivery.path,delivery.branch,delivery.base_sha);
-      }
-    } catch(error) { throw gitFailure(error); }
-    await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='RUNNING' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
+    rebuildReservedWorktree(delivery);
+    await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='DISPATCHED' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
     return delivery;
   }
-  if(delivery.work_item_state!=='WAITING_FOR_WORK_ITEM_AUTHORIZATION'&&delivery.work_item_state!=='REWORK_ELIGIBLE') return;
+  // A prior lease prepared (or started) this attempt but died before evidence
+  // was persisted.  The delivery/worktree are still usable, so re-dispatch
+  // deterministically instead of silently skipping: rebuild to the reserved
+  // base and hand the attempt back to the executor.  The single-active-job
+  // index guarantees this job is the only executable attempt for the delivery.
+  if((delivery.state==='DISPATCHED'||delivery.state==='RUNNING')&&delivery.worktree_state==='ACTIVE'&&delivery.work_item_state==='DEVELOPMENT_IN_PROGRESS'){
+    rebuildReservedWorktree(delivery);
+    await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='DISPATCHED' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
+    return delivery;
+  }
+  // Never silently skip dispatch: an unexpected state must fail visible so the
+  // worker terminates the job instead of falling into a no-op retry loop that
+  // never invokes the agent.
+  if(delivery.work_item_state!=='WAITING_FOR_WORK_ITEM_AUTHORIZATION'&&delivery.work_item_state!=='REWORK_ELIGIBLE') throw new ApiError(409,'DEVELOPMENT_DISPATCH_STATE_INVALID');
   await discardStaleWorktrees(delivery.project_id,delivery.repository_path,delivery.path); pruneWorktrees(delivery.repository_path);
   let base:string;
   try { const rejected=delivery.work_item_state==='REWORK_ELIGIBLE'?(await pool.query(`SELECT head_sha FROM deliveries WHERE work_item_id=$1 AND state='QA_REJECTED' AND head_sha IS NOT NULL ORDER BY created_at DESC LIMIT 1`,[delivery.work_item_id])).rows[0]:null; base=String(rejected?.head_sha??initializePhaseRefs(delivery.repository_path,delivery.initial_sha).phaseSha); const released=await pool.query(`SELECT id,path FROM worktrees WHERE project_id=$1 AND state='RELEASED' ORDER BY created_at LIMIT 1`,[delivery.project_id]); if(released.rowCount){removeWorktree(delivery.repository_path,released.rows[0].path);await pool.query(`UPDATE worktrees SET state='REMOVED' WHERE id=$1`,[released.rows[0].id]);} mkdirSync(join(delivery.repository_path,'.naamive-worktrees'),{recursive:true}); createWorktree(delivery.repository_path,delivery.path,delivery.branch,base); }
   catch(error) { throw gitFailure(error); }
-  await withTransaction(async c=>{const artifact=await evidence(c,delivery.project_id,'development-delivery',{delivery_id:delivery.id,work_item_id:delivery.work_item_id,branch:delivery.branch,base_sha:base,job_id:job.id},job.operation_id);await c.query(`UPDATE worktrees SET state='ACTIVE',base_sha=$2,lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id,base]);await c.query(`UPDATE deliveries SET base_sha=$2,state='RUNNING' WHERE id=$1`,[delivery.id,base]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_DISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id,branch:delivery.branch,base_sha:base,evidence_hash:artifact.json.hash});});
+  await withTransaction(async c=>{const artifact=await evidence(c,delivery.project_id,'development-delivery',{delivery_id:delivery.id,work_item_id:delivery.work_item_id,branch:delivery.branch,base_sha:base,job_id:job.id},job.operation_id);await c.query(`UPDATE worktrees SET state='ACTIVE',base_sha=$2,lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id,base]);await c.query(`UPDATE deliveries SET base_sha=$2,state='DISPATCHED' WHERE id=$1`,[delivery.id,base]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_DISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id,branch:delivery.branch,base_sha:base,evidence_hash:artifact.json.hash});});
   return {...delivery,base_sha:base};
 };
 

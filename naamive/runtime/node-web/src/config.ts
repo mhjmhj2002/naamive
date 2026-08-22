@@ -43,6 +43,14 @@ export const config = () => {
     developmentRetryMaxAttempts: Number(process.env.NAAMIVE_DEVELOPMENT_RETRY_MAX_ATTEMPTS ?? 3),
     developmentHeartbeatSeconds: Number(process.env.NAAMIVE_DEVELOPMENT_HEARTBEAT_SECONDS ?? 60),
     agentHeartbeatSeconds: Number(process.env.NAAMIVE_AGENT_HEARTBEAT_SECONDS ?? 30),
+    // Server-side development reservation reconciliation (not worker-only).
+    // A RESERVED delivery whose DEVELOP_WORK_ITEM job is never consumed is
+    // failed terminal+visible after this bounded grace.  It also bounds how
+    // long an expired lease (dead worker) may keep an attempt active before
+    // the server marks it recoverable/terminal.
+    developmentReservationGraceSeconds: Number(process.env.NAAMIVE_DEVELOPMENT_RESERVATION_GRACE_SECONDS ?? 300),
+    // How often the SERVER process runs the outside-the-worker reconciliation.
+    developmentReconcileIntervalSeconds: Number(process.env.NAAMIVE_DEVELOPMENT_RECONCILE_INTERVAL_SECONDS ?? 30),
     // F5-23 pendency 22: observable timeout & degradation policy. The planning
     // timeout may only be elevated once telemetry is available, is configurable
     // and audited (default 12 minutes = 720s). A heartbeat fires every 60s and a
