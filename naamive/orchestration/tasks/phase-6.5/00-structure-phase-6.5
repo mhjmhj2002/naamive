@@ -1,0 +1,832 @@
+# TASK — Estruturar a Fase 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery
+
+## REGRA DE IDIOMA
+
+Toda a análise, documentação criada e resposta desta task devem ser feitas em **português do Brasil (pt-BR)**.
+
+---
+
+# CONTEXTO
+
+Uma auditoria de aderência do lifecycle identificou desvios estruturais importantes entre:
+
+* lifecycle normativo;
+* protocolo de orquestração;
+* runtime;
+* persistência;
+* APIs;
+* UI;
+* automação;
+* recovery;
+* gates;
+* assurance;
+* testes.
+
+A conclusão da auditoria foi que a implementação atual não representa corretamente o modelo operacional normativo do NAAMIVE.
+
+A Fase 7 deve permanecer congelada até que essas não conformidades estruturais sejam corrigidas.
+
+Será criada uma fase intermediária:
+
+**Fase 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery**
+
+A branch de trabalho desta fase foi derivada da `phase6-development` e deve preservar tudo que já foi implementado até a Fase 6.
+
+---
+
+# PREPARAÇÃO DA BRANCH DA FASE 6.5
+
+Antes de iniciar qualquer alteração documental desta task, garantir que o trabalho esteja sendo realizado em uma branch própria da Fase 6.5, criada **a partir da branch `phase6-development`**.
+
+Branch de origem:
+
+`phase6-development`
+
+Branch de destino:
+
+`phase6.5-lifecycle-alignment`
+
+## Procedimento
+
+1. Verificar se existem alterações locais não commitadas.
+2. Se houver alterações locais que possam ser perdidas ou misturadas indevidamente, **parar e informar**, sem executar checkout, reset, clean ou stash automático.
+3. Atualizar as referências remotas.
+4. Confirmar que a branch `phase6-development` existe e está disponível.
+5. Verificar se a branch `phase6.5-lifecycle-alignment` já existe localmente ou no remoto.
+
+### Se a branch `phase6.5-lifecycle-alignment` já existir
+
+* Fazer checkout nela.
+* Confirmar que sua ancestralidade parte de `phase6-development`.
+* Não recriar a branch.
+* Não rebasear ou resetar automaticamente.
+
+### Se a branch `phase6.5-lifecycle-alignment` ainda não existir
+
+Criá-la **a partir da versão atualizada de `phase6-development`**.
+
+Fluxo esperado:
+
+```bash
+git fetch origin
+git checkout phase6-development
+git pull --ff-only origin phase6-development
+git checkout -b phase6.5-lifecycle-alignment
+git push -u origin phase6.5-lifecycle-alignment
+```
+
+## Validação obrigatória
+
+Antes de continuar a task:
+
+* branch atual deve ser `phase6.5-lifecycle-alignment`;
+* registrar o HEAD inicial;
+* confirmar que a branch deriva de `phase6-development`;
+* registrar `git status`;
+* não iniciar alterações da Fase 6.5 enquanto essa validação não estiver concluída.
+
+Se qualquer condição acima não puder ser garantida com segurança, **parar e informar o problema**.
+
+# BASELINE OFICIAL DA FASE 6.5
+
+A auditoria que originou esta fase está versionada no seguinte arquivo:
+
+`/home/mhj/git/naamive/naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+Este documento é a **baseline oficial das não conformidades existentes antes da Fase 6.5**.
+
+## Regra obrigatória
+
+Antes de qualquer planejamento:
+
+1. Ler **integralmente**:
+
+   `/home/mhj/git/naamive/naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+2. Utilizar obrigatoriamente:
+
+   * resumo executivo;
+   * lifecycle esperado;
+   * lifecycle implementado;
+   * diferenças encontradas;
+   * análise dos problemas;
+   * matriz de aderência;
+   * estados em limbo;
+   * gates legítimos;
+   * paradas humanas indevidas;
+   * automações ausentes;
+   * problemas de UI;
+   * plano de correção;
+   * critérios finais de aderência.
+
+3. Não reinterpretar ou suavizar as não conformidades para adequá-las ao comportamento atual do código.
+
+4. **NÃO modificar o arquivo da auditoria.**
+
+5. Nos novos documentos, referenciá-lo preferencialmente pelo caminho relativo:
+
+   `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+A auditoria deve permanecer imutável como fotografia histórica do sistema antes das correções.
+
+---
+
+# OBJETIVO
+
+Estruturar formalmente a **Fase 6.5** dentro do repositório.
+
+Esta task é exclusivamente de:
+
+* organização;
+* planejamento;
+* decomposição;
+* rastreabilidade;
+* preparação das tasks;
+* atualização do roadmap.
+
+**NÃO implementar correções funcionais nesta task.**
+
+Ao terminar, devemos possuir um backlog estruturado e executável para corrigir o desalinhamento identificado pela auditoria.
+
+---
+
+# 1. VALIDAR ESTADO DO REPOSITÓRIO
+
+Antes de qualquer alteração:
+
+* confirmar branch atual;
+* registrar HEAD;
+* verificar `git status`;
+* verificar working tree;
+* não executar `reset`;
+* não executar `clean`;
+* não descartar alterações existentes;
+* não trocar de branch.
+
+Se a branch atual não corresponder à branch criada para a Fase 6.5, **parar e informar**, sem realizar alterações.
+
+---
+
+# 2. LER AS FONTES OBRIGATÓRIAS
+
+Ler integralmente, no mínimo:
+
+1. `/home/mhj/git/naamive/naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+2. `orchestration/LIFECYCLE_COMPASS.md`
+3. `orchestration/PROJECT_LIFECYCLE.md`
+4. `orchestration/MODULE_LIFECYCLE.md`
+5. `orchestration/ORCHESTRATION_PROTOCOL.md`
+6. `orchestration/STATE_MACHINE_MODEL.md`
+7. `governance/GATE_POLICY.md`
+8. `AGENTS.md` aplicável;
+9. roadmap atual;
+10. planejamento da Fase 5;
+11. planejamento da Fase 6;
+12. F5-22;
+13. F5-23;
+14. tasks da Fase 6 relacionadas a supervision/assurance.
+
+Também analisar a estrutura documental utilizada pelas fases anteriores para manter consistência de:
+
+* nomenclatura;
+* diretórios;
+* IDs;
+* status;
+* critérios de aceite;
+* dependências;
+* evidências.
+
+Não inventar um novo padrão documental se já existir um padrão adequado no repositório.
+
+---
+
+# 3. CONTEXTO ARQUITETURAL DO NAAMIVE
+
+O NAAMIVE é uma plataforma de **orquestração autônoma do ciclo de desenvolvimento de software baseada em agentes de IA**.
+
+O objetivo não é criar uma interface para uma pessoa operar agentes manualmente.
+
+O fluxo esperado é:
+
+**necessidade → análise → definição → arquitetura → planejamento → implementação → integração → validação → entrega → evolução**
+
+utilizando agentes especializados sempre que a atividade puder ser automatizada.
+
+O humano atua principalmente como:
+
+* autoridade de negócio;
+* autoridade para decisões materiais;
+* aprovador de gates explicitamente definidos;
+* resolvedor de exceções que não possam ser solucionadas automaticamente.
+
+O humano **não deve funcionar como operador manual do workflow técnico**.
+
+---
+
+# 4. PRINCÍPIO CENTRAL DA FASE 6.5
+
+Formalizar explicitamente no planejamento:
+
+> **AUTOMATION FIRST, HUMAN BY EXCEPTION OR EXPLICIT GATE.**
+
+Depois que um escopo foi autorizado, o orquestrador deve tentar conduzi-lo autonomamente até:
+
+1. atingir um gate humano explicitamente previsto;
+2. encontrar decisão material que exija autoridade humana;
+3. encontrar bloqueio não solucionável automaticamente;
+4. encontrar falha que realmente necessite decisão humana;
+5. concluir o trabalho.
+
+Estados técnicos não devem criar novas aprovações humanas implicitamente.
+
+---
+
+# 5. PRINCÍPIOS ARQUITETURAIS OBRIGATÓRIOS
+
+A Fase 6.5 deve preservar e formalizar:
+
+1. Nenhum work item aprovado pelo plano deve exigir autorização humana individual adicional.
+2. Elegibilidade deve provocar dispatch automático.
+3. Dependências satisfeitas devem provocar reavaliação automática.
+4. Produção concluída deve provocar QA/review automaticamente.
+5. `EXECUTION_SUCCEEDED != WORK_ACCEPTED`.
+6. Apenas `ACCEPT` caracteriza trabalho aceito.
+7. `REWORK` deve retornar ao ciclo de produção/review automaticamente quando não existir decisão material.
+8. `BLOCK` deve tentar assistência/routing antes de escalada humana.
+9. Toda falha recuperável deve possuir caminho operacional de saída.
+10. Gates humanos devem existir somente onde explicitamente previstos pelo lifecycle/política.
+11. A UI deve representar e explicar o lifecycle, não operar manualmente o workflow técnico.
+12. Projeto e módulo devem avançar coerentemente.
+13. Toda ação deve permanecer auditável e rastreável.
+14. Estados automáticos não devem exigir cliques humanos para continuar.
+15. Toda parada humana deve informar:
+
+    * por que parou;
+    * o que está aguardando;
+    * quem possui autoridade;
+    * quais decisões são permitidas;
+    * como o processo continua.
+
+---
+
+# 6. CRIAR O PLANEJAMENTO FORMAL DA FASE 6.5
+
+Criar um documento de planejamento seguindo o padrão existente das fases anteriores.
+
+Nome sugerido:
+
+`16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md`
+
+Antes de criar, verificar a sequência e convenção reais dos documentos existentes e ajustar o nome se necessário.
+
+O planejamento deve conter, no mínimo:
+
+* objetivo;
+* motivação;
+* contexto;
+* baseline;
+* problemas identificados;
+* escopo;
+* fora de escopo;
+* princípios arquiteturais;
+* invariantes;
+* estratégia de compatibilidade;
+* estratégia de migração;
+* riscos;
+* dependências;
+* estratégia de rollout;
+* estratégia de recovery;
+* estratégia de testes;
+* critérios de conclusão;
+* backlog da fase;
+* dependências entre tasks;
+* ordem de execução.
+
+Referenciar explicitamente:
+
+`orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+como baseline da fase.
+
+---
+
+# 7. TRANSFORMAR A AUDITORIA EM BACKLOG FORMAL
+
+Usar como ponto de partida as tasks propostas pela auditoria.
+
+## A — Lifecycle/runtime
+
+### LR-01 — Publicar workflows aderentes v2
+
+Corrigir a base normativa/runtime dos workflows.
+
+### LR-02 — Sincronizar macro-lifecycle
+
+Fazer projeto e módulo refletirem corretamente planejamento, implementação, integração, validação e entrega.
+
+---
+
+## B — Automação
+
+### AUT-01 — Scheduler transacional de elegibilidade
+
+Despachar automaticamente work items elegíveis.
+
+### AUT-02 — Pipeline automático QA → review → merge → integração
+
+Eliminar operações técnicas manuais entre produção e integração.
+
+### AUT-03 — Ampliar F6 aos trabalhos reais
+
+Aplicar supervision/assurance ao desenvolvimento, planejamento, integração, QA, release e demais trabalhos selecionados.
+
+---
+
+## C — Recovery
+
+### REC-01 — Recovery orientado pela causa
+
+Separar corretamente:
+
+* retry técnico;
+* restart;
+* resume;
+* rework com evidência;
+* recuperação de integração.
+
+### REC-02 — Recuperação de reviewer e blocks
+
+Eliminar limbos relacionados a:
+
+* reviewer indisponível;
+* falha terminal de review;
+* assistência;
+* routing;
+* especialista;
+* escalada.
+
+---
+
+## D — Gates
+
+### GAT-01 — Catálogo server-side de gates e autoridade
+
+Eliminar gates implícitos e tornar gates condicionais realmente condicionais.
+
+### GAT-02 — Entrega, pausa e cancelamento
+
+Completar:
+
+* `DELIVERY → DELIVERED`;
+* `PAUSED`;
+* `CANCELLED`;
+* retomada;
+* rejeição/rework de entrega.
+
+### GAT-03 — Autenticação e RBAC
+
+Garantir autoridade verificável para decisões e operações sensíveis.
+
+---
+
+## E — UI
+
+### UI-01 — Projeção única de estado e `allowed_actions`
+
+Eliminar renderers concorrentes e fazer o servidor determinar as ações válidas.
+
+### UI-02 — Superfícies completas de parada
+
+Garantir UX adequada para:
+
+* gate;
+* failure;
+* retry;
+* rework;
+* block;
+* escalation;
+* pause;
+* delivery;
+* recovery.
+
+---
+
+## F — Testes
+
+### TST-01 — Suíte de conformidade do lifecycle
+
+Criar suíte capaz de provar que runtime, API, UI e lifecycle obedecem ao mesmo contrato.
+
+---
+
+## G — Documentação
+
+### DOC-01 — Reconciliar documentação F5/F6/F6.5
+
+Eliminar divergências documentais sem reescrever falsamente o histórico.
+
+---
+
+# 8. NÃO COPIAR CEGAMENTE O BACKLOG DA AUDITORIA
+
+A auditoria é a baseline, mas esta task deve validar tecnicamente:
+
+* granularidade;
+* dependências;
+* ordem;
+* sobreposição;
+* pré-condições.
+
+Se uma task precisar ser dividida, justificar.
+
+Se duas tasks precisarem ser reorganizadas, justificar.
+
+Se alguma task proposta pela auditoria depender de trabalho não identificado, criar a dependência explicitamente.
+
+**Não remover silenciosamente nenhum problema identificado pela auditoria.**
+
+Todo problema deve possuir:
+
+* task responsável;
+* ou justificativa explícita de fora de escopo.
+
+---
+
+# 9. CRIAR DIRETÓRIO DE TASKS DA FASE 6.5
+
+Criar diretório seguindo a convenção existente.
+
+Sugestão:
+
+`phase-6-5-implementation-tasks/`
+
+Confirmar antes o local correto conforme a organização das fases anteriores.
+
+Cada task deve possuir arquivo próprio.
+
+Exemplos:
+
+* `LR-01-publish-conformant-workflows-v2.md`
+* `LR-02-synchronize-macro-lifecycle.md`
+* `AUT-01-transactional-eligibility-scheduler.md`
+* `AUT-02-automatic-qa-review-merge-integration.md`
+* `AUT-03-expand-phase6-assurance.md`
+* `REC-01-cause-aware-recovery.md`
+* `REC-02-reviewer-and-block-recovery.md`
+* `GAT-01-server-side-gate-catalog.md`
+* `GAT-02-delivery-pause-cancellation.md`
+* `GAT-03-authentication-rbac.md`
+* `UI-01-single-state-action-projection.md`
+* `UI-02-complete-stop-surfaces.md`
+* `TST-01-lifecycle-conformance-suite.md`
+* `DOC-01-reconcile-phase5-phase6-docs.md`
+
+Adaptar nomes somente para manter a convenção real do repositório.
+
+---
+
+# 10. CONTEÚDO MÍNIMO DE CADA TASK
+
+Cada arquivo deve possuir:
+
+* ID;
+* título;
+* status;
+* objetivo;
+* problema corrigido;
+* referência à auditoria;
+* contexto;
+* comportamento atual;
+* comportamento esperado;
+* invariantes envolvidos;
+* arquivos/componentes prováveis;
+* dependências;
+* restrições;
+* estratégia de implementação;
+* compatibilidade/migração quando aplicável;
+* critérios de aceite;
+* testes obrigatórios;
+* riscos;
+* evidências esperadas.
+
+Status inicial:
+
+`TO DO`
+
+Nenhuma task deve ser marcada como implementada nesta preparação.
+
+---
+
+# 11. VALIDAR A ORDEM DE EXECUÇÃO
+
+Usar como ponto de partida:
+
+`LR-01 → AUT-01 → REC-01 → LR-02 → AUT-02 → AUT-03 → REC-02 → GAT-01/GAT-03 → GAT-02 → UI-01/UI-02 → TST-01 → DOC-01`
+
+Essa ordem **não é obrigatória**.
+
+Validar as dependências reais e produzir a ordem tecnicamente mais segura.
+
+Para cada alteração de ordem, apresentar justificativa.
+
+O objetivo é evitar implementar componentes sobre contratos que serão modificados posteriormente.
+
+---
+
+# 12. DETALHAMENTO ESPECIAL DA LR-01
+
+A primeira implementação esperada após esta preparação provavelmente será:
+
+`LR-01 — Publicar workflows aderentes v2`
+
+Portanto, deixar esta task especialmente detalhada.
+
+Cobrir obrigatoriamente:
+
+* versionamento de workflow;
+* migrations;
+* compatibilidade com dados existentes;
+* preservação histórica;
+* eliminação de autorização humana individual por work item;
+* substituição de `WAITING_FOR_WORK_ITEM_AUTHORIZATION`;
+* estado correto para work item aprovado mas ainda inelegível;
+* estado correto para work item elegível;
+* dependências técnicas;
+* bloqueios externos;
+* transições permitidas;
+* impacto em APIs;
+* impacto em projeções;
+* impacto em testes legados;
+* comportamento de linhas já persistidas;
+* idempotência;
+* roll-forward;
+* rollback, se aplicável;
+* compatibilidade com o projeto real usado na auditoria.
+
+Não implementar LR-01 nesta task.
+
+Somente deixá-la pronta para execução posterior.
+
+---
+
+# 13. PRESERVAR O PROJETO REAL DA AUDITORIA
+
+O projeto utilizado durante a auditoria deve ser tratado como cenário de regressão.
+
+A preparação deve registrar que, ao final da Fase 6.5, o seguinte comportamento precisa ser comprovado:
+
+### WI Persistência
+
+`produção → QA automática → review independente → ACCEPT → merge automático`
+
+### Depois do ACCEPT
+
+O sistema deve reavaliar automaticamente os dependentes.
+
+### WI Métrica
+
+Sem decisão humana pendente:
+
+→ deve ser automaticamente elegível e despachado.
+
+### WI Interface
+
+Possui decisão externa legítima:
+
+→ deve permanecer parado somente enquanto essa decisão estiver pendente.
+
+Depois de:
+
+* decisão externa resolvida;
+* dependência técnica satisfeita;
+
+→ deve ser automaticamente elegível e despachado.
+
+Este cenário deve posteriormente fazer parte da suíte de conformidade.
+
+---
+
+# 14. ATUALIZAR O ROADMAP
+
+Atualizar o roadmap para inserir:
+
+**Fase 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery**
+
+entre Fase 6 e Fase 7.
+
+A Fase 7 existente:
+
+* não deve ser apagada;
+* não deve ser renumerada nesta task sem necessidade comprovada;
+* não deve iniciar;
+* deve permanecer explicitamente bloqueada pela conclusão da Fase 6.5.
+
+Registrar de forma compatível com o padrão documental:
+
+`F7 BLOCKED BY PHASE 6.5`
+
+ou equivalente.
+
+---
+
+# 15. NÃO REESCREVER O HISTÓRICO
+
+Não alterar fases anteriores para fingir que comportamentos ausentes já estavam implementados.
+
+Se F5 ou F6 possuem:
+
+* status incorreto;
+* linguagem futura;
+* documentação conflitante;
+* task marcada de forma inconsistente;
+
+registrar a inconsistência e associá-la a `DOC-01`.
+
+A Fase 6.5 corrige o estado atual sem falsificar o histórico.
+
+---
+
+# 16. NÃO ALTERAR A AUDITORIA
+
+O arquivo:
+
+`/home/mhj/git/naamive/naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+é imutável nesta task.
+
+Não:
+
+* editar;
+* atualizar;
+* corrigir;
+* resumir substituindo o original;
+* alterar conclusões;
+* marcar problemas como resolvidos dentro dele.
+
+Ele representa o **ANTES**.
+
+As correções e evidências futuras devem ser registradas separadamente.
+
+---
+
+# 17. RASTREABILIDADE AUDITORIA → TASK
+
+Criar no planejamento da Fase 6.5 uma matriz de rastreabilidade:
+
+| Não conformidade da auditoria | Severidade | Task responsável | Critério de resolução |
+| ----------------------------- | ---------- | ---------------- | --------------------- |
+
+Garantir que **todas as não conformidades relevantes da auditoria possuam destino**.
+
+Especialmente todas as classificadas como:
+
+* `CRÍTICA`;
+* `ALTA`.
+
+Nenhuma pode desaparecer entre a auditoria e o backlog.
+
+---
+
+# 18. CRITÉRIOS GLOBAIS DE CONCLUSÃO DA FASE 6.5
+
+Usar os critérios finais da auditoria como baseline.
+
+A Fase 6.5 somente poderá ser considerada concluída quando, entre outros:
+
+1. Nenhum WI aprovado pelo plano exigir autorização individual.
+2. Todo WI elegível for despachado automaticamente e de forma idempotente.
+3. Dependências satisfeitas provocarem reavaliação automática.
+4. Produção concluída gerar QA e review sem comando humano.
+5. Trabalho supervisionado permanecer incompleto até `ACCEPT`.
+6. `REWORK` gerar ciclo corretivo automático quando não houver gate material.
+7. `BLOCK` provocar assistência/routing antes de escalada.
+8. Toda falha recuperável possuir saída operacional válida.
+9. Nenhum estado recuperável permanecer em limbo.
+10. Gates humanos existirem somente onde autorizados.
+11. Toda parada humana explicar motivo, autoridade, decisões e consequências.
+12. Merge, candidata, validação e integração técnica forem automatizados.
+13. Projeto e módulo avançarem coerentemente.
+14. Existir aceite final de entrega.
+15. `PAUSED` e `CANCELLED` possuírem semântica normativa.
+16. Ações sensíveis exigirem identidade/autoridade adequada.
+17. A UI utilizar uma única fonte de verdade para ações permitidas.
+18. O cenário real da auditoria completar automaticamente QA, review, merge e próximo dispatch.
+19. Testes E2E cobrirem happy path, rework, block, retry, dependências, gates e recovery.
+20. Documentação, workflow, runtime, API, UI e testes representarem o mesmo contrato.
+
+Não reduzir esses critérios sem justificativa arquitetural explícita.
+
+---
+
+# 19. CRITÉRIOS DE CONCLUSÃO DESTA TASK DE PREPARAÇÃO
+
+Esta task estará concluída quando existirem:
+
+1. planejamento formal da Fase 6.5;
+2. baseline da auditoria referenciada;
+3. diretório próprio de tasks;
+4. backlog formal completo;
+5. arquivos individuais das tasks;
+6. dependências explícitas;
+7. ordem de execução definida;
+8. matriz auditoria → task;
+9. critérios de aceite por task;
+10. critérios globais da Fase 6.5;
+11. roadmap atualizado;
+12. Fase 7 explicitamente bloqueada;
+13. LR-01 detalhada e pronta para execução;
+14. nenhuma correção funcional implementada.
+
+---
+
+# RESULTADO FINAL OBRIGATÓRIO
+
+Ao terminar, responder em português com:
+
+## 1. Estado inicial
+
+* branch;
+* HEAD inicial;
+* working tree inicial.
+
+## 2. Arquivos criados
+
+Lista completa com caminhos.
+
+## 3. Arquivos alterados
+
+Lista completa com caminhos e motivo.
+
+## 4. Estrutura final da Fase 6.5
+
+Mostrar todas as tasks e seus objetivos.
+
+## 5. Matriz de rastreabilidade
+
+Confirmar cobertura das não conformidades críticas e altas da auditoria.
+
+## 6. Dependências
+
+Mostrar grafo ou sequência de dependências.
+
+## 7. Ordem final recomendada
+
+Apresentar a sequência completa de execução.
+
+## 8. Primeira task pronta para implementação
+
+Informar qual deve ser executada primeiro e por quê.
+
+## 9. Divergências encontradas
+
+Apontar conflitos entre:
+
+* auditoria;
+* lifecycle;
+* F5;
+* F6;
+* roadmap;
+* implementação atual.
+
+Não corrigir silenciosamente.
+
+## 10. Confirmação da Fase 7
+
+Confirmar que permanece bloqueada pela Fase 6.5.
+
+## 11. Git status final
+
+Mostrar:
+
+* arquivos novos;
+* arquivos modificados;
+* working tree.
+
+---
+
+# REGRAS FINAIS
+
+**NÃO implementar nenhuma correção funcional nesta task.**
+
+Não alterar:
+
+* runtime funcional;
+* comportamento de APIs;
+* UI funcional;
+* migrations funcionais;
+* banco;
+* scheduler;
+* recovery;
+* assurance.
+
+Alterações permitidas são exclusivamente de **planejamento, documentação, estrutura de tasks e roadmap**.
+
+**NÃO modificar a auditoria:**
+
+`/home/mhj/git/naamive/naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+Não adaptar o lifecycle para justificar o código existente.
+
+Não iniciar `LR-01`.
+
+Ao concluir a estruturação da Fase 6.5, **PARAR e aguardar revisão humana antes de qualquer implementação funcional.**
