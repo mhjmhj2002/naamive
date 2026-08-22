@@ -1,0 +1,57 @@
+{
+  "schema_version": "lr01-real-project-snapshot/v1",
+  "captured_at": "2026-08-22",
+  "source": "2026-08-22 lifecycle conformance audit read-only inventory",
+  "project": {
+    "id": "728901f8-17fe-4fc9-bdc4-0b2fabc2ce08",
+    "workflow_code": "PROJECT_DISCOVERY",
+    "workflow_version": 3,
+    "state": "READY_FOR_MODULE_MATERIALIZATION",
+    "expected_classification": "PROJECT_MACRO_STATE_LEGACY",
+    "expected_decision": "PRESERVE_LEGACY"
+  },
+  "module": {
+    "id": "a16bc306-4df9-448a-a683-0c1406daea64",
+    "module_key": "registro-de-solicitacoes",
+    "workflow_code": "MODULE_DELIVERY",
+    "workflow_version": 1,
+    "state": "WORK_ITEMS_ACTIVE",
+    "expected_classification": "MODULE_MACRO_STATE_LEGACY",
+    "expected_decision": "PRESERVE_LEGACY"
+  },
+  "work_items": [
+    {
+      "id": "fcf9e503-5714-4d6d-8a53-32e4974645e0",
+      "logical_id": "request-record-store",
+      "workflow_code": "WORK_ITEM_DELIVERY",
+      "workflow_version": 1,
+      "state": "QA_IN_PROGRESS",
+      "expected_classification": "QA_IN_PROGRESS_PRESERVE_EVIDENCE",
+      "expected_decision": "PRESERVE_LEGACY"
+    },
+    {
+      "id": "4c556479-1f08-4af0-887c-a574cf226b6d",
+      "logical_id": "request-registration-ui",
+      "workflow_code": "WORK_ITEM_DELIVERY",
+      "workflow_version": 1,
+      "state": "WAITING_FOR_WORK_ITEM_AUTHORIZATION",
+      "expected_classification": "WAITING_AUTH_EXTERNAL_BLOCKER",
+      "expected_decision": "PRESERVE_LEGACY"
+    },
+    {
+      "id": "813d56f5-3402-4090-8283-d84858486133",
+      "logical_id": "request-registration-metric",
+      "workflow_code": "WORK_ITEM_DELIVERY",
+      "workflow_version": 1,
+      "state": "WAITING_FOR_WORK_ITEM_AUTHORIZATION",
+      "expected_classification": "WAITING_AUTH_DEPENDENCIES",
+      "expected_decision": "PRESERVE_LEGACY"
+    }
+  ],
+  "invariants": {
+    "mutate_source_project": false,
+    "promote_workflow_version": false,
+    "infer_acceptance": false,
+    "preserve_evidence_lineage": true
+  }
+}

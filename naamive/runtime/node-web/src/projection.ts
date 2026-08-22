@@ -11,10 +11,34 @@ export const publicValue = (value: unknown): unknown => {
     .map(([name, item]) => [name, publicValue(item)]).filter(([, item]) => item !== undefined));
 };
 
-export const publicEvent = (row: Record<string, unknown>) => ({ id: row.id, event_type: row.event_type, occurred_at: row.occurred_at, payload: publicValue(row.payload) });
+export const publicEvent = (row: Record<string, unknown>) => ({
+  id: row.id,
+  event_type: row.event_type,
+  occurred_at: row.occurred_at,
+  ...('workflow_code' in row ? { workflow_code: row.workflow_code } : {}),
+  ...('workflow_version' in row ? { workflow_version: row.workflow_version } : {}),
+  ...('state' in row ? { state: row.state } : {}),
+  payload: publicValue(row.payload)
+});
 
-export const nextAction = (state: string, blocked?: string | null) => {
+export const allowedActions = (workflowCode: string | null | undefined, workflowVersion: number | null | undefined, state: string, activeExternalBlockers = 0) => {
+  if (workflowCode === 'WORK_ITEM_DELIVERY' && Number(workflowVersion) === 2) {
+    if (state === 'WAITING_FOR_EXTERNAL_INPUT' && activeExternalBlockers > 0) return ['RESOLVE_EXTERNAL_BLOCKER'];
+    return [];
+  }
+  if (state === 'WAITING_FOR_WORK_ITEM_AUTHORIZATION') return ['START_DEVELOPMENT'];
+  if (state === 'REWORK_ELIGIBLE') return ['AUTHORIZE_REWORK'];
+  return [];
+};
+
+export const nextAction = (state: string, blocked?: string | null, workflowCode?: string | null, workflowVersion?: number | null) => {
   if (blocked) return `Resolver bloqueio: ${blocked}.`;
+  if (workflowCode === 'WORK_ITEM_DELIVERY' && Number(workflowVersion) === 2) {
+    if (state === 'WAITING_FOR_EXTERNAL_INPUT') return 'Fornecer ou registrar a resolução da dependência externa.';
+    if (state === 'WAITING_FOR_DEPENDENCIES') return 'Aguardar dependências técnicas; nenhuma ação humana é necessária.';
+    if (state === 'ELIGIBLE_FOR_DISPATCH') return 'Elegível para despacho automático pela AUT-01; nenhuma ação humana é necessária.';
+    if (state === 'PAUSED') return 'Retomar ou cancelar com motivo e evidência.';
+  }
   if (state.includes('WAITING_FOR') || state.includes('ELIGIBLE')) return 'Decisão ou autorização do operador necessária.';
   if (state.includes('DEVELOPMENT') || state.includes('QA') || state.includes('INTEGRATION')) return 'Acompanhar a execução em andamento.';
   if (state === 'READY_FOR_PHASE_MERGE') return 'Incorporar o item à fase.';

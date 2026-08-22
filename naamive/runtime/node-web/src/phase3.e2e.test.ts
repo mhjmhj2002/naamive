@@ -16,6 +16,7 @@ if (!databaseUrl) {
   // agent adapter. Tests use the controlled (deterministic, non-production)
   // adapter so no real Codex invocation can ever occur.
   process.env.NAAMIVE_AGENT_ADAPTER = 'controlled';
+  process.env.NAAMIVE_DEVELOPMENT_EXECUTOR = 'controlled';
   process.env.NAAMIVE_RUNTIME_ENVIRONMENT = 'test';
   const { pool } = await import('./db.js');
   const { materializeModule, materializationBaselineOptions, decideModule, completeDefinition, decideArchitecture, approveModulePlan, startDevelopment, retryDevelopmentWorkItem, prepareDevelopmentJob, finalizeDevelopmentJob, startModuleRevision, submitQa, authorizeRework, mergeWorkItemToPhase, createCandidate, validateCandidate, startIntegration } = await import('./phase3.js');
@@ -65,8 +66,10 @@ if (!databaseUrl) {
     }], approveModulePlan, `phase3-plan-${randomUUID()}`);
     assert.equal(plan.status, 'ACCEPTED');
     assert.equal(plan.work_item_ids?.length, 1);
-    const item = await pool.query(`SELECT title,payload,state FROM work_items WHERE id=$1`, [plan.work_item_ids?.[0]]);
-    assert.equal(item.rows[0].state, 'WAITING_FOR_WORK_ITEM_AUTHORIZATION');
+    const item = await pool.query(`SELECT title,payload,state,workflow_code,workflow_version FROM work_items WHERE id=$1`, [plan.work_item_ids?.[0]]);
+    assert.equal(item.rows[0].state, 'ELIGIBLE_FOR_DISPATCH');
+    assert.equal(item.rows[0].workflow_code, 'WORK_ITEM_DELIVERY');
+    assert.equal(item.rows[0].workflow_version, 2);
     assert.equal(item.rows[0].payload.plan_artifact_hash, plan.evidence_hash);
     // F5-23 persists the plan revision's criterion coverage (criterion_ids),
     // not the legacy free-text acceptance_criteria on each QA entry.
@@ -103,7 +106,7 @@ if (!databaseUrl) {
     const module=await materializeModule(id,{module_key:'delivery',name:'Delivery',objective:'Test',scope:['test'],out_of_scope:[],dependencies:[],acceptance_criteria:['works']},`m-${randomUUID()}`);
     const gate=(await pool.query(`SELECT version FROM module_gates WHERE id=$1`,[module.gate_id])).rows[0]; await decideModule(id,module.module_id!,{decision:'APPROVED',version:gate.version},`d-${randomUUID()}`); await completeDefinition(id,module.module_id!,{},`def-${randomUUID()}`);
     const architecture=(await pool.query(`SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'`,[module.module_id])).rows[0]; await decideArchitecture(id,module.module_id!,{decision:'APPROVED',version:architecture.version},`a-${randomUUID()}`);
-    const plan=await seedAndApprovePlan(id,module.module_id!,[{title:'Fix me',inputs:['input'],allowlist:['src/delivery.txt','src/reworked.txt'],denylist:['.env'],output:'output',acceptance_criteria:['works'],qa_matrix:[{command:"test -f src/reworked.txt",cwd:'.',timeout_seconds:1}]}],approveModulePlan,`p-${randomUUID()}`); const workItemId=plan.work_item_ids![0];
+    const plan=await seedAndApprovePlan(id,module.module_id!,[{title:'Fix me',inputs:['input'],allowlist:['src/delivery.txt','src/reworked.txt'],denylist:['.env'],output:'output',acceptance_criteria:['works'],qa_matrix:[{command:'test "$(cat src/reworked.txt 2>/dev/null)" = fixed',cwd:'.',timeout_seconds:1}]}],approveModulePlan,`p-${randomUUID()}`,1); const workItemId=plan.work_item_ids![0];
     // A corrupted v3 fixture without the mandatory inherited reference must fail
     // before Dev reserves a delivery. Restoring v2 proves the legacy path remains intact.
     await pool.query(`UPDATE projects SET workflow_version=3 WHERE id=$1`,[id]);

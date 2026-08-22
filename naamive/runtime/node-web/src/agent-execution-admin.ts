@@ -138,7 +138,7 @@ export const validateRuntime = async (runtimeId: string) => {
 };
 
 export const listProjectExecutionData = async (projectId: string) => {
-  const executions = await pool.query(`SELECT id,job_id,job_kind,state,agent_id,task_type,classification,policy_name,policy_version,selected_runtime_name,selected_adapter_type,selection_reason,next_action,created_at,completed_at
+  const executions = await pool.query(`SELECT id,job_id,job_kind,workflow_code,workflow_version,state,agent_id,task_type,classification,policy_name,policy_version,selected_runtime_name,selected_adapter_type,selection_reason,next_action,created_at,completed_at
     FROM agent_execution_view WHERE project_key=$1 ORDER BY created_at DESC`, [projectId]);
   const attempts = await pool.query(`SELECT execution_id,id,sequence,attempt_kind,runtime_name,adapter_type,state,failure_class,retry_not_before,dispatched_at,completed_at,sanitized_error,usage
     FROM agent_execution_attempt_view WHERE project_key=$1 ORDER BY sequence DESC`, [projectId]);

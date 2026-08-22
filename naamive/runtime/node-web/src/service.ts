@@ -150,11 +150,12 @@ export const archiveProject = async (projectId: string, body: Record<string, unk
   await event(client,projectId,'PROJECT_ARCHIVED',correlation,{...record,artifact_hash:artifact.hash}); return {project_id:projectId,state:target};
 });
 
-export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
-const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,p.draft,sd.label AS status,sd.next_action,
+export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,workflow_code,workflow_version,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
+const projectedProjects = `SELECT p.id,p.title,p.workflow_code,p.workflow_version,p.state,coalesce(ws.metadata->>'canonical_state',p.state) AS canonical_state,p.updated_at,p.draft,sd.label AS status,sd.next_action,
   (SELECT event_type FROM events e WHERE e.project_id=p.id ORDER BY id DESC LIMIT 1) AS last_event
  FROM projects p
  LEFT JOIN workflow_definitions wd ON wd.code=p.workflow_code AND wd.version=p.workflow_version
+ LEFT JOIN workflow_states ws ON ws.workflow_id=wd.id AND ws.code=p.state
  LEFT JOIN state_status_mappings sm ON sm.workflow_id=wd.id AND sm.state_code=p.state AND sm.event_code IS NULL AND sm.status_type_code='JOURNEY' AND sm.audience_code='OPERATOR'
  LEFT JOIN status_definitions sd ON sd.code=sm.status_code AND sd.version=sm.status_definition_version`;
 export const listProjects = async (archived=false) => (await pool.query(`${projectedProjects} ${archived ? 'WHERE p.archived_at IS NOT NULL' : 'WHERE p.archived_at IS NULL'} ORDER BY p.updated_at DESC`)).rows;

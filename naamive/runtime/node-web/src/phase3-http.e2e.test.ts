@@ -16,6 +16,7 @@ if (!databaseUrl) {
   // requires a plan_revision_id produced by the agent. The controlled adapter
   // is the deterministic non-production fixture, so no real Codex call occurs.
   process.env.NAAMIVE_AGENT_ADAPTER = 'controlled';
+  process.env.NAAMIVE_DEVELOPMENT_EXECUTOR = 'controlled';
   process.env.NAAMIVE_RUNTIME_ENVIRONMENT = 'test';
 
   const { pool } = await import('./db.js');
@@ -123,7 +124,7 @@ if (!databaseUrl) {
     const seeded = await seedPlanRevision(projectId, moduleId, [
       { title: 'Approved HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] },
       { title: 'Reworked but pending HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'grep -q reworked README.md', cwd: '.', timeout_seconds: 10 }] }
-    ]);
+    ], 1);
     const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`);
     assert.equal(reviewResponse.status, 200);
     const reviewProjection: any = await reviewResponse.json();
@@ -210,7 +211,7 @@ if (!databaseUrl) {
     const module = await post(`/api/projects/${projectId}/modules`, { module_key: `reconcile-${expected.toLowerCase()}`, name: 'Reconcile', objective: 'prove', scope: ['runtime'], out_of_scope: [], dependencies: [], acceptance_criteria: ['passes'] }); const moduleId = module.module_id;
     const gate = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0]; await post(`/api/projects/${projectId}/modules/${moduleId}/decision`, { decision: 'APPROVED', version: gate.version }); await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
     const architecture = (await pool.query("SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'", [moduleId])).rows[0]; await post(`/api/projects/${projectId}/modules/${moduleId}/architecture`, { decision: 'APPROVED', version: architecture.version });
-    const seeded = await seedPlanRevision(projectId, moduleId, [{ title: 'Reconcile item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] }]); const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }); const item = plan.work_item_ids[0]; await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
+    const seeded = await seedPlanRevision(projectId, moduleId, [{ title: 'Reconcile item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] }], 1); const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }); const item = plan.work_item_ids[0]; await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
     const tree = (await pool.query("SELECT path,branch FROM worktrees WHERE work_item_id=$1 AND state='ACTIVE'", [item])).rows[0];
     if (expected === 'DIRTY') writeFileSync(join(tree.path, 'README.md'), 'dirty\n', { flag: 'a' });
     if (expected === 'DIVERGED') {

@@ -1,6 +1,6 @@
 ---
 task: LR-01
-status: TO DO
+status: DONE
 title: Publicar workflows aderentes v2
 depends_on: []
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
