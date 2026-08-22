@@ -138,7 +138,7 @@ Uma execução `REJECTED`, `FAILED` ou em `REWORK_REQUIRED` não promove o estad
 do projeto/módulo. Só uma decisão de gate favorável com as evidências exigidas
 registra a transição.
 
-## Evolução planejada: micro-lifecycle universal de supervisão (Fase 6)
+## Micro-lifecycle universal de supervisão: fundação F6 e expansão Fase 6.5
 
 O mapa macro acima permanece canônico. A Fase 6 não acrescentará uma etapa
 macro de audit; ela introduzirá, para cada execução delegada, um micro-lifecycle
@@ -147,10 +147,13 @@ REVIEW → ACCEPT ou REWORK`; `BLOCK → ASSIST / ROUTE / ESCALATE`; e `REWORK �
 PRODUCE → REVIEW`. Só `ACCEPT` caracterizará trabalho concluído pela
 orquestração. Portanto, `EXECUTION_SUCCEEDED != WORK_ACCEPTED`.
 
-No estado atual, `EVIDENCE_REVIEW` continua com a semântica publicada e não é
-retroativamente reinterpretado como completeness review. O detalhamento futuro
-separará validação de evidência, review de completude/especialista, aceite de
-trabalho e gate, preservando os contratos e gates humanos existentes.
+No escopo histórico e opt-in da Fase 6, `EVIDENCE_REVIEW` continuou com a
+semântica publicada e não foi retroativamente reinterpretado como completeness
+review. Essa coexistência não impede evolução posterior. A Fase 6.5 publica
+novas versões de workflow e rollout controlado para aplicar o micro-lifecycle aos
+trabalhos e handoffs reais selecionados, preservando a consulta e a semântica das
+execuções históricas. Validação de evidência, review de completude/especialista,
+aceite de trabalho e gate continuam controles distintos.
 
 ## Mapa do módulo: a esteira paralela da capacidade de negócio
 

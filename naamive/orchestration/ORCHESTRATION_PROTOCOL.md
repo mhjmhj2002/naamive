@@ -59,14 +59,20 @@ Somente um gate `REGISTER_PROJECT` aprovado materializa o projeto. O detalhe da 
 | `PAUSED` | Execução interrompida por decisão registrada. | `VALIDATING`, `CANCELLED` |
 | `CANCELLED` | Execução encerrada por decisão registrada. | nenhum |
 
-## Evolução planejada para a Fase 6 — supervision & assurance
+## Supervision & assurance: fundação F6 e expansão Fase 6.5
 
-O protocolo atual permanece em vigor até a implementação autorizada da Fase 6.
-O estágio atual `EVIDENCE_REVIEW` valida vinculação e suficiência de evidências;
-ele não deve ser lido como aceite automático de completude. A evolução será
-aditiva e distinguirá `OUTPUT_SUBMITTED`, review independente de completude,
-review especializado, `WORK_ACCEPTANCE` e gate decision. O invariante é que uma
-execução bem-sucedida nunca implica automaticamente aceite do trabalho.
+No rollout histórico e opt-in da Fase 6, `EVIDENCE_REVIEW` valida vinculação e
+suficiência de evidências; ele não deve ser lido como aceite automático de
+completude. A fundação F6 distingue `OUTPUT_SUBMITTED`, review independente de
+completude, review especializado, `WORK_ACCEPTANCE` e gate decision. O
+invariante é que uma execução bem-sucedida nunca implica automaticamente aceite
+do trabalho.
+
+Essa coexistência histórica não é uma proibição permanente de evolução. A Fase
+6.5 pode publicar novos workflows e contratos e aplicar supervision/assurance
+aos jobs e handoffs reais selecionados. O rollout corretivo substitui o
+comportamento operacional legado em novas versões, preservando a semântica,
+consulta e rastreabilidade das execuções históricas já concluídas.
 
 Cada dispatch deverá passar por produção e review independente, com findings
 rastreáveis, rework delimitado e re-review. Block deixará de ser somente falha

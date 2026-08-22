@@ -474,6 +474,15 @@ Esta fase é implementada de forma aditiva e opt-in; não retroaltera o runtime,
 contratos ou comportamento certificado das
 Fases 3, 4 e 5.
 
+Esta descrição registra a estratégia histórica de implantação e coexistência da
+Fase 6: ela preservou as versões e execuções certificadas até então, sem
+reinterpretá-las. Não é uma proibição permanente de evoluir o runtime. A
+auditoria posterior de aderência identificou que partes relevantes do fluxo
+operacional principal continuaram fora do micro-lifecycle de supervision e
+assurance. A Fase 6.5 corrige essa lacuna por novos workflows, contratos e
+rollout versionado, inclusive pela `AUT-03`, sem reinterpretar execuções
+históricas concluídas.
+
 | ID | Tarefa de implementação e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
 | F6-01 | Publicar contratos e política versionada, fechada e opt-in de assurance. | Não duplicar contratos nem mudar o caminho F4 legado. |

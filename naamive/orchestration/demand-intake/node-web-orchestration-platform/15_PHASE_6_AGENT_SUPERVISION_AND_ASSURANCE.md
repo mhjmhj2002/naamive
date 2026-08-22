@@ -28,8 +28,14 @@ SELF_CHECK != INDEPENDENT_REVIEW
 
 Uma execução bem-sucedida somente prova que o produtor terminou a tentativa e
 submeteu uma saída; não autoriza a orquestração a tratá-la como trabalho aceito.
-Esta fase não implementa runtime nem altera contratos certificados da Fase 5.
-As decisões abaixo são normativas para a implementação futura autorizada.
+Na formulação histórica da Fase 6, essa capacidade seria implantada de modo
+aditivo e opt-in, sem reinterpretar contratos ou execuções já certificados das
+Fases 3, 4 e 5. As decisões abaixo registram essa fronteira e a fundação
+normativa entregue pela Fase 6; elas não proíbem evolução posterior autorizada.
+A auditoria posterior identificou que o fluxo operacional real permaneceu fora
+da cobertura F6 em pontos relevantes. A Fase 6.5, por novos workflows e rollout
+versionado, é responsável por integrar supervision/assurance a esses fluxos sem
+reinterpretar execuções históricas concluídas.
 
 ## F6-01 — Micro-lifecycle universal
 
@@ -189,6 +195,13 @@ em `SUCCEEDED`. Migration F6 é aditiva/versionada: amplia o estado de
 reinterpretar linhas F4. Política publicada de assurance seleciona requests do
 novo caminho; rollout inicial é opt-in e reversível para novos dispatches.
 
+Esse rollout inicial documenta a coexistência histórica da Fase 6, não congela o
+escopo do runtime. A Fase 6.5 pode publicar novas versões de workflow e contrato
+e, pela `AUT-03`, selecionar jobs e handoffs reais para supervision/assurance.
+Versões e execuções históricas continuam consultáveis sob sua semântica original;
+somente novos dispatches selecionados pelo rollout corretivo passam ao contrato
+novo.
+
 Invariantes: no máximo um `REVIEW` ativo por aceite e uma decisão terminal por
 versão; retry/restart usa as mesmas chaves idempotentes e não duplica finding ou
 block; cancelamento vence novo dispatch; e a restrição F4 de uma tentativa
@@ -214,7 +227,9 @@ de reviewer e antecipação de riscos. Isso não é escopo desta fase.
 - A fronteira terminal de review, handoff transacional, independência verificável, coexistência F3/F4 e contexto seguro são normativos.
 - Findings, rework, blocks, assistência, routing e escalonamento são entidades/processos rastreáveis.
 - Ownership entre orquestrador, governance, especialista, advisory, QA e humano está delimitado.
-- A implementação preserva o comportamento certificado F4/F5 para dispatches fora da política F6 opt-in.
+- A implementação histórica preserva o comportamento certificado F4/F5 para
+  dispatches fora da política F6 opt-in; a Fase 6.5 pode ampliar essa seleção em
+  versões novas, sem reinterpretar execuções históricas.
 
 ## Questões para o detalhamento/implementação da Fase 6
 

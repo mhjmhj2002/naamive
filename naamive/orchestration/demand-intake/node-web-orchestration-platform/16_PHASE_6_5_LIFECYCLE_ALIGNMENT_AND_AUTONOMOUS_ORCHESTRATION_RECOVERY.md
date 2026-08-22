@@ -123,7 +123,12 @@ atualizada por esta fase.
 
 - Publicar workflows novos e manter versões F3/F4/F5/F6 consultáveis.
 - Preservar o caminho legado enquanto a política de rollout estiver desligada,
-  sem reinterpretar resultados históricos como aceites F6.
+  sem reinterpretar resultados históricos como aceites F6. Essa coexistência é
+  uma estratégia de transição, não uma obrigação de manter indefinidamente o
+  fluxo operacional incorreto fora de assurance.
+- Substituir, em novos workflows e dispatches selecionados, o comportamento
+  operacional legado pelos contratos corretivos da Fase 6.5, inclusive a
+  cobertura F6 dos trabalhos reais pela `AUT-03`.
 - Mapear consumidores antes de mudar contratos; APIs incompatíveis usam versão ou
   período de coexistência explícito.
 - Manter referências de baseline tecnológica e garantias Git/F3 em todo novo

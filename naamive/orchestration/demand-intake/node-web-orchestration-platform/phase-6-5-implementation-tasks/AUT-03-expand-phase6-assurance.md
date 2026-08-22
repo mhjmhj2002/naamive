@@ -13,14 +13,20 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 Aplicar o micro-lifecycle F6 aos trabalhos reais selecionados: planejamento,
 desenvolvimento, integração, QA, segurança, release e demais job kinds aprovados.
 Corrige o opt-in restrito à discovery e a ausência de `work_acceptance` no
-projeto real auditado.
+projeto real auditado. A característica opt-in histórica da Fase 6 não impede
+esta ampliação: a Fase 6.5 está autorizada a selecionar novos workflows, jobs e
+handoffs reais para assurance, preservando sem reinterpretar execuções históricas
+já concluídas. Em outros termos, o opt-in histórico da Fase 6 não obriga a Fase
+6.5 a manter o fluxo real fora de assurance.
 
 ## Contexto, atual e esperado
 
 F6 certificou contracts, independence, review e blocks de modo aditivo, mas o
 `AgentExecutionService` e as políticas operacionais não cobrem os caminhos reais.
-Cada dispatch selecionado deve criar acceptance, produzir output, aguardar review
-independente e só gerar efeito de negócio após `ACCEPT`.
+Cada dispatch selecionado pela política deve criar `work_acceptance`, produzir
+output, aguardar revisão independente quando a política exigir e só gerar efeito
+de negócio após `ACCEPT`. Compatibilidade controla o rollout por versão/política;
+não mantém permanentemente o fluxo real fora de supervision/assurance.
 
 ## Invariantes
 
@@ -46,6 +52,9 @@ trabalho em sucesso técnico e não criar coleção paralela de findings.
 Inventariar job kinds e efeitos; publicar seletores por classificação; adaptar
 cada produtor ao handoff F6 e seu aplicador de efeito após `ACCEPT`; certificar
 review package específico sem conteúdo proibido; ativar por canário e medir.
+Publicar novos workflows/contratos quando necessário para substituir o
+comportamento operacional legado em novos dispatches, mantendo as versões
+históricas somente para consulta, recovery compatível e auditoria.
 
 ## Critérios de aceite
 
