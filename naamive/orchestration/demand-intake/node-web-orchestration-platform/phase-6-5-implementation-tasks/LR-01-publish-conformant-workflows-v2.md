@@ -110,6 +110,14 @@ publicadas até F6 e da baseline F5 aplicada aos projetos v3.
 - Não apagar `WAITING_FOR_WORK_ITEM_AUTHORIZATION` do histórico.
 - Não iniciar scheduler, pipeline ou UI desta fase nesta task além do mínimo
   necessário para publicar/selecionar o contrato novo.
+- `LR-01` define o contrato de workflow, estados, transições, guards,
+  versionamento e compatibilidade. `AUT-01` implementa scheduler, elegibilidade
+  automática e auto-dispatch; portanto, LR-01 não pode antecipar scheduler,
+  polling, auto-dispatch, reação automática a dependência satisfeita, criação
+  automática de jobs ou cascata automática de execução.
+- Se um ajuste mínimo tiver efeito automático inevitável apenas para garantir a
+  consistência do contrato novo, documentar por que ele não constitui
+  implementação antecipada da `AUT-01`.
 - Não transformar estado técnico em gate humano.
 - Preservar workflows legados e o projeto real auditado.
 
@@ -119,12 +127,26 @@ publicadas até F6 e da baseline F5 aplicada aos projetos v3.
 2. Produzir tabela normativa de mapeamento projeto/módulo/WI/execução, incluindo
    origem, evento, controle, destino, side effects autorizados e recuperação.
 3. Validar o desenho contra Compass, lifecycles, protocolo e gate policy.
-4. Publicar versões novas em migration aditiva e repetível, com hashes/estado de
+4. Antes de qualquer alteração funcional, migration ou publicação de workflow,
+   fechar a matriz normativa de estados/transições de projeto, módulo, WI e
+   execução; confirmar que cada estado possui semântica única; validá-la contra
+   `LIFECYCLE_COMPASS.md`, `PROJECT_LIFECYCLE.md`, `MODULE_LIFECYCLE.md`,
+   `ORCHESTRATION_PROTOCOL.md`, `STATE_MACHINE_MODEL.md` e `GATE_POLICY.md`;
+   confirmar que espera técnica, blocker, gate, elegibilidade, produção, review,
+   `ACCEPT`, `REWORK` e falha recuperável possuem semânticas distintas; e
+   confirmar que nenhuma autorização humana implícita está sendo criada. Se
+   houver conflito normativo relevante, parar antes da implementação funcional
+   correspondente, registrar documentos em conflito, regra/estado/transição
+   afetada, alternativas, impacto e recomendação, e solicitar decisão humana
+   antes de continuar. Se for necessário inventar estado, gate ou transição não
+   derivável dos documentos normativos ou do planejamento aprovado da Fase 6.5,
+   tratar como `DECISÃO ARQUITETURAL NECESSÁRIA` e parar antes de implementá-lo.
+5. Publicar versões novas em migration aditiva e repetível, com hashes/estado de
    publicação imutáveis.
-5. Selecionar a versão nova apenas para instâncias novas ou migrações explícitas.
-6. Adicionar projeção de compatibilidade que identifique versão e semântica sem
+6. Selecionar a versão nova apenas para instâncias novas ou migrações explícitas.
+7. Adicionar projeção de compatibilidade que identifique versão e semântica sem
    expor ação inválida.
-7. Validar cada consumidor e ajustar apenas os contratos indispensáveis ao novo
+8. Validar cada consumidor e ajustar apenas os contratos indispensáveis ao novo
    workflow; automações funcionais ficam nas tasks dependentes.
 
 ## Compatibilidade e comportamento de linhas persistidas
@@ -198,6 +220,10 @@ linha pode ser classificada sem perda; o avanço automático será provado em
 8. APIs/projeções identificam versão e não oferecem comando incompatível.
 9. Publicação, seleção e migração explícita são idempotentes.
 10. Projeto real é representável como fixture de regressão sem mutação.
+11. A matriz normativa de estados/transições foi fechada e validada contra os
+    documentos normativos antes de qualquer alteração funcional.
+12. Nenhum scheduler, auto-dispatch ou comportamento pertencente à `AUT-01` foi
+    implementado antecipadamente.
 
 ## Testes obrigatórios
 
@@ -216,6 +242,11 @@ linha pode ser classificada sem perda; o avanço automático será provado em
 - Migração promover linha sem evidência; mitigar com fail-closed e dry-run.
 - Consumidor assumir enum legado; mitigar com busca completa e testes por versão.
 - Rollback deixar instância sem executor; mitigar mantendo suporte à versão nova.
+- Agent criar estado, gate ou transição por conveniência de implementação;
+  mitigar com pré-validação normativa obrigatória e parada diante de decisão
+  arquitetural não coberta.
+- LR-01 absorver responsabilidades de AUT-01; mitigar com fronteira explícita
+  entre LR-01 e AUT-01.
 
 ## Evidências esperadas
 
