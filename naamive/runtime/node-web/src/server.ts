@@ -20,6 +20,7 @@ import { createTechnologyBaselineRevision, listTechnologyCatalogItems, listTechn
 import { developmentRuntime, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
 import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
+import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from './gate-catalog.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -91,8 +92,11 @@ export const createApiServer = () => createServer(async (request, response) => {
   const assuranceGateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/gates$/);
   const assuranceCancelMatch = url.pathname.match(/^\/api\/projects\/[^/]+\/assurance\/acceptances\/([^/]+)\/cancel$/);
   const assuranceReconcileMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/acceptances\/([^/]+)\/reconcile$/);
+  const catalogGateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/catalog-gates$/);
+  const catalogGateDecisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/catalog-gates\/([^/]+)\/decision$/);
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
+  if (request.method === 'GET' && url.pathname === '/api/gate-catalog') return respond(response, 200, await publishedGateCatalog());
   if (request.method === 'GET' && url.pathname === '/health/runtime') { const health=await runtimeHealth(); return respond(response,health.healthy?200:503,health); }
   if (developmentRuntimeMatch && request.method === 'GET') return respond(response,200,await developmentRuntime(developmentRuntimeMatch[1],developmentRuntimeMatch[2]));
   if (request.method === 'GET' && url.pathname === '/api/technology/categories') return respond(response, 200, await listTechnologyCategories());
@@ -102,6 +106,13 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (technologyProfileMatch && request.method === 'GET') return respond(response, 200, await technologyProfile(technologyProfileMatch[1]));
   if (request.method === 'GET' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 200, { items: await listRuntimeCatalogue() });
   const assuranceOptions=()=>({correlationId:uuidParameter(url.searchParams.get('correlation_id'),'ASSURANCE_CORRELATION_INVALID'),limit:Number(url.searchParams.get('limit')??100),actorRole:String(request.headers['x-actor-role']??'')});
+  if (catalogGateMatch && request.method === 'GET') return respond(response,200,await catalogGateProjection(catalogGateMatch[1],String(request.headers['x-actor-role']??'')));
+  if (catalogGateDecisionMatch && request.method === 'POST') {
+    const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();
+    if(!idempotencyKey) throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
+    const body=await json(request), actorId=String(request.headers['x-actor-id']??'').trim(), actorRole=String(request.headers['x-actor-role']??'').trim();
+    return respond(response,202,await withTransaction(client=>decideCatalogGate(client,catalogGateDecisionMatch[1],catalogGateDecisionMatch[2],{version:Number(body.version),decision:String(body.decision??''),reason:String(body.reason??''),evidence:body.evidence,actor_id:actorId,actor_role:actorRole,idempotency_key:idempotencyKey})));
+  }
   if (assuranceMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceMatch[1],url.searchParams.get('cursor'),url.searchParams.get('state'),url.searchParams.get('category'),assuranceOptions()));
   if (assuranceModuleMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceModuleMatch[1],url.searchParams.get('cursor'),url.searchParams.get('state'),url.searchParams.get('category'),{...assuranceOptions(),targetType:'module',targetId:uuidParameter(assuranceModuleMatch[2],'ASSURANCE_MODULE_ID_INVALID')}));
   if (assuranceWorkItemMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceWorkItemMatch[1],url.searchParams.get('cursor'),url.searchParams.get('state'),url.searchParams.get('category'),{...assuranceOptions(),targetType:'work_item',targetId:uuidParameter(assuranceWorkItemMatch[2],'ASSURANCE_WORK_ITEM_ID_INVALID')}));

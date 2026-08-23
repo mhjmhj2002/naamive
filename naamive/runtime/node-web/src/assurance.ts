@@ -7,6 +7,7 @@ import { sanitizeStructured } from './agent-runtime-redaction.js';
 import { persistDiscoveryAgentOutcome } from './discovery-agent-jobs.js';
 import type { AgentResult } from './agent.js';
 import { config } from './config.js';
+import { gateDefinition } from './gate-catalog.js';
 
 export const assuranceDecisions = ['ACCEPT', 'REWORK', 'BLOCK', 'ESCALATE'] as const;
 export const acceptanceStates = ['PENDING_PRODUCE','PENDING_REVIEW','WAITING_FOR_INDEPENDENT_REVIEWER','ACCEPTED','REWORK_REQUIRED','BLOCKED','ESCALATED','CANCELLED'] as const;
@@ -529,10 +530,10 @@ export const createAssistanceProposal = async (blockId:string, body:unknown, act
   await audit(client,block.project_id,'ASSURANCE_ASSISTANCE_PROPOSED',block.correlation_id,{block_id:blockId,proposal_id:row.id,routing_role:value.routing_role}); return row;
 });
 
-const gateRoles:Record<string,string[]>={INDEPENDENCE_EXCEPTION:['TECH_LEAD','REPOSITORY_OWNER'],SCOPE_ARCHITECTURE_POLICY:['TECH_LEAD','REPOSITORY_OWNER'],ACCEPTED_RISK:['TECH_LEAD','REPOSITORY_OWNER'],ESCALATED_CLOSURE:['TECH_LEAD','REPOSITORY_OWNER']};
 export const recordHumanGate = async(projectId:string,body:unknown,actorId:string,actorRole?:string,idempotencyKey?:string)=>withTransaction(async client=>{
   const value=safeEvidence(body), type=String(value.gate_type??''), role=String(actorRole??'');
-  if(!gateRoles[type]?.includes(role))throw new AssuranceError('ASSURANCE_GATE_UNAUTHORIZED',403);
+  let contract; try { contract=gateDefinition(type); } catch { throw new AssuranceError('ASSURANCE_GATE_NOT_CATALOGED'); }
+  if(!contract.authority_roles.includes(role))throw new AssuranceError('ASSURANCE_GATE_UNAUTHORIZED',403);
   if(idempotencyKey) { const replay=await client.query(`SELECT * FROM assurance_human_gates WHERE idempotency_key=$1`,[idempotencyKey]); if(replay.rowCount)return replay.rows[0]; }
   if(!['APPROVED','REJECTED'].includes(String(value.decision))||typeof value.reason!=='string'||!value.reason.trim()||!value.evidence||!value.scope||typeof value.scope!=='object'||Array.isArray(value.scope)||!classificationOrder.includes(String(value.classification??'INTERNAL')))throw new AssuranceError('ASSURANCE_GATE_INVALID');
   const scope=value.scope as Record<string,unknown>;
