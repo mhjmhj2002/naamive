@@ -1,6 +1,6 @@
 # NAAMIVE — Resumo de Continuidade da Fase 6.5
 
-**Data do checkpoint:** 22/08/2026  
+**Data do checkpoint:** 23/08/2026
 **Branch:** `phase6.5-lifecycle-alignment`  
 **Fase:** 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery  
 **Objetivo deste arquivo:** permitir retomar o trabalho em um novo chat sem reconstruir todo o histórico.
@@ -42,8 +42,8 @@ A Fase 6.5 possui 14 demandas:
 | 1 | **LR-01** | Publicar workflows aderentes v2 e corrigir o modelo de estados/transições | **DONE** |
 | 2 | **GAT-01** | Catálogo server-side versionado de gates e autoridade | **DONE** |
 | 3 | **GAT-03** | Autenticação e RBAC server-side | **DONE** |
-| 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **TO_DO** |
-| 5 | **REC-01** | Recovery orientado pela causa | **TO_DO** |
+| 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
+| 5 | **REC-01** | Recovery orientado pela causa | **TO_DO / NEXT** |
 | 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO** |
 | 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
@@ -205,7 +205,7 @@ GAT-03 responde:
 
 ---
 
-## 5. GAT-03 — DOING
+## 5. GAT-03 — DONE
 
 ### Objetivo
 
@@ -296,9 +296,9 @@ Não são prova de autoridade:
 
 Podem permanecer apenas quando necessário para compatibilidade/auditoria histórica.
 
-### Implementação já realizada
+### Implementação concluída
 
-Até o checkpoint atual:
+Foram concluídos:
 
 - migration `053`;
 - principals;
@@ -339,72 +339,31 @@ Arquivos principais:
 - regressões F6
 - `git diff --check`
 
-### Bloqueio atual
+### Conclusão validada
 
-A GAT-03 permanece **DOING / IN_PROGRESS** porque:
-
-`http-acceptance.e2e.test.ts`
-
-possui chamadas HTTP anônimas incompatíveis com a nova fronteira obrigatória de autenticação.
-
-Isso **não deve ser resolvido enfraquecendo a autenticação**.
-
-O agent está neste momento analisando/corrigindo essa regressão.
-
-A orientação atual é classificar cada falha como:
-
-- teste legado desatualizado;
-- regressão funcional GAT-03;
-- endpoint legitimamente público.
-
-Se o endpoint corretamente exige autenticação, adaptar o teste para autenticar legitimamente.
-
-Proibidos:
-
-- bypass para ambiente de teste;
-- header mágico;
-- usuário implícito;
-- role default;
-- reutilização dos headers legados como autenticação.
-
-### Critério para DONE
-
-GAT-03 somente pode virar DONE quando:
-
-- `http-acceptance.e2e.test.ts` estiver verde;
-- GAT-03 estiver verde;
-- regressões GAT-01/F6 estiverem verdes;
-- build estiver verde;
-- nenhuma regressão nova permanecer;
-- eventuais falhas restantes forem somente as quatro de inventory já comprovadas como preexistentes;
-- `git diff --check` passar.
+O ajuste de `http-acceptance.e2e.test.ts` passou a autenticar pelos mecanismos
+legítimos. GAT-03 foi aceita sem enfraquecer a fronteira de segurança: não há
+bypass de teste, header mágico, usuário implícito, role default ou reutilização
+de headers legados como autenticação. Build, testes GAT-03, regressões GAT-01/F6
+e `git diff --check` foram validados; as quatro falhas históricas de inventory
+(`FAILED` versus `RETRYABLE`) permaneceram classificadas como preexistentes.
 
 ---
 
-## 6. Próximas tasks
+## 6. AUT-01 — DONE
 
-### AUT-01 — TO_DO
+AUT-01 entregou scheduler v2 com dispatch automático, capacidade configurável,
+guarda PostgreSQL contra oversubscription, reavaliação de dependências e
+reconciler. As decisões são auditáveis e o scheduler cobre DAG/ciclo,
+fan-in/fan-out, concorrência, rollback de crash, restart e replay; o cenário
+de regressão inclui Métrica e Interface.
 
-Implementar scheduler transacional de elegibilidade.
+**FOLLOW-UP / AUDIT POINT — capacidade:** a liberação de capacidade é coberta
+pelo reconciler periódico como safety net. Decidir em auditoria futura se o
+contrato exige wake-up imediato nessa liberação, antes de criar um trigger
+direto. Não há evidência atual de hook direto e este ponto não reabre AUT-01.
 
-Objetivo central:
-
-Quando um WI estiver elegível, o sistema deve avançar automaticamente para dispatch sem exigir clique/autorização humana individual.
-
-Deve tratar:
-
-- elegibilidade;
-- dependências;
-- blockers;
-- concorrência;
-- idempotência;
-- dispatch automático.
-
-Não confundir scheduler com gate humano.
-
----
-
-### REC-01 — TO_DO
+## 7. Próxima task funcional — REC-01 (`TO_DO / NEXT`)
 
 Recovery orientado pela causa.
 
@@ -515,20 +474,22 @@ Documentos históricos permanecem históricos; documentação corrente deve refl
 
 ---
 
-## 7. Estado consolidado
+## 8. Estado consolidado
 
 | Categoria | Quantidade |
 |---|---:|
-| DONE | 2 |
-| DOING | 1 |
-| TO_DO | 11 |
+| DONE | 4 |
+| DOING | 0 |
+| TO_DO | 10 |
 | Total | 14 |
 
 Progresso funcional da F6.5:
 
 - **LR-01: DONE**
 - **GAT-01: DONE**
-- **GAT-03: DOING**
+- **GAT-03: DONE**
+- **AUT-01: DONE**
+- **REC-01: TO_DO / NEXT**
 - restante: **TO_DO**
 
 Fase 7:
@@ -537,7 +498,7 @@ Fase 7:
 
 ---
 
-## 8. Regras que não devem ser perdidas ao trocar de chat
+## 9. Regras que não devem ser perdidas ao trocar de chat
 
 1. **Automation First.** Humano somente por exceção ou gate explícito.
 2. Não transformar erro, retry, QA, review, dependência ou conclusão técnica em gate humano.
@@ -554,13 +515,15 @@ Fase 7:
 
 ---
 
-## 9. Ponto exato para retomada
+## 10. Ponto exato para retomada
 
 Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. verificar o resultado final do agent que está concluindo a regressão `http-acceptance.e2e.test.ts`;
-4. decidir se GAT-03 pode mudar de `DOING` para `DONE`;
-5. se GAT-03 estiver aceita, a próxima task da ordem planejada é **AUT-01 — transactional eligibility scheduler**;
-6. antes de implementar AUT-01, auditar a task e seus guardrails, seguindo o mesmo processo usado em LR-01, GAT-01 e GAT-03.
+3. retomar por **REC-01 — recovery orientado pela causa**, sem antecipar QA,
+   review, merge, integração ou macro-lifecycle;
+4. preservar AUT-01 como concluída e tratar a decisão sobre wake-up imediato na
+   liberação de capacidade apenas como ponto de auditoria futuro;
+5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 TO_DO/NEXT`.

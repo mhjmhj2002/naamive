@@ -3,6 +3,7 @@ document_type: phase-planning
 status: READY_FOR_REVIEW
 created_at: 2026-08-22
 scope: planejamento da Fase 6.5, sem implementação funcional
+execution_checkpoint: 2026-08-23
 primary_roadmap: 01_DELIVERY_ROADMAP.md
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
@@ -40,6 +41,18 @@ a matriz de aderência, a análise do projeto real, os estados em limbo, os gate
 as paradas humanas indevidas, as automações ausentes, os problemas de UI, o plano
 ordenado e os critérios finais da auditoria. A auditoria não é reinterpretada nem
 atualizada por esta fase.
+
+## Checkpoint vivo de execução — 2026-08-23
+
+`LR-01`, `GAT-01`, `GAT-03` e `AUT-01` estão `DONE`; `REC-01` é a próxima
+task funcional, em `TO_DO / NEXT`. A sequência serial efetivamente concluída é
+`LR-01 → GAT-01 → GAT-03 → AUT-01`.
+
+No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o
+contrato do lifecycle. A fronteira final de execução registrada na task é
+`[LR-01, GAT-01, GAT-03]`: além do lifecycle, o scheduler requer catálogo de
+autoridade e identidade/RBAC verificáveis. A distinção preserva o planejamento
+original e não cria dependência nova para REC-01.
 
 ## Problemas identificados
 
@@ -249,8 +262,10 @@ Alterações em relação à ordem inicial da auditoria:
 - UI fica depois de semânticas e ações server-side estáveis; `TST-01` e `DOC-01`
   fecham a fase sem servir como substitutos de testes dentro de cada task.
 
-`GAT-01`, `AUT-01` e `REC-01` podem avançar em paralelo após `LR-01`; a ordem
-serial acima é a recomendação conservadora para execução por uma task de cada vez.
+O paralelismo indicado na preparação era uma possibilidade de backlog, não uma
+fronteira final de execução. Para AUT-01, a execução foi fechada após
+`LR-01 → GAT-01 → GAT-03`; a ordem serial acima continua sendo a referência
+conservadora para uma task por vez.
 
 ## Matriz de rastreabilidade auditoria → task
 
@@ -338,6 +353,12 @@ descartável equivalente, sem mutar o projeto original.
 18. O cenário real completa automaticamente QA, review, merge e próximo dispatch.
 19. E2E cobre happy path, rework, block, retry, dependências, gates e recovery.
 20. Documentação, workflow, runtime, API, UI e testes representam o mesmo contrato.
+
+## Registro histórico da preparação — 2026-08-22
+
+Esta seção registra o estado do pacote quando o planejamento foi fechado; não é
+o estado de execução atual. O checkpoint vivo acima e o índice de tasks são as
+fontes para a retomada operacional.
 
 ## Critérios de conclusão deste planejamento
 

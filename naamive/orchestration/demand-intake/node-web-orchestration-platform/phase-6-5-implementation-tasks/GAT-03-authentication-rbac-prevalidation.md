@@ -4,9 +4,15 @@ document_type: mandatory-authentication-rbac-prevalidation
 status: DECISÃO_ARQUITETURAL_APROVADA
 validated_at: 2026-08-22
 catalog_dependency: GAT-01/v2
+historical_context: evidência pré-implementação; GAT-03 foi concluída posteriormente
 ---
 
 # GAT-03 — Pré-validação de autenticação e RBAC
+
+> **Registro histórico de pré-implementação (22/08/2026).** A decisão abaixo
+> desbloqueou a task; GAT-03 está `DONE` em
+> [GAT-03-authentication-rbac.md](GAT-03-authentication-rbac.md). Este arquivo
+> não representa bloqueio ativo.
 
 ## Resultado da trava
 
