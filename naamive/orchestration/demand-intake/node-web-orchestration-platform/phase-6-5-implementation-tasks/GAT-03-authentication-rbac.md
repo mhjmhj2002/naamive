@@ -1,6 +1,6 @@
 ---
 task: GAT-03
-status: TO DO
+status: BLOCKED_BY_ARCHITECTURAL_DECISION
 title: Autenticação e RBAC
 depends_on: [GAT-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
