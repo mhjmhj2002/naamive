@@ -457,7 +457,6 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
         await client.query(`INSERT INTO finding_work_items(finding_id,work_item_id) VALUES($1,$2) ON CONFLICT DO NOTHING`,[canonicalFindingId,target.work_item_id]);
         const delivery=(await client.query(`SELECT head_sha FROM deliveries WHERE id=$1 FOR UPDATE`,[target.delivery_id])).rows[0];
         const rework=await registerF3Rework(client,{projectId:review.project_id,findingId:canonicalFindingId,workItemId:target.work_item_id,deliveryId:target.delivery_id,headSha:String(delivery?.head_sha??''),justification:description,correlationId:review.correlation_id});
-        if(rework.registered) await client.query(`UPDATE findings SET state='FIXED_PENDING_REVALIDATION' WHERE id=$1 AND state='OPEN'`,[canonicalFindingId]);
         if(!rework.registered) {
           await client.query(`UPDATE work_acceptances SET state='ESCALATED',updated_at=clock_timestamp() WHERE id=$1`,[review.acceptance_id]);
           await openBlock(client,{projectId:review.project_id,acceptanceId:review.acceptance_id,executionId:review.execution_id,sourceType:'ASSURANCE_REVIEW',sourceId:reviewId,code:rework.reason==='REWORK_LIMIT'?'REWORK_LIMIT_REACHED':'REWORK_TARGET_UNRESOLVED',category:'POLICY',severity:'HIGH',correlationId:review.correlation_id,evidence:{review_id:reviewId,reason:rework.reason}});

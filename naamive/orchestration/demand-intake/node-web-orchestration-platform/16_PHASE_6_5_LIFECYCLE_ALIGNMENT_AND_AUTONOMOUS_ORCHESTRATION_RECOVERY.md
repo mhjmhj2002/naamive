@@ -44,8 +44,9 @@ atualizada por esta fase.
 
 ## Checkpoint vivo de execução — 2026-08-23
 
-`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; `LR-02` é a
-próxima task serial, ainda em `TO_DO`. A sequência efetivamente concluída é
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; os dois findings
+da auditoria de `9e9bdaf0` foram fechados. `LR-02` é a próxima task serial,
+ainda em `TO_DO`. A sequência efetivamente concluída é
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01`.
 
 No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o

@@ -81,6 +81,12 @@ Markdown, eventos/projeções e E2E por causa.
 
 ## Evidência de implementação — 2026-08-23
 
+Os dois findings da auditoria de `9e9bdaf0` foram fechados: o executor agora
+possui fencing persistente por claim UUID e geração monotônica, e o finding
+permanece `OPEN` durante o agendamento de rework. A transição para
+`FIXED_PENDING_REVALIDATION` ocorre somente quando F3 persiste evidência de um
+commit corretivo auditável.
+
 - `RECOVERY_POLICY:v1` centraliza causa, certainty, footprint e uma única ação
   entre `RETRY`, `RESTART`, `RESUME`, `RECONCILE`, `REWORK`,
   `RECORD_AND_CONTINUE` e `INTEGRATION_RECOVERY`;
@@ -100,7 +106,7 @@ Markdown, eventos/projeções e E2E por causa.
 - projeções publicam decisão, causa, razão e continuação conhecida sem expor
   botões técnicos contraditórios ou antecipar REC-02.
 
-Validação: migrations `056`–`059`, build e uma seleção regressiva de 113 testes
-diretamente afetados passaram. A suíte global manteve somente as quatro falhas
+Validação: migrations `056`–`060`, build, suítes REC-01 e regressões diretamente
+afetadas passaram. A suíte global manteve somente as quatro falhas
 históricas já auditadas em `inventory.e2e.test.ts` (`FAILED` esperado versus
 `RETRYABLE` atual), sem falha nova.

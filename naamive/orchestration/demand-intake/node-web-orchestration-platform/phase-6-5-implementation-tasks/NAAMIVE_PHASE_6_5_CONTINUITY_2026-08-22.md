@@ -369,7 +369,9 @@ AUT-01 fornece attempts, reservations, jobs, capacidade e scheduler/reconciler.
 GAT-01/GAT-03 são guardrails para qualquer escalada humana, não dependências
 funcionais mecânicas. A pré-validação está em
 `REC-01-cause-aware-recovery-prevalidation.md` e foi implementada sem ampliar
-o escopo de REC-02, AUT-02 ou LR-02.
+o escopo de REC-02, AUT-02 ou LR-02. Os dois findings da auditoria de `9e9bdaf0`
+foram fechados com fencing persistente do executor e promoção de finding apenas
+após evidência corretiva canônica F3.
 
 Recovery orientado pela causa.
 
@@ -387,10 +389,10 @@ Exemplos:
 
 Nenhum erro deve deixar o processo permanentemente no limbo. A implementação
 entregou classifier e executor centrais, decisão versionada/auditável,
-replay/convergência, Git reconciliation, adapters v2, projeção explicável,
-lineage AUT-01 e wake-up pós-commit. Migrations `056`–`059`, build e 113 testes
-diretamente afetados passaram; permaneceram somente as quatro falhas históricas
-de inventory já auditadas.
+replay/convergência, fencing persistente, Git reconciliation, adapters v2,
+projeção explicável, lineage AUT-01 e wake-up pós-commit. Migrations `056`–`060`,
+build e suítes diretamente afetadas passaram; permaneceram somente as quatro
+falhas históricas de inventory já auditadas.
 
 ---
 
@@ -533,7 +535,7 @@ Ao iniciar um novo chat:
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
 3. retomar por **LR-02 — sincronizar macro-lifecycle**, sem antecipar AUT-02;
-4. preservar AUT-01 e REC-01 como concluídas, incluindo o wake-up pós-commit de
-   capacidade implementado por recovery;
+4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
+   lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
    `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02 TO_DO/NEXT`.

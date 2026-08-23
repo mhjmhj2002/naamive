@@ -1,8 +1,9 @@
 # Tasks de implementação — Fase 6.5
 
 Índice vivo da execução da Fase 6.5. Checkpoint em 23/08/2026:
-`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; a próxima task
-serial é `LR-02`, ainda em `TO_DO`.
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; os dois findings
+da auditoria de `9e9bdaf0` foram fechados. A próxima task serial é `LR-02`,
+ainda em `TO_DO`.
 
 Baseline histórica imutável:
 `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`.
@@ -24,7 +25,7 @@ Baseline histórica imutável:
 | 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `TO_DO` | todas as tasks funcionais |
 | 14 | [DOC-01 — Reconciliar documentação F5/F6/F6.5](DOC-01-reconcile-phase5-phase6-docs.md) | `TO_DO` | TST-01 |
 
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01` é a sequência serial já concluída. A
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01` é a sequência serial concluída. A
 dependência conceitual original de AUT-01 em LR-01 descreve o contrato de
 lifecycle que ela consome; a fronteira final de execução também exige GAT-01 e
 GAT-03, pois o scheduler opera sob catálogo de autoridade e identidade/RBAC

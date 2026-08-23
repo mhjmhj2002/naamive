@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto';
+import type { PoolClient } from 'pg';
 import { config } from './config.js';
 import { pool, withTransaction } from './db.js';
 import { ApiError } from './service.js';
@@ -17,7 +18,11 @@ export type PersistedRecoveryDecision={
   work_item_id:string|null;attempt_id:string|null;job_id:string|null;delivery_id:string|null;worktree_id:string|null;integration_candidate_id:string|null;integration_attempt_id:string|null;
   evidence_refs:string[];finding_refs:string[];source_state:string;source_version:number;classification_key:string;classification_fingerprint:string;idempotency_key:string;operation_id:string;
   predecessor_decision_id:string|null;execution_state:string;execution_attempts:number;execution_result:Record<string,unknown>;created_at:string;executed_at:string|null;
-  execution_lease_expires_at:string|null;
+  execution_lease_expires_at:string|null;execution_claim_id:string|null;execution_generation:number;
+};
+
+export type RecoveryExecutionClaim=PersistedRecoveryDecision&{
+  execution_claim_id:string;execution_generation:number;
 };
 
 const observeWorktree=(row:any,workItemId:string)=>{
@@ -98,56 +103,99 @@ export const collectIntegrationRecoverySignals=async(projectId:string,candidateI
     integrationObservation:observation,worktreeObservation:'NOT_APPLICABLE',requiredAuthoritiesConclusive:observation!=='UNAVAILABLE',noEffectVerified:observation==='NOT_APPLIED'};
 };
 
-const persistDecision=async(signals:RecoverySignals,idempotencyKey:string,predecessorDecisionId?:string|null):Promise<PersistedRecoveryDecision>=>{
+const persistDecisionInTransaction=async(c:PoolClient,signals:RecoverySignals,idempotencyKey:string,predecessorDecisionId?:string|null):Promise<PersistedRecoveryDecision>=>{
   const classification=classifier.classify(signals);
   const resource=signals.workItemId??signals.integrationCandidateId!;
   const classificationKey=hash(`${classification.policyVersion}|${signals.projectId}|${resource}|${signals.sourceState}|${signals.sourceVersion}|${classification.classificationFingerprint}`);
   const scopedIdempotencyKey=hash(`${signals.projectId}|${resource}|${idempotencyKey}`);
-  return withTransaction(async c=>{
-    await c.query(`SELECT pg_advisory_xact_lock(hashtext($1))`,[`recovery:${classificationKey}`]);
-    const existing=(await c.query(`SELECT * FROM recovery_decisions WHERE classification_key=$1 OR idempotency_key=$2 ORDER BY created_at LIMIT 1`,[classificationKey,scopedIdempotencyKey])).rows[0];
-    if(existing)return existing;
-    const id=randomUUID(),operationId=randomUUID(),correlation=randomUUID(),operationKey=`recovery-operation:${classificationKey}`;
-    await c.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id) VALUES($1,$2,$3,'QUEUED',$4,$5)`,[operationId,signals.projectId,`RECOVERY_${classification.selectedAction}`,operationKey,correlation]);
-    const inserted=(await c.query(`INSERT INTO recovery_decisions(id,project_id,policy_version,cause,effect_certainty,evidence_footprint,selected_action,reason,
+  await c.query(`SELECT pg_advisory_xact_lock(hashtext($1))`,[`recovery:${classificationKey}`]);
+  const existing=(await c.query(`SELECT * FROM recovery_decisions WHERE classification_key=$1 OR idempotency_key=$2 ORDER BY created_at LIMIT 1`,[classificationKey,scopedIdempotencyKey])).rows[0];
+  if(existing)return existing;
+  const id=randomUUID(),operationId=randomUUID(),correlation=randomUUID(),operationKey=`recovery-operation:${classificationKey}`;
+  await c.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id) VALUES($1,$2,$3,'QUEUED',$4,$5)`,[operationId,signals.projectId,`RECOVERY_${classification.selectedAction}`,operationKey,correlation]);
+  const inserted=(await c.query(`INSERT INTO recovery_decisions(id,project_id,policy_version,cause,effect_certainty,evidence_footprint,selected_action,reason,
       work_item_id,attempt_id,job_id,delivery_id,worktree_id,integration_candidate_id,integration_attempt_id,evidence_refs,finding_refs,source_state,source_version,
       classification_key,classification_fingerprint,idempotency_key,operation_id,predecessor_decision_id)
       VALUES($1,$2,$3,$4,$5,$6::jsonb,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16::jsonb,$17::jsonb,$18,$19,$20,$21,$22,$23,$24) RETURNING *`,[
       id,signals.projectId,classification.policyVersion,classification.cause,classification.effectCertainty,JSON.stringify(classification.evidenceFootprint),classification.selectedAction,classification.reason,
       signals.workItemId??null,signals.attemptId??null,signals.jobId??null,signals.deliveryId??null,signals.worktreeId??null,signals.integrationCandidateId??null,signals.integrationAttemptId??null,
       JSON.stringify([...(signals.executionEvidenceRefs??[]),...(signals.commitRefs??[])]),JSON.stringify(signals.findingRefs??[]),signals.sourceState,signals.sourceVersion,classificationKey,classification.classificationFingerprint,scopedIdempotencyKey,operationId,predecessorDecisionId??null
-    ])).rows[0];
-    await c.query(`UPDATE operations SET recovery_decision_id=$2 WHERE id=$1`,[operationId,id]);
-    await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,payload,actor_id) VALUES($1,'RECOVERY_DECISION_RECORDED',$2,$3,$4,$5)`,[signals.projectId,correlation,operationId,{recovery_decision_id:id,policy_version:classification.policyVersion,cause:classification.cause,effect_certainty:classification.effectCertainty,evidence_footprint:classification.evidenceFootprint,selected_action:classification.selectedAction,reason:classification.reason,work_item_id:signals.workItemId??null,integration_candidate_id:signals.integrationCandidateId??null},config().operatorId]);
-    return inserted;
-  });
+  ])).rows[0];
+  await c.query(`UPDATE operations SET recovery_decision_id=$2 WHERE id=$1`,[operationId,id]);
+  await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,payload,actor_id) VALUES($1,'RECOVERY_DECISION_RECORDED',$2,$3,$4,$5)`,[signals.projectId,correlation,operationId,{recovery_decision_id:id,policy_version:classification.policyVersion,cause:classification.cause,effect_certainty:classification.effectCertainty,evidence_footprint:classification.evidenceFootprint,selected_action:classification.selectedAction,reason:classification.reason,work_item_id:signals.workItemId??null,integration_candidate_id:signals.integrationCandidateId??null},config().operatorId]);
+  return inserted;
 };
 
-const markDecision=async(id:string,state:string,result:Record<string,unknown>={})=>withTransaction(async c=>{
-  const decision=(await c.query(`SELECT * FROM recovery_decisions WHERE id=$1 FOR UPDATE`,[id])).rows[0];if(!decision)throw new ApiError(404,'RECOVERY_DECISION_NOT_FOUND');
-  await c.query(`UPDATE recovery_decisions SET execution_state=$2,execution_lease_expires_at=NULL,execution_result=execution_result||$3::jsonb,executed_at=CASE WHEN $2 IN ('COMPLETED','SUPERSEDED','FAILED') THEN clock_timestamp() ELSE executed_at END WHERE id=$1`,[id,state,JSON.stringify(result)]);
+const persistDecision=async(signals:RecoverySignals,idempotencyKey:string,predecessorDecisionId?:string|null):Promise<PersistedRecoveryDecision>=>withTransaction(c=>persistDecisionInTransaction(c,signals,idempotencyKey,predecessorDecisionId));
+
+const assertExecutionClaim=async(c:PoolClient,claim:RecoveryExecutionClaim)=>{
+  const current=(await c.query(`SELECT * FROM recovery_decisions
+    WHERE id=$1 AND execution_claim_id=$2 AND execution_generation=$3
+      AND execution_state='EXECUTING' AND execution_lease_expires_at>clock_timestamp()
+    FOR UPDATE`,[claim.id,claim.execution_claim_id,claim.execution_generation])).rows[0];
+  if(!current)throw new ApiError(409,'RECOVERY_EXECUTION_FENCED');
+  return current as RecoveryExecutionClaim;
+};
+
+const assertCompletedClaim=async(claim:RecoveryExecutionClaim)=>{
+  const current=(await pool.query(`SELECT 1 FROM recovery_decisions
+    WHERE id=$1 AND execution_claim_id=$2 AND execution_generation=$3 AND execution_state='COMPLETED'`,[claim.id,claim.execution_claim_id,claim.execution_generation])).rows[0];
+  if(!current)throw new ApiError(409,'RECOVERY_EXECUTION_FENCED');
+};
+
+const transitionClaim=async(c:PoolClient,claim:RecoveryExecutionClaim,state:string,result:Record<string,unknown>={})=>{
+  const decision=await assertExecutionClaim(c,claim);
+  const changed=await c.query(`UPDATE recovery_decisions
+    SET execution_state=$4,execution_lease_expires_at=NULL,
+      execution_result=execution_result||$5::jsonb,
+      executed_at=CASE WHEN $4 IN ('COMPLETED','SUPERSEDED','FAILED') THEN clock_timestamp() ELSE executed_at END
+    WHERE id=$1 AND execution_claim_id=$2 AND execution_generation=$3 AND execution_state='EXECUTING'`,
+    [claim.id,claim.execution_claim_id,claim.execution_generation,state,JSON.stringify(result)]);
+  if(changed.rowCount!==1)throw new ApiError(409,'RECOVERY_EXECUTION_FENCED');
   if(['COMPLETED','SUPERSEDED'].includes(state))await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);
   return decision;
+};
+
+export const markClaimedRecoveryDecision=async(claim:RecoveryExecutionClaim,state:string,result:Record<string,unknown>={})=>withTransaction(c=>transitionClaim(c,claim,state,result));
+
+const withClaimedExternalEffect=async<T>(claim:RecoveryExecutionClaim,effect:()=>T):Promise<T>=>withTransaction(async c=>{
+  await assertExecutionClaim(c,claim);
+  return effect();
 });
 
-const beginExecution=async(id:string):Promise<PersistedRecoveryDecision|null>=>withTransaction(async c=>{
-  const row=(await c.query(`SELECT * FROM recovery_decisions WHERE id=$1 FOR UPDATE`,[id])).rows[0];if(!row)throw new ApiError(404,'RECOVERY_DECISION_NOT_FOUND');
+const supersedeWithDecision=async(claim:RecoveryExecutionClaim,signals:RecoverySignals,idempotencyKey:string,result:Record<string,unknown>={})=>withTransaction(async c=>{
+  await assertExecutionClaim(c,claim);
+  const next=await persistDecisionInTransaction(c,signals,idempotencyKey,claim.id);
+  await transitionClaim(c,claim,'SUPERSEDED',{...result,converged_to:next.id});
+  return next;
+});
+
+export const claimRecoveryDecision=async(id:string):Promise<RecoveryExecutionClaim|null>=>withTransaction(async c=>{
+  const row=(await c.query(`SELECT *,execution_lease_expires_at>clock_timestamp() AS execution_lease_is_live FROM recovery_decisions WHERE id=$1 FOR UPDATE`,[id])).rows[0];if(!row)throw new ApiError(404,'RECOVERY_DECISION_NOT_FOUND');
   if(['COMPLETED','SUPERSEDED'].includes(row.execution_state))return null;
-  if(row.execution_state==='EXECUTING'&&row.execution_lease_expires_at&&Date.parse(row.execution_lease_expires_at)>Date.now())return null;
-  await c.query(`UPDATE recovery_decisions SET execution_state='EXECUTING',execution_attempts=execution_attempts+1,execution_lease_expires_at=clock_timestamp()+($2*interval '1 second') WHERE id=$1`,[id,reservationGraceSeconds()]);
-  await c.query(`UPDATE operations SET status='RUNNING' WHERE id=$1`,[row.operation_id]);return row;
+  if(row.execution_state==='EXECUTING'&&row.execution_lease_is_live)return null;
+  const claimId=randomUUID();
+  const claimed=(await c.query(`UPDATE recovery_decisions
+    SET execution_state='EXECUTING',execution_attempts=execution_attempts+1,
+      execution_claim_id=$2,execution_generation=execution_generation+1,
+      execution_lease_expires_at=clock_timestamp()+($3*interval '1 second')
+    WHERE id=$1 RETURNING *`,[id,claimId,reservationGraceSeconds()])).rows[0] as RecoveryExecutionClaim;
+  await c.query(`UPDATE operations SET status='RUNNING' WHERE id=$1`,[row.operation_id]);return claimed;
 });
 
-const scheduleAfterRelease=async(decision:PersistedRecoveryDecision,baseSha?:string|null)=>{
+const scheduleAfterRelease=async(decision:RecoveryExecutionClaim,baseSha?:string|null)=>{
   if(!decision.work_item_id)return;
+  await assertCompletedClaim(decision);
   await scheduleWorkItem(decision.project_id,decision.work_item_id,`RECOVERY_${decision.selected_action}`,undefined,{recoveryDecisionId:decision.id,baseSha:baseSha??undefined,originDeliveryId:decision.delivery_id??undefined,originOperationId:decision.attempt_id??undefined});
+  await assertCompletedClaim(decision);
   await scheduleEligibleWorkItems('RECOVERY_CAPACITY_RELEASED');
 };
 
-const executeRetry=async(decision:PersistedRecoveryDecision)=>{
+const executeRetry=async(decision:RecoveryExecutionClaim)=>{
   if(decision.integration_candidate_id)return executeIntegrationRetry(decision);
   const delay=delays[Math.min(Math.max(Number((await pool.query(`SELECT attempts FROM jobs WHERE id=$1`,[decision.job_id])).rows[0]?.attempts??1)-1,0),2)];
   await withTransaction(async c=>{
+    await assertExecutionClaim(c,decision);
     const current=(await c.query(`SELECT rd.execution_state,j.status,j.attempts,w.version FROM recovery_decisions rd JOIN jobs j ON j.id=rd.job_id JOIN work_items w ON w.id=rd.work_item_id WHERE rd.id=$1 FOR UPDATE OF rd,j,w`,[decision.id])).rows[0];
     if(!current||current.execution_state==='COMPLETED')return;
     if(decision.effect_certainty!=='NO_EFFECT'||Number(current.attempts)>config().agentMaxRetries)throw new ApiError(409,'RECOVERY_RETRY_GUARD_CHANGED');
@@ -155,12 +203,12 @@ const executeRetry=async(decision:PersistedRecoveryDecision)=>{
     await c.query(`UPDATE operations SET status='QUEUED',failure_code=NULL,completed_at=NULL WHERE id=$1`,[decision.attempt_id]);
     await c.query(`UPDATE deliveries SET state='RESERVED' WHERE id=$1`,[decision.delivery_id]);await c.query(`UPDATE worktrees SET state='PREPARED',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[decision.worktree_id]);
     await c.query(`UPDATE work_items SET state='DISPATCHED',version=version+1 WHERE id=$1`,[decision.work_item_id]);
-    await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({retry_in_seconds:delay,reused_job_id:decision.job_id,reused_delivery_id:decision.delivery_id})]);
-    await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);
+    await transitionClaim(c,decision,'COMPLETED',{retry_in_seconds:delay,reused_job_id:decision.job_id,reused_delivery_id:decision.delivery_id});
   });
 };
 
-const terminalizeAttempt=async(decision:PersistedRecoveryDecision)=>withTransaction(async c=>{
+const terminalizeAttempt=async(decision:RecoveryExecutionClaim)=>withTransaction(async c=>{
+  await assertExecutionClaim(c,decision);
   if(decision.job_id)await c.query(`UPDATE jobs SET status='FAILED',completed_at=coalesce(completed_at,clock_timestamp()),lease_expires_at=NULL,last_error=coalesce(last_error,$2) WHERE id=$1 AND status<>'COMPLETED'`,[decision.job_id,decision.cause]);
   if(decision.attempt_id)await c.query(`UPDATE operations SET status='FAILED',failure_code=coalesce(failure_code,$2),completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id,decision.cause]);
   if(decision.delivery_id)await c.query(`UPDATE deliveries SET state='FAILED' WHERE id=$1 AND state NOT IN ('QA_REJECTED','QA_APPROVED','EVIDENCE_REVIEW')`,[decision.delivery_id]);
@@ -168,79 +216,81 @@ const terminalizeAttempt=async(decision:PersistedRecoveryDecision)=>withTransact
   if(decision.work_item_id)await c.query(`UPDATE work_items SET state='RECOVERY_REQUIRED',version=version+1 WHERE id=$1`,[decision.work_item_id]);
 });
 
-const cleanupNoEffectWorktree=async(decision:PersistedRecoveryDecision)=>{
+const cleanupNoEffectWorktree=async(decision:RecoveryExecutionClaim)=>{
   if(!decision.worktree_id)return;
   const row=(await pool.query(`SELECT t.path,t.branch,p.repository_path FROM worktrees t JOIN projects p ON p.id=t.project_id WHERE t.id=$1`,[decision.worktree_id])).rows[0];if(!row)return;
-  try{discardWorktree(row.repository_path,row.path);discardDeliveryBranch(row.repository_path,row.branch);}catch(error){
+  try{await withClaimedExternalEffect(decision,()=>{discardWorktree(row.repository_path,row.path);discardDeliveryBranch(row.repository_path,row.branch);});}catch(error){
+    if(error instanceof ApiError&&error.code==='RECOVERY_EXECUTION_FENCED')throw error;
     const signals=await collectWorkItemRecoverySignals(decision.project_id,decision.work_item_id!,'OPERATION_UNRECORDED');
-    const next=await persistDecision(signals,`recovery-convergence:${decision.id}:cleanup`,decision.id);await markDecision(decision.id,'SUPERSEDED',{converged_to:next.id,cleanup:'INCONCLUSIVE'});await executeRecoveryDecision(next.id);throw error;
+    const next=await supersedeWithDecision(decision,signals,`recovery-convergence:${decision.id}:cleanup`,{cleanup:'INCONCLUSIVE'});await executeRecoveryDecision(next.id);throw error;
   }
-  await pool.query(`UPDATE worktrees SET state='REMOVED',lease_expires_at=NULL WHERE id=$1`,[decision.worktree_id]);
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE worktrees SET state='REMOVED',lease_expires_at=NULL WHERE id=$1`,[decision.worktree_id]);});
 };
 
-const executeRestart=async(decision:PersistedRecoveryDecision)=>{
+const executeRestart=async(decision:RecoveryExecutionClaim)=>{
   if(decision.effect_certainty!=='NO_EFFECT')throw new ApiError(409,'RECOVERY_RESTART_EFFECT_NOT_ABSENT');
   await terminalizeAttempt(decision);await cleanupNoEffectWorktree(decision);
-  await withTransaction(async c=>{await c.query(`UPDATE work_items SET state='ELIGIBLE_FOR_DISPATCH',version=version+1 WHERE id=$1 AND state='RECOVERY_REQUIRED'`,[decision.work_item_id]);await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({attempt_restarted:true,previous_attempt_id:decision.attempt_id})]);await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);});
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE work_items SET state='ELIGIBLE_FOR_DISPATCH',version=version+1 WHERE id=$1 AND state='RECOVERY_REQUIRED'`,[decision.work_item_id]);await transitionClaim(c,decision,'COMPLETED',{attempt_restarted:true,previous_attempt_id:decision.attempt_id});});
   await scheduleAfterRelease(decision);
 };
 
-const executeResume=async(decision:PersistedRecoveryDecision)=>{
+const executeResume=async(decision:RecoveryExecutionClaim)=>{
   const signals=await collectWorkItemRecoverySignals(decision.project_id,decision.work_item_id!,undefined,true);
   const classified=classifier.classify(signals);
   if(classified.selectedAction!=='RESUME'){
-    const next=await persistDecision(signals,`recovery-convergence:${decision.id}:${signals.sourceVersion}`,decision.id);await markDecision(decision.id,'SUPERSEDED',{converged_to:next.id});return executeRecoveryDecision(next.id);
+    const next=await supersedeWithDecision(decision,signals,`recovery-convergence:${decision.id}:${signals.sourceVersion}`);return executeRecoveryDecision(next.id);
   }
   const head=(signals.commitRefs??[]).at(-1)??null;
-  await withTransaction(async c=>{if(decision.job_id)await c.query(`UPDATE jobs SET status='COMPLETED',completed_at=coalesce(completed_at,clock_timestamp()),lease_expires_at=NULL WHERE id=$1`,[decision.job_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);if(decision.delivery_id)await c.query(`UPDATE deliveries SET state='EVIDENCE_REVIEW',head_sha=coalesce(head_sha,$2),commits=CASE WHEN commits='[]'::jsonb AND $3::jsonb<>'[]'::jsonb THEN $3::jsonb ELSE commits END WHERE id=$1`,[decision.delivery_id,head,JSON.stringify(signals.commitRefs??[])]);if(decision.worktree_id)await c.query(`UPDATE worktrees SET state='ACTIVE' WHERE id=$1`,[decision.worktree_id]);await c.query(`UPDATE work_items SET state='QA_IN_PROGRESS',version=version+1 WHERE id=$1`,[decision.work_item_id]);await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({resumed_at:'QA_IN_PROGRESS',preserved_evidence_refs:decision.evidence_refs})]);await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);});
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);if(decision.job_id)await c.query(`UPDATE jobs SET status='COMPLETED',completed_at=coalesce(completed_at,clock_timestamp()),lease_expires_at=NULL WHERE id=$1`,[decision.job_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);if(decision.delivery_id)await c.query(`UPDATE deliveries SET state='EVIDENCE_REVIEW',head_sha=coalesce(head_sha,$2),commits=CASE WHEN commits='[]'::jsonb AND $3::jsonb<>'[]'::jsonb THEN $3::jsonb ELSE commits END WHERE id=$1`,[decision.delivery_id,head,JSON.stringify(signals.commitRefs??[])]);if(decision.worktree_id)await c.query(`UPDATE worktrees SET state='ACTIVE' WHERE id=$1`,[decision.worktree_id]);await c.query(`UPDATE work_items SET state='QA_IN_PROGRESS',version=version+1 WHERE id=$1`,[decision.work_item_id]);await transitionClaim(c,decision,'COMPLETED',{resumed_at:'QA_IN_PROGRESS',preserved_evidence_refs:decision.evidence_refs});});
 };
 
-const executeRework=async(decision:PersistedRecoveryDecision)=>{
+const executeRework=async(decision:RecoveryExecutionClaim)=>{
   const head=(decision.evidence_refs??[]).find(value=>/^[0-9a-f]{40}$/i.test(value))??(await pool.query(`SELECT head_sha FROM deliveries WHERE id=$1`,[decision.delivery_id])).rows[0]?.head_sha;
   if(!head)throw new ApiError(409,'RECOVERY_REWORK_COMMIT_REQUIRED');
-  await withTransaction(async c=>{if(decision.worktree_id)await c.query(`UPDATE worktrees SET state='RELEASED',lease_expires_at=NULL WHERE id=$1`,[decision.worktree_id]);await c.query(`UPDATE work_items SET state='ELIGIBLE_FOR_DISPATCH',rework_rounds=rework_rounds+1,version=version+1 WHERE id=$1`,[decision.work_item_id]);await c.query(`UPDATE findings SET state='FIXED_PENDING_REVALIDATION' WHERE id=ANY($1::uuid[])`,[decision.finding_refs]);await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({rework_base_sha:head,finding_refs:decision.finding_refs})]);await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);});
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);if(decision.worktree_id)await c.query(`UPDATE worktrees SET state='RELEASED',lease_expires_at=NULL WHERE id=$1`,[decision.worktree_id]);await c.query(`UPDATE work_items SET state='ELIGIBLE_FOR_DISPATCH',rework_rounds=rework_rounds+1,version=version+1 WHERE id=$1`,[decision.work_item_id]);await transitionClaim(c,decision,'COMPLETED',{rework_base_sha:head,finding_refs:decision.finding_refs});});
   await scheduleAfterRelease(decision,head);
 };
 
-const executeReconcile=async(decision:PersistedRecoveryDecision)=>{
+const executeReconcile=async(decision:RecoveryExecutionClaim)=>{
   const signals=decision.work_item_id?await collectWorkItemRecoverySignals(decision.project_id,decision.work_item_id,decision.cause,true):await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,decision.cause,true);
   const classified=classifier.classify(signals);
   if(classified.selectedAction==='RECONCILE'&&classified.effectCertainty==='EFFECT_UNKNOWN'){
-    await markDecision(decision.id,'WAITING_RECONCILIATION',{last_observation:'INCONCLUSIVE',observed_at:new Date().toISOString()});return;
+    await markClaimedRecoveryDecision(decision,'WAITING_RECONCILIATION',{last_observation:'INCONCLUSIVE',observed_at:new Date().toISOString()});return;
   }
-  const next=await persistDecision(signals,`recovery-convergence:${decision.id}:${classified.classificationFingerprint}`,decision.id);
-  await markDecision(decision.id,'SUPERSEDED',{converged_to:next.id,effect_certainty:classified.effectCertainty,selected_action:classified.selectedAction});
+  const next=await supersedeWithDecision(decision,signals,`recovery-convergence:${decision.id}:${classified.classificationFingerprint}`,{effect_certainty:classified.effectCertainty,selected_action:classified.selectedAction});
   await executeRecoveryDecision(next.id);
 };
 
-const executeRecordAndContinue=async(decision:PersistedRecoveryDecision)=>withTransaction(async c=>{
-  const row=(await c.query(`SELECT a.id,p.repository_path FROM integration_attempts a JOIN projects p ON p.id=a.project_id WHERE a.id=$1 FOR UPDATE OF a`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
-  const remote=gitValue(row.repository_path,'rev-parse','origin/integration');await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=coalesce(merge_sha,$2),push_sha=coalesce(push_sha,$2) WHERE id=$1`,[decision.integration_attempt_id,remote]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({recorded_remote_sha:remote,reapplied:false})]);await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);
-});
+const executeRecordAndContinue=async(decision:RecoveryExecutionClaim)=>{
+  const row=(await pool.query(`SELECT a.id,p.repository_path FROM integration_attempts a JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
+  const remote=await withClaimedExternalEffect(decision,()=>gitValue(row.repository_path,'rev-parse','origin/integration'));
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=coalesce(merge_sha,$2),push_sha=coalesce(push_sha,$2) WHERE id=$1`,[decision.integration_attempt_id,remote]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{recorded_remote_sha:remote,reapplied:false});});
+};
 
-const executeIntegrationRecovery=async(decision:PersistedRecoveryDecision)=>withTransaction(async c=>{
+const executeIntegrationRecovery=async(decision:RecoveryExecutionClaim)=>withTransaction(async c=>{
+  await assertExecutionClaim(c,decision);
   if(decision.integration_candidate_id)await c.query(`UPDATE integration_candidates SET state='INTEGRATION_BLOCKED',blocked_kind='GIT_DIVERGED',version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);
   if(decision.work_item_id)await c.query(`UPDATE work_items SET state='WAITING_FOR_ESCALATION',version=version+1 WHERE id=$1`,[decision.work_item_id]);
   if(decision.integration_candidate_id&&decision.attempt_id)await c.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id,decision.cause]);
-  await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({continuation:'INTEGRATION_RECOVERY',required_authority:'TECH_LEAD_OR_REPOSITORY_OWNER',automatic_retry:false})]);await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,payload,actor_id) VALUES($1,'RECOVERY_WAITING_FOR_ESCALATION',$2,$3,$4,$5)`,[decision.project_id,randomUUID(),decision.operation_id,{recovery_decision_id:decision.id,cause:decision.cause,reason:decision.reason,continuation:'INTEGRATION_RECOVERY',required_authority:'TECH_LEAD_OR_REPOSITORY_OWNER'},config().operatorId]);
+  await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,payload,actor_id) VALUES($1,'RECOVERY_WAITING_FOR_ESCALATION',$2,$3,$4,$5)`,[decision.project_id,randomUUID(),decision.operation_id,{recovery_decision_id:decision.id,cause:decision.cause,reason:decision.reason,continuation:'INTEGRATION_RECOVERY',required_authority:'TECH_LEAD_OR_REPOSITORY_OWNER'},config().operatorId]);await transitionClaim(c,decision,'COMPLETED',{continuation:'INTEGRATION_RECOVERY',required_authority:'TECH_LEAD_OR_REPOSITORY_OWNER',automatic_retry:false});
 });
 
-const executeIntegrationRetry=async(decision:PersistedRecoveryDecision)=>{
+const executeIntegrationRetry=async(decision:RecoveryExecutionClaim)=>{
   if(decision.effect_certainty!=='NO_EFFECT')throw new ApiError(409,'RECOVERY_RETRY_EFFECT_NOT_ABSENT');
   const row=(await pool.query(`SELECT a.*,c.phase_sha,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
-  await withTransaction(async c=>{await c.query(`UPDATE integration_attempts SET state='RESERVED' WHERE id=$1`,[row.id]);await c.query(`UPDATE integration_candidates SET state='INTEGRATION_IN_PROGRESS',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);});
-  try{const result=mergeAndPushDetached(row.repository_path,'phases/3','integration',row.candidate_sha,row.integration_before_sha);await withTransaction(async c=>{await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=$2,push_sha=$2 WHERE id=$1`,[row.id,result.mergeSha]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await c.query(`UPDATE recovery_decisions SET execution_state='COMPLETED',execution_lease_expires_at=NULL,execution_result=$2::jsonb,executed_at=clock_timestamp() WHERE id=$1`,[decision.id,JSON.stringify({merge_sha:result.mergeSha,reconciled_before_retry:true})]);await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`,[decision.operation_id]);});}
-  catch{const signals=await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,'MERGE_TIMEOUT');const next=await persistDecision(signals,`recovery-uncertain:${decision.id}`,decision.id);await markDecision(decision.id,'SUPERSEDED',{uncertain_external_result:true,converged_to:next.id});await executeRecoveryDecision(next.id);}
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='RESERVED' WHERE id=$1`,[row.id]);await c.query(`UPDATE integration_candidates SET state='INTEGRATION_IN_PROGRESS',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);});
+  try{const result=await withClaimedExternalEffect(decision,()=>mergeAndPushDetached(row.repository_path,'phases/3','integration',row.candidate_sha,row.integration_before_sha));await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=$2,push_sha=$2 WHERE id=$1`,[row.id,result.mergeSha]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{merge_sha:result.mergeSha,reconciled_before_retry:true});});}
+  catch(error){if(error instanceof ApiError&&error.code==='RECOVERY_EXECUTION_FENCED')throw error;const signals=await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,'MERGE_TIMEOUT');const next=await supersedeWithDecision(decision,signals,`recovery-uncertain:${decision.id}`,{uncertain_external_result:true});await executeRecoveryDecision(next.id);}
 };
 
-export const executeRecoveryDecision=async(id:string)=>{
-  const decision=await beginExecution(id);if(!decision)return (await pool.query(`SELECT * FROM recovery_decisions WHERE id=$1`,[id])).rows[0] as PersistedRecoveryDecision;
+export const executeClaimedRecoveryDecision=async(decision:RecoveryExecutionClaim)=>{
+  const id=decision.id;
   try{
     const current=decision.work_item_id?(await pool.query(`SELECT state,version FROM work_items WHERE id=$1`,[decision.work_item_id])).rows[0]:(await pool.query(`SELECT state,version FROM integration_candidates WHERE id=$1`,[decision.integration_candidate_id])).rows[0];
     if(!current)throw new ApiError(409,'RECOVERY_RESOURCE_NOT_FOUND');
     if(current.state!==decision.source_state||Number(current.version)!==Number(decision.source_version)){
       const signals=decision.work_item_id?await collectWorkItemRecoverySignals(decision.project_id,decision.work_item_id,undefined,true):await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,undefined,true);
-      const next=await persistDecision(signals,`recovery-state-changed:${decision.id}:${signals.sourceVersion}`,decision.id);await markDecision(decision.id,'SUPERSEDED',{guard_revalidated:false,converged_to:next.id});await executeRecoveryDecision(next.id);
+      const next=await supersedeWithDecision(decision,signals,`recovery-state-changed:${decision.id}:${signals.sourceVersion}`,{guard_revalidated:false});await executeRecoveryDecision(next.id);
       return (await pool.query(`SELECT * FROM recovery_decisions WHERE id=$1`,[id])).rows[0] as PersistedRecoveryDecision;
     }
     if(decision.selected_action==='RETRY')await executeRetry(decision);
@@ -250,8 +300,14 @@ export const executeRecoveryDecision=async(id:string)=>{
     else if(decision.selected_action==='REWORK')await executeRework(decision);
     else if(decision.selected_action==='RECORD_AND_CONTINUE')await executeRecordAndContinue(decision);
     else await executeIntegrationRecovery(decision);
-  }catch(error){await pool.query(`UPDATE recovery_decisions SET execution_state='FAILED',execution_lease_expires_at=NULL,execution_result=execution_result||$2::jsonb WHERE id=$1 AND execution_state='EXECUTING'`,[id,JSON.stringify({error_code:error instanceof ApiError?error.code:'RECOVERY_EXECUTION_FAILED'})]);throw error;}
+  }catch(error){await pool.query(`UPDATE recovery_decisions SET execution_state='FAILED',execution_lease_expires_at=NULL,execution_result=execution_result||$4::jsonb
+    WHERE id=$1 AND execution_claim_id=$2 AND execution_generation=$3 AND execution_state='EXECUTING' AND execution_lease_expires_at>clock_timestamp()`,[id,decision.execution_claim_id,decision.execution_generation,JSON.stringify({error_code:error instanceof ApiError?error.code:'RECOVERY_EXECUTION_FAILED'})]);throw error;}
   return (await pool.query(`SELECT * FROM recovery_decisions WHERE id=$1`,[id])).rows[0] as PersistedRecoveryDecision;
+};
+
+export const executeRecoveryDecision=async(id:string)=>{
+  const decision=await claimRecoveryDecision(id);if(!decision)return (await pool.query(`SELECT * FROM recovery_decisions WHERE id=$1`,[id])).rows[0] as PersistedRecoveryDecision;
+  return executeClaimedRecoveryDecision(decision);
 };
 
 export const requestWorkItemRecovery=async(projectId:string,workItemId:string,idempotencyKey:string,observedCause?:RecoveryCause)=>{
