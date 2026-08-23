@@ -17,6 +17,7 @@ if (!databaseUrl) {
   const { runOnce } = await import('./worker.js');
   const { seedPlanRevision } = await import('./test-plan-helper.js');
   const { createApiServer } = await import('./server.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
   const { retryModulePlan, buildPlanContext, controlledPlanFixture, persistPlan, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_SANITIZER_VERSION, MODULE_PLAN_SCHEMA_VERSION } = await import('./module-planning.js');
   const { canonicalHash } = await import('./module-planning.js');
 
@@ -378,32 +379,32 @@ if (!databaseUrl) {
     assert.equal(replay.operation_id, recoveredOp.id);
   });
 
-  test('retryModulePlan requires operator authorization and the retry endpoint requires Idempotency-Key (pendency 12)', async (t) => {
+  test('retryModulePlan requires authenticated RBAC authorization and the retry endpoint requires Idempotency-Key (pendency 12)', async (t) => {
     const { id, cleanup } = await setupProject(); t.after(cleanup);
     const { module } = await toPlanning(id, 'Persist requests', ['A request can be tracked']);
     const job = (await pool.query(`SELECT j.* FROM jobs j WHERE j.module_id=$1 AND j.kind='PLAN_MODULE_WORK_ITEMS' AND j.status IN ('PENDING','RETRYABLE')`, [module])).rows[0];
     const operation = (await pool.query(`SELECT * FROM operations WHERE id=$1`, [job.operation_id])).rows[0];
     await pool.query(`UPDATE jobs SET status='FAILED',completed_at=clock_timestamp() WHERE operation_id=$1`, [operation.id]);
     await pool.query(`UPDATE operations SET status='FAILED',failure_code='MODULE_PLAN_VALIDATION_FAILED',completed_at=clock_timestamp() WHERE id=$1`, [operation.id]);
-    // Unauthorized operator is rejected before any work happens.
-    await assert.rejects(() => retryModulePlan(id, module, { failed_operation_id: operation.id }, `mp-unauth-${randomUUID()}`, 'someone-else'), /OPERATOR_NOT_AUTHORIZED/);
-    // No retry operation was created by the unauthorized attempt.
-    assert.equal((await pool.query(`SELECT count(*)::int n FROM operations WHERE retry_of_operation_id=$1`, [operation.id])).rows[0].n, 0);
-    // HTTP: missing Idempotency-Key is rejected (422), no random-key fallback.
+    const auth=await testAuthenticatedHeaders(id,[{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);
+    t.after(auth.cleanup);
+    // HTTP: an authenticated caller without Idempotency-Key is rejected (422), no random-key fallback.
     const server = createApiServer();
     let listening = false;
     t.after(async () => { if (listening) await new Promise<void>((resolve) => server.close(() => resolve())); });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve)); listening = true;
     const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-    const missingKey = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ failed_operation_id: operation.id }) });
+    const missingKey = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json',...auth.headers }, body: JSON.stringify({ failed_operation_id: operation.id }) });
     assert.equal(missingKey.status, 422);
     const missingKeyBody = await missingKey.json();
     assert.equal(missingKeyBody.code, 'IDEMPOTENCY_KEY_REQUIRED');
-    // HTTP: wrong operator header is rejected (403).
+    // Caller-controlled legacy headers cannot establish a principal or role.
     const wrongOperator = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `mp-http-${randomUUID()}`, 'x-naamive-operator': 'not-the-operator' }, body: JSON.stringify({ failed_operation_id: operation.id }) });
-    assert.equal(wrongOperator.status, 403);
-    // HTTP: valid operator + key succeeds.
-    const ok = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `mp-http-ok-${randomUUID()}`, 'x-naamive-operator': 'module-planning-e2e-operator' }, body: JSON.stringify({ failed_operation_id: operation.id }) });
+    assert.equal(wrongOperator.status, 401);
+    assert.equal((await pool.query(`SELECT count(*)::int n FROM operations WHERE retry_of_operation_id=$1`, [operation.id])).rows[0].n, 0);
+    // A persisted session and scoped grant, rather than any header-declared
+    // identity, authorizes the retry.
+    const ok = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `mp-http-ok-${randomUUID()}`,...auth.headers }, body: JSON.stringify({ failed_operation_id: operation.id }) });
     assert.equal(ok.status, 202);
   });
 

@@ -12,6 +12,7 @@ import { enqueuePlan, MODULE_PLAN_VALIDATOR_VERSION, validatePlan, canonicalHash
 import { derivePlanStatus } from './plan-telemetry.js';
 import { developmentHealth } from './development-telemetry.js';
 import { modulePlanReview } from './module-plan-review.js';
+import { scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
 
 const event=(c:any,p:string,t:string,correlation:string,payload:object)=>c.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id,workflow_code,workflow_version)
   SELECT id,$2,$3,$4,$5,workflow_code,workflow_version FROM projects WHERE id=$1`,[p,t,correlation,payload,config().operatorId]);
@@ -37,7 +38,8 @@ export const decideModule=async(projectId:string,moduleId:string,body:Record<str
 export const completeDefinition=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{const old=await idem(c,idempotencyKey);if(old)return{operation_id:old,status:'ACCEPTED'};const m=(await c.query(`SELECT * FROM modules WHERE id=$1 AND project_id=$2 FOR UPDATE`,[moduleId,projectId])).rows[0];if(!m)throw new ApiError(404,'MODULE_NOT_FOUND');const target=await moduleTarget(c,m.state,'DEFINITION_COMPLETED'),round=(await c.query(`SELECT * FROM module_rounds WHERE module_id=$1 ORDER BY round_number DESC LIMIT 1 FOR UPDATE`,[moduleId])).rows[0],correlation=randomUUID(),op=await operation(c,projectId,'COMPLETE_MODULE_DEFINITION',idempotencyKey,correlation);const artifacts=await evidence(c,projectId,'module-definition',{module_id:moduleId,revision_id:m.current_revision_id,round_id:round.id,...body,correlation_id:correlation},op),gateId=randomUUID();await c.query(`INSERT INTO module_gates(id,project_id,module_id,revision_id,round_id,kind,evidence) VALUES($1,$2,$3,$4,$5,'ARCHITECTURE_DECISION',$6)`,[gateId,projectId,moduleId,m.current_revision_id,round.id,{artifact_hash:artifacts.json.hash}]);await c.query(`UPDATE module_rounds SET state=$2 WHERE id=$1`,[round.id,target]);await c.query(`UPDATE modules SET state=$2,version=version+1 WHERE id=$1`,[moduleId,target]);await event(c,projectId,'MODULE_DEFINITION_COMPLETED',correlation,{module_id:moduleId,gate_id:gateId,evidence_hash:artifacts.json.hash});return{operation_id:op,status:'ACCEPTED',gate_id:gateId};});
 export const decideArchitecture=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};const m=(await c.query(`SELECT * FROM modules WHERE id=$1 AND project_id=$2 FOR UPDATE`,[moduleId,projectId])).rows[0];if(!m)throw new ApiError(404,'MODULE_NOT_FOUND');const gate=(await c.query(`SELECT * FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION' AND status='OPEN' FOR UPDATE`,[moduleId])).rows[0];if(!gate||Number(body.version)!==gate.version)throw new ApiError(409,'GATE_VERSION_CONFLICT');const approved=body.decision==='APPROVED',feedback=typeof body.feedback==='string'?body.feedback.trim():'';if(!approved&&!feedback)throw new ApiError(422,'GATE_FEEDBACK_REQUIRED');const correlation=randomUUID(),op=await operation(c,projectId,'DECIDE_ARCHITECTURE',idempotencyKey,correlation);let planned:any; if(approved){const target=await moduleTarget(c,m.state,'DECIDE_ARCHITECTURE');const artifacts=await evidence(c,projectId,'module-architecture',{module_id:moduleId,revision_id:m.current_revision_id,round_id:gate.round_id,decision:body.decision,alternatives:body.alternatives??[],consequences:body.consequences??[],risks:body.risks??[],correlation_id:correlation},op);await c.query(`UPDATE modules SET state=$2,version=version+1 WHERE id=$1`,[moduleId,target]);await c.query(`UPDATE module_rounds SET state=$2 WHERE id=$1`,[gate.round_id,target]);await c.query(`UPDATE module_gates SET status='APPROVED',decision=$2,feedback=$3,decided_at=clock_timestamp(),evidence=evidence||$4 WHERE id=$1`,[gate.id,body.decision,feedback,{architecture_hash:artifacts.json.hash}]);planned=await enqueuePlan(c,projectId,m,`plan-module:${moduleId}:initial`);}else await c.query(`UPDATE module_gates SET status='REJECTED',decision=$2,feedback=$3,decided_at=clock_timestamp() WHERE id=$1`,[gate.id,body.decision,feedback]);await event(c,projectId,approved?'ARCHITECTURE_APPROVED':'ARCHITECTURE_REJECTED',correlation,{module_id:moduleId,gate_id:gate.id,plan_operation_id:planned?.op,plan_job_id:planned?.job});return{operation_id:op,status:'ACCEPTED',plan_operation_id:planned?.op};});
 const legacyApproveModulePlan=async(..._args:any[])=>{throw new ApiError(410,'PHASE3_LEGACY_COMMAND_DISABLED');};
-export const approveModulePlan=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{
+export const approveModulePlan=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>{
+  const result=await withTransaction(async c=>{
   await c.query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`,[idempotencyKey]);
   const prior=await idem(c,idempotencyKey);
   if(prior)return{operation_id:prior,status:'ACCEPTED',evidence_hash:null};
@@ -95,8 +97,11 @@ export const approveModulePlan=async(projectId:string,moduleId:string,body:Recor
     await event(c,projectId,'MODULE_PLAN_EXTERNAL_BLOCKED',correlation,{module_id:moduleId,plan_revision_id:p.id,blocked_work_item_ids:blockedIds,work_item_workflow:workflow});
   }
   await event(c,projectId,'MODULE_PLAN_APPROVED',correlation,{module_id:moduleId,plan_revision_id:p.id,work_item_ids:ids,work_items:materialized,blocked_work_item_ids:blockedIds,work_item_workflow:workflow,dispatch_created:false});
-  return{operation_id:op,status:'ACCEPTED',work_item_ids:ids,blocked_work_item_ids:blockedIds,evidence_hash:p.json_artifact_hash,work_item_workflow:workflow};
-});
+    return{operation_id:op,status:'ACCEPTED',work_item_ids:ids,blocked_work_item_ids:blockedIds,evidence_hash:p.json_artifact_hash,work_item_workflow:workflow};
+  });
+  if(result.work_item_workflow?.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.work_item_workflow.workflow_version)===2) await scheduleEligibleWorkItems('MODULE_PLAN_APPROVED');
+  return result;
+};
 export const startModuleRevision=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};const m=(await c.query(`SELECT * FROM modules WHERE id=$1 AND project_id=$2 FOR UPDATE`,[moduleId,projectId])).rows[0];if(!m)throw new ApiError(404,'MODULE_NOT_FOUND');const previous=m.current_revision_id,old=(await c.query(`SELECT * FROM module_revisions WHERE id=$1 FOR UPDATE`,[previous])).rows[0],rejectedGate=Boolean((await c.query(`SELECT 1 FROM module_gates WHERE module_id=$1 AND revision_id=$2 AND kind='MODULE_APPROVAL' AND status='REJECTED' FOR SHARE`,[moduleId,previous])).rowCount);if((old.status!=='REJECTED'&&!rejectedGate)||m.state!=='WAITING_FOR_MODULE_APPROVAL')throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');const payload={...old.payload,...body,module_key:m.module_key,schema_version:1,supersedes_revision_id:previous},baselineRevisionId=baselineReference(old.technology_baseline_revision_id),revision=randomUUID(),round=randomUUID(),correlation=randomUUID(),op=await operation(c,projectId,'RESUBMIT_MODULE_REVISION',idempotencyKey,correlation);await c.query(`UPDATE module_revisions SET status='SUPERSEDED' WHERE id=$1`,[previous]);await c.query(`INSERT INTO module_revisions(id,project_id,module_key,revision,payload,status,technology_baseline_revision_id,criteria) VALUES($1,$2,$3,$4,$5,'PENDING_APPROVAL',$6,$7::jsonb)`,[revision,projectId,m.module_key,Number(old.revision)+1,payload,baselineRevisionId,JSON.stringify(versionedCriteria(payload.acceptance_criteria))]);await c.query(`INSERT INTO module_rounds(id,module_id,revision_id,round_number,state) SELECT $1,$2,$3,coalesce(max(round_number),0)+1,'WAITING_FOR_MODULE_APPROVAL' FROM module_rounds WHERE module_id=$2`,[round,moduleId,revision]);await c.query(`UPDATE modules SET current_revision_id=$2,state='WAITING_FOR_MODULE_APPROVAL',version=version+1 WHERE id=$1`,[moduleId,revision]);const artifacts=await evidence(c,projectId,'module-definition',{...payload,module_id:moduleId,revision_id:revision,technology_baseline_revision_id:baselineRevisionId,round_id:round,correlation_id:correlation},op),gateId=randomUUID();await c.query(`INSERT INTO module_gates(id,project_id,module_id,revision_id,round_id,kind,evidence,technology_baseline_revision_id) VALUES($1,$2,$3,$4,$5,'MODULE_APPROVAL',$6,$7)`,[gateId,projectId,moduleId,revision,round,{definition_hash:artifacts.json.hash},baselineRevisionId]);await event(c,projectId,'MODULE_REVISION_STARTED',correlation,{module_id:moduleId,revision_id:revision,supersedes_revision_id:previous,technology_baseline_revision_id:baselineRevisionId});await event(c,projectId,'MODULE_RESUBMITTED',correlation,{module_id:moduleId,revision_id:revision,gate_id:gateId,technology_baseline_revision_id:baselineRevisionId});return{operation_id:op,status:'ACCEPTED',revision_id:revision,gate_id:gateId};});
 
 export const authorizeWorkItem=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{
@@ -318,7 +323,8 @@ export const retryDevelopmentWorkItem=async(projectId:string,workItemId:string,b
   return{operation_id:op,status:'ACCEPTED',delivery_id:source.delivery_id,reconciliation};
 });
 
-export const resolveExternalBlocker=async(projectId:string,workItemId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{
+export const resolveExternalBlocker=async(projectId:string,workItemId:string,body:Record<string,unknown>,idempotencyKey:string)=>{
+  const result=await withTransaction(async c=>{
   const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};
   const justification=typeof body.justification==='string'?body.justification.trim():'';
   if(!justification)throw new ApiError(422,'EXTERNAL_BLOCKER_RESOLUTION_REQUIRED');
@@ -350,8 +356,11 @@ export const resolveExternalBlocker=async(projectId:string,workItemId:string,bod
   await c.query(`UPDATE work_items SET payload=$2,version=version+1 WHERE id=$1`,[workItemId,payload]);
   const artifact=await evidence(c,projectId,'external-blocker-resolution',{work_item_id:workItemId,resolution,correlation_id:correlation},op);
   await event(c,projectId,'WORK_ITEM_EXTERNAL_BLOCKER_RESOLVED',correlation,{work_item_id:workItemId,resolution,evidence_hash:artifact.json.hash});
-  return{operation_id:op,status:'ACCEPTED'};
-});
+    return{operation_id:op,status:'ACCEPTED'};
+  });
+  if(result.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.workflow_version)===2&&result.state==='ELIGIBLE_FOR_DISPATCH') await scheduleWorkItem(projectId,workItemId,'EXTERNAL_BLOCKER_RESOLVED');
+  return result;
+};
 
 /** Rebuilds a delivery's private worktree at the reserved base so an
  * unrecorded or invalid commit from a lost attempt can never be replayed into
@@ -375,7 +384,7 @@ export const prepareDevelopmentJob=async(job:any)=>{
   if(!delivery)throw new ApiError(409,'DELIVERY_NOT_FOUND');
   // A retry reuses the reserved attempt/worktree deterministically; it never
   // creates a competing delivery for the same work item.
-  if(delivery.state==='RESERVED'&&delivery.worktree_state==='PREPARED'&&['WAITING_FOR_WORK_ITEM_AUTHORIZATION','REWORK_ELIGIBLE'].includes(delivery.work_item_state)){
+  if(delivery.state==='RESERVED'&&delivery.worktree_state==='PREPARED'&&['WAITING_FOR_WORK_ITEM_AUTHORIZATION','REWORK_ELIGIBLE','DISPATCHED'].includes(delivery.work_item_state)){
     // A failed dispatch can have already written an unrecorded or invalid
     // commit before the worker lost control.  Reusing that branch makes every
     // following agent attempt cherry-pick the same files into a changed tree,
@@ -383,7 +392,7 @@ export const prepareDevelopmentJob=async(job:any)=>{
     // delivery has no persisted head/evidence yet, so rebuild its private
     // worktree at the reserved base before giving it back to the executor.
     rebuildReservedWorktree(delivery);
-    await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='DISPATCHED' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
+    await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='DISPATCHED' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await c.query(`UPDATE work_items SET state=$2,version=version+1 WHERE id=$1`,[delivery.work_item_id,delivery.work_item_state==='DISPATCHED'?'PRODUCING':'DEVELOPMENT_IN_PROGRESS']);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
     return delivery;
   }
   // A prior lease prepared (or started) this attempt but died before evidence
@@ -391,7 +400,7 @@ export const prepareDevelopmentJob=async(job:any)=>{
   // deterministically instead of silently skipping: rebuild to the reserved
   // base and hand the attempt back to the executor.  The single-active-job
   // index guarantees this job is the only executable attempt for the delivery.
-  if((delivery.state==='DISPATCHED'||delivery.state==='RUNNING')&&delivery.worktree_state==='ACTIVE'&&delivery.work_item_state==='DEVELOPMENT_IN_PROGRESS'){
+  if((delivery.state==='DISPATCHED'||delivery.state==='RUNNING')&&delivery.worktree_state==='ACTIVE'&&['DEVELOPMENT_IN_PROGRESS','PRODUCING'].includes(delivery.work_item_state)){
     rebuildReservedWorktree(delivery);
     await withTransaction(async c=>{await c.query(`UPDATE deliveries SET state='DISPATCHED' WHERE id=$1`,[delivery.id]);await c.query(`UPDATE worktrees SET state='ACTIVE',lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id]);await event(c,delivery.project_id,'DEVELOPMENT_REDISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id});});
     return delivery;
@@ -399,12 +408,12 @@ export const prepareDevelopmentJob=async(job:any)=>{
   // Never silently skip dispatch: an unexpected state must fail visible so the
   // worker terminates the job instead of falling into a no-op retry loop that
   // never invokes the agent.
-  if(delivery.work_item_state!=='WAITING_FOR_WORK_ITEM_AUTHORIZATION'&&delivery.work_item_state!=='REWORK_ELIGIBLE') throw new ApiError(409,'DEVELOPMENT_DISPATCH_STATE_INVALID');
+  if(delivery.work_item_state!=='WAITING_FOR_WORK_ITEM_AUTHORIZATION'&&delivery.work_item_state!=='REWORK_ELIGIBLE'&&delivery.work_item_state!=='DISPATCHED') throw new ApiError(409,'DEVELOPMENT_DISPATCH_STATE_INVALID');
   await discardStaleWorktrees(delivery.project_id,delivery.repository_path,delivery.path); pruneWorktrees(delivery.repository_path);
   let base:string;
   try { const rejected=delivery.work_item_state==='REWORK_ELIGIBLE'?(await pool.query(`SELECT head_sha FROM deliveries WHERE work_item_id=$1 AND state='QA_REJECTED' AND head_sha IS NOT NULL ORDER BY created_at DESC LIMIT 1`,[delivery.work_item_id])).rows[0]:null; base=String(rejected?.head_sha??initializePhaseRefs(delivery.repository_path,delivery.initial_sha).phaseSha); const released=await pool.query(`SELECT id,path FROM worktrees WHERE project_id=$1 AND state='RELEASED' ORDER BY created_at LIMIT 1`,[delivery.project_id]); if(released.rowCount){removeWorktree(delivery.repository_path,released.rows[0].path);await pool.query(`UPDATE worktrees SET state='REMOVED' WHERE id=$1`,[released.rows[0].id]);} mkdirSync(join(delivery.repository_path,'.naamive-worktrees'),{recursive:true}); createWorktree(delivery.repository_path,delivery.path,delivery.branch,base); }
   catch(error) { throw gitFailure(error); }
-  await withTransaction(async c=>{const artifact=await evidence(c,delivery.project_id,'development-delivery',{delivery_id:delivery.id,work_item_id:delivery.work_item_id,branch:delivery.branch,base_sha:base,job_id:job.id},job.operation_id);await c.query(`UPDATE worktrees SET state='ACTIVE',base_sha=$2,lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id,base]);await c.query(`UPDATE deliveries SET base_sha=$2,state='DISPATCHED' WHERE id=$1`,[delivery.id,base]);await c.query(`UPDATE work_items SET state='DEVELOPMENT_IN_PROGRESS',version=version+1 WHERE id=$1`,[delivery.work_item_id]);await event(c,delivery.project_id,'DEVELOPMENT_DISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id,branch:delivery.branch,base_sha:base,evidence_hash:artifact.json.hash});});
+  await withTransaction(async c=>{const artifact=await evidence(c,delivery.project_id,'development-delivery',{delivery_id:delivery.id,work_item_id:delivery.work_item_id,branch:delivery.branch,base_sha:base,job_id:job.id},job.operation_id);await c.query(`UPDATE worktrees SET state='ACTIVE',base_sha=$2,lease_expires_at=clock_timestamp()+interval '10 minutes' WHERE id=$1`,[delivery.worktree_id,base]);await c.query(`UPDATE deliveries SET base_sha=$2,state='DISPATCHED' WHERE id=$1`,[delivery.id,base]);await c.query(`UPDATE work_items SET state=$2,version=version+1 WHERE id=$1`,[delivery.work_item_id,delivery.work_item_state==='DISPATCHED'?'PRODUCING':'DEVELOPMENT_IN_PROGRESS']);await event(c,delivery.project_id,'DEVELOPMENT_DISPATCHED',job.operation_id,{work_item_id:delivery.work_item_id,delivery_id:delivery.id,job_id:job.id,branch:delivery.branch,base_sha:base,evidence_hash:artifact.json.hash});});
   return {...delivery,base_sha:base};
 };
 

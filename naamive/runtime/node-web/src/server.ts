@@ -18,6 +18,7 @@ import { decideTechnologyBaseline, submitTechnologyBaseline } from './baseline-g
 import { startTechnologyBaselineRevision } from './baseline-revision.js';
 import { createTechnologyBaselineRevision, listTechnologyCatalogItems, listTechnologyCategories, listTechnologyProfiles, requestTechnologyInventory, technologyBaseline, technologyCatalogRevision, technologyProfile, technologySelectionContext } from './technology-api.js';
 import { developmentRuntime, reconcileDevelopmentRuntime } from './development-runtime.js';
+import { reconcileEligibilityScheduler } from './eligibility-scheduler.js';
 import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
 import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
 import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from './gate-catalog.js';
@@ -234,7 +235,7 @@ if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.
   // Server-side development reservation reconciliation runs OUTSIDE the worker
   // so a RESERVED delivery whose job is never consumed (or whose worker died)
   // is still reconciled to terminal/recoverable on a bounded schedule.
-  const reconcileTimer=setInterval(()=>{ void reconcileDevelopmentRuntime().catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
+  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileEligibilityScheduler()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');clearInterval(reconcileTimer);server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }

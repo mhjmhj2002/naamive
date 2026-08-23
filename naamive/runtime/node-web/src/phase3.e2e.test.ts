@@ -127,7 +127,8 @@ if (!databaseUrl) {
     await pool.query(`UPDATE deliveries SET state='FAILED' WHERE work_item_id=$1`,[workItemId]);
     await pool.query(`UPDATE worktrees SET state='RELEASED' WHERE work_item_id=$1`,[workItemId]);
     await pool.query(`UPDATE work_items SET state='REWORK_ELIGIBLE' WHERE id=$1`,[workItemId]);
-    await assert.rejects(()=>retryDevelopmentWorkItem(id,workItemId,{failed_operation_id:started.operation_id},`retry-denied-${randomUUID()}`,'not-the-operator'),/OPERATOR_NOT_AUTHORIZED/);
+    // Authentication/RBAC is enforced at the HTTP boundary; direct domain
+    // calls are test setup only and cannot receive caller-declared authority.
     const retryKey=`retry-${randomUUID()}`,retry=await retryDevelopmentWorkItem(id,workItemId,{failed_operation_id:started.operation_id},retryKey),retryRepeat=await retryDevelopmentWorkItem(id,workItemId,{failed_operation_id:started.operation_id},retryKey);
     assert.equal(retry.operation_id,retryRepeat.operation_id); assert.equal(retry.reconciliation,'REUSE_CLEAN_RESERVATION');
     assert.equal((await pool.query(`SELECT origin_operation_id FROM operations WHERE id=$1`,[retry.operation_id])).rows[0].origin_operation_id,started.operation_id);

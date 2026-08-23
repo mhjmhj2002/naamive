@@ -96,7 +96,7 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
     // retry; terminal failure releases it for governed rework.
     await client.query(`UPDATE deliveries SET state=$2 WHERE id=$1`, [job.delivery_id, permanent ? 'FAILED' : 'RESERVED']);
     await client.query(`UPDATE worktrees SET state=$2 WHERE id=(SELECT worktree_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent ? 'RELEASED' : 'PREPARED']);
-    await client.query(`UPDATE work_items SET state=$2,version=version+1 WHERE id=(SELECT work_item_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent ? 'REWORK_ELIGIBLE' : 'WAITING_FOR_WORK_ITEM_AUTHORIZATION']);
+    await client.query(`UPDATE work_items SET state=CASE WHEN workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2 THEN CASE WHEN $2 THEN 'RECOVERY_REQUIRED' ELSE 'DISPATCHED' END ELSE CASE WHEN $2 THEN 'REWORK_ELIGIBLE' ELSE 'WAITING_FOR_WORK_ITEM_AUTHORIZATION' END END,version=version+1 WHERE id=(SELECT work_item_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent]);
     if (permanent) await persistDevelopmentFailureEvidence(client, job, code);
   }
   if (permanent) {

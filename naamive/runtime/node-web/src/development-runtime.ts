@@ -12,11 +12,14 @@ const matrix:Record<string,[string,string,string]>={
  // A reservation is queued, never "running".  PENDING/RETRYABLE jobs map to
  // QUEUED/RETRY_SCHEDULED; only a LEASED job with a real started signal maps
  // to an executing stage.
- 'PENDING|RESERVED|RESERVED|WAITING_FOR_WORK_ITEM_AUTHORIZATION':['QUEUED','HEALTHY','WAIT_FOR_WORKER'],
+  'PENDING|RESERVED|RESERVED|WAITING_FOR_WORK_ITEM_AUTHORIZATION':['QUEUED','HEALTHY','WAIT_FOR_WORKER'],
+  'PENDING|RESERVED|RESERVED|DISPATCHED':['QUEUED','HEALTHY','WAIT_FOR_WORKER'],
  'PENDING|RESERVED|RESERVED|REWORK_ELIGIBLE':['QUEUED','HEALTHY','WAIT_FOR_WORKER'],
  'LEASED|PREPARING|RESERVED|DEVELOPMENT_IN_PROGRESS':['PREPARING_WORKTREE','HEALTHY','WAIT_FOR_WORKER'],
- 'LEASED|DISPATCHED|ACTIVE|DEVELOPMENT_IN_PROGRESS':['DISPATCHING_AGENT','HEALTHY','WAIT_FOR_AGENT'],
- 'LEASED|RUNNING|ACTIVE|DEVELOPMENT_IN_PROGRESS':['EXECUTING_AGENT','HEALTHY','WAIT_FOR_AGENT'],
+  'LEASED|DISPATCHED|ACTIVE|DEVELOPMENT_IN_PROGRESS':['DISPATCHING_AGENT','HEALTHY','WAIT_FOR_AGENT'],
+  'LEASED|DISPATCHED|ACTIVE|PRODUCING':['DISPATCHING_AGENT','HEALTHY','WAIT_FOR_AGENT'],
+  'LEASED|RUNNING|ACTIVE|DEVELOPMENT_IN_PROGRESS':['EXECUTING_AGENT','HEALTHY','WAIT_FOR_AGENT'],
+  'LEASED|RUNNING|ACTIVE|PRODUCING':['EXECUTING_AGENT','HEALTHY','WAIT_FOR_AGENT'],
  'COMPLETED|DEVELOPMENT_IN_PROGRESS|ACTIVE|DEVELOPMENT_IN_PROGRESS':['VALIDATING_EVIDENCE','DEGRADED','DIAGNOSE_RUNTIME_AND_RECONCILE'],
  'COMPLETED|EVIDENCE_REVIEW|ACTIVE|QA_IN_PROGRESS':['READY_FOR_QA','HEALTHY','SUBMIT_QA'],
  'RETRYABLE|RESERVED|PREPARED|WAITING_FOR_WORK_ITEM_AUTHORIZATION':['RETRY_SCHEDULED','DEGRADED','RETRY_GOVERNED_COMMAND'],
@@ -64,7 +67,7 @@ const failStaleDevelopmentAttempt=async(job:any,delivery:any,workItemId:string,c
   await c.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=clock_timestamp() WHERE id=$1`, [operationId, code]);
   await c.query(`UPDATE deliveries SET state='FAILED' WHERE id=$1`, [delivery.id]);
   await c.query(`UPDATE worktrees SET state='RELEASED',lease_expires_at=NULL WHERE id=$1`, [delivery.worktree_id]);
-  await c.query(`UPDATE work_items SET state='REWORK_ELIGIBLE',version=version+1 WHERE id=$1`, [workItemId]);
+  await c.query(`UPDATE work_items SET state=CASE WHEN workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2 THEN 'RECOVERY_REQUIRED' ELSE 'REWORK_ELIGIBLE' END,version=version+1 WHERE id=$1`, [workItemId]);
   await persistDevelopmentFailureEvidence(c, job, code);
   await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,job_id,payload,actor_id) VALUES($1,'DEVELOPMENT_RECONCILED',$2,$3,$4,$5,$6)`,
     [delivery.project_id, randomUUID(), operationId, job.id, { work_item_id: workItemId, delivery_id: delivery.id, job_id: job.id, code, reason, next_action: 'RETRY_DEVELOP_WORK_ITEM' }, 'runtime-detector']);

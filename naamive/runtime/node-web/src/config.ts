@@ -23,6 +23,8 @@ export const config = () => {
   if(developmentExecutorRaw && !['codex','deepseek','controlled'].includes(developmentExecutorRaw)) throw new Error('NAAMIVE_DEVELOPMENT_EXECUTOR must be codex, deepseek or controlled');
   const authSessionHours=Number(process.env.NAAMIVE_AUTH_SESSION_HOURS ?? 8);
   if(!Number.isFinite(authSessionHours)||authSessionHours<1||authSessionHours>168)throw new Error('NAAMIVE_AUTH_SESSION_HOURS must be between 1 and 168');
+  const developmentMaxConcurrency=Number(process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY ?? 1);
+  if(!Number.isInteger(developmentMaxConcurrency)||developmentMaxConcurrency<1||developmentMaxConcurrency>1024)throw new Error('NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY must be an integer between 1 and 1024');
   if(process.env.NAAMIVE_AUTH_BOOTSTRAP_SECRET!==undefined&&process.env.NAAMIVE_AUTH_BOOTSTRAP_SECRET!==''&&process.env.NAAMIVE_AUTH_BOOTSTRAP_SECRET.length<32)throw new Error('NAAMIVE_AUTH_BOOTSTRAP_SECRET must have at least 32 characters');
   return {
     databaseUrl: required('DATABASE_URL'),
@@ -37,6 +39,9 @@ export const config = () => {
     webOrigin,
     port: Number(process.env.PORT ?? 3000),
     authSessionHours,
+    // AUT-01 global runtime development slots. Reservations consume a slot;
+    // a waiting eligible WI is never converted to a client-controlled state.
+    developmentMaxConcurrency,
     agentTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_TIMEOUT_SECONDS ?? 600),
     agentReadinessTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_TIMEOUT_SECONDS ?? 20),
     agentReadinessCacheSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_CACHE_SECONDS ?? 300),

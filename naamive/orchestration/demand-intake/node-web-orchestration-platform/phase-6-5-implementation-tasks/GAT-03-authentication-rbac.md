@@ -65,6 +65,16 @@ cross-project, service identity, logs/redaction e E2E UI+servidor.
 Riscos: lockout, papel excessivo e confiança no navegador. Evidências: threat
 model curto, matriz RBAC, config/runbook, audit records e testes negativos.
 
+## Evidência de conclusão — 2026-08-23
+
+`GAT-03` permanece `DONE`. Foram executados com sucesso `npm run build`,
+`auth.e2e.test.ts`, `http-acceptance.e2e.test.ts`, `gate-catalog.e2e.test.ts`,
+`lifecycle-v2.e2e.test.ts`, `phase3.e2e.test.ts` e `git diff --check`.
+As regressões de retry agora criam sessão opaca e grant persistido pelo helper
+de teste; headers `x-naamive-operator` não são aceitos como identidade nem
+autoridade. Não há header mágico, usuário implícito ou role default no fluxo
+autorizado.
+
 ## Trava de pré-validação do modelo de identidade e autenticação
 
 Antes de implementar middleware, sessão, token, adapter de identity provider,
