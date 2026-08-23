@@ -19,6 +19,7 @@ import { detectDevelopmentRuntimeInconsistencies, reconcileDevelopmentRuntime } 
 import { startRuntimeProcess } from './runtime-process.js';
 import { executeIndependentReview } from './assurance.js';
 import { configuredWorkerService } from './auth.js';
+import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -74,7 +75,7 @@ const completeJob = async (job: any, result?: any) => withTransaction(async (cli
   if (!pending.rowCount) await client.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id]);
 });
 
-const failJob = async (job: any, error: unknown) => withTransaction(async (client) => {
+const failLegacyJob = async (job: any, error: unknown) => withTransaction(async (client) => {
   const code = error instanceof AgentConfigurationError || error instanceof AgentExecutionError || error instanceof AgentReadinessError || error instanceof ArtifactStorageError || error instanceof ApiError ? error.code : 'AGENT_EXECUTION_FAILED';
   const current = (await client.query(`SELECT attempts FROM jobs WHERE id=$1 AND status='LEASED' FOR UPDATE`, [job.id])).rows[0];
   if (!current) return;
@@ -150,6 +151,10 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
   }
 });
 
+const failJob=async(job:any,error:unknown,step:string)=>job.kind==='DEVELOP_WORK_ITEM'
+  ? recoverDevelopmentFailure(job,error,step)
+  : failLegacyJob(job,error);
+
 const heartbeat = (job: any) => setInterval(() => {
   void pool.query(`UPDATE jobs SET heartbeat_at=clock_timestamp(),last_signal_at=clock_timestamp(),lease_expires_at=clock_timestamp()+($2||' seconds')::interval WHERE id=$1 AND status='LEASED'`, [job.id, String(leaseSeconds())]);
   // F5-23 pendency 20/22: a periodic heartbeat records that the process is
@@ -162,6 +167,7 @@ const heartbeat = (job: any) => setInterval(() => {
 export const runOnce = async (projectId?: string): Promise<boolean> => {
   await detectDevelopmentRuntimeInconsistencies();
   await reconcileDevelopmentRuntime();
+  await reconcileCauseAwareRecovery();
   const lock = await pool.connect();
   try {
     const lockKey=projectId??randomUUID();
@@ -267,7 +273,7 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
         signal: typeof cause.signal === 'string' ? cause.signal : undefined,
         cause_constraint: typeof cause.constraint === 'string' ? cause.constraint : undefined
       });
-      await failJob(job, error);
+      await failJob(job, error,step);
     } finally {
       clearInterval(timer);
     }

@@ -23,6 +23,7 @@ if (!databaseUrl) {
   const { createApiServer } = await import('./server.js');
   const { runOnce } = await import('./worker.js');
   const { seedPlanRevision } = await import('./test-plan-helper.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
 
   type DisposableRepo = { root: string; path: string; sha: string };
   const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
@@ -54,6 +55,7 @@ if (!databaseUrl) {
     for (const sql of [
       'DELETE FROM events WHERE project_id=$1', 'DELETE FROM artifacts WHERE project_id=$1',
       'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM integration_attempts WHERE project_id=$1',
+      'DELETE FROM recovery_decisions WHERE project_id=$1', 'DELETE FROM work_item_scheduling_decisions WHERE project_id=$1',
       'DELETE FROM rework_gates WHERE project_id=$1', 'DELETE FROM rework_decisions WHERE project_id=$1',
       'DELETE FROM finding_work_items WHERE finding_id IN (SELECT id FROM findings WHERE project_id=$1)',
       'DELETE FROM runtime_diagnostics WHERE work_item_id IN (SELECT id FROM work_items WHERE project_id=$1)',
@@ -84,12 +86,13 @@ if (!databaseUrl) {
     });
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state)
       VALUES($1,'HTTP','Ops','test',$2,'test://origin','integration',$3,'{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`, [projectId, repo.path, repo.sha]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);t.after(session.cleanup);
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     serverListening = true;
     const address = server.address() as { port: number };
     const base = `http://127.0.0.1:${address.port}`;
     const post = async (path: string, body: Record<string, unknown> = {}, expected = 202) => {
-      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
+      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { ...session.headers,'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
       const responseBody = await response.text();
       assert.equal(response.status, expected, responseBody);
       return JSON.parse(responseBody) as Record<string, any>;
@@ -100,7 +103,7 @@ if (!databaseUrl) {
     // The initial module gate must give the web client the complete business
     // proposal.  This is deliberately checked before the approval changes the
     // module state, because this is the operator's informed-decision screen.
-    const proposal = await (await fetch(`${base}/api/projects/${projectId}?phase3=true`)).json() as { modules: Array<Record<string, unknown>>; gates: Array<Record<string, unknown>> };
+    const proposal = await (await fetch(`${base}/api/projects/${projectId}?phase3=true`,{headers:session.headers})).json() as { modules: Array<Record<string, unknown>>; gates: Array<Record<string, unknown>> };
     assert.deepEqual(proposal.modules[0] && {
       module_key: proposal.modules[0].module_key, name: proposal.modules[0].name, objective: proposal.modules[0].objective,
       scope: proposal.modules[0].scope, out_of_scope: proposal.modules[0].out_of_scope,
@@ -125,7 +128,7 @@ if (!databaseUrl) {
       { title: 'Approved HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] },
       { title: 'Reworked but pending HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'grep -q reworked README.md', cwd: '.', timeout_seconds: 10 }] }
     ], 1);
-    const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`);
+    const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`,{headers:session.headers});
     assert.equal(reviewResponse.status, 200);
     const reviewProjection: any = await reviewResponse.json();
     assert.equal('plans' in reviewProjection, false);
@@ -201,9 +204,10 @@ if (!databaseUrl) {
     const repo = createRepository(); const projectId = `phase3-reconcile-${randomUUID().slice(0, 8)}`; const server = createApiServer(); let serverListening = false;
     t.after(async () => { try { if (serverListening) await new Promise<void>((resolve) => server.close(() => resolve())); await cleanupProject(projectId); } finally { rmSync(repo.root, { recursive: true, force: true }); } });
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state) VALUES($1,'Reconcile','Ops','test',$2,'test://origin','integration',$3,'{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`, [projectId, repo.path, repo.sha]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);t.after(session.cleanup);
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve)); serverListening = true; const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
     const post = async (path: string, body: Record<string, unknown> = {}) => {
-      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
+      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { ...session.headers,'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
       const responseBody = await response.text();
       assert.equal(response.status, 202, responseBody);
       return JSON.parse(responseBody) as Record<string, any>;
@@ -231,12 +235,13 @@ if (!databaseUrl) {
     const projectId=`phase3-sse-${randomUUID().slice(0,8)}`, approved=randomUUID(), rejected=randomUUID(), server=createApiServer();
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state)
       VALUES($1,'SSE','Ops','test','/not-exposed','test://origin','integration','safe-sha','{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`,[projectId]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'}]);t.after(session.cleanup);
     const correlation=randomUUID();
     const first=(await pool.query(`INSERT INTO events(project_id,event_type,correlation_id,payload) VALUES($1,'QA_APPROVED',$2,$3) RETURNING id`,[projectId,correlation,{work_item_id:approved,head_sha:'approved-sha',worktree_path:'/host/private',stdout:'raw'}])).rows[0].id;
     await pool.query(`INSERT INTO events(project_id,event_type,correlation_id,payload) VALUES($1,'QA_REJECTED',$2,$3),($1,'REWORK_ESCALATED',$2,$4),($1,'INTEGRATION_ARCHIVED',$2,$5)`,[projectId,correlation,{work_item_id:rejected,head_sha:'rejected-sha',command:'private'},{work_item_id:rejected,prompt:'private',reason:'timeout'},{candidate_id:randomUUID(),path:'/host/private'}]);
     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve)); const base=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
     t.after(async()=>{await new Promise<void>(resolve=>server.close(()=>resolve()));await cleanupProject(projectId);});
-    const read=async(after:number)=>{const response=await fetch(`${base}/api/projects/${projectId}/events?after=${after}`);const reader=response.body!.getReader(),chunk=await reader.read();await reader.cancel();return new TextDecoder().decode(chunk.value);};
+    const read=async(after:number)=>{const response=await fetch(`${base}/api/projects/${projectId}/events?after=${after}`,{headers:session.headers});const reader=response.body!.getReader(),chunk=await reader.read();await reader.cancel();return new TextDecoder().decode(chunk.value);};
     const replay=await read(0), ids=[...replay.matchAll(/^id: (\d+)$/gm)].map(match=>Number(match[1]));
     assert.deepEqual(ids,[...new Set(ids)]); assert.equal(ids.length,4); assert.match(replay,/approved-sha/); assert.doesNotMatch(replay,/host\/private|raw|private/);
     const resumed=await read(Number(first)); assert.doesNotMatch(resumed,/event: QA_APPROVED/); assert.match(resumed,/event: QA_REJECTED/); assert.match(await (await fetch(base)).text(),/INTEGRATION_ARCHIVED/);

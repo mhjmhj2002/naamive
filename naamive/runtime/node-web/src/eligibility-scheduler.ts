@@ -23,8 +23,9 @@ const dependenciesSatisfied=async(c:any,item:any)=>{
 };
 
 type ReservationHook=(client:any,refs:{operation_id:string;delivery_id:string;job_id:string})=>Promise<void>;
+export type RecoverySchedulingContext={recoveryDecisionId:string;baseSha?:string;originDeliveryId?:string;originOperationId?:string};
 
-export const scheduleWorkItem=async(projectId:string,workItemId:string,trigger='RECONCILE',afterReservation?:ReservationHook)=>withTransaction(async c=>{
+export const scheduleWorkItem=async(projectId:string,workItemId:string,trigger='RECONCILE',afterReservation?:ReservationHook,recovery?:RecoverySchedulingContext)=>withTransaction(async c=>{
   const item=(await c.query(`SELECT w.*,p.repository_path,p.initial_sha FROM work_items w JOIN projects p ON p.id=w.project_id WHERE w.id=$1 AND w.project_id=$2 FOR UPDATE`,[workItemId,projectId])).rows[0];
   if(!item) return {reason:'NOT_ELIGIBLE' as SchedulingReason};
   if(item.workflow_code!=='WORK_ITEM_DELIVERY'||Number(item.workflow_version)!==2){
@@ -52,15 +53,15 @@ export const scheduleWorkItem=async(projectId:string,workItemId:string,trigger='
   const capacity=config().developmentMaxConcurrency;
   const used=Number((await c.query(`SELECT count(*)::int n FROM deliveries d WHERE ${activeDelivery}`)).rows[0].n);
   if(used>=capacity){await record(c,projectId,workItemId,trigger,'WAITING_CAPACITY',{capacity,used});return{reason:'WAITING_CAPACITY' as SchedulingReason};}
-  const dispatchKey=`${ELIGIBILITY_PREDICATE_VERSION}:${item.revision_id}:${item.version}`;
+  const dispatchKey=`${ELIGIBILITY_PREDICATE_VERSION}:${item.revision_id}:${item.version}${recovery?`:recovery:${recovery.recoveryDecisionId}`:''}`;
   const already=(await c.query(`SELECT operation_id,delivery_id,job_id FROM work_item_scheduling_decisions WHERE work_item_id=$1 AND dispatch_key=$2 AND decision_code='DISPATCHED'`,[workItemId,dispatchKey])).rows[0];
   if(already){await record(c,projectId,workItemId,trigger,'ACTIVE_ATTEMPT_EXISTS',{replayed_dispatch_key:dispatchKey}, {dispatchKey,operationId:already.operation_id,deliveryId:already.delivery_id,jobId:already.job_id});return{reason:'ACTIVE_ATTEMPT_EXISTS' as SchedulingReason};}
   const operationId=randomUUID(),deliveryId=randomUUID(),worktreeId=randomUUID(),jobId=randomUUID(),correlation=randomUUID();
-  const worktree=join(item.repository_path,'.naamive-worktrees',worktreeId),branch=`work-items/${workItemId}`;
-  await c.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id) VALUES($1,$2,'SCHEDULE_DEVELOPMENT','QUEUED',$3,$4)`,[operationId,projectId,`schedule:${workItemId}:${dispatchKey}`,correlation]);
-  await c.query(`INSERT INTO worktrees(id,project_id,work_item_id,path,branch,base_sha,lease_expires_at,state) VALUES($1,$2,$3,$4,$5,$6,clock_timestamp()+interval '10 minutes','RESERVED')`,[worktreeId,projectId,workItemId,worktree,branch,item.initial_sha]);
-  await c.query(`INSERT INTO deliveries(id,project_id,work_item_id,revision_id,worktree_id,base_sha,qa_matrix,technology_baseline_revision_id,state) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,'RESERVED')`,[deliveryId,projectId,workItemId,item.revision_id,worktreeId,item.initial_sha,JSON.stringify(Array.isArray(item.payload?.qa_matrix)?item.payload.qa_matrix:[]),item.technology_baseline_revision_id]);
-  await c.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,delivery_id,kind,idempotency_key,technology_baseline_revision_id,metadata) VALUES($1,$2,$3,NULL,$4,'DEVELOP_WORK_ITEM',$5,$6,'{}')`,[jobId,operationId,projectId,deliveryId,`development:${deliveryId}`,item.technology_baseline_revision_id]);
+  const worktree=join(item.repository_path,'.naamive-worktrees',worktreeId),branch=recovery?`work-items/${workItemId}-recovery-${recovery.recoveryDecisionId.slice(0,8)}`:`work-items/${workItemId}`,baseSha=recovery?.baseSha??item.initial_sha;
+  await c.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,origin_operation_id,recovery_decision_id) VALUES($1,$2,$3,'QUEUED',$4,$5,$6,$7)`,[operationId,projectId,recovery?'SCHEDULE_RECOVERY_DEVELOPMENT':'SCHEDULE_DEVELOPMENT',`schedule:${workItemId}:${dispatchKey}`,correlation,recovery?.originOperationId??null,recovery?.recoveryDecisionId??null]);
+  await c.query(`INSERT INTO worktrees(id,project_id,work_item_id,path,branch,base_sha,lease_expires_at,state) VALUES($1,$2,$3,$4,$5,$6,clock_timestamp()+interval '10 minutes','RESERVED')`,[worktreeId,projectId,workItemId,worktree,branch,baseSha]);
+  await c.query(`INSERT INTO deliveries(id,project_id,work_item_id,revision_id,worktree_id,base_sha,qa_matrix,technology_baseline_revision_id,state,recovery_decision_id,origin_delivery_id) VALUES($1,$2,$3,$4,$5,$6,$7::jsonb,$8,'RESERVED',$9,$10)`,[deliveryId,projectId,workItemId,item.revision_id,worktreeId,baseSha,JSON.stringify(Array.isArray(item.payload?.qa_matrix)?item.payload.qa_matrix:[]),item.technology_baseline_revision_id,recovery?.recoveryDecisionId??null,recovery?.originDeliveryId??null]);
+  await c.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,delivery_id,kind,idempotency_key,technology_baseline_revision_id,metadata,origin_operation_id,recovery_decision_id) VALUES($1,$2,$3,NULL,$4,'DEVELOP_WORK_ITEM',$5,$6,'{}',$7,$8)`,[jobId,operationId,projectId,deliveryId,`development:${deliveryId}`,item.technology_baseline_revision_id,recovery?.originOperationId??null,recovery?.recoveryDecisionId??null]);
   await c.query(`UPDATE deliveries SET job_id=$2 WHERE id=$1`,[deliveryId,jobId]);
   await c.query(`UPDATE work_items SET state='DISPATCHED',version=version+1 WHERE id=$1`,[workItemId]);
   await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,job_id,payload,actor_id,workflow_code,workflow_version) VALUES($1,'WORK_ITEM_SCHEDULED',$2,$3,$4,$5,$6,$7,$8)`,[projectId,correlation,operationId,jobId,{work_item_id:workItemId,delivery_id:deliveryId,job_id:jobId,dispatch_key:dispatchKey,predicate_version:ELIGIBILITY_PREDICATE_VERSION},config().operatorId,item.workflow_code,item.workflow_version]);

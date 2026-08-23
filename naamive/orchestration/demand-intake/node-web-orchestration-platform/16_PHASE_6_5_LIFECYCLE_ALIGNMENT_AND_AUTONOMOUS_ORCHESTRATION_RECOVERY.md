@@ -44,9 +44,9 @@ atualizada por esta fase.
 
 ## Checkpoint vivo de execução — 2026-08-23
 
-`LR-01`, `GAT-01`, `GAT-03` e `AUT-01` estão `DONE`; `REC-01` é a próxima
-task funcional, em `TO_DO / NEXT`. A sequência serial efetivamente concluída é
-`LR-01 → GAT-01 → GAT-03 → AUT-01`.
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; `LR-02` é a
+próxima task serial, ainda em `TO_DO`. A sequência efetivamente concluída é
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01`.
 
 No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o
 contrato do lifecycle. A fronteira final de execução registrada na task é

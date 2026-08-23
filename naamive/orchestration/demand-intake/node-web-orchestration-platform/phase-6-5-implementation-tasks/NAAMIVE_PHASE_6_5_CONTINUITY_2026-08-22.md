@@ -43,8 +43,8 @@ A Fase 6.5 possui 14 demandas:
 | 2 | **GAT-01** | Catálogo server-side versionado de gates e autoridade | **DONE** |
 | 3 | **GAT-03** | Autenticação e RBAC server-side | **DONE** |
 | 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
-| 5 | **REC-01** | Recovery orientado pela causa | **TO_DO / NEXT** |
-| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO** |
+| 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
+| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / NEXT** |
 | 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
@@ -358,19 +358,18 @@ reconciler. As decisões são auditáveis e o scheduler cobre DAG/ciclo,
 fan-in/fan-out, concorrência, rollback de crash, restart e replay; o cenário
 de regressão inclui Métrica e Interface.
 
-**FOLLOW-UP / AUDIT POINT — capacidade:** a liberação de capacidade é coberta
-pelo reconciler periódico como safety net. Decidir em auditoria futura se o
-contrato exige wake-up imediato nessa liberação, antes de criar um trigger
-direto. Não há evidência atual de hook direto e este ponto não reabre AUT-01.
+**Ponto de capacidade fechado por REC-01:** além do reconciler periódico como
+safety net, recovery que libera slot solicita reavaliação idempotente pós-commit
+com o trigger `RECOVERY_CAPACITY_RELEASED`, preservando o lock global de AUT-01.
 
-## 7. Próxima task funcional — REC-01 (`TO_DO / NEXT`)
+## 7. REC-01 — DONE
 
 Fronteira funcional final: `[LR-01, AUT-01]`. LR-01 fornece o lifecycle v2;
 AUT-01 fornece attempts, reservations, jobs, capacidade e scheduler/reconciler.
 GAT-01/GAT-03 são guardrails para qualquer escalada humana, não dependências
 funcionais mecânicas. A pré-validação está em
-`REC-01-cause-aware-recovery-prevalidation.md` e classificou a task como
-`READY_FOR_IMPLEMENTATION`, mantendo o status da task em `TO_DO`.
+`REC-01-cause-aware-recovery-prevalidation.md` e foi implementada sem ampliar
+o escopo de REC-02, AUT-02 ou LR-02.
 
 Recovery orientado pela causa.
 
@@ -386,11 +385,16 @@ Exemplos:
 - resolução de blocker;
 - reexecução segura.
 
-Nenhum erro deve deixar o processo permanentemente no limbo.
+Nenhum erro deve deixar o processo permanentemente no limbo. A implementação
+entregou classifier e executor centrais, decisão versionada/auditável,
+replay/convergência, Git reconciliation, adapters v2, projeção explicável,
+lineage AUT-01 e wake-up pós-commit. Migrations `056`–`059`, build e 113 testes
+diretamente afetados passaram; permaneceram somente as quatro falhas históricas
+de inventory já auditadas.
 
 ---
 
-### LR-02 — TO_DO
+### LR-02 — TO_DO / NEXT
 
 Sincronizar lifecycle macro de projeto e módulo com os novos contratos.
 
@@ -485,9 +489,9 @@ Documentos históricos permanecem históricos; documentação corrente deve refl
 
 | Categoria | Quantidade |
 |---|---:|
-| DONE | 4 |
+| DONE | 5 |
 | DOING | 0 |
-| TO_DO | 10 |
+| TO_DO | 9 |
 | Total | 14 |
 
 Progresso funcional da F6.5:
@@ -496,7 +500,7 @@ Progresso funcional da F6.5:
 - **GAT-01: DONE**
 - **GAT-03: DONE**
 - **AUT-01: DONE**
-- **REC-01: TO_DO / NEXT**
+- **REC-01: DONE**
 - restante: **TO_DO**
 
 Fase 7:
@@ -528,9 +532,8 @@ Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. retomar por **REC-01 — recovery orientado pela causa**, sem antecipar QA,
-   review, merge, integração ou macro-lifecycle;
-4. preservar AUT-01 como concluída e tratar a decisão sobre wake-up imediato na
-   liberação de capacidade apenas como ponto de auditoria futuro;
+3. retomar por **LR-02 — sincronizar macro-lifecycle**, sem antecipar AUT-02;
+4. preservar AUT-01 e REC-01 como concluídas, incluindo o wake-up pós-commit de
+   capacidade implementado por recovery;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 TO_DO/NEXT`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02 TO_DO/NEXT`.

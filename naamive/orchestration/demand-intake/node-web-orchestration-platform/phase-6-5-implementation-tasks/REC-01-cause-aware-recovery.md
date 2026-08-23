@@ -1,6 +1,6 @@
 ---
 task: REC-01
-status: TO DO
+status: DONE
 title: Recovery orientado pela causa
 depends_on: [LR-01, AUT-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -78,3 +78,29 @@ idempotência, restart do worker e migração de estados em limbo.
 Riscos: repetir efeito já aplicado, perder commits e classificar causa errada.
 Evidências: taxonomia/matriz versionada, recovery decisions, relatórios JSON/
 Markdown, eventos/projeções e E2E por causa.
+
+## Evidência de implementação — 2026-08-23
+
+- `RECOVERY_POLICY:v1` centraliza causa, certainty, footprint e uma única ação
+  entre `RETRY`, `RESTART`, `RESUME`, `RECONCILE`, `REWORK`,
+  `RECORD_AND_CONTINUE` e `INTEGRATION_RECOVERY`;
+- `recovery_decisions` persiste decisão, versionamento, fingerprint,
+  idempotência, operation/evento, estado de execução e lineage de convergência;
+- o executor revalida estado/versão, retoma decisões persistidas e impede
+  repetição quando o efeito é desconhecido;
+- restart e rework criam nova attempt exclusivamente pelo scheduler AUT-01;
+  retry reutiliza delivery, worktree e job, preservando contador e backoff;
+- reconciliação Git distingue `NOT_APPLIED`, `APPLIED_UNRECORDED` e
+  `DIVERGED`, incluindo merge/push e fechamento da operation de integração;
+- liberação por recovery solicita
+  `scheduleEligibleWorkItems('RECOVERY_CAPACITY_RELEASED')` pós-commit;
+- endpoints e adapters v2 ignoram payload técnico como autoridade, sob a
+  autenticação/RBAC legítima de GAT-03; o comportamento legado fora do v2 foi
+  preservado;
+- projeções publicam decisão, causa, razão e continuação conhecida sem expor
+  botões técnicos contraditórios ou antecipar REC-02.
+
+Validação: migrations `056`–`059`, build e uma seleção regressiva de 113 testes
+diretamente afetados passaram. A suíte global manteve somente as quatro falhas
+históricas já auditadas em `inventory.e2e.test.ts` (`FAILED` esperado versus
+`RETRYABLE` atual), sem falha nova.

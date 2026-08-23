@@ -1,8 +1,8 @@
 # Tasks de implementação — Fase 6.5
 
 Índice vivo da execução da Fase 6.5. Checkpoint em 23/08/2026:
-`LR-01`, `GAT-01`, `GAT-03` e `AUT-01` estão `DONE`; a próxima task funcional
-é `REC-01`, em `TO_DO / NEXT`.
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; a próxima task
+serial é `LR-02`, ainda em `TO_DO`.
 
 Baseline histórica imutável:
 `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`.
@@ -13,7 +13,7 @@ Baseline histórica imutável:
 | 2 | [GAT-01 — Catálogo server-side de gates e autoridade](GAT-01-server-side-gate-catalog.md) | `DONE` | LR-01 |
 | 3 | [GAT-03 — Autenticação e RBAC](GAT-03-authentication-rbac.md) | `DONE` | GAT-01 |
 | 4 | [AUT-01 — Scheduler transacional de elegibilidade](AUT-01-transactional-eligibility-scheduler.md) | `DONE` | LR-01, GAT-01, GAT-03 |
-| 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `TO_DO / NEXT` | LR-01, AUT-01 |
+| 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `DONE` | LR-01, AUT-01 |
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` | LR-01, GAT-01 |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |
@@ -24,7 +24,7 @@ Baseline histórica imutável:
 | 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `TO_DO` | todas as tasks funcionais |
 | 14 | [DOC-01 — Reconciliar documentação F5/F6/F6.5](DOC-01-reconcile-phase5-phase6-docs.md) | `TO_DO` | TST-01 |
 
-`LR-01 → GAT-01 → GAT-03 → AUT-01` é a sequência serial já concluída. A
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01` é a sequência serial já concluída. A
 dependência conceitual original de AUT-01 em LR-01 descreve o contrato de
 lifecycle que ela consome; a fronteira final de execução também exige GAT-01 e
 GAT-03, pois o scheduler opera sob catálogo de autoridade e identidade/RBAC

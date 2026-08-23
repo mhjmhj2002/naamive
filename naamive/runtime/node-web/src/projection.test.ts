@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allowedActions, nextAction, publicEvent, publicValue } from './projection.js';
+import { allowedActions, nextAction, publicEvent, publicValue, recoveryNextAction } from './projection.js';
 
 test('public projections retain operational facts but remove execution internals', () => {
   const value=publicValue({head_sha:'abc',worktree_path:'/host/tree',qa_command:'npm test',nested:{stdout:'raw',evidence_hash:'hash'},findings:[{description:'safe',secret_token:'no'}]});
@@ -14,6 +14,13 @@ test('work-item v2 projections distinguish automatic waits from legitimate human
   assert.deepEqual(allowedActions('WORK_ITEM_DELIVERY', 2, 'WAITING_FOR_EXTERNAL_INPUT', 2), ['RESOLVE_EXTERNAL_BLOCKER']);
   assert.deepEqual(allowedActions('WORK_ITEM_DELIVERY', 2, 'ELIGIBLE_FOR_DISPATCH'), []);
   assert.ok(!allowedActions('WORK_ITEM_DELIVERY', 2, 'ELIGIBLE_FOR_DISPATCH').includes('START_DEVELOPMENT'));
+});
+
+test('REC-01 projection explains reconciliation and escalation without technical action buttons',()=>{
+  assert.match(recoveryNextAction({selected_action:'RECONCILE',execution_state:'WAITING_RECONCILIATION',reason:'unknown'})!,/nenhum efeito será repetido/);
+  assert.match(recoveryNextAction({selected_action:'INTEGRATION_RECOVERY',execution_state:'COMPLETED',reason:'Git diverged'})!,/Git\/integração/);
+  assert.deepEqual(allowedActions('WORK_ITEM_DELIVERY',2,'RECOVERY_REQUIRED'),[]);
+  assert.deepEqual(allowedActions('WORK_ITEM_DELIVERY',2,'WAITING_FOR_ESCALATION'),[]);
 });
 
 test('public projections remove baseline configuration, content and credential-bearing URLs', () => {

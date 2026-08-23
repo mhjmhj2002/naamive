@@ -45,3 +45,11 @@ export const nextAction = (state: string, blocked?: string | null, workflowCode?
   if (state === 'MERGED_TO_PHASE') return 'Criar ou validar a candidata de integração.';
   return 'Acompanhar a próxima atualização.';
 };
+
+export const recoveryNextAction=(decision:{selected_action?:string;execution_state?:string;reason?:string}|null|undefined)=>{
+  if(!decision)return null;
+  if(decision.execution_state==='WAITING_RECONCILIATION')return 'Recovery automático aguarda reconciliação conclusiva; nenhum efeito será repetido.';
+  if(decision.execution_state==='COMPLETED'&&decision.selected_action==='INTEGRATION_RECOVERY')return `Recuperação específica de Git/integração necessária. ${decision.reason??''}`.trim();
+  if(['PENDING','EXECUTING'].includes(String(decision.execution_state)))return `Recovery automático em andamento: ${decision.selected_action}.`;
+  return decision.reason??null;
+};

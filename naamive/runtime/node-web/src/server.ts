@@ -23,6 +23,7 @@ import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
 import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
 import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from './gate-catalog.js';
 import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
+import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -69,9 +70,9 @@ export const createApiServer = () => createServer(async (request, response) => {
   }
   const match = url.pathname.match(/^\/api\/projects\/([^/]+)(?:\/(intake|submit|decision|events|start-discovery|retry-discovery|apply-review-adjustments|archive))?$/);
   const phase3Match = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules(?:\/([^/]+)(?:\/(decision|work-items|definition|architecture|plan|revision|plan-adjustment|retry-plan))?)?$/);
-  const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|restart-development|retry-development|qa|rework|rework-decision|merge|reconcile|resolve-external-blocker)$/);
+  const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|restart-development|retry-development|qa|rework|rework-decision|merge|reconcile|recovery|resolve-external-blocker)$/);
   const developmentRuntimeMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/development-runtime$/);
-  const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|escalate|archive)$/);
+  const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|recovery|escalate|archive)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
   const baselineRevisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/revisions\/([^/]+)\/start-revision$/);
   const technologyCatalogRevisionMatch = url.pathname.match(/^\/api\/technology\/catalog-revisions\/([^/]+)$/);
@@ -201,6 +202,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'development') return respond(response,202,await startDevelopment(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'restart-development') return respond(response,202,await restartDevelopmentOrchestration(workItemMatch[1],workItemMatch[2],request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'retry-development') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');return respond(response,202,await retryDevelopmentWorkItem(workItemMatch[1],workItemMatch[2],await json(request),idempotencyKey,principal!.id)); }
+  if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'recovery') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');await json(request);return respond(response,202,await requestWorkItemRecovery(workItemMatch[1],workItemMatch[2],idempotencyKey)); }
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'resolve-external-blocker') return respond(response,202,await resolveExternalBlocker(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'qa') return respond(response,202,await submitQa(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'rework') return respond(response,202,await authorizeRework(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
@@ -214,6 +216,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (candidateMatch && request.method === 'POST' && candidateMatch[3] === 'integrate') return respond(response,202,await startIntegration(candidateMatch[1],candidateMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (candidateMatch && request.method === 'POST' && candidateMatch[3] === 'retry') return respond(response,202,await retryIntegration(candidateMatch[1],candidateMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (candidateMatch && request.method === 'POST' && candidateMatch[3] === 'reconcile') return respond(response,202,await reconcileIntegrationAttempt(candidateMatch[1],candidateMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
+  if (candidateMatch && request.method === 'POST' && candidateMatch[3] === 'recovery') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');await json(request);return respond(response,202,await requestIntegrationRecovery(candidateMatch[1],candidateMatch[2],idempotencyKey)); }
   if (candidateMatch && request.method === 'POST' && candidateMatch[3] === 'archive') return respond(response,202,await archiveIntegration(candidateMatch[1],candidateMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (match && request.method === 'PUT' && match[2] === undefined) return respond(response, 200, await bindRepository(match[1], await json(request)));
   if (match && request.method === 'PUT' && match[2] === 'intake') return respond(response, 200, await saveIntake(match[1], await json(request)));
@@ -235,7 +238,7 @@ if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.
   // Server-side development reservation reconciliation runs OUTSIDE the worker
   // so a RESERVED delivery whose job is never consumed (or whose worker died)
   // is still reconciled to terminal/recoverable on a bounded schedule.
-  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileEligibilityScheduler()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
+  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');clearInterval(reconcileTimer);server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }
