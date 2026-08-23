@@ -7,6 +7,7 @@ if (!process.env.DATABASE_URL) {
 } else {
   const { pool, withTransaction } = await import('./db.js');
   const { catalogGateProjection, decideCatalogGate, openCatalogGate } = await import('./gate-catalog.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
   const projectId=randomUUID();
   const opening={gate_code:'MATERIAL_ARCHITECTURE',scope_type:'MODULE',scope_id:randomUUID(),condition_code:'MATERIALITY_POLICY_MATCHED',reason:'A alteração rompe contrato público.',evidence:{policy_id:'architecture/materiality',policy_version:1,material_impacts:['contrato público'],alternatives:['mudança compatível'],affected_boundaries:['module:catalog']}};
 
@@ -21,6 +22,8 @@ if (!process.env.DATABASE_URL) {
   test('GAT-01 persists catalog contracts, rejects stale/unauthorized decisions, replays idempotently and exposes escalation exits', async t => {
     t.after(async()=>{await clean(); await pool.end();});
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,state,draft) VALUES($1,'GAT-01','owner','tester','/tmp','local','main','000','REGISTERED','{}')`,[projectId]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'TECH_LEAD',action_code:'DECIDE_CATALOG_GATE',resource_type:'MODULE',resource_id:opening.scope_id}]);
+    const originalFetch=globalThis.fetch;globalThis.fetch=(input:any,init:any={})=>originalFetch(input,{...init,headers:{...session.headers,...init.headers}});t.after(async()=>{globalThis.fetch=originalFetch;await session.cleanup();});
     const gate:any=await withTransaction(client=>openCatalogGate(client,projectId,{...opening,idempotency_key:`open-${projectId}`}));
     assert.equal(gate.status,'OPEN');
     assert.equal(gate.gate_code,'MATERIAL_ARCHITECTURE');

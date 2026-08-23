@@ -1,7 +1,7 @@
 ---
 task: GAT-03
 document_type: mandatory-authentication-rbac-prevalidation
-status: BLOCKED_BY_ARCHITECTURAL_DECISION
+status: DECISÃO_ARQUITETURAL_APROVADA
 validated_at: 2026-08-22
 catalog_dependency: GAT-01/v2
 ---
@@ -10,8 +10,22 @@ catalog_dependency: GAT-01/v2
 
 ## Resultado da trava
 
-**DECISÃO ARQUITETURAL NECESSÁRIA.** Não foi implementado middleware, sessão,
-token, identidade de serviço, RBAC, CSRF, migration ou alteração de rota.
+**Histórico preservado — DECISÃO ARQUITETURAL NECESSÁRIA.** A trava original
+foi aprovada em 2026-08-22. A decisão abaixo desbloqueia a implementação.
+
+### DECISÃO ARQUITETURAL APROVADA
+
+O MVP local usa `LocalIdentityProvider`: principal persistido, hash `scrypt` de
+senha/segredo, sessão server-side e identificador opaco em cookie `HttpOnly` e
+`SameSite=Strict`. A sessão expira, pode ser revogada e exige `Origin` igual a
+`NAAMIVE_WEB_ORIGIN` e token CSRF em mutações. Roles, grants, projetos,
+recursos e ações são exclusivamente server-side. Não há OIDC nesta fase; a
+fronteira de resolução de principal permite um provider futuro sem redesenhar
+grants ou a GAT-01.
+
+O deployment continua loopback/same-origin. Essa decisão não autoriza exposição
+remota: qualquer boundary fora do host local exige nova revisão de segurança,
+TLS e mecanismo de identidade confiável.
 
 O deployment aprovado/documentado é um MVP local, sem provedor de identidade,
 sem cadastro de usuários, sem sessão, sem proxy autenticador e sem contrato de
@@ -114,7 +128,9 @@ configuração legada do processo.
 5. Se a UI usará cookie/sessão ou credencial fora de cookie, para então aplicar
    a proteção CSRF/sessão correspondente.
 
-Após essa decisão, a implementação deve ser fail-closed, centralizar a decisão
-de autorização em cada comando e acrescentar os testes de matriz, anônimo,
-spoofing, CSRF/sessão, expiração/revogação, cross-project, service identity,
-redaction e E2E UI+servidor exigidos pela GAT-03.
+Os service principals `WORKER_SERVICE` e `AGENT_SERVICE` têm credenciais
+distintas, hash seguro, grants mínimos, expiração/revogação e rotação. Eles não
+possuem roles humanas nem decidem gates. O bootstrap do primeiro administrador
+usa exclusivamente `NAAMIVE_AUTH_BOOTSTRAP_SECRET` (mínimo de 32 caracteres),
+uma única vez; ele cria o principal e grants iniciais auditáveis, e não funciona
+como senha mestre depois que existir `CONFIGURATION_ADMIN` ativo.

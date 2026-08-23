@@ -17,6 +17,29 @@ npm run dev
 npm run worker
 ```
 
+## Autenticação local e RBAC (GAT-03)
+
+O runtime local não possui usuário padrão. Antes de usar a UI/API, defina um
+segredo aleatório de pelo menos 32 caracteres em `NAAMIVE_AUTH_BOOTSTRAP_SECRET`
+e execute uma única vez, pela mesma origem local, `POST /api/auth/bootstrap`
+com o header `X-Naamive-Bootstrap-Secret` e corpo `username`/`password`. O
+segredo de bootstrap não autentica requisições após a criação do primeiro
+administrador e não deve ser registrado em shell history, logs ou arquivos
+versionados.
+
+Use `POST /api/auth/login` para receber o cookie de sessão `HttpOnly` e o token
+CSRF, que deve ser enviado em `X-CSRF-Token` para mutações. `POST
+/api/auth/logout` revoga a sessão. O administrador cria usuários, grants e
+service principals em `/api/admin/auth/principals` e
+`/api/admin/auth/service-principals`; a credencial de serviço é retornada uma
+única vez, deve ir ao secret store/configuração protegida e pode ser rotacionada.
+
+O worker exige `NAAMIVE_WORKER_SERVICE_ID` e
+`NAAMIVE_WORKER_SERVICE_SECRET` criados pelo administrador. `NAAMIVE_OPERATOR_ID`
+e os headers `x-actor-*`/`x-naamive-operator` são legado e não concedem
+identidade ou autoridade aos fluxos novos. A API permanece loopback: não a
+exponha remotamente sem uma nova revisão de fronteira, TLS e autenticação.
+
 Se você estiver na raiz do repositório (`~/git/naamive`), prefixe os comandos
 com o diretório do runtime em vez de executá-los diretamente:
 

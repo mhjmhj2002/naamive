@@ -21,6 +21,9 @@ export const config = () => {
   if (!new URL(webOrigin).hostname || !isLoopback(new URL(webOrigin).hostname)) throw new Error('NAAMIVE_WEB_ORIGIN must be localhost-only');
   const developmentExecutorRaw=process.env.NAAMIVE_DEVELOPMENT_EXECUTOR;
   if(developmentExecutorRaw && !['codex','deepseek','controlled'].includes(developmentExecutorRaw)) throw new Error('NAAMIVE_DEVELOPMENT_EXECUTOR must be codex, deepseek or controlled');
+  const authSessionHours=Number(process.env.NAAMIVE_AUTH_SESSION_HOURS ?? 8);
+  if(!Number.isFinite(authSessionHours)||authSessionHours<1||authSessionHours>168)throw new Error('NAAMIVE_AUTH_SESSION_HOURS must be between 1 and 168');
+  if(process.env.NAAMIVE_AUTH_BOOTSTRAP_SECRET!==undefined&&process.env.NAAMIVE_AUTH_BOOTSTRAP_SECRET!==''&&process.env.NAAMIVE_AUTH_BOOTSTRAP_SECRET.length<32)throw new Error('NAAMIVE_AUTH_BOOTSTRAP_SECRET must have at least 32 characters');
   return {
     databaseUrl: required('DATABASE_URL'),
     // Checked when a long-running SERVER/WORKER process is started.  Keeping
@@ -33,6 +36,7 @@ export const config = () => {
     host,
     webOrigin,
     port: Number(process.env.PORT ?? 3000),
+    authSessionHours,
     agentTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_TIMEOUT_SECONDS ?? 600),
     agentReadinessTimeoutSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_TIMEOUT_SECONDS ?? 20),
     agentReadinessCacheSeconds: Number(process.env.NAAMIVE_AGENT_READINESS_CACHE_SECONDS ?? 300),

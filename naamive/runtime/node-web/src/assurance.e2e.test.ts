@@ -15,6 +15,7 @@ if (!process.env.DATABASE_URL) {
   const { putArtifact } = await import('./artifacts.js');
   const { runOnce } = await import('./worker.js');
   const { createApiServer } = await import('./server.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
 
   const project = randomUUID(), revision = randomUUID(), runtimeA = randomUUID(), runtimeB = randomUUID(), policy = randomUUID();
   const assurancePolicy = randomUUID(), correlation = randomUUID();
@@ -68,6 +69,8 @@ if (!process.env.DATABASE_URL) {
   test('F6 durably dispatches independent review, safely replays it, and keeps unavailable reviewers non-accepting', async (t) => {
     t.after(async () => { await clean(); await pool.end(); });
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,state,draft) VALUES($1,'F6 E2E','owner','tester','/tmp','local','main','000','REGISTERED','{}')`,[project]);
+    const session=await testAuthenticatedHeaders(project,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'ON_CALL_OWNER',action_code:'ASSURANCE_ON_CALL'},{role_code:'TECH_LEAD',action_code:'ASSURANCE_GATE'},{role_code:'REPOSITORY_OWNER',action_code:'ASSURANCE_GATE'}]);
+    const originalFetch=globalThis.fetch;globalThis.fetch=(input:any,init:any={})=>originalFetch(input,{...init,headers:{...session.headers,...init.headers}});t.after(async()=>{globalThis.fetch=originalFetch;await session.cleanup();});
     await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,'{}',$3,$4,'file:///tmp/f6','tester')`,[revision,project,'a'.repeat(64),'b'.repeat(64)]);
     await withTransaction(async c => {
       await c.query(`INSERT INTO ai_runtime(id,name,environment,enabled,current_configuration_version) VALUES($1,$2,'test',true,1)`,[runtimeA,`f6-${runtimeA}`]);
@@ -148,7 +151,7 @@ if (!process.env.DATABASE_URL) {
     assert.equal(Number((await pool.query('SELECT count(*)::int n FROM review_decisions WHERE review_id=$1',[review.id])).rows[0].n),1);
 
     const projectionUrl=`${base}/api/projects/${project}/assurance?correlation_id=${correlation}&limit=2`;
-    const unauthorizedProjection=await (await fetch(projectionUrl)).json(); assert.deepEqual(unauthorizedProjection.allowed_actions,[]); assert.ok(unauthorizedProjection.acceptances.length<=2);
+    const unauthorizedResponse=await originalFetch(projectionUrl); assert.equal(unauthorizedResponse.status,401);
     const ownerProjection=await (await fetch(projectionUrl,{headers:{'x-actor-role':'ON_CALL_OWNER'}})).json(); assert.ok(ownerProjection.allowed_actions.includes('RECONCILE_ACCEPTANCE'));
     const nested=await (await fetch(`${base}/api/projects/${project}/work-items/${randomUUID()}/assurance`)).json(); assert.equal(nested.scope.target_type,'work_item'); assert.deepEqual(nested.acceptances,[]);
 
@@ -157,7 +160,7 @@ if (!process.env.DATABASE_URL) {
     await transitionBlock(reviewerBlock,'ESCALATED',{reason:'critical ambiguity',evidence:{reference:'escalation-1'}},'escalate-review-block');
     await assert.rejects(()=>transitionBlock(reviewerBlock,'RESOLUTION_SELECTED',{reason:'choose repair',evidence:{reference:'decision-1'}},'select-before-gate'),/ASSURANCE_ESCALATED_CLOSURE_GATE_REQUIRED/);
     const gateUrl=`${base}/api/projects/${project}/assurance/gates`,gateBody={block_id:reviewerBlock,gate_type:'ESCALATED_CLOSURE',decision:'APPROVED',reason:'authorized closure',evidence:{reference:'gate-1'},scope:{block_id:reviewerBlock},classification:'INTERNAL'};
-    assert.equal((await fetch(gateUrl,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'ON_CALL_OWNER'},body:JSON.stringify(gateBody)})).status,403);
+    assert.equal((await originalFetch(gateUrl,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'ON_CALL_OWNER'},body:JSON.stringify(gateBody)})).status,401);
     const closureResponse=await fetch(gateUrl,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'TECH_LEAD','idempotency-key':'closure-gate-once'},body:JSON.stringify(gateBody)});
     assert.equal(closureResponse.status,202); assert.equal((await closureResponse.json()).correlation_id,correlation);
     const reworked=await makeAcceptance();
@@ -189,7 +192,7 @@ if (!process.env.DATABASE_URL) {
     const cancelled=await makeAcceptance();
     const pending:any=(await pool.query(`SELECT * FROM assurance_reviews WHERE acceptance_id=$1`,[cancelled.acceptance])).rows[0];
     const url=`${base}/api/projects/${project}/assurance/acceptances/${cancelled.acceptance}/cancel`;
-    assert.equal((await fetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reason:'operator requested',evidence:{reference:'incident-1'}})})).status,403);
+    assert.equal((await originalFetch(url,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({reason:'operator requested',evidence:{reference:'incident-1'}})})).status,401);
     const cancelHeaders={'content-type':'application/json','x-actor-role':'ON_CALL_OWNER','x-actor-id':'f6-owner','idempotency-key':`cancel-acceptance-once:${project}`};
     const cancelBody=JSON.stringify({reason:'operator requested',evidence:{reference:'incident-1'}});
     assert.equal((await fetch(url,{method:'POST',headers:cancelHeaders,body:cancelBody})).status,202);

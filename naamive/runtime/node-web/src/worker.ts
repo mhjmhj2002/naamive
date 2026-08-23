@@ -18,6 +18,7 @@ import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } fro
 import { detectDevelopmentRuntimeInconsistencies, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { startRuntimeProcess } from './runtime-process.js';
 import { executeIndependentReview } from './assurance.js';
+import { configuredWorkerService } from './auth.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -277,6 +278,9 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
 };
 
 if (process.argv[1]?.endsWith('worker.ts') || process.argv[1]?.endsWith('worker.js')) {
+  // A credencial é criada/rotacionada pelo administrador e nunca é uma sessão
+  // humana ou o NAAMIVE_OPERATOR_ID legado. Sem ela o worker falha fechado.
+  await configuredWorkerService();
   const stopRuntime=await startRuntimeProcess('WORKER');
   log('worker', 'info', 'worker_started', { poll_interval_seconds: 1 });
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('worker','info','worker_stopped');await stopRuntime();await pool.end();process.exit(0);};

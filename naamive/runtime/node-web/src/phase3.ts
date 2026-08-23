@@ -262,7 +262,7 @@ export const restartDevelopmentOrchestration=async(projectId:string,workItemId:s
  * reuses only a released, clean reservation; the worker still reconciles it
  * before touching Git.  A source operation can produce one retry lineage. */
 export const retryDevelopmentWorkItem=async(projectId:string,workItemId:string,body:Record<string,unknown>,idempotencyKey:string,operatorId=config().operatorId)=>withTransaction(async c=>{
-  if(!operatorId||operatorId!==config().operatorId)throw new ApiError(403,'OPERATOR_NOT_AUTHORIZED');
+  if(!operatorId)throw new ApiError(403,'OPERATOR_NOT_AUTHORIZED');
   const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};
   const failedOperationId=typeof body.failed_operation_id==='string'?body.failed_operation_id:'';
   if(!failedOperationId)throw new ApiError(422,'FAILED_OPERATION_ID_REQUIRED');
