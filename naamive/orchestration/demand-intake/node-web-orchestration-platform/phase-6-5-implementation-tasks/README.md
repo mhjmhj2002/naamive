@@ -13,7 +13,7 @@ Baseline histórica imutável:
 | 2 | [GAT-01 — Catálogo server-side de gates e autoridade](GAT-01-server-side-gate-catalog.md) | `DONE` | LR-01 |
 | 3 | [GAT-03 — Autenticação e RBAC](GAT-03-authentication-rbac.md) | `DONE` | GAT-01 |
 | 4 | [AUT-01 — Scheduler transacional de elegibilidade](AUT-01-transactional-eligibility-scheduler.md) | `DONE` | LR-01, GAT-01, GAT-03 |
-| 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `TO_DO / NEXT` | LR-01 |
+| 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `TO_DO / NEXT` | LR-01, AUT-01 |
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` | LR-01, GAT-01 |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |
@@ -28,7 +28,9 @@ Baseline histórica imutável:
 dependência conceitual original de AUT-01 em LR-01 descreve o contrato de
 lifecycle que ela consome; a fronteira final de execução também exige GAT-01 e
 GAT-03, pois o scheduler opera sob catálogo de autoridade e identidade/RBAC
-verificáveis. Isso não altera as dependências de REC-01 nem antecipa seu escopo.
+verificáveis. REC-01 preserva sua dependência conceitual em LR-01 e acrescenta
+AUT-01 como fronteira funcional, pois recovery administra attempts e só pode
+criar nova execução pela reservation transacional do scheduler.
 
 Fonte canônica do planejamento:
 [16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md](../16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md).

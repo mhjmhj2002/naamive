@@ -52,7 +52,9 @@ No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o
 contrato do lifecycle. A fronteira final de execução registrada na task é
 `[LR-01, GAT-01, GAT-03]`: além do lifecycle, o scheduler requer catálogo de
 autoridade e identidade/RBAC verificáveis. A distinção preserva o planejamento
-original e não cria dependência nova para REC-01.
+original. REC-01 preserva dependência conceitual em LR-01 e possui fronteira
+funcional `[LR-01, AUT-01]`, porque administra attempts/reservations/jobs
+publicados por AUT-01; GAT-01/GAT-03 permanecem guardrails de autoridade.
 
 ## Problemas identificados
 
@@ -204,7 +206,7 @@ original e não cria dependência nova para REC-01.
 | 2 | `GAT-01` | Tornar gates e autoridades uma política server-side explícita. | LR-01 |
 | 3 | `GAT-03` | Autenticar identidade e aplicar RBAC às ações sensíveis. | GAT-01 |
 | 4 | `AUT-01` | Despachar WIs elegíveis transacionalmente. | LR-01 |
-| 5 | `REC-01` | Selecionar recovery pela causa e eliminar ações ambíguas. | LR-01 |
+| 5 | `REC-01` | Selecionar recovery pela causa e eliminar ações ambíguas. | LR-01, AUT-01 |
 | 6 | `LR-02` | Sincronizar macro-lifecycle e automações de passagem macro. | LR-01, GAT-01 |
 | 7 | `AUT-02` | Encadear QA, review, merge, candidata, validação e integração. | AUT-01, REC-01, LR-02 |
 | 8 | `AUT-03` | Aplicar F6 aos trabalhos reais selecionados. | AUT-02 |
@@ -222,6 +224,7 @@ flowchart LR
   LR01[LR-01] --> GAT01[GAT-01] --> GAT03[GAT-03]
   LR01 --> AUT01[AUT-01]
   LR01 --> REC01[REC-01]
+  AUT01 --> REC01
   LR01 --> LR02[LR-02]
   GAT01 --> LR02
   AUT01 --> AUT02[AUT-02]

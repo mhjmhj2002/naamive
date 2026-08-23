@@ -2,7 +2,7 @@
 task: REC-01
 status: TO DO
 title: Recovery orientado pela causa
-depends_on: [LR-01]
+depends_on: [LR-01, AUT-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
@@ -39,14 +39,23 @@ worktree/Git, endpoints de retry/restart/rework, projections e audit events.
 
 ## Dependências e restrições
 
-Depende de LR-01. Não corrige reviewer/block F6 (REC-02), não apaga tentativa
-ou worktree ambíguo e não oferece mais de uma ação incompatível por estado/causa.
+Depende conceitualmente de LR-01 e funcionalmente de AUT-01: toda nova attempt,
+reservation ou job deve respeitar a fronteira transacional do scheduler. GAT-01
+e GAT-03 são guardrails para eventual decisão humana, sem ampliar a fronteira
+funcional. Não corrige reviewer/block F6 (REC-02), não apaga tentativa ou
+worktree ambíguo e não oferece mais de uma ação incompatível por estado/causa.
+
+Contrato de pré-validação publicado em
+[`REC-01-cause-aware-recovery-prevalidation.md`](REC-01-cause-aware-recovery-prevalidation.md):
+`EFFECT_UNKNOWN ⇒ RECONCILE BEFORE RETRY`, matriz de footprints, semântica das
+ações, `RecoveryDecision` auditável, integração AUT-01 e fronteira REC-02.
 
 ## Estratégia de implementação e migração
 
-Publicar taxonomia de causas e matriz causa→ação; centralizar classificação;
-resolver contexto no servidor; executar/persistir decisão idempotente; reconciliar
-estado intermediário; mapear estados legados sem ação e preservar evidência.
+Implementar a taxonomia e matriz versionadas já pré-validadas; centralizar
+`RecoveryClassifier` e `RecoveryExecutor`; resolver contexto no servidor;
+executar/persistir decisão idempotente; reconciliar estado intermediário;
+mapear estados legados sem ação e preservar evidência.
 
 ## Critérios de aceite
 

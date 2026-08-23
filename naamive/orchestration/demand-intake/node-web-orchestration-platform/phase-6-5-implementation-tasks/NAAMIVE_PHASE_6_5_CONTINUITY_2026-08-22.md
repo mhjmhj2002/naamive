@@ -365,6 +365,13 @@ direto. Não há evidência atual de hook direto e este ponto não reabre AUT-01
 
 ## 7. Próxima task funcional — REC-01 (`TO_DO / NEXT`)
 
+Fronteira funcional final: `[LR-01, AUT-01]`. LR-01 fornece o lifecycle v2;
+AUT-01 fornece attempts, reservations, jobs, capacidade e scheduler/reconciler.
+GAT-01/GAT-03 são guardrails para qualquer escalada humana, não dependências
+funcionais mecânicas. A pré-validação está em
+`REC-01-cause-aware-recovery-prevalidation.md` e classificou a task como
+`READY_FOR_IMPLEMENTATION`, mantendo o status da task em `TO_DO`.
+
 Recovery orientado pela causa.
 
 Objetivo:
