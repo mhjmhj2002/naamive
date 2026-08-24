@@ -89,3 +89,20 @@ lineage cross-project e coexistência legado. Migrations, build e regressões de
 gate, auth, discovery, workflow, HTTP, projection, AUT-01, REC-01 e Phase 3
 passaram. Nenhum módulo ou `module_revision` é criado pelo fluxo LR-02A; LR-02,
 AUT-02, GAT-02 e REC-02 não foram iniciadas.
+
+### Correção LR-02A-FIX-01 — evolução aprovada
+
+A migration aditiva `062_phase_6_5_product_commitment_approved_succession.sql`
+fecha o gap auditado de sucessão de uma revisão `APPROVED`. Uma proposta
+sucessora agora mantém a autoridade anterior aprovada enquanto está pendente;
+na aprovação, gate, predecessor `SUPERSEDED`, sucessora `APPROVED` e eventos
+são confirmados na mesma transação. O índice estrutural de uma única `APPROVED`
+foi preservado e foi acrescentada unicidade para uma única
+`PENDING_APPROVAL` por projeto.
+
+Após rejeição de uma sucessora, a revisão aprovada corrente permanece intacta.
+A rodada seguinte aponta para a revisão rejeitada e a aprovação resolve a
+autoridade substituída por sua cadeia ancestral. Testes PostgreSQL comprovam
+replay, corridas de criação/aprovação, múltiplas gerações, imutabilidade e
+rollback após superseder a predecessora. LR-02A retorna a `DONE`; LR-02 segue
+`TO_DO / NEXT / READY_FOR_IMPLEMENTATION`.

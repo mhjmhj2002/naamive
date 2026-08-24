@@ -6,6 +6,10 @@ dois findings da auditoria de `9e9bdaf0` foram fechados. A fonte canônica de
 módulos comprometidos foi publicada e a próxima task serial é `LR-02`, cuja
 pré-validação está `READY_FOR_IMPLEMENTATION`.
 
+O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
+podem evoluir por troca atômica da revisão corrente, mantendo uma única
+`APPROVED`, uma única proposta pendente e todo o histórico imutável.
+
 Baseline histórica imutável:
 `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`.
 

@@ -54,6 +54,11 @@ LR-02A publicou o contrato canônico em `gate_records` (não na tabela legada
 `gates`) e separou o schema de materialization lineage da execução macro que
 continua pertencendo a LR-02.
 
+O finding LR-02A-FIX-01 foi encerrado aditivamente pela migration 062. Uma
+revisão aprovada pode receber proposta sucessora sem perder a autoridade
+corrente; a aprovação seguinte troca predecessor/sucessora atomicamente,
+preserva uma única `APPROVED` e mantém lineage através de rework rejeitado.
+
 No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o
 contrato do lifecycle. A fronteira final de execução registrada na task é
 `[LR-01, GAT-01, GAT-03]`: além do lifecycle, o scheduler requer catálogo de

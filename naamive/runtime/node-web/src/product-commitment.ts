@@ -182,10 +182,10 @@ export const createProductCommitmentRevision = async (
     const hashes=new Map(persisted.map(row=>[String(row.id),String(row.sha256)]));
     if(artifactRefs.some(reference=>hashes.get(reference.artifact_id)!==reference.sha256)) throw new ApiError(422,'PRODUCT_COMMITMENT_SOURCE_EVIDENCE_INVALID');
   }
-  const active=(await client.query(`SELECT id,status FROM product_commitment_revisions WHERE project_id=$1 AND status IN ('PENDING_APPROVAL','APPROVED') ORDER BY revision_number DESC LIMIT 1`,[projectId])).rows[0];
-  if(active) throw new ApiError(409,active.status==='APPROVED'?'PRODUCT_COMMITMENT_ALREADY_APPROVED':'PRODUCT_COMMITMENT_APPROVAL_PENDING');
+  const pending=(await client.query(`SELECT id FROM product_commitment_revisions WHERE project_id=$1 AND status='PENDING_APPROVAL' ORDER BY revision_number DESC LIMIT 1`,[projectId])).rows[0];
+  if(pending) throw new ApiError(409,'PRODUCT_COMMITMENT_APPROVAL_PENDING');
   const predecessor=(await client.query(`SELECT id,status,revision_number,logical_round FROM product_commitment_revisions WHERE project_id=$1 ORDER BY revision_number DESC LIMIT 1`,[projectId])).rows[0];
-  if(predecessor && predecessor.status!=='REJECTED') throw new ApiError(409,'PRODUCT_COMMITMENT_REWORK_NOT_ALLOWED');
+  if(predecessor&&!['APPROVED','REJECTED'].includes(predecessor.status)) throw new ApiError(409,'PRODUCT_COMMITMENT_SUCCESSOR_NOT_ALLOWED');
   const revisionNumber=(BigInt(predecessor?.revision_number??0)+1n).toString();
   const logicalRound=(BigInt(predecessor?.logical_round??0)+1n).toString();
   const canonical=canonicalProductCommitment(proposal,{source_intake_revision_id:lineage.intake_id,source_requirements_artifact_id:lineage.requirements_id,source_requirements_sha256:lineage.requirements_sha256});
@@ -196,7 +196,7 @@ export const createProductCommitmentRevision = async (
     const {module_key,source_evidence,...payload}=module;
     await client.query(`INSERT INTO product_commitment_modules(id,project_id,product_commitment_revision_id,module_key,ordinal,payload,source_evidence) VALUES($1,$2,$3,$4,$5,$6,$7)`,[randomUUID(),projectId,revisionId,module_key,index+1,payload,source_evidence]);
   }
-  if(predecessor){
+  if(predecessor?.status==='REJECTED'){
     await client.query(`UPDATE product_commitment_revisions SET status='SUPERSEDED' WHERE id=$1`,[predecessor.id]);
     await auditEvent(client,projectId,'PRODUCT_COMMITMENT_SUPERSEDED',correlationId,{revision_id:predecessor.id,successor_revision_id:revisionId,canonical_sha256:canonical.canonical_sha256},createdBy);
   }
@@ -218,6 +218,8 @@ const criticalDecisionEvidence=new Set([
 ]);
 
 export const decideProductCommitmentGate = async (projectId:string, gateId:string, input:GateDecision) => withTransaction(async client=>{
+  const project=(await client.query(`SELECT id FROM projects WHERE id=$1 FOR UPDATE`,[projectId])).rows[0];
+  if(!project) throw new ApiError(404,'PROJECT_NOT_FOUND');
   const priorDecision=input.idempotency_key ? (await client.query(`SELECT d.gate_id,r.id AS revision_id FROM gate_decisions d LEFT JOIN product_commitment_revisions r ON r.gate_record_id=d.gate_id WHERE d.idempotency_key=$1`,[input.idempotency_key])).rows[0] : null;
   if(priorDecision){
     if(priorDecision.gate_id!==gateId||!priorDecision.revision_id) throw new ApiError(409,'IDEMPOTENCY_KEY_REUSED');
@@ -232,9 +234,26 @@ export const decideProductCommitmentGate = async (projectId:string, gateId:strin
   if(row.gate_code!=='PRODUCT_COMMITMENT'||row.scope_type!=='PROJECT'||row.scope_id!==projectId) throw new ApiError(409,'PRODUCT_COMMITMENT_GATE_BINDING_INVALID');
   if(row.status!=='PENDING_APPROVAL'||row.gate_status!=='OPEN') throw new ApiError(409,'PRODUCT_COMMITMENT_REVISION_NOT_PENDING');
   if(row.gate_evidence.product_commitment_revision_id!==row.id||row.gate_evidence.canonical_sha256!==row.canonical_sha256||row.gate_evidence.contract_version!==row.contract_version||row.gate_evidence.requirements_revision_id!==row.source_intake_revision_id||row.gate_evidence.source_requirements_artifact_id!==row.source_requirements_artifact_id||row.gate_evidence.source_requirements_sha256!==row.source_requirements_sha256||row.gate_evidence.source_review_artifact_id!==row.source_review_artifact_id||row.gate_evidence.source_review_sha256!==row.source_review_sha256) throw new ApiError(409,'PRODUCT_COMMITMENT_GATE_EVIDENCE_INVALID');
-  const decided=await decideCatalogGate(client,projectId,gateId,input);
   const target=input.decision==='APPROVE'?'APPROVED':input.decision==='REWORK'?'REJECTED':null;
   if(!target) throw new ApiError(422,'GATE_DECISION_NOT_ALLOWED');
+  const immediatePredecessor=row.supersedes_revision_id?(await client.query(`SELECT id,status,revision_number,logical_round FROM product_commitment_revisions WHERE id=$1 AND project_id=$2 FOR UPDATE`,[row.supersedes_revision_id,projectId])).rows[0]:null;
+  if(row.supersedes_revision_id&&!immediatePredecessor) throw new ApiError(409,'PRODUCT_COMMITMENT_SUCCESSOR_LINEAGE_INVALID');
+  const currentApproved=(await client.query(`SELECT id,revision_number,logical_round,canonical_sha256 FROM product_commitment_revisions WHERE project_id=$1 AND status='APPROVED' FOR UPDATE`,[projectId])).rows[0]??null;
+  if(target==='APPROVED'&&currentApproved){
+    const ancestor=(await client.query(`WITH RECURSIVE ancestry AS (
+      SELECT id,supersedes_revision_id,revision_number,logical_round FROM product_commitment_revisions WHERE id=$1 AND project_id=$2
+      UNION
+      SELECT predecessor.id,predecessor.supersedes_revision_id,predecessor.revision_number,predecessor.logical_round
+      FROM product_commitment_revisions predecessor JOIN ancestry successor ON successor.supersedes_revision_id=predecessor.id
+      WHERE predecessor.project_id=$2
+    ) SELECT 1 FROM ancestry WHERE id=$3 AND revision_number<$4 AND logical_round<$5`,[row.id,projectId,currentApproved.id,row.revision_number,row.logical_round])).rowCount;
+    if(!ancestor) throw new ApiError(409,'PRODUCT_COMMITMENT_APPROVED_PREDECESSOR_MISMATCH');
+  }
+  const decided=await decideCatalogGate(client,projectId,gateId,input);
+  if(target==='APPROVED'&&currentApproved){
+    await client.query(`UPDATE product_commitment_revisions SET status='SUPERSEDED' WHERE id=$1`,[currentApproved.id]);
+    await auditEvent(client,projectId,'PRODUCT_COMMITMENT_SUPERSEDED',decided.correlation_id,{revision_id:currentApproved.id,successor_revision_id:row.id,predecessor_canonical_sha256:currentApproved.canonical_sha256,successor_canonical_sha256:row.canonical_sha256},input.actor_id);
+  }
   await client.query(`UPDATE product_commitment_revisions SET status=$2,approved_at=CASE WHEN $2='APPROVED' THEN clock_timestamp() ELSE NULL END WHERE id=$1`,[row.id,target]);
   await auditEvent(client,projectId,target==='APPROVED'?'PRODUCT_COMMITMENT_APPROVED':'PRODUCT_COMMITMENT_REJECTED',decided.correlation_id,{revision_id:row.id,gate_record_id:gateId,gate_decision_id:decided.decision_id,decision:input.decision,canonical_sha256:row.canonical_sha256,contract_version:row.contract_version,reason:input.reason},input.actor_id);
   return revisionProjection(client,row.id);

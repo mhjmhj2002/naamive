@@ -406,6 +406,12 @@ schema/hash server-side, binding GAT-01/GAT-03, read model, eventos e estrutura
 vazia de materialization lineage foram validados em PostgreSQL real. O fluxo
 não materializa módulos e preserva o legado.
 
+O finding LR-02A-FIX-01 foi fechado pela migration 062 e regressões em
+PostgreSQL: uma revisão `APPROVED` admite sucessora pendente; aprovação troca a
+autoridade atomicamente, rejeição preserva a current approved, cadeias de
+rework continuam rastreáveis e os índices impedem duas revisões aprovadas ou
+pendentes por projeto.
+
 ---
 
 ### LR-02 — TO_DO / NEXT / READY_FOR_IMPLEMENTATION
