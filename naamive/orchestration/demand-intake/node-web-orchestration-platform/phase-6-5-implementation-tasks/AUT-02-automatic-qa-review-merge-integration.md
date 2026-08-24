@@ -33,6 +33,9 @@ estado sem comando humano.
 - QA/review/merge usam o mesmo snapshot imutável e SHA;
 - somente Assurance persiste `ACCEPT`; ausência de policy/reviewer nunca autoaceita;
 - REC-01 é a única autoridade para `EFFECT_UNKNOWN` e recovery;
+- merge é por WI, mas a candidata imutável é por module revision/round e só
+  nasce quando todo o conjunto requerido estiver pronto;
+- revision stale antes de `PRE_EFFECT` é fail-closed (`SUPERSEDED`/`NO_OP`);
 - merge/candidata/integração têm fencing, idempotência e reconciliação Git;
 - AUT-03, REC-02 e GAT-02 não são antecipadas; LR-02 é a única autoridade macro.
 
@@ -57,7 +60,7 @@ legado, sem bypass de saga.
 - output cria QA automático sobre snapshot congelado;
 - QA pass cria review independente; só `ACCEPT` autoriza merge;
 - QA/review/validation negativos produzem finding, rework ou stop corretos;
-- merge, candidata, validation e integration são auditáveis e exatamente uma vez;
+- merge por WI e candidata agregada por revision/round são auditáveis e exatamente uma vez;
 - crash/replay/concurrency convergem sem repetir efeito externo;
 - WI integrado emite reavaliação LR-02, sem mutação macro direta;
 - recurso já `CANCELLED` é fenced/no-op; cancelamento funcional é GAT-02.
@@ -67,7 +70,7 @@ legado, sem bypass de saga.
 Executar a matriz completa da prevalidation em PostgreSQL real, incluindo
 happy path, QA failure, `REWORK`/`BLOCK`/`ESCALATE`, no reviewer, stale SHA,
 REC-01 Git recovery, crash/replay, concorrência, revision antiga, recurso já
-`CANCELLED` e coexistência legada.
+`CANCELLED`, candidata multi-WI, succession/pre-effect e coexistência legada.
 
 ## Riscos e evidências esperadas
 

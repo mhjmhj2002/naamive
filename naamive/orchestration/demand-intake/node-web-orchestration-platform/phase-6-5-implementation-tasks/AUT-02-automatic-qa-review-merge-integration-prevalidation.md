@@ -54,7 +54,7 @@ Candidate é entidade lateral, não um estado novo de WI.
 | `INDEPENDENT_REVIEW` | `REWORK` | `REWORK_REQUIRED` | Assurance/F3 | finding + rework | AUT-01 agenda correção |
 | `INDEPENDENT_REVIEW` | `BLOCK` | `BLOCKED` | Assurance | block/finding | parar |
 | `INDEPENDENT_REVIEW` | `ESCALATE` | `WAITING_FOR_ESCALATION` | Assurance/GAT-01 | razão/evidence/autoridade | parar |
-| `ACCEPTED` | merge recorded + candidate | `READY_FOR_INTEGRATION` | AUT-02/Git | SHA, parents, manifest | validate candidate |
+| `ACCEPTED` | merge próprio recorded + `integrationCandidateEligible` do módulo/round | `READY_FOR_INTEGRATION` | AUT-02/Git | todos os membros requeridos, SHA/parents e manifest agregado | validate candidate |
 | `READY_FOR_INTEGRATION` | integration intent | `INTEGRATING` | AUT-02 | candidate validada/refs | integrate |
 | `INTEGRATING` | integration recorded | `INTEGRATED` | AUT-02/Git | remote SHA/parents + attempt | LR-02 re-evaluate |
 
@@ -63,10 +63,15 @@ qaEligible = WI v2 + OUTPUT_SUBMITTED + immutable candidate + !CANCELLED
 qaPassed = todos os comandos da matrix congelada passaram no candidate.head_sha
 reviewEligible = qaPassed + policy selecionada + sem finding/rework aberto
 accepted = work_acceptance=ACCEPTED + única review_decision=ACCEPT
-mergeEligible = accepted + qaPassed + sem finding/rework/recovery + revision atual +
-                snapshot SHA/ref/ancestry válidos
-candidateValid = manifest/hash/lineage/phase ref verificados + sem candidate finding
-integrationEligible = candidateValid + target esperado + sem recovery bloqueante
+mergeEligible = accepted + qaPassed + snapshot/revision lineage válida +
+  module_revision_id == modules.current_revision_id + work_item_revision corrente/elegível +
+  sem finding/rework/recovery/block impeditivo + intent não superseded/cancelled +
+  snapshot SHA/ref/ancestry válidos
+integrationCandidateEligible(module_revision, round) = revision/round corrente e elegível +
+  RequiredWorkItemSet:v1 completo + todo membro com snapshot válido, QA PASS,
+  Assurance ACCEPT e MERGE_RECORDED + sem finding/rework/recovery/block/stale/cancel
+candidateValid = manifest agregado/hash/lineage/phase ref verificados + sem candidate finding
+integrationEligible = candidateValid + target esperado + sem recovery bloqueante + revision ainda corrente
 integrated = remote target == SHA registrado + parents esperados + attempt/evidence persistidos
 ```
 
@@ -92,6 +97,67 @@ de todo efeito irreversível, servidor relê SHA/ref/lineage: QA em A e merge em
 B é proibido. `deliveries.qa_matrix` já é cópia da execução e
 `qa_matrices.payload/hash` é a fonte de hash; AUT-02 fixa esse hash, nunca uma
 matriz atual do work item.
+
+Como o schema atual não possui `work_item_revision_id` separado, o contrato o
+define como referência imutável persistida na implementação: SHA-256 de
+`work-item-revision:v1`, `module_plan_revision_id`, `work_item_id` e payload
+canônico do WI. `work_item_revision corrente/elegível` significa que o mesmo
+ref ainda deriva da única plan revision aprovada aplicável ao module round e
+que o WI não foi superseded/cancelled/reworked. Não é `work_items.version`, que
+incrementa em transições operacionais e não representa revisão de requisitos.
+
+## Unidade agregada da `integration_candidate`
+
+`WorkItemDeliveryCandidate:v1` continua **um por delivery/WI** e
+`MERGE_RECORDED` continua **um por WI**. Em contraste,
+`integration_candidate` é exatamente **um pacote imutável por
+`module_revision_id + module_round_id + generation`**, jamais a consequência
+direta de um merge isolado. Um merge apenas emite
+`REASSESS_INTEGRATION_CANDIDATE` para o módulo/round; não cria candidata.
+
+`RequiredWorkItemSet:v1(module_revision_id,module_round_id)` é a fonte
+normativa, não uma contagem. É a lista canônica de todos os `work_items` v2
+materializados pelo `module_plan_revisions.status=APPROVED` vinculado àquela
+mesma revision e round, com `project_id`/`module_id` idênticos. Ela é lida sob
+lock junto da plan revision, module round e module current revision; IDs de WI
+são ordenados lexicalmente por UUID. Uma plan revision substituída, WI de outra
+round/revision ou linha legada não é membro. Se esse conjunto estiver vazio ou
+não houver uma única plan revision aprovada aplicável, o predicado falha fechado.
+
+```text
+integrationCandidateEligible(module_revision_id, module_round_id) =
+  module.current_revision_id == module_revision_id
+  AND RequiredWorkItemSet:v1 é não vazio e completo
+  AND cada work_item_revision_id ainda corresponde à plan revision aprovada
+  AND cada membro tem WorkItemDeliveryCandidate:v1 válido
+  AND cada membro tem QA terminal PASS, work_acceptance ACCEPTED e MERGE_RECORDED
+  AND nenhum membro tem finding, rework, recovery, block, stale, supersession
+      ou CANCELLED impeditivo
+  AND phase ref/merge lineage de todos os membros ainda é verificável
+```
+
+A candidata contém `project_id`, `module_id`, `module_revision_id`, round e
+generation, pipeline/policy version, a lista canônica ordenada de membros e,
+por membro, `work_item_id`, `work_item_revision_id`, delivery/snapshot IDs,
+QA report/hash, acceptance/review evidence, merge result/evidence e merged SHA.
+Também congela phase/base/target refs e SHAs, lineage, source operation/event/
+correlation, creation generation e `manifest_hash`.
+
+O manifest é canonicalizado como JSON UTF-8: objeto com chaves ordenadas,
+arrays de membros ordenados por `work_item_id` lexical e todos os IDs/hashes
+representados como strings; sem timestamps de execução nem campos derivados
+não determinísticos. `manifest_hash = SHA-256(canonical_manifest)`. A candidata
+é imutável depois de criada. Mudança anterior à criação recalcula o predicado;
+mudança posterior preserva a candidata histórica e a marca
+`SUPERSEDED`/`NO_OP`, ou chama REC-01 se o efeito já começou.
+
+A chave é `candidate:v1:<module_revision_id>:<module_round_id>:<manifest_hash>`.
+Ela representa o conjunto completo, permite replay e só produz nova candidate
+para nova generation/conteúdo canônico; `manifest_hash` é também a identidade
+determinística da generation. A implementação futura deve adicionar
+unicidade equivalente no schema v2; a unicidade legada `(project_id,phase_sha)`
+não é autoridade suficiente para essa unidade agregada e permanece apenas para
+compatibilidade histórica.
 
 ## QA e candidate validation
 
@@ -155,7 +221,9 @@ escalados, evidence e autoridade; WI espera em `WAITING_FOR_ESCALATION`.
 ```text
 review ACCEPT / work_acceptance ACCEPTED
 → MERGE_WORK_ITEM intent → merge ou REC-01 reconcile
-→ MERGE_RECORDED → INTEGRATION_CANDIDATE_CREATED
+→ MERGE_RECORDED → REASSESS_INTEGRATION_CANDIDATE
+→ somente se integrationCandidateEligible(module_revision,round)
+  → INTEGRATION_CANDIDATE_CREATED
 → VALIDATE_INTEGRATION_CANDIDATE → CANDIDATE_VALIDATED
 → INTEGRATE_CANDIDATE → INTEGRATION_RECORDED
 → WI INTEGRATED → MACRO_REEVALUATE (LR-02)
@@ -164,9 +232,12 @@ review ACCEPT / work_acceptance ACCEPTED
 Merge requer `mergeEligible`: acceptance aceita, QA pass, nenhum finding/rework/
 recovery bloqueante, snapshot/revision atuais, SHA igual, base ancestral e phase
 ref esperada. Usa `mergeWorkItem` F3 e só então grava `MERGE_RECORDED` com phase
-SHA, parents, target ref e evidence. A candidate nasce uma vez por
-`candidate:v1:<merge_result_id>`, com snapshot IDs, merge/phase SHA, WI/module
-revisions e acceptance/QA hashes. Rework/block/finding nunca geram candidate.
+SHA, parents, target ref e evidence. Ele só reavalia a candidata agregada do
+módulo/round. A candidata nasce uma vez pela chave canônica agregada, depois de
+todos os WIs requeridos terem seus `MERGE_RECORDED`; rework/block/finding nunca
+geram candidate. Quando o último de N merges é gravado, os concorrentes relêem
+o mesmo `RequiredWorkItemSet:v1` sob lock e a unicidade do manifest permite que
+exatamente um crie a candidata.
 
 Integração só começa em `candidateValid`. `integration_attempt` fixa target
 `integration`, `integration_before_sha`, candidate SHA e parents esperados.
@@ -181,7 +252,8 @@ Push retornando zero não é prova suficiente.
 | development→QA | completion, snapshot, `QA_IN_PROGRESS`, QA intent/job, event |
 | QA pass→review | QA report, acceptance/review, review intent/job, event |
 | review ACCEPT→merge | decision/acceptance, merge intent, event |
-| merge→candidate | merge evidence, candidate/manifest, validation intent, event |
+| merge→candidate eligibility | merge evidence, `REASSESS_INTEGRATION_CANDIDATE` intent, event |
+| candidate aggregated | manifest/candidate de todos os WIs requeridos, validation intent, event |
 | validated→integration | validation report/state, integration intent, event |
 | integrated | evidence/states, WI `INTEGRATED`, event, LR-02 intent |
 
@@ -229,10 +301,25 @@ quando REC-01 confirma defeito, não na incerteza.
 - **LR-02:** recebe intent/fato macro; AUT-02 não altera `projects`/`modules.state`.
 
 Uma module revision nova preserva pipeline antigo como evidência, mas não
-satisfaz a nova. Antes de QA, merge e integration, reler a revisão atual. Se não
-é mais corrente antes de ACCEPT, intent é `SUPERSEDED`; após ACCEPT, merge só é
-permitido com autorização explícita de lineage ainda válida, caso contrário
-também supersede. Nunca apagar records nem herdar QA/acceptance à nova revisão.
+satisfaz a nova. Não existe autorização humana, gate ou lineage excepcional que
+permita continuar. A política é **fail closed**: antes de `PRE_EFFECT` de merge
+ou integration, o executor bloqueia module/current revision, round, WI,
+snapshot/candidate e intent; se a revision não é corrente/elegível, termina a
+intent como `SUPERSEDED`/`NO_OP` sem Git. Snapshot, QA, review, ACCEPT,
+acceptance, intent e evidence continuam históricos; nada é apagado ou herdado.
+
+| Momento da sucessão | Owner | Consequência determinística |
+| --- | --- | --- |
+| antes de `ACCEPT` | AUT-02 | pipeline da revision antiga `SUPERSEDED`; nenhum ACCEPT antigo satisfaz a nova |
+| após `ACCEPT`, antes de merge `PRE_EFFECT` | AUT-02 | `mergeEligible=false`; merge não inicia, intent `SUPERSEDED`/`NO_OP` |
+| após merge `PRE_EFFECT`, antes de confirmação | REC-01 | `EFFECT_UNKNOWN → RECONCILE BEFORE RETRY`; não supersede cegamente |
+| após `MERGE_RECORDED`, antes de candidate | AUT-02 | reavalia conjunto; stale impede candidate nova e a intent é `SUPERSEDED`/`NO_OP` |
+| após candidate criada, antes de integration `PRE_EFFECT` | AUT-02 | candidate histórica `SUPERSEDED`; integration intent `NO_OP` |
+| durante integration/push ou sem confirmação | REC-01 | reconcile; `NOT_APPLIED` encerra/supersede sem novo efeito, `APPLIED_UNRECORDED` registra e continua, `DIVERGED` usa `INTEGRATION_RECOVERY` |
+
+Não há rollback Git automático para ocultar efeito já possível. Se a observação
+provar efeito aplicado, ele é registrado com sua lineage histórica mesmo que a
+revision esteja stale; se provar `NOT_APPLIED`, nenhum novo merge é iniciado.
 
 Para v2, endpoints manuais `/qa`, `/merge`, create candidate, `/validate`,
 `/integrate`, `/retry` e `/reconcile` são **B**: reemit/reconcile intent
@@ -247,16 +334,23 @@ candidate/validation/integration, intent atual, recovery, finding/block,
 stale/superseded, next automatic action e stop reason. UI não decide.
 
 Chaves: `qa:v1:<delivery_candidate>`, `review:v1:<acceptance>:<version>`,
-`merge:v1:<delivery_candidate>`, `candidate:v1:<merge_result>`,
+`merge:v1:<delivery_candidate>`,
+`candidate:v1:<module_revision_id>:<module_round_id>:<manifest_hash>`,
 `validate:v1:<candidate>`, `integrate:v1:<candidate>`. Antes de qualquer efeito:
 lease/generation, predecessor state, snapshot/SHA/ref, cancelamento,
 finding/rework/recovery, workflow v2 e revision corrente são relidos. Sem
 autoridade, `SUPERSEDED`/`NO_OP` sem efeito.
 
-Ordem de locks: `project → module/current revision → work_item → delivery
+Ordem de locks: `project → module/current revision → module round → approved
+module plan revision → RequiredWorkItemSet:v1` (WIs em UUID lexical) `→ delivery
 candidate/delivery/worktree → work_acceptance → assurance_review → integration
 candidate/attempt → pipeline intent/operation`; AUT-01 toma sua capacidade após
 WI; LR-02 não toma locks WI/delivery; REC-01 mantém `RecoveryDecision → job/WI`.
+Candidate creation e revision succession tomam os mesmos primeiros locks e
+releem current revision/round/required set imediatamente antes de gravar ou
+reclamar intent. A unique key da candidate por manifest é o backstop. Assim,
+últimos merges concorrentes criam uma candidate, succession antes da gravação
+fenceia a criação e succession durante claim de integration impede novo efeito.
 PostgreSQL locks/uniques serializam QA/reviewer/ACCEPT/merge duplicados,
 candidate/replay, integration/recovery, nova revisão e CANCELLED.
 
@@ -280,7 +374,20 @@ PostgreSQL real: happy path até `INTEGRATED`/LR-02; QA failure; review
 `REWORK`/`BLOCK`/`ESCALATE`; sem reviewer/policy; stale SHA; merge diverged,
 unknown e applied-unrecorded; validation failure; integration unknown; cada
 crash; concurrent ACCEPT/merge; replay; revision antiga; recurso já CANCELLED;
-e coexistência legada.
+e coexistência legada. A matriz inclui explicitamente:
+
+1. três WIs com só um, ou N-1, `MERGE_RECORDED` não criam candidate;
+2. o último WI e dois últimos merges concorrentes criam exatamente uma candidate;
+3. replay do último merge não duplica candidate; manifest completo, hash
+   determinístico e imutabilidade são provados;
+4. sucessão antes de ACCEPT, depois de ACCEPT/pre-effect e depois de merge
+   produzem respectivamente supersession histórica, nenhum merge e nenhuma
+   candidate nova; a nova revision não herda QA/ACCEPT;
+5. sucessão após pre-effect, `APPLIED_UNRECORDED` e `NOT_APPLIED` usam REC-01;
+6. candidate stale antes de integration é `SUPERSEDED`/`NO_OP`; integration
+   `EFFECT_UNKNOWN` stale reconcilia;
+7. candidate creation × revision succession, integration claim × succession,
+   crash/replay/fencing não duplicam candidate, merge nem integration.
 
 ## Prontidão
 
