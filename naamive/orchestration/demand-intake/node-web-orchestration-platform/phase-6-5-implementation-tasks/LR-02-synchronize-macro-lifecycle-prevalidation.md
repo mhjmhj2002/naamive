@@ -10,14 +10,12 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 ## Resultado
 
-**PREVALIDATION_BLOCKED.** A matriz de lifecycle, os predicados e as fronteiras
-de responsabilidade abaixo estão fechados para a implementação. Porém, não há
-fonte canônica persistida para a lista de módulos comprometidos aprovada no
-`PRODUCT_COMMITMENT`. O catálogo GAT-01 exige `candidate_modules` como
-evidência, mas `persistDiscoveryAgentOutcome` somente armazena metadados livres
-dos artefatos de discovery; não há schema, revisão, identidade estável nem
-relação com `modules`. Portanto LR-02 não pode materializar módulos sem
-reconstruir texto livre, o que é expressamente vedado.
+**PREVALIDATION_BLOCKED — BLOCKED_BY_LR-02A.** A matriz de lifecycle, os
+predicados e as fronteiras estão fechados. O contrato faltante foi separado na
+task bloqueadora [`LR-02A`](LR-02A-canonical-product-commitment-modules.md),
+cuja pré-validação está `READY_FOR_IMPLEMENTATION`. Enquanto LR-02A não
+publicar a fonte canônica/imutável dos módulos comprometidos, LR-02 não pode
+materializar módulos sem reconstruir texto livre, o que é vedado.
 
 LR-02 permanece `TO DO`. Esta pré-validação não iniciou AUT-02 nem alterou
 runtime, migration ou teste funcional.
@@ -44,7 +42,8 @@ runtime, migration ou teste funcional.
 | Dependência funcional | REC-01 | É a única autoridade para classificação e execução de recovery, `RecoveryDecision`, retry/restart/reconcile/rework. |
 | Guardrail de autoridade | GAT-03 | Autentica/RBAC qualquer gate ou comando humano; não participa da derivação automática do macro-estado. |
 
-Ordem serial consolidada: `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02`.
+Ordem serial consolidada:
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02`.
 AUT-02 continua posterior e depende de LR-02; GAT-02 continua dona de entrega,
 pausa, retomada e cancelamento.
 
@@ -216,7 +215,7 @@ política explícita, nunca reescreve módulo histórico.
 
 ### Bloqueio: fonte canônica ausente
 
-**DECISÃO ARQUITETURAL NECESSÁRIA — committed modules.**
+**Decisão arquitetural resolvida por LR-02A — committed modules.**
 
 Problema: `candidate_modules` é exigido por GAT-01, porém não existe tabela,
 artefato schema-validado ou campo de revisão com a lista aprovada. A única
@@ -225,16 +224,11 @@ manual; ela não pode ser a fonte do próprio compromisso. Ler texto/metadata de
 `product-commitment-review` seria reconstrução de texto livre e quebraria
 replay, idempotência e auditabilidade.
 
-Opções: (1) criar uma revisão canônica imutável de compromisso com itens
-`module_key`, payload/hash e vínculo ao gate; (2) criar tabelas normalizadas de
-commitment e itens, mantendo artefato como evidência; (3) tornar o schema do
-artefato de compromisso publicado, validado e endereçado por hash, com índice
-de materialização. Recomendação: **(1)**, pois combina a infraestrutura de
-revisões já usada pelo runtime, preserva snapshot e fornece referência direta
-para a idempotência acima. Task afetada: LR-02, com migration aditiva e testes
-de replay/concor­rência quando houver decisão. Sem essa decisão/contrato,
-materialização automática não é implementável com segurança; por isso o status
-global é bloqueado.
+LR-02A escolheu uma `ProductCommitmentRevision` imutável com itens canônicos,
+`module_key`, payload/hash, vínculo ao gate e lineage de materialização. A
+especificação está em sua pré-validação. A implementação aditiva e os testes
+de replay/concor­rência pertencem a LR-02A; até sua conclusão/auditoria, este
+status permanece bloqueado.
 
 ## Desenho de agregação, atomicidade e concorrência
 

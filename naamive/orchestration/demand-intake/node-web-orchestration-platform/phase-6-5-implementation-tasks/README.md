@@ -2,8 +2,8 @@
 
 Índice vivo da execução da Fase 6.5. Checkpoint em 23/08/2026:
 `LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; os dois findings
-da auditoria de `9e9bdaf0` foram fechados. A próxima task serial é `LR-02`,
-ainda em `TO_DO`.
+da auditoria de `9e9bdaf0` foram fechados. A próxima task serial é `LR-02A`,
+ainda em `TO_DO`; ela desbloqueia LR-02.
 
 Baseline histórica imutável:
 `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`.
@@ -15,7 +15,8 @@ Baseline histórica imutável:
 | 3 | [GAT-03 — Autenticação e RBAC](GAT-03-authentication-rbac.md) | `DONE` | GAT-01 |
 | 4 | [AUT-01 — Scheduler transacional de elegibilidade](AUT-01-transactional-eligibility-scheduler.md) | `DONE` | LR-01, GAT-01, GAT-03 |
 | 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `DONE` | LR-01, AUT-01 |
-| 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (pré-validação `PREVALIDATION_BLOCKED`) | LR-01, GAT-01, AUT-01, REC-01 |
+| 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `TO_DO` (pré-validação `READY_FOR_IMPLEMENTATION`) | LR-01, GAT-01, GAT-03, REC-01 |
+| 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (bloqueada por LR-02A) | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `TO_DO` | AUT-03, GAT-01 |

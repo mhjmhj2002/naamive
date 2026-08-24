@@ -2,7 +2,7 @@
 task: LR-02
 status: TO DO
 title: Sincronizar macro-lifecycle
-depends_on: [LR-01, GAT-01, AUT-01, REC-01]
+depends_on: [LR-01, GAT-01, AUT-01, REC-01, LR-02A]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
@@ -40,10 +40,12 @@ eventos, projeções e migrations/índices necessários.
 
 ## Dependências e restrições
 
-Depende conceitual e funcionalmente de LR-01, GAT-01, AUT-01 e REC-01.
+Depende conceitual e funcionalmente de LR-01, GAT-01, AUT-01, REC-01 e
+LR-02A. LR-02A publica a fonte canônica e imutável dos módulos comprometidos;
+sem ela, a materialização automática seria reconstrução proibida de texto livre.
 GAT-03 é guardrail de identidade/RBAC para qualquer ação humana, mas não é
 dependência mecânica da agregação automática. A ordem serial é
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02`.
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02`.
 
 O contrato de pré-validação está em
 [`LR-02-synchronize-macro-lifecycle-prevalidation.md`](LR-02-synchronize-macro-lifecycle-prevalidation.md).
