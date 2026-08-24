@@ -122,10 +122,10 @@ if(!process.env.DATABASE_URL){
     assert.deepEqual([mfC.materialized_module_id,mfC.required,mfC.present_in_current_commitment,mfC.scope_change_pending],[cModule,true,false,true]);
 
     const discoveryProject=randomUUID(),discoveryIntake=randomUUID(),registrationGate=randomUUID();
-    await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft) VALUES($1,'LR-02 discovery','owner','tester','/tmp','local','main','000','PROJECT_INTAKE',1,'WAITING_FOR_REGISTRATION','{}')`,[discoveryProject]);
+    await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,selected_discovery_workflow_code,selected_discovery_workflow_version,state,draft) VALUES($1,'LR-02 discovery','owner','tester','/tmp','local','main','000','PROJECT_INTAKE',1,'PROJECT_DISCOVERY',4,'WAITING_FOR_REGISTRATION','{}')`,[discoveryProject]);
     await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,'{}',$3,$4,$5,'tester')`,[discoveryIntake,discoveryProject,'e'.repeat(64),'f'.repeat(64),`file:///tmp/${discoveryIntake}`]);
     await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id) VALUES($1,$2,'REGISTER_PROJECT',$3)`,[registrationGate,discoveryProject,discoveryIntake]);
-    await pool.query(`UPDATE workflow_rollouts SET selection_enabled=true WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4`);
+    await pool.query(`UPDATE workflow_rollouts SET selection_enabled=false WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4`);
     const {testAuthenticatedHeaders}=await import('./test-auth.js'),{createApiServer}=await import('./server.js');
     const session=await testAuthenticatedHeaders(discoveryProject,[{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);
     const server=createApiServer();await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve));

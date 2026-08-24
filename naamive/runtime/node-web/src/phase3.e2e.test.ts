@@ -107,12 +107,10 @@ if (!databaseUrl) {
     const gate=(await pool.query(`SELECT version FROM module_gates WHERE id=$1`,[module.gate_id])).rows[0]; await decideModule(id,module.module_id!,{decision:'APPROVED',version:gate.version},`d-${randomUUID()}`); await completeDefinition(id,module.module_id!,{},`def-${randomUUID()}`);
     const architecture=(await pool.query(`SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'`,[module.module_id])).rows[0]; await decideArchitecture(id,module.module_id!,{decision:'APPROVED',version:architecture.version},`a-${randomUUID()}`);
     const plan=await seedAndApprovePlan(id,module.module_id!,[{title:'Fix me',inputs:['input'],allowlist:['src/delivery.txt','src/reworked.txt'],denylist:['.env'],output:'output',acceptance_criteria:['works'],qa_matrix:[{command:'test "$(cat src/reworked.txt 2>/dev/null)" = fixed',cwd:'.',timeout_seconds:1}]}],approveModulePlan,`p-${randomUUID()}`,1); const workItemId=plan.work_item_ids![0];
-    // A corrupted v3 fixture without the mandatory inherited reference must fail
-    // before Dev reserves a delivery. Restoring v2 proves the legacy path remains intact.
-    await pool.query(`UPDATE projects SET workflow_version=3 WHERE id=$1`,[id]);
-    await assert.rejects(() => startDevelopment(id,workItemId,{},`dev-v3-missing-baseline-${randomUUID()}`), /TECHNOLOGY_BASELINE_APPROVAL_REQUIRED/);
+    // LR-02-FIX-01 rejects the historical test-only v2 -> v3 rebinding before
+    // it can turn an existing instance into a corrupted workflow selection.
+    await assert.rejects(pool.query(`UPDATE projects SET workflow_version=3 WHERE id=$1`,[id]),(error:any)=>error.code==='23514');
     assert.equal((await pool.query(`SELECT count(*)::int AS count FROM deliveries WHERE work_item_id=$1`,[workItemId])).rows[0].count,0);
-    await pool.query(`UPDATE projects SET workflow_version=2 WHERE id=$1`,[id]);
     const started=await startDevelopment(id,workItemId,{},`dev-${randomUUID()}`); await runOnce(id); const firstTree=(await pool.query(`SELECT path FROM worktrees WHERE work_item_id=$1 AND state='ACTIVE'`,[workItemId])).rows[0].path;
     // The final cherry-pick is made by the worker, not by the repository's
     // configured developer identity. This keeps headless workers from

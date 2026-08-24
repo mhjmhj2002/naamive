@@ -40,7 +40,15 @@ const assertAssuranceScope = async (projectId: string, resource: 'acceptance'|'r
   if (!(await pool.query(sql, [id, projectId])).rowCount) throw new ApiError(404, 'ASSURANCE_RESOURCE_NOT_FOUND');
 };
 const decide = async (projectId: string, body: Record<string, unknown>, actor: AuthenticatedPrincipal) => withTransaction(async (client) => {
-  const gate = await client.query(`SELECT * FROM gates WHERE project_id=$1 AND status='OPEN' FOR UPDATE`, [projectId]); if (!gate.rowCount) throw new ApiError(409, 'GATE_NOT_OPEN'); const row=gate.rows[0];
+  const gate = await client.query(`SELECT * FROM gates WHERE project_id=$1 AND status='OPEN' FOR UPDATE`, [projectId]);
+  if(!gate.rowCount){
+    const replay=(await client.query(`SELECT * FROM gates WHERE id=$1 AND project_id=$2 FOR UPDATE`,[body.gate_id,projectId])).rows[0];
+    if(!replay||replay.kind!=='REGISTER_PROJECT'||replay.status!=='APPROVED'||body.decision!=='APPROVED'||Number(body.version)!==replay.version)throw new ApiError(409,'GATE_NOT_OPEN');
+    const automaticDiscovery=await activateV4DiscoveryAfterRegistration(client,projectId,replay.revision_id);
+    const state=(await client.query(`SELECT state FROM projects WHERE id=$1`,[projectId])).rows[0]?.state;
+    return {project_id:projectId,state:automaticDiscovery?.state??state};
+  }
+  const row=gate.rows[0];
   if (body.gate_id !== row.id) throw new ApiError(409, 'GATE_VERSION_CONFLICT');
   if (Number(body.version) !== row.version) throw new ApiError(409, 'GATE_VERSION_CONFLICT');
   const approved = body.decision === 'APPROVED', feedback=typeof body.feedback === 'string' ? body.feedback.trim() : '';

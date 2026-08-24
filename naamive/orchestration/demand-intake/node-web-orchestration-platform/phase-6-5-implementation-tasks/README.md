@@ -5,7 +5,9 @@
 `DONE`; os dois findings da auditoria de `9e9bdaf0` foram fechados. LR-02
 entregou o agregador macro versionado, intents/outbox recuperáveis, materialização
 pela `COMMITTED_MODULE_EVOLUTION_POLICY:v1` e o ledger reconstruível
-`CommittedModuleObligation:v1`. `AUT-02` é a próxima task serial.
+`CommittedModuleObligation:v1`. `LR-02-FIX-01` fixou a seleção do workflow na
+criação da instância e impediu reclassificação por rollout tardio. `AUT-02`
+permanece `TO_DO` e é a próxima task da sequência serial.
 
 O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
 podem evoluir por troca atômica da revisão corrente, mantendo uma única

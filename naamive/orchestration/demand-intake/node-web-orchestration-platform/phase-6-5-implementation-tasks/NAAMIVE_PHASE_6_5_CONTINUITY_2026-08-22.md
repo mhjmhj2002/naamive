@@ -428,6 +428,13 @@ idempotentes; sucessões, reintrodução, replay, concorrência, reabertura e
 fencing temporal foram validados em PostgreSQL real. O legado e os rollouts
 globais foram preservados. AUT-02 e GAT-02 não foram iniciadas.
 
+O finding `LR-02-FIX-01` foi fechado pela migration 064 e por regressões HTTP e
+PostgreSQL. A seleção de `PROJECT_DISCOVERY` agora é congelada atomicamente na
+criação da instância; o gate consome somente essa seleção persistida. Assim,
+toggles posteriores de `NEW_PROJECTS` não migram projetos, replay não duplica
+intent/evento/operação/job e a vinculação ativa de intake permanece íntegra até
+a transição explícita. Nenhum projeto existente teve workflow/estado migrado.
+
 ---
 
 ### AUT-02 — TO_DO
@@ -553,6 +560,8 @@ Fase 7:
 10. Diante de decisão arquitetural material não prevista, usar `DECISÃO ARQUITETURAL NECESSÁRIA` em vez de inventar.
 11. As quatro falhas `inventory.e2e.test.ts` (`FAILED` vs `RETRYABLE`) são dívida preexistente comprovada.
 12. F7 só começa após aceite integral da F6.5.
+13. A versão de workflow pertence à instância: `NEW_PROJECTS` seleciona apenas
+    na criação e gates nunca reavaliam rollout nem migram instâncias existentes.
 
 ---
 
@@ -562,8 +571,8 @@ Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. retomar por **AUT-02 — Pipeline automático QA → review → merge → integração**, sem antecipar GAT-02;
+3. retomar por **AUT-02**, mantendo GAT-02 e REC-02 em `TO_DO`;
 4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
    lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 DONE → AUT-02 TO_DO/NEXT`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 DONE → AUT-02 TO_DO`.

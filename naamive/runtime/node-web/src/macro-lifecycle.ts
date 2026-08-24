@@ -155,12 +155,15 @@ const insertIntent=async(client:pg.PoolClient,input:{projectId:string;destinatio
 };
 
 export const activateV4DiscoveryAfterRegistration=async(client:pg.PoolClient,projectId:string,intakeRevisionId:string)=>{
-  const rollout=(await client.query(`SELECT 1 FROM workflow_rollouts WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4 AND selection_scope='NEW_PROJECTS' AND selection_enabled=true`)).rowCount;
-  if(!rollout) return null;
-  await client.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=4,state='ANALYSIS',updated_at=clock_timestamp() WHERE id=$1`,[projectId]);
+  const project=(await client.query(`SELECT workflow_code,workflow_version,state,selected_discovery_workflow_code,selected_discovery_workflow_version FROM projects WHERE id=$1 FOR UPDATE`,[projectId])).rows[0];
+  if(!project||project.selected_discovery_workflow_code!=='PROJECT_DISCOVERY'||Number(project.selected_discovery_workflow_version)!==4) return null;
+  if(project.workflow_code==='PROJECT_INTAKE'&&project.workflow_version===1&&project.state==='REGISTERED')
+    await client.query(`UPDATE projects SET workflow_code=selected_discovery_workflow_code,workflow_version=selected_discovery_workflow_version,state='ANALYSIS',updated_at=clock_timestamp() WHERE id=$1`,[projectId]);
+  else if(!(project.workflow_code==='PROJECT_DISCOVERY'&&Number(project.workflow_version)===4&&project.state==='ANALYSIS')) return null;
   const key=`discovery:${projectId}:${intakeRevisionId}:v4`,correlation=randomUUID();
+  const existing=(await client.query(`SELECT id FROM macro_lifecycle_intents WHERE idempotency_key=$1`,[key])).rows[0];
   const intentId=await insertIntent(client,{projectId,destination:'DISCOVERY',kind:'DISCOVERY',aggregateType:'PROJECT',aggregateId:projectId,idempotencyKey:key,payload:{intake_revision_id:intakeRevisionId,workflow_code:'PROJECT_DISCOVERY',workflow_version:4},evidenceRefs:[`intake_revision:${intakeRevisionId}`]});
-  await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,revision_id,actor_id,workflow_code,workflow_version)
+  if(!existing)await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,revision_id,actor_id,workflow_code,workflow_version)
     VALUES($1,'MACRO_DISCOVERY_REQUESTED',$2,$3,$4,$5,'PROJECT_DISCOVERY',4)`,[projectId,correlation,{intent_id:intentId,idempotency_key:key,intake_revision_id:intakeRevisionId},intakeRevisionId,config().operatorId]);
   return {state:'ANALYSIS',intentId};
 };

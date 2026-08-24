@@ -33,12 +33,14 @@ export const workflowTransition = async (
 };
 
 export const selectedWorkflow = async (client: pg.PoolClient, workflowCode: string, selectionScope: string) => {
-  const result = await client.query<{ workflow_code: string; workflow_version: number }>(`SELECT r.workflow_code,r.workflow_version
+  const result = await client.query<{ workflow_code: string; workflow_version: number; selection_enabled: boolean }>(`SELECT r.workflow_code,r.workflow_version,r.selection_enabled
     FROM workflow_rollouts r
     JOIN workflow_definitions d ON d.code=r.workflow_code AND d.version=r.workflow_version
-    WHERE r.workflow_code=$1 AND r.selection_scope=$2 AND r.selection_enabled=true AND d.status='PUBLISHED'
-    ORDER BY r.workflow_version DESC LIMIT 1`, [workflowCode, selectionScope]);
-  return result.rows[0] ?? null;
+    WHERE r.workflow_code=$1 AND r.selection_scope=$2 AND d.status='PUBLISHED'
+    ORDER BY r.workflow_version DESC
+    FOR SHARE OF r`, [workflowCode, selectionScope]);
+  const selected=result.rows.find(row=>row.selection_enabled);
+  return selected ? {workflow_code:selected.workflow_code,workflow_version:selected.workflow_version} : null;
 };
 
 /** Interprets only published workflow data; business state names are never the runtime authority. */

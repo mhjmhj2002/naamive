@@ -10,8 +10,10 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 ## Estado de implementação
 
-`DONE` em 2026-08-24. O contrato normativo da pré-validação foi implementado e
-validado, mantendo AUT-02 e GAT-02 fora de escopo.
+`DONE` em 2026-08-24, incluindo a correção auditada `LR-02-FIX-01`. A seleção
+de `PROJECT_DISCOVERY` é fixada atomicamente na criação da instância e nunca é
+reavaliada na aprovação de `REGISTER_PROJECT`. AUT-02 e GAT-02 permanecem fora
+de escopo.
 
 ## Objetivo e problema corrigido
 
@@ -128,7 +130,10 @@ snapshots de projeção e relatório de coexistência.
 - testes unitários e PostgreSQL cobrem predicados negativos, primeira revisão,
   sucessões, reintrodução, lineage, reabertura, fencing temporal, required-set,
   recovery preservado, lease expirado, dois reconcilers e idempotência;
+- a migration aditiva `064_phase_6_5_project_workflow_selection.sql` persiste a
+  seleção imutável de discovery sem trocar o workflow/estado ativo; criação,
+  gate e replay obedecem à seleção congelada mesmo após toggles do rollout;
 - `npm run migrate`, `npm run build` e as suítes focadas passaram. A suíte E2E
-  integral fechou com 98/102; as únicas quatro falhas são a dívida histórica de
+  integral fechou com 99/103; as únicas quatro falhas são a dívida histórica de
   `inventory.e2e.test.ts` (`FAILED` esperado versus `RETRYABLE`) autorizada pela
   task. Rollouts globais permanecem desligados e o legado permanece inalterado.
