@@ -75,6 +75,10 @@ Unitários das regras agregadas; PostgreSQL de atomicidade/concorrência;
 integração de registro, compromisso, um/múltiplos módulos e rework; crash/replay;
 regressão de versões antigas e API/SSE do macro-estado.
 
+Inclui a execução funcional transferida de LR-02A: intents e criação efetiva de
+um/vários módulos, replay parcial A/B/C, retries, reconciliador de
+materialização e preenchimento operacional do materialization lineage.
+
 ## Riscos e evidências esperadas
 
 Riscos: avanço prematuro, deadlock, agregação por contagem e reabertura incorreta.

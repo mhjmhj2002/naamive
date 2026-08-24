@@ -402,7 +402,8 @@ falhas históricas de inventory já auditadas.
 
 Publicar a `ProductCommitmentRevision` canônica, versionada e imutável que
 associa `candidate_modules` aprovados ao gate `PRODUCT_COMMITMENT`. Sua
-pré-validação está `READY_FOR_IMPLEMENTATION`; ela é bloqueadora de LR-02.
+pré-validação está `READY_FOR_IMPLEMENTATION`, com PV-01/PV-02 resolvidos; ela
+é bloqueadora de LR-02.
 
 ---
 

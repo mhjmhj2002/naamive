@@ -10,7 +10,8 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 ## Resultado e autoridade
 
-**READY_FOR_IMPLEMENTATION.** Uma nova `ProductCommitmentRevision` com itens
+**READY_FOR_IMPLEMENTATION.** Os ajustes independentes LR-02A-PV-01 e
+LR-02A-PV-02 foram incorporados. Uma nova `ProductCommitmentRevision` com itens
 normalizados é a autoridade. Não há decisão anterior pendente. A implementação
 será aditiva e reutilizará os padrões de revisões imutáveis já existentes, sem
 reutilizar uma entidade semanticamente inadequada.
@@ -37,9 +38,10 @@ product_commitment_revisions
   source_intake_revision_id UUID FK intake_revisions
   source_requirements_artifact_id UUID FK artifacts; source_requirements_sha256
   source_review_artifact_id UUID FK artifacts; source_review_sha256
-  canonical_sha256; supersedes_revision_id self FK; approved_gate_id UUID FK gates
-  created_at, approved_at, created_by
-  UNIQUE(project_id, revision_number); UNIQUE(project_id, canonical_sha256)
+  canonical_sha256; logical_round BIGINT; supersedes_revision_id self FK
+  gate_record_id UUID; creation_idempotency_key TEXT; created_at, approved_at, created_by
+  UNIQUE(project_id, revision_number); UNIQUE(project_id, logical_round)
+  UNIQUE(project_id, creation_idempotency_key)
 
 product_commitment_modules
   id UUID PK; product_commitment_revision_id UUID FK; module_key; ordinal
@@ -47,7 +49,7 @@ product_commitment_modules
   UNIQUE(product_commitment_revision_id, module_key)
   UNIQUE(product_commitment_revision_id, ordinal)
 
-product_commitment_module_materializations
+product_commitment_module_materializations  -- contrato/infraestrutura LR-02A
   product_commitment_module_id UUID FK; project_id TEXT FK projects
   product_commitment_revision_id UUID FK; module_key
   module_id UUID FK modules; module_revision_id UUID FK module_revisions
@@ -56,10 +58,37 @@ product_commitment_module_materializations
   UNIQUE(project_id, product_commitment_revision_id, module_key)
 ```
 
-Revisões `APPROVED` e `SUPERSEDED` são imutáveis. `approved_gate_id` e os
-artefatos devem pertencer ao mesmo projeto, por guard/trigger. A única mudança
-permitida é a transição de status/lineage publicada e transacional; mudança de
-conteúdo cria outra revisão.
+O binding final é `gate_record_id` para a instância real `gate_records`, não
+`gates`. A migration adicionará `UNIQUE(id, project_id)` a `gate_records` e FK
+composta `(gate_record_id, project_id) → gate_records(id, project_id)`. Um
+trigger/guard transacional obrigatório valida
+`gate_code='PRODUCT_COMMITMENT'`, `scope_type='PROJECT'`,
+`scope_id=project_id` e os campos de evidence
+`product_commitment_revision_id`, `canonical_sha256` e `contract_version`.
+FK simples não prova essas propriedades. `gate_decisions` é a decisão,
+ator/evidência vinculada por `gate_records.decision_id`.
+
+Revisões `APPROVED` e `SUPERSEDED` são imutáveis em payload, itens, hash e
+source lineage. A sucessora aponta para `supersedes_revision_id`; a antiga só
+pode trocar `APPROVED → SUPERSEDED` na transição autorizada, sem qualquer outra
+atualização de conteúdo ou lineage.
+
+## Instância persistida do PRODUCT_COMMITMENT
+
+| Conceito | Tabela real | PK e project binding | Status/version/decisão/evidence | Adequada ao binding v1? |
+| --- | --- | --- | --- | --- |
+| Instância legado em uso hoje | `gates` | `id`; `project_id`; `revision_id → intake_revisions` | `status` (`OPEN`/decidido), `version`, `evidence`; `server.ts` a atualiza e grava artefato de decisão. | Não: é caminho histórico, não carrega snapshot GAT-01 nem `gate_decisions`. |
+| Catálogo/política | `gate_catalog_publications` | `version`, sem projeto | catálogo/hash publicado; não representa gate concreto. | Não. |
+| Instância GAT-01 | `gate_records` | `id`, `project_id`, `gate_code`, `scope_type/id` | `status`, `version`, `evidence`, contract/hash do catálogo, `decision_id`, timestamps. | **Sim**, para `PROJECT_DISCOVERY:v4`. |
+| Decisão GAT-01 | `gate_decisions` | `id`; `gate_id → gate_records` | versão do gate, decisão, actor, role, reason e evidence. | Sim como evidência da decisão, mas não como binding primário. |
+| Evidência/auditoria | `artifacts`, `events`, `operations` | projeto/correlação | hashes, eventos e operações; não têm semântica de instância de gate. | Não. |
+
+GAT-01 responde política: gate permitido, condition, evidence, autoridade e
+efeitos. `gate_records` responde a instância concreta aberta para um projeto; e
+`gate_decisions` responde por sua decisão concreta. A implementação LR-02A
+nova usa `openCatalogGate`/`decideCatalogGate` e `gate_records`; não amplia nem
+reescreve o fluxo legado `gates` que `server.ts`/`discovery-agent-jobs.ts` ainda
+usam para versões históricas.
 
 ## Schema e identidade de `candidate_modules`
 
@@ -104,16 +133,17 @@ pelo workflow de projeto aplicável.
 
 | Transição | Regra |
 | --- | --- |
-| `DRAFT → PENDING_APPROVAL` | Serviço valida schema, lineage, conjunto, hash e referências; persiste revisão+itens+evidência e abre gate. |
-| `PENDING_APPROVAL → APPROVED` | Decisão GAT-03 autorizada no gate GAT-01 atual; na mesma transação grava `approved_gate_id`, `approved_at` e evento. Só este estado é consumível por LR-02. |
+| `DRAFT → PENDING_APPROVAL` | Serviço valida schema, lineage, conjunto, hash e referências; persiste revisão+itens, abre `gate_records` e grava o binding/evidence na mesma transação. |
+| `PENDING_APPROVAL → APPROVED` | Decisão GAT-03 autorizada em `gate_records`/`gate_decisions`; na mesma transação grava `approved_at` e evento. Só este estado é consumível por LR-02. |
 | `PENDING_APPROVAL → REJECTED` | Rework preserva snapshot, feedback e gate; não materializa. |
 | `REJECTED → SUPERSEDED` + nova revisão | Novo output validado cria ID/número novos com `supersedes_revision_id`. |
 | `APPROVED → SUPERSEDED` | Só por revisão sucessora aprovada e política explícita; não cancela nem modifica módulos já materializados. |
 
-O gate referencia `product_commitment_revision_id` e `canonical_sha256` na
-evidência `candidate_modules`. O request de decisão não aceita módulos: ele
+O `gate_records.evidence` referencia `product_commitment_revision_id`,
+`canonical_sha256` e `contract_version`, além da evidence `candidate_modules`.
+O request de decisão não aceita módulos: ele
 contém apenas decisão, razão/evidência e versão do gate. O servidor relê a
-revisão `PENDING_APPROVAL` ligada ao gate e recusa hash/revisão divergentes.
+revisão `PENDING_APPROVAL` ligada ao gate record e recusa hash/revisão divergentes.
 Service principal cria proposta; só humano autenticado/autorizado por GAT-03
 decide. Módulo removido de revisão futura é apenas lineage: não é apagado,
 arquivado nem cancelado implicitamente.
@@ -133,19 +163,25 @@ resultado do agente (proposta não confiável)
 
 ## Hash, atomicidade, eventos e concorrência
 
-O canonical JSON cobre versão, intake revision, artefato/hash de requisitos e
-itens ordenados por `module_key`; normaliza strings e ordena coleções que são
-conjuntos (`dependencies` e refs). A ordem de `scope`, `out_of_scope` e
-critérios é preservada, pois seu conteúdo é parte do contrato. `canonical_sha256`
-é SHA-256 desse JSON: reordenar módulos não muda hash, alterar campo normativo
-muda.
+O canonical JSON inclui exatamente `contract_version`,
+`source_intake_revision_id`, `source_requirements_artifact_id`,
+`source_requirements_sha256` e módulos ordenados por `module_key`. Por módulo,
+inclui `module_key`, `name`, `objective`, `scope`, `out_of_scope`,
+`dependencies`, `acceptance_criteria` e `source_evidence` normativo. Não inclui
+`created_at`, IDs aleatórios, `ordinal` visual, `gate_record_id`, decisão ou
+timestamps. Normaliza strings e ordena coleções que são conjuntos
+(`dependencies` e refs); preserva a ordem de `scope`, `out_of_scope` e critérios
+quando seu conteúdo é parte do contrato. `canonical_sha256` é SHA-256 desse JSON.
 
-Criação usa a chave
-`product-commitment-revision:<project_id>:<source_intake_revision_id>:<canonical_sha256>`
-e unique project/hash. Ela bloqueia projeto/revisão e retorna a mesma linha em
-replay. Aprovação bloqueia gate+revisão e usa a idempotência GAT-01; versão
-stale ou segunda decisão não muda snapshot. Escritores concorrentes convergem
-no índice quando o conteúdo é igual; conteúdo diferente cria revisões distintas.
+Hash identifica conteúdo, não rodada lógica. `UNIQUE(project_id, canonical_sha256)`
+é removido: replay técnico da mesma proposta usa a mesma
+`creation_idempotency_key` (única por projeto) e retorna a mesma revisão; uma
+nova rodada após `REJECTED`, mesmo com conteúdo idêntico, recebe uma chave nova,
+cria `revision_number` e
+`logical_round` novos. A criação bloqueia a linha `projects` (`FOR UPDATE`) e
+calcula `MAX(revision_number)+1` e `MAX(logical_round)+1` sob esse lock; é
+proibido usar `MAX+1` sem lock. Escritores concorrentes convergem pelo mesmo
+idempotency key ou recebem rodadas distintas para propostas lógicas distintas.
 
 Eventos novos são `PRODUCT_COMMITMENT_REVISION_CREATED`,
 `PRODUCT_COMMITMENT_READY_FOR_APPROVAL`, `PRODUCT_COMMITMENT_APPROVED`,
@@ -154,8 +190,8 @@ audit trail suficiente para essas mudanças de banco; o outbox/reconciliador de
 materialização continua com LR-02. Unidades atômicas:
 
 ```text
-revision + items + hash + evidence/gate reference + event
-gate decision + revision APPROVED/approved_gate_id + event
+revision + items + hash + gate_records evidence/binding + event
+gate_decisions + gate_records decided + revision APPROVED + event
 ```
 
 Não há side effect externo na transação.
@@ -164,16 +200,20 @@ Não há side effect externo na transação.
 
 LR-02 lê somente itens da revisão `APPROVED`, identificados por
 `project_id + product_commitment_revision_id + module_key`. A chave de intent é
-`materialize:<project_id>:<revision_id>:<module_key>`. Após criar módulo e
-primeira `module_revision`, grava exatamente uma linha em
-`product_commitment_module_materializations`; replay encontra a linha e não
-redigita nem recria A/B quando C ficou pendente. A lineage, e não title/name,
-liga candidato → módulo → revisão → operation.
+`materialize:<project_id>:<revision_id>:<module_key>`. LR-02, e não LR-02A,
+cria módulos/`module_revisions`, preenche
+`product_commitment_module_materializations`, trata A/B/C, retries e o
+reconciliador macro. A lineage, e não title/name, liga candidato → módulo →
+revisão → operation quando LR-02 a executar.
 
-Se a mesma chave lógica voltar em nova revisão aprovada, LR-02 consulta o
-lineage e só cria evolução/revisão mediante política explícita; nunca
-sobrescreve a linha anterior. Essa política é consumo futuro de LR-02, não
-implementação de LR-02A.
+LR-02A entrega apenas a estrutura: FKs compostas por `project_id` para
+`product_commitment_revisions`, `product_commitment_modules`, `modules` e
+`module_revisions` (com pares `UNIQUE(id, project_id)` aditivos quando
+necessários) rejeitam item inexistente, project/revision/item incompatíveis e
+módulo de outro projeto. Uniques rejeitam dois bindings contraditórios para o
+mesmo item; inserir o mesmo binding é replay seguro pelo contrato. Mesma chave
+lógica em revisão sucessora é resolvida por LR-02, nunca sobrescrevendo a linha
+anterior.
 
 ## Legado, rollout e testes
 
@@ -185,15 +225,20 @@ própria e sem ativar os rollouts v4/v2.
 | Grupo | Cobertura obrigatória |
 | --- | --- |
 | Schema | válido; key inválida/duplicada; obrigatório ausente; dependência ausente/própria/cíclica; campos críticos extras. |
-| Revision | criação, replay, imutabilidade após aprovação, rejeição, supersession e rework com IDs distintos. |
+| Revision | criação, replay técnico, numbering/round concorrentes determinísticos, imutabilidade após aprovação, rejeição, supersession e nova rodada de rework com conteúdo igual. |
 | Gate/RBAC | gate referencia revisão/hash; payload adulterado é ignorado/rejeitado; approve/reject, versão stale e duas decisões concorrentes. |
 | Hash | determinístico, módulos reordenados equivalentes, mudança normativa altera hash. |
-| Materialization | um/vários módulos, replay parcial, duplicate key, mesma identidade em revisão sucessora e lineage preservado. |
-| Legado/concurrency | artefato histórico intocado; dois writers, dois approvals e replays em PostgreSQL real. |
+| Lineage schema | item aceita exatamente um binding válido; FK/unique; project e revision mismatch rejeitados; dois bindings contraditórios rejeitados; mesmo binding é replay seguro. |
+| Legado/concurrency | artefato histórico intocado; dois writers, mesmo conteúdo converge por replay técnico, conteúdo distinto cria revisão distinta e decisões concorrentes em PostgreSQL real. |
+
+Testes movidos explicitamente para LR-02: materialização de um/vários módulos,
+crash/replay parcial A/B/C, criação efetiva de `modules`/`module_revisions`,
+preenchimento operacional de lineage, retries e reconciliador macro.
 
 ## Condição para desbloquear LR-02
 
-Após LR-02A implementar e auditar tabelas/constraints, validação, gate binding,
-revisão imutável, hash, events e materialization lineage acima, a pré-validação
-LR-02 pode mudar de `PREVALIDATION_BLOCKED` para `READY_FOR_IMPLEMENTATION`.
-Antes disso, LR-02 e AUT-02 não iniciam.
+Após LR-02A implementar e auditar tabelas/constraints, validação, binding ao
+`gate_records`, revisão imutável, hash, events, API/read model e schema de
+materialization lineage acima, a pré-validação LR-02 pode mudar de
+`PREVALIDATION_BLOCKED` para `READY_FOR_IMPLEMENTATION`. Antes disso, LR-02 e
+AUT-02 não iniciam.

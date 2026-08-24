@@ -25,6 +25,13 @@ REC-01 é uma barreira de ordem já concluída, não uma autoridade sobre este
 contrato de dados. LR-02A bloqueia LR-02; não implementa agregação macro,
 AUT-02, GAT-02, materialização efetiva ou rollout.
 
+LR-02A implementará somente o snapshot, sua validação, revisões imutáveis,
+binding ao gate GAT-01, API/read model e a **estrutura** de lineage de
+materialização. LR-02 consumirá a revisão `APPROVED`, criará intents, módulos
+e `module_revisions`, fará retries/replay parcial/reconciliação e preencherá
+efetivamente esse lineage. LR-02A nunca chama `materializeModule()` apenas para
+preencher a tabela de lineage.
+
 O contrato pré-validado está em
 [`LR-02A-canonical-product-commitment-modules-prevalidation.md`](LR-02A-canonical-product-commitment-modules-prevalidation.md).
 
@@ -54,13 +61,14 @@ tratar artefato como autoridade, embora seus hashes permaneçam evidência.
 - revisão aprovada congelada e vinculada ao gate/requisitos;
 - replay, concorrência e alteração de payload não duplicam nem alteram o
   compromisso;
-- `module_key`, dependências, hash e lineage de materialização são
-  determinísticos;
+- `module_key`, dependências, hash e a estrutura de lineage de materialização
+  são determinísticos;
 - nenhuma instância histórica é reconstruída automaticamente.
 
 ## Testes obrigatórios
 
 Schema e validação negativa; revisão, rework e supersession; hash determinístico
-e independente da ordem; gate autorizado/obsoleto/concorrente; materialização
-parcial/replay; lineage por módulo; coexistência legado e PostgreSQL real para
-constraints, locks e atomicidade.
+e independente da ordem; gate autorizado/obsoleto/concorrente; schema de
+lineage (FK, unicidade e consistência cross-project); coexistência legado e
+PostgreSQL real para constraints, locks e atomicidade. Materialização de um ou
+vários módulos, replay parcial A/B/C, retries e reconciliador pertencem a LR-02.

@@ -15,7 +15,7 @@ Baseline histórica imutável:
 | 3 | [GAT-03 — Autenticação e RBAC](GAT-03-authentication-rbac.md) | `DONE` | GAT-01 |
 | 4 | [AUT-01 — Scheduler transacional de elegibilidade](AUT-01-transactional-eligibility-scheduler.md) | `DONE` | LR-01, GAT-01, GAT-03 |
 | 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `DONE` | LR-01, AUT-01 |
-| 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `TO_DO` (pré-validação `READY_FOR_IMPLEMENTATION`) | LR-01, GAT-01, GAT-03, REC-01 |
+| 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `TO_DO` (pré-validação `READY_FOR_IMPLEMENTATION`; PV-01/PV-02 resolvidos) | LR-01, GAT-01, GAT-03, REC-01 |
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (bloqueada por LR-02A) | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |

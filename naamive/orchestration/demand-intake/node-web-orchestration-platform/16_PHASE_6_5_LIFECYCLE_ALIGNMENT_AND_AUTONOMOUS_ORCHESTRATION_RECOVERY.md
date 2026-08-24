@@ -49,6 +49,10 @@ da auditoria de `9e9bdaf0` foram fechados. `LR-02A` é a próxima task serial,
 ainda em `TO_DO` e bloqueia LR-02. A sequência efetivamente concluída é
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01`.
 
+A pré-validação de LR-02A está `READY_FOR_IMPLEMENTATION`: o contrato usa a
+instância GAT-01 `gate_records` (não a tabela legada `gates`) e separa o schema
+de materialization lineage da execução macro que pertence a LR-02.
+
 No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o
 contrato do lifecycle. A fronteira final de execução registrada na task é
 `[LR-01, GAT-01, GAT-03]`: além do lifecycle, o scheduler requer catálogo de
