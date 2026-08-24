@@ -44,14 +44,15 @@ atualizada por esta fase.
 
 ## Checkpoint vivo de execução — 2026-08-23
 
-`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; os dois findings
-da auditoria de `9e9bdaf0` foram fechados. `LR-02A` é a próxima task serial,
-ainda em `TO_DO` e bloqueia LR-02. A sequência efetivamente concluída é
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01`.
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01` e `LR-02A` estão `DONE`; os
+dois findings da auditoria de `9e9bdaf0` foram fechados. `LR-02` é a próxima
+task serial e sua pré-validação está `READY_FOR_IMPLEMENTATION`. A sequência
+efetivamente concluída é
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A`.
 
-A pré-validação de LR-02A está `READY_FOR_IMPLEMENTATION`: o contrato usa a
-instância GAT-01 `gate_records` (não a tabela legada `gates`) e separa o schema
-de materialization lineage da execução macro que pertence a LR-02.
+LR-02A publicou o contrato canônico em `gate_records` (não na tabela legada
+`gates`) e separou o schema de materialization lineage da execução macro que
+continua pertencendo a LR-02.
 
 No backlog original, AUT-01 dependia conceitualmente de LR-01 porque consome o
 contrato do lifecycle. A fronteira final de execução registrada na task é
@@ -263,7 +264,7 @@ flowchart LR
 
 Sequência serial segura:
 
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02 → AUT-02 → AUT-03 → REC-02 → GAT-02 → UI-01 → UI-02 → TST-01 → DOC-01`.
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02 → AUT-02 → AUT-03 → REC-02 → GAT-02 → UI-01 → UI-02 → TST-01 → DOC-01`.
 
 Alterações em relação à ordem inicial da auditoria:
 

@@ -45,8 +45,8 @@ a pré-validação de LR-02:
 | 3 | **GAT-03** | Autenticação e RBAC server-side | **DONE** |
 | 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
 | 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
-| 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **TO_DO / NEXT** |
-| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / BLOCKED_BY_LR-02A** |
+| 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **DONE** |
+| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / NEXT / READY_FOR_IMPLEMENTATION** |
 | 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
@@ -58,7 +58,7 @@ a pré-validação de LR-02:
 
 Ordem planejada:
 
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02 → AUT-02 → AUT-03 → REC-02 → GAT-02 → UI-01 → UI-02 → TST-01 → DOC-01`
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02 → AUT-02 → AUT-03 → REC-02 → GAT-02 → UI-01 → UI-02 → TST-01 → DOC-01`
 
 ---
 
@@ -398,24 +398,25 @@ falhas históricas de inventory já auditadas.
 
 ---
 
-### LR-02A — TO_DO / NEXT
+### LR-02A — DONE
 
-Publicar a `ProductCommitmentRevision` canônica, versionada e imutável que
-associa `candidate_modules` aprovados ao gate `PRODUCT_COMMITMENT`. Sua
-pré-validação está `READY_FOR_IMPLEMENTATION`, com PV-01/PV-02 resolvidos; ela
-é bloqueadora de LR-02.
+Publicada a `ProductCommitmentRevision` canônica, versionada e imutável que
+associa `candidate_modules` ao gate `PRODUCT_COMMITMENT`. A migration 061,
+schema/hash server-side, binding GAT-01/GAT-03, read model, eventos e estrutura
+vazia de materialization lineage foram validados em PostgreSQL real. O fluxo
+não materializa módulos e preserva o legado.
 
 ---
 
-### LR-02 — TO_DO / BLOCKED_BY_LR-02A
+### LR-02 — TO_DO / NEXT / READY_FOR_IMPLEMENTATION
 
 Sincronizar lifecycle macro de projeto e módulo com os novos contratos.
 
 Projeto, módulo, work item e execução precisam refletir coerentemente o progresso real.
 
-A pré-validação em `LR-02-synchronize-macro-lifecycle-prevalidation.md`
-delegou o contrato ausente à LR-02A. Não iniciar LR-02 nem AUT-02 até a
-implementação e auditoria de LR-02A; LR-02 continua `TO_DO`.
+A pré-validação em `LR-02-synchronize-macro-lifecycle-prevalidation.md` está
+`READY_FOR_IMPLEMENTATION` após a entrega do contrato LR-02A. LR-02 continua
+`TO_DO` e é a próxima task; AUT-02 não foi iniciada.
 
 ---
 
@@ -549,8 +550,8 @@ Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. retomar por **LR-02A — Canonical Product Commitment Modules**, sem antecipar LR-02 ou AUT-02;
+3. retomar por **LR-02 — Sincronizar macro-lifecycle**, sem antecipar AUT-02;
 4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
    lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A TO_DO/NEXT → LR-02 TO_DO/BLOCKED_BY_LR-02A`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 TO_DO/NEXT/READY_FOR_IMPLEMENTATION`.

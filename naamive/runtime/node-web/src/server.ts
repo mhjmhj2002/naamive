@@ -24,6 +24,7 @@ import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistance
 import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from './gate-catalog.js';
 import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
 import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
+import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -97,6 +98,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const assuranceReconcileMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/assurance\/acceptances\/([^/]+)\/reconcile$/);
   const catalogGateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/catalog-gates$/);
   const catalogGateDecisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/catalog-gates\/([^/]+)\/decision$/);
+  const productCommitmentMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/product-commitments$/);
   const authAdminPrincipalMatch=url.pathname.match(/^\/api\/admin\/auth\/principals\/([0-9a-f-]{36})\/revoke$/);
   const authAdminServiceMatch=url.pathname.match(/^\/api\/admin\/auth\/service-principals\/([0-9a-f-]{36})\/rotate$/);
   if (request.method==='POST' && url.pathname==='/api/auth/logout') { await logout(principal!,response); return respond(response,204,{}); }
@@ -130,11 +132,14 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/api/admin/ai-runtimes') return respond(response, 200, { items: await listRuntimeCatalogue() });
   const assuranceOptions=async(projectId:string)=>{const roles=(await pool.query(`SELECT role_code FROM auth_role_grants WHERE principal_id=$1 AND project_id=$2 AND status='ACTIVE' AND (expires_at IS NULL OR expires_at>clock_timestamp()) AND role_code IN ('ON_CALL_OWNER','ASSURANCE_REVIEWER','TECH_LEAD','REPOSITORY_OWNER') ORDER BY CASE role_code WHEN 'ON_CALL_OWNER' THEN 1 WHEN 'ASSURANCE_REVIEWER' THEN 2 WHEN 'TECH_LEAD' THEN 3 ELSE 4 END LIMIT 1`,[principal!.id,projectId])).rows[0];return {correlationId:uuidParameter(url.searchParams.get('correlation_id'),'ASSURANCE_CORRELATION_INVALID'),limit:Number(url.searchParams.get('limit')??100),actorRole:roles?.role_code??''};};
   if (catalogGateMatch && request.method === 'GET') { const projection:any=await catalogGateProjection(catalogGateMatch[1]); for(const gate of projection.gates.filter((item:any)=>item.status==='OPEN'))try{const grant=await authorizeCatalogGate(principal!,catalogGateMatch[1],gate.id);gate.allowed_actions=['DECIDE_GATE'];gate.authorized_role=grant.role;}catch{} return respond(response,200,projection); }
+  if (productCommitmentMatch && request.method === 'GET') return respond(response,200,await productCommitmentProjection(productCommitmentMatch[1]));
   if (catalogGateDecisionMatch && request.method === 'POST') {
     const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();
     if(!idempotencyKey) throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
     const authorization=await authorizeCatalogGate(principal!,catalogGateDecisionMatch[1],catalogGateDecisionMatch[2]); const body=await json(request);
-    return respond(response,202,await withTransaction(client=>decideCatalogGate(client,catalogGateDecisionMatch[1],catalogGateDecisionMatch[2],{version:Number(body.version),decision:String(body.decision??''),reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,actor_role:authorization.role,idempotency_key:idempotencyKey})));
+    const input={version:Number(body.version),decision:String(body.decision??''),reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,actor_role:authorization.role,idempotency_key:idempotencyKey};
+    const gateCode=(await pool.query(`SELECT gate_code FROM gate_records WHERE id=$1 AND project_id=$2`,[catalogGateDecisionMatch[2],catalogGateDecisionMatch[1]])).rows[0]?.gate_code;
+    return respond(response,202,gateCode==='PRODUCT_COMMITMENT'?await decideProductCommitmentGate(catalogGateDecisionMatch[1],catalogGateDecisionMatch[2],input):await withTransaction(client=>decideCatalogGate(client,catalogGateDecisionMatch[1],catalogGateDecisionMatch[2],input)));
   }
   if (assuranceMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceMatch[1],url.searchParams.get('cursor'),url.searchParams.get('state'),url.searchParams.get('category'),await assuranceOptions(assuranceMatch[1])));
   if (assuranceModuleMatch && request.method === 'GET') return respond(response,200,await assuranceProjection(assuranceModuleMatch[1],url.searchParams.get('cursor'),url.searchParams.get('state'),url.searchParams.get('category'),{...(await assuranceOptions(assuranceModuleMatch[1])),targetType:'module',targetId:uuidParameter(assuranceModuleMatch[2],'ASSURANCE_MODULE_ID_INVALID')}));

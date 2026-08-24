@@ -1,9 +1,9 @@
 ---
 task: LR-02A
-status: TO DO
+status: DONE
 title: Canonical Product Commitment Modules
 depends_on: [LR-01, GAT-01, GAT-03, REC-01]
-blocks: [LR-02]
+blocks: []
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
@@ -72,3 +72,20 @@ e independente da ordem; gate autorizado/obsoleto/concorrente; schema de
 lineage (FK, unicidade e consistência cross-project); coexistência legado e
 PostgreSQL real para constraints, locks e atomicidade. Materialização de um ou
 vários módulos, replay parcial A/B/C, retries e reconciliador pertencem a LR-02.
+
+## Evidência de implementação — 2026-08-23
+
+LR-02A está `DONE`. A migration aditiva
+`061_phase_6_5_canonical_product_commitment_modules.sql` publica revisões,
+itens e a infraestrutura vazia de materialization lineage, com FKs compostas,
+unicidade, imutabilidade e guards de gate/projeto. `product-commitment.ts`
+implementa `PRODUCT_COMMITMENT_MODULES:v1`, DAG, canonical JSON/SHA-256,
+allocation sob lock de projeto, replay, rework/supersession, abertura e decisão
+atômicas via GAT-01/GAT-03, eventos e read model HTTP.
+
+Os testes unitários e PostgreSQL cobrem schema negativo, determinismo, replay,
+corridas de criação/decisão/supersession, stale version, RBAC, adulteração,
+lineage cross-project e coexistência legado. Migrations, build e regressões de
+gate, auth, discovery, workflow, HTTP, projection, AUT-01, REC-01 e Phase 3
+passaram. Nenhum módulo ou `module_revision` é criado pelo fluxo LR-02A; LR-02,
+AUT-02, GAT-02 e REC-02 não foram iniciadas.

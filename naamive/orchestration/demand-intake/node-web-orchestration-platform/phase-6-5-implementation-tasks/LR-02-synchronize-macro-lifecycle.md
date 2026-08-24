@@ -49,6 +49,7 @@ dependência mecânica da agregação automática. A ordem serial é
 
 O contrato de pré-validação está em
 [`LR-02-synchronize-macro-lifecycle-prevalidation.md`](LR-02-synchronize-macro-lifecycle-prevalidation.md).
+Ele está `READY_FOR_IMPLEMENTATION` após a conclusão de LR-02A.
 Não implementa pipeline interno de WI (AUT-02),
 aceite final/pausa/cancelamento (GAT-02) nem altera históricos certificados.
 

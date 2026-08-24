@@ -1,7 +1,7 @@
 ---
 task: LR-02
 document_type: prevalidation
-status: PREVALIDATION_BLOCKED
+status: READY_FOR_IMPLEMENTATION
 created_at: 2026-08-23
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
@@ -10,15 +10,14 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 ## Resultado
 
-**PREVALIDATION_BLOCKED — BLOCKED_BY_LR-02A.** A matriz de lifecycle, os
-predicados e as fronteiras estão fechados. O contrato faltante foi separado na
-task bloqueadora [`LR-02A`](LR-02A-canonical-product-commitment-modules.md),
-cuja pré-validação está `READY_FOR_IMPLEMENTATION`. Enquanto LR-02A não
-publicar a fonte canônica/imutável dos módulos comprometidos, LR-02 não pode
-materializar módulos sem reconstruir texto livre, o que é vedado.
+**READY_FOR_IMPLEMENTATION.** A matriz de lifecycle, os predicados e as
+fronteiras estão fechados. A task bloqueadora
+[`LR-02A`](LR-02A-canonical-product-commitment-modules.md) está `DONE` e
+publicou a fonte canônica/imutável dos módulos comprometidos, eliminando a
+reconstrução proibida de texto livre.
 
-LR-02 permanece `TO DO`. Esta pré-validação não iniciou AUT-02 nem alterou
-runtime, migration ou teste funcional.
+LR-02 permanece `TO DO` e é a próxima task serial. Esta atualização de status
+não iniciou LR-02 nem AUT-02.
 
 ## Leitura e evidências examinadas
 
@@ -213,22 +212,19 @@ a mesma linha/intent pelo índice e lock de projeto/revisão. Reprocessar a mesm
 revisão é `NO_CHANGE`; uma revisão diferente só cria/atualiza o ciclo segundo
 política explícita, nunca reescreve módulo histórico.
 
-### Bloqueio: fonte canônica ausente
+### Fonte canônica entregue
 
 **Decisão arquitetural resolvida por LR-02A — committed modules.**
 
-Problema: `candidate_modules` é exigido por GAT-01, porém não existe tabela,
-artefato schema-validado ou campo de revisão com a lista aprovada. A única
-estrutura com `module_key` estável hoje é `modules`, criada tarde e por comando
-manual; ela não pode ser a fonte do próprio compromisso. Ler texto/metadata de
-`product-commitment-review` seria reconstrução de texto livre e quebraria
-replay, idempotência e auditabilidade.
+O problema bloqueante era a ausência de uma fonte persistida para
+`candidate_modules`; ler texto/metadata de `product-commitment-review` seria
+reconstrução de texto livre e quebraria replay, idempotência e auditabilidade.
 
-LR-02A escolheu uma `ProductCommitmentRevision` imutável com itens canônicos,
-`module_key`, payload/hash, vínculo ao gate e lineage de materialização. A
-especificação está em sua pré-validação. A implementação aditiva e os testes
-de replay/concor­rência pertencem a LR-02A; até sua conclusão/auditoria, este
-status permanece bloqueado.
+LR-02A entregou `ProductCommitmentRevision` imutável com itens canônicos,
+`module_key`, payload/hash, vínculo a `gate_records/gate_decisions`, read model
+e infraestrutura de lineage. A migration 061 e os testes PostgreSQL provaram
+replay, concorrência, imutabilidade e proteção cross-project. LR-02 pode agora
+consumir somente revisões `APPROVED` e preencher o lineage operacional.
 
 ## Desenho de agregação, atomicidade e concorrência
 
@@ -264,8 +260,8 @@ projeção jamais promovem agregado.
 
 LR-02 governa exclusivamente novas instâncias selecionadas de
 `PROJECT_DISCOVERY:v4` e `MODULE_DELIVERY:v2`, com WIs
-`WORK_ITEM_DELIVERY:v2`. O rollout permanece desligado até este contrato e a
-decisão de committed modules serem implementados. V1--v3 e MODULE v1 são
+`WORK_ITEM_DELIVERY:v2`. O rollout permanece desligado até LR-02 implementar e
+validar este contrato; committed modules já foram entregues por LR-02A. V1--v3 e MODULE v1 são
 consultáveis e classificados `PRESERVE_LEGACY`; não há migração implícita.
 Migração futura exige classificação LR-01, pré-condições/evidência, plano
 explícito, evento e reavaliação, e rollback de política só afeta novos
@@ -297,10 +293,10 @@ de agregação após fato GAT-02 válido.
 | Versionamento e API | legado preservado; novo workflow correto; migração apenas explícita; API/SSE mostra macro-state/eventos e não oferece comando manual técnico. |
 | PostgreSQL | unique keys, locks, idempotência, atomicidade e ausência de avanço duplicado em banco real. |
 
-## Checklist de fronteira antes de desbloquear
+## Checklist de fronteira concluído
 
-1. Aprovar e publicar a fonte canônica versionada de módulos comprometidos.
-2. Atualizar esta pré-validação para `READY_FOR_IMPLEMENTATION` com schema,
-   ownership e vínculo exato ao `PRODUCT_COMMITMENT` aprovados.
-3. Só então implementar migration aditiva de intent/outbox, agregador,
-   reconciliador, rollout e a matriz de testes; não iniciar AUT-02 antes disso.
+1. Fonte canônica versionada de módulos comprometidos publicada por LR-02A.
+2. Pré-validação atualizada para `READY_FOR_IMPLEMENTATION` com schema,
+   ownership e vínculo exato ao `PRODUCT_COMMITMENT` implementados.
+3. LR-02 pode implementar migration aditiva de intent/outbox, agregador,
+   reconciliador, rollout e sua matriz de testes; AUT-02 continua fora de escopo.

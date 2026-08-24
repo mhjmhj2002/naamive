@@ -1,9 +1,10 @@
 # Tasks de implementação — Fase 6.5
 
 Índice vivo da execução da Fase 6.5. Checkpoint em 23/08/2026:
-`LR-01`, `GAT-01`, `GAT-03`, `AUT-01` e `REC-01` estão `DONE`; os dois findings
-da auditoria de `9e9bdaf0` foram fechados. A próxima task serial é `LR-02A`,
-ainda em `TO_DO`; ela desbloqueia LR-02.
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01` e `LR-02A` estão `DONE`; os
+dois findings da auditoria de `9e9bdaf0` foram fechados. A fonte canônica de
+módulos comprometidos foi publicada e a próxima task serial é `LR-02`, cuja
+pré-validação está `READY_FOR_IMPLEMENTATION`.
 
 Baseline histórica imutável:
 `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`.
@@ -15,8 +16,8 @@ Baseline histórica imutável:
 | 3 | [GAT-03 — Autenticação e RBAC](GAT-03-authentication-rbac.md) | `DONE` | GAT-01 |
 | 4 | [AUT-01 — Scheduler transacional de elegibilidade](AUT-01-transactional-eligibility-scheduler.md) | `DONE` | LR-01, GAT-01, GAT-03 |
 | 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `DONE` | LR-01, AUT-01 |
-| 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `TO_DO` (pré-validação `READY_FOR_IMPLEMENTATION`; PV-01/PV-02 resolvidos) | LR-01, GAT-01, GAT-03, REC-01 |
-| 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (bloqueada por LR-02A) | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
+| 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `DONE` | LR-01, GAT-01, GAT-03, REC-01 |
+| 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (pré-validação `READY_FOR_IMPLEMENTATION`; próxima) | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `TO_DO` | AUT-03, GAT-01 |
@@ -26,7 +27,7 @@ Baseline histórica imutável:
 | 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `TO_DO` | todas as tasks funcionais |
 | 14 | [DOC-01 — Reconciliar documentação F5/F6/F6.5](DOC-01-reconcile-phase5-phase6-docs.md) | `TO_DO` | TST-01 |
 
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01` é a sequência serial concluída. A
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A` é a sequência serial concluída. A
 dependência conceitual original de AUT-01 em LR-01 descreve o contrato de
 lifecycle que ela consome; a fronteira final de execução também exige GAT-01 e
 GAT-03, pois o scheduler opera sob catálogo de autoridade e identidade/RBAC
