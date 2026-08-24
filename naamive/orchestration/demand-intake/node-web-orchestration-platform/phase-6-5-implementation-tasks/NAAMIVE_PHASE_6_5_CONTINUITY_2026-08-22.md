@@ -44,7 +44,7 @@ A Fase 6.5 possui 14 demandas:
 | 3 | **GAT-03** | Autenticação e RBAC server-side | **DONE** |
 | 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
 | 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
-| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / NEXT** |
+| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / PREVALIDATION_BLOCKED** |
 | 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
@@ -396,11 +396,16 @@ falhas históricas de inventory já auditadas.
 
 ---
 
-### LR-02 — TO_DO / NEXT
+### LR-02 — TO_DO / PREVALIDATION_BLOCKED
 
 Sincronizar lifecycle macro de projeto e módulo com os novos contratos.
 
 Projeto, módulo, work item e execução precisam refletir coerentemente o progresso real.
+
+A pré-validação em `LR-02-synchronize-macro-lifecycle-prevalidation.md`
+identificou a ausência de fonte canônica/versionada de módulos comprometidos.
+Não iniciar implementação nem AUT-02 até publicar esse contrato; LR-02 continua
+`TO_DO`.
 
 ---
 
@@ -534,8 +539,8 @@ Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. retomar por **LR-02 — sincronizar macro-lifecycle**, sem antecipar AUT-02;
+3. retomar a pré-condição bloqueante de **LR-02 — sincronizar macro-lifecycle**, sem antecipar AUT-02;
 4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
    lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02 TO_DO/NEXT`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02 TO_DO/PREVALIDATION_BLOCKED`.

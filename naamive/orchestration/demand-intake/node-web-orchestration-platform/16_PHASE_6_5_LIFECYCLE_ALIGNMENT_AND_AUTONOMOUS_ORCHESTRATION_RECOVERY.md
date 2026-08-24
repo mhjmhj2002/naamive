@@ -208,7 +208,7 @@ publicados por AUT-01; GAT-01/GAT-03 permanecem guardrails de autoridade.
 | 3 | `GAT-03` | Autenticar identidade e aplicar RBAC às ações sensíveis. | GAT-01 |
 | 4 | `AUT-01` | Despachar WIs elegíveis transacionalmente. | LR-01 |
 | 5 | `REC-01` | Selecionar recovery pela causa e eliminar ações ambíguas. | LR-01, AUT-01 |
-| 6 | `LR-02` | Sincronizar macro-lifecycle e automações de passagem macro. | LR-01, GAT-01 |
+| 6 | `LR-02` | Sincronizar macro-lifecycle e automações de passagem macro. | LR-01, GAT-01, AUT-01, REC-01 |
 | 7 | `AUT-02` | Encadear QA, review, merge, candidata, validação e integração. | AUT-01, REC-01, LR-02 |
 | 8 | `AUT-03` | Aplicar F6 aos trabalhos reais selecionados. | AUT-02 |
 | 9 | `REC-02` | Recuperar reviewer e blocks com assistência/routing. | AUT-03, GAT-01 |
@@ -228,6 +228,8 @@ flowchart LR
   AUT01 --> REC01
   LR01 --> LR02[LR-02]
   GAT01 --> LR02
+  AUT01 --> LR02
+  REC01 --> LR02
   AUT01 --> AUT02[AUT-02]
   REC01 --> AUT02
   LR02 --> AUT02 --> AUT03[AUT-03] --> REC02[REC-02]

@@ -2,7 +2,7 @@
 task: LR-02
 status: TO DO
 title: Sincronizar macro-lifecycle
-depends_on: [LR-01, GAT-01]
+depends_on: [LR-01, GAT-01, AUT-01, REC-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
@@ -40,7 +40,14 @@ eventos, projeções e migrations/índices necessários.
 
 ## Dependências e restrições
 
-Depende de LR-01 e GAT-01. Não implementa pipeline interno de WI (AUT-02),
+Depende conceitual e funcionalmente de LR-01, GAT-01, AUT-01 e REC-01.
+GAT-03 é guardrail de identidade/RBAC para qualquer ação humana, mas não é
+dependência mecânica da agregação automática. A ordem serial é
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02`.
+
+O contrato de pré-validação está em
+[`LR-02-synchronize-macro-lifecycle-prevalidation.md`](LR-02-synchronize-macro-lifecycle-prevalidation.md).
+Não implementa pipeline interno de WI (AUT-02),
 aceite final/pausa/cancelamento (GAT-02) nem altera históricos certificados.
 
 ## Estratégia de implementação e compatibilidade
