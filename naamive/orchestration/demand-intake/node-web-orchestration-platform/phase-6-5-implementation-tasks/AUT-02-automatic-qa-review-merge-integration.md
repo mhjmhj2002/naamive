@@ -61,6 +61,8 @@ legado, sem bypass de saga.
 - QA pass cria review independente; só `ACCEPT` autoriza merge;
 - QA/review/validation negativos produzem finding, rework ou stop corretos;
 - merge por WI e candidata agregada por revision/round são auditáveis e exatamente uma vez;
+- criação/finalização da candidata promovem todos os membros do manifest
+  atomicamente; integração parcial de subset é proibida;
 - crash/replay/concurrency convergem sem repetir efeito externo;
 - WI integrado emite reavaliação LR-02, sem mutação macro direta;
 - recurso já `CANCELLED` é fenced/no-op; cancelamento funcional é GAT-02.

@@ -54,9 +54,10 @@ Candidate é entidade lateral, não um estado novo de WI.
 | `INDEPENDENT_REVIEW` | `REWORK` | `REWORK_REQUIRED` | Assurance/F3 | finding + rework | AUT-01 agenda correção |
 | `INDEPENDENT_REVIEW` | `BLOCK` | `BLOCKED` | Assurance | block/finding | parar |
 | `INDEPENDENT_REVIEW` | `ESCALATE` | `WAITING_FOR_ESCALATION` | Assurance/GAT-01 | razão/evidence/autoridade | parar |
-| `ACCEPTED` | merge próprio recorded + `integrationCandidateEligible` do módulo/round | `READY_FOR_INTEGRATION` | AUT-02/Git | todos os membros requeridos, SHA/parents e manifest agregado | validate candidate |
-| `READY_FOR_INTEGRATION` | integration intent | `INTEGRATING` | AUT-02 | candidate validada/refs | integrate |
-| `INTEGRATING` | integration recorded | `INTEGRATED` | AUT-02/Git | remote SHA/parents + attempt | LR-02 re-evaluate |
+| `ACCEPTED` | `MERGE_RECORDED` individual, aggregate ainda falso | `ACCEPTED` | AUT-02/Git | merge evidence do próprio WI | `REASSESS_INTEGRATION_CANDIDATE` |
+| `ACCEPTED` (todos os membros) | candidate agregada persistida | `READY_FOR_INTEGRATION` | AUT-02 | manifest completo, SHA/parents e candidate | validation intent; promoção coletiva |
+| `READY_FOR_INTEGRATION` (todos os membros) | candidate validated + integration `PRE_EFFECT` | `INTEGRATING` | AUT-02 | candidate/attempt e membros ainda elegíveis | integração coletiva |
+| `INTEGRATING` (todos os membros) | `INTEGRATION_RECORDED(candidate)` | `INTEGRATED` | AUT-02/Git | remote SHA/parents + attempt/evidence | promoção coletiva + LR-02 |
 
 ```text
 qaEligible = WI v2 + OUTPUT_SUBMITTED + immutable candidate + !CANCELLED
@@ -159,6 +160,33 @@ unicidade equivalente no schema v2; a unicidade legada `(project_id,phase_sha)`
 não é autoridade suficiente para essa unidade agregada e permanece apenas para
 compatibilidade histórica.
 
+`RequiredWorkItemSet:v1` é consultado somente para construir a candidate. A
+partir do commit de criação, `candidate.members` do manifest é a única fonte de
+membership para validar, integrar e finalizar aquela generation; nenhuma query
+dinâmica pode adicionar/remover WI, nem uma contagem pode substituir a lista.
+Novo WI, plan/revision/round nova ou rework gera outra generation quando
+elegível; não muta a candidate antiga.
+
+### Cardinalidade coletiva publicada
+
+Quando `integrationCandidateEligible` é verdadeiro, uma única transação grava:
+manifest/hash, candidate no estado inicial, vínculo imutável de membros, evento
+agregado, evidences, validation intent **e** a transição de **todos** os membros
+do manifest que ainda estão `ACCEPTED` para `READY_FOR_INTEGRATION`. Se qualquer
+member update falhar, toda a criação é rollback; enquanto houver N-1 merges,
+nenhum WI recebe essa promoção agregada. A promoção não depende do WI que gravou
+o último `MERGE_RECORDED`.
+
+Os estados são distintos: candidate usa os estados publicados de
+`INTEGRATION_CANDIDATE` (`CANDIDATE_CREATED`, validação/`INTEGRATION_PENDING`,
+`INTEGRATION_IN_PROGRESS`, `INTEGRATED`, `INTEGRATION_BLOCKED`, `SUPERSEDED`),
+enquanto WIs usam `ACCEPTED`, `READY_FOR_INTEGRATION`, `INTEGRATING` e
+`INTEGRATED`. Pelo contrato já publicado de `WORK_ITEM_DELIVERY:v2`, a política
+é **A**: no mesmo pre-effect em que candidate/attempt começam integração, todos
+os membros `READY_FOR_INTEGRATION` passam coletivamente para `INTEGRATING`.
+Não existe subset em estado transitório; se o pre-effect não começar, eles ficam
+`READY_FOR_INTEGRATION`.
+
 ## QA e candidate validation
 
 QA é **executor determinístico, não agent**. O novo job `RUN_DELIVERY_QA` roda
@@ -223,10 +251,11 @@ review ACCEPT / work_acceptance ACCEPTED
 → MERGE_WORK_ITEM intent → merge ou REC-01 reconcile
 → MERGE_RECORDED → REASSESS_INTEGRATION_CANDIDATE
 → somente se integrationCandidateEligible(module_revision,round)
-  → INTEGRATION_CANDIDATE_CREATED
+  → INTEGRATION_CANDIDATE_CREATED + todos os membros → READY_FOR_INTEGRATION
 → VALIDATE_INTEGRATION_CANDIDATE → CANDIDATE_VALIDATED
-→ INTEGRATE_CANDIDATE → INTEGRATION_RECORDED
-→ WI INTEGRATED → MACRO_REEVALUATE (LR-02)
+→ INTEGRATE_CANDIDATE + todos os membros → INTEGRATING
+→ INTEGRATION_RECORDED → todos os membros → INTEGRATED
+→ um MACRO_REEVALUATE (LR-02)
 ```
 
 Merge requer `mergeEligible`: acceptance aceita, QA pass, nenhum finding/rework/
@@ -239,11 +268,15 @@ geram candidate. Quando o último de N merges é gravado, os concorrentes relêe
 o mesmo `RequiredWorkItemSet:v1` sob lock e a unicidade do manifest permite que
 exatamente um crie a candidata.
 
-Integração só começa em `candidateValid`. `integration_attempt` fixa target
-`integration`, `integration_before_sha`, candidate SHA e parents esperados.
-`INTEGRATED` exige `reconcileIntegration` confirmar ref remoto e parents; depois
-persiste merge/push SHA, attempt/candidate state, event/evidence e WI state.
-Push retornando zero não é prova suficiente.
+Integração só começa em `candidateValid`, depois de reler **todos** os membros
+congelados do manifest. `integration_attempt` fixa target `integration`,
+`integration_before_sha`, candidate SHA e parents esperados. No `PRE_EFFECT`,
+candidate/attempt e todos os WIs membros entram em `INTEGRATING` na mesma
+transação. `INTEGRATED` exige `reconcileIntegration` confirmar ref remoto e
+parents; depois uma única transação persiste merge/push SHA, attempt/candidate
+state, evidence, eventos agregados/por WI, **todos** os WIs do manifest em
+`INTEGRATED` e o único `MACRO_REEVALUATE` pós-conclusão. Push retornando zero
+não é prova suficiente.
 
 ## Atomicidade, outbox e jobs
 
@@ -253,16 +286,17 @@ Push retornando zero não é prova suficiente.
 | QA pass→review | QA report, acceptance/review, review intent/job, event |
 | review ACCEPT→merge | decision/acceptance, merge intent, event |
 | merge→candidate eligibility | merge evidence, `REASSESS_INTEGRATION_CANDIDATE` intent, event |
-| candidate aggregated | manifest/candidate de todos os WIs requeridos, validation intent, event |
-| validated→integration | validation report/state, integration intent, event |
-| integrated | evidence/states, WI `INTEGRATED`, event, LR-02 intent |
+| candidate aggregated | manifest/candidate + vínculos de todos os WIs + todos `ACCEPTED→READY_FOR_INTEGRATION` + validation intent + event |
+| validated→integration | validation report/state + candidate/attempt e todos membros `READY_FOR_INTEGRATION→INTEGRATING` + integration intent + event |
+| integrated | integration evidence + attempt/candidate `INTEGRATED` + todos membros `INTEGRATING→INTEGRATED` + events + um LR-02 intent |
 
 `macro_lifecycle_intents` pertence somente ao macro lifecycle. AUT-02 cria um
 ledger/outbox aditivo, por exemplo `assurance_integration_intents`, com
 destination/kind, candidate lineage, payload/evidence refs, unique idempotency,
 `PENDING|LEASED|COMPLETED|FAILED|SUPERSEDED`, attempts, lease owner/token/expiry,
 fencing generation e replay. Worker usa `FOR UPDATE SKIP LOCKED`; somente o
-último handoff publica `MACRO_REEVALUATE` existente.
+último handoff publica um `MACRO_REEVALUATE` existente, após toda a promoção
+coletiva; nunca um intent por WI que possa expor subset persistido.
 
 Jobs/operations auditáveis: `RUN_DELIVERY_QA`, `REVIEW` (existente),
 `MERGE_WORK_ITEM`, `VALIDATE_INTEGRATION_CANDIDATE` e `INTEGRATE_CANDIDATE`.
@@ -314,12 +348,16 @@ acceptance, intent e evidence continuam históricos; nada é apagado ou herdado.
 | após `ACCEPT`, antes de merge `PRE_EFFECT` | AUT-02 | `mergeEligible=false`; merge não inicia, intent `SUPERSEDED`/`NO_OP` |
 | após merge `PRE_EFFECT`, antes de confirmação | REC-01 | `EFFECT_UNKNOWN → RECONCILE BEFORE RETRY`; não supersede cegamente |
 | após `MERGE_RECORDED`, antes de candidate | AUT-02 | reavalia conjunto; stale impede candidate nova e a intent é `SUPERSEDED`/`NO_OP` |
-| após candidate criada, antes de integration `PRE_EFFECT` | AUT-02 | candidate histórica `SUPERSEDED`; integration intent `NO_OP` |
-| durante integration/push ou sem confirmação | REC-01 | reconcile; `NOT_APPLIED` encerra/supersede sem novo efeito, `APPLIED_UNRECORDED` registra e continua, `DIVERGED` usa `INTEGRATION_RECOVERY` |
+| após candidate criada, antes de integration `PRE_EFFECT` | AUT-02 | stale/finding/rework/recovery/block/cancel de **qualquer membro** torna candidate inteira `SUPERSEDED`; intent `NO_OP`; nenhum membro integra |
+| durante integration/push ou sem confirmação | REC-01 | reconcile; `NOT_APPLIED` encerra/supersede sem membro `INTEGRATED`, `APPLIED_UNRECORDED` registra candidate e todos os membros do manifest atomicamente, `DIVERGED` usa `INTEGRATION_RECOVERY` |
 
 Não há rollback Git automático para ocultar efeito já possível. Se a observação
 provar efeito aplicado, ele é registrado com sua lineage histórica mesmo que a
 revision esteja stale; se provar `NOT_APPLIED`, nenhum novo merge é iniciado.
+Uma candidate superseded não faz rollback de estados individuais além do fato
+que os mudou legitimamente (por exemplo, WI-B em `REWORK_REQUIRED`); A/C nunca
+são integrados isoladamente e sua candidate association permanece projetável
+como histórica/superseded.
 
 Para v2, endpoints manuais `/qa`, `/merge`, create candidate, `/validate`,
 `/integrate`, `/retry` e `/reconcile` são **B**: reemit/reconcile intent
@@ -332,6 +370,13 @@ GAT-03. Worker usa service principal real, sem header mágico/default/fallback.
 API/SSE projeta snapshot/hash, QA report/status, review/acceptance, merge,
 candidate/validation/integration, intent atual, recovery, finding/block,
 stale/superseded, next automatic action e stop reason. UI não decide.
+Cada WI membro também projeta `candidate_id`, `candidate_manifest_hash`, índice
+canônico de membership, candidate/integration status; o módulo projeta total e
+ready members, validation e integration status. Eventos agregados
+`INTEGRATION_CANDIDATE_CREATED`/`INTEGRATION_RECORDED` e eventos por WI, se
+necessários, compartilham `candidate_id`, `manifest_hash`, module revision,
+round e `correlation_id`. Replay de evento só observa/aplica a transação
+coletiva já concluída, nunca promove um membro isolado.
 
 Chaves: `qa:v1:<delivery_candidate>`, `review:v1:<acceptance>:<version>`,
 `merge:v1:<delivery_candidate>`,
@@ -344,13 +389,17 @@ autoridade, `SUPERSEDED`/`NO_OP` sem efeito.
 Ordem de locks: `project → module/current revision → module round → approved
 module plan revision → RequiredWorkItemSet:v1` (WIs em UUID lexical) `→ delivery
 candidate/delivery/worktree → work_acceptance → assurance_review → integration
-candidate/attempt → pipeline intent/operation`; AUT-01 toma sua capacidade após
-WI; LR-02 não toma locks WI/delivery; REC-01 mantém `RecoveryDecision → job/WI`.
-Candidate creation e revision succession tomam os mesmos primeiros locks e
-releem current revision/round/required set imediatamente antes de gravar ou
-reclamar intent. A unique key da candidate por manifest é o backstop. Assim,
-últimos merges concorrentes criam uma candidate, succession antes da gravação
-fenceia a criação e succession durante claim de integration impede novo efeito.
+candidate → integration attempt/intent → operation`. A finalização preserva essa
+ordem, sem inversão: bloqueia primeiro todos os membros do manifest em UUID
+lexical, depois o candidate, e só então attempt/intent; rework e succession usam
+a mesma ordem antes de mudar um membro. AUT-01 toma
+sua capacidade após WI; LR-02 não toma locks WI/delivery; REC-01 mantém
+`RecoveryDecision → job/WI`. Candidate creation e revision succession tomam os
+mesmos primeiros locks e releem current revision/round/required set imediatamente
+antes de gravar ou reclamar intent. A unique key da candidate por manifest é o
+backstop. Assim, últimos merges concorrentes criam uma candidate, succession
+antes da gravação fenceia a criação e succession/rework durante claim de
+integration impede novo efeito ou subset.
 PostgreSQL locks/uniques serializam QA/reviewer/ACCEPT/merge duplicados,
 candidate/replay, integration/recovery, nova revisão e CANCELLED.
 
@@ -362,11 +411,13 @@ candidate/replay, integration/recovery, nova revisão e CANCELLED.
 | QA result, review intent ausente | QA report/acceptance | só review intent |
 | ACCEPT, merge intent ausente | decision/acceptance | só merge intent |
 | merge aplicado, record ausente | Git/REC-01 | reconcile/record |
-| merge recorded, candidate ausente | merge evidence | candidate única |
-| candidate sem validation intent | candidate | só validation intent |
+| merge recorded, candidate ausente | merge evidence + RequiredWorkItemSet | candidate e todos membros `READY` juntos |
+| crash durante candidate creation/member update | transação PostgreSQL | rollback total ou candidate+todos `READY`, nunca subset |
+| candidate sem validation intent | candidate/manifest imutável | só validation intent |
 | validation sem integration intent | report | só integration intent |
-| integration aplicada sem record | remote Git/REC-01 | reconcile/record |
-| integrated sem macro intent | integration evidence | só LR-02 intent |
+| integration aplicada sem record | remote Git/REC-01 | reconcile e candidate+todos membros `INTEGRATED` juntos |
+| crash durante finalização de membros | transação PostgreSQL + Git/REC-01 | rollback local; reconciler finaliza todo conjunto |
+| integrated sem macro intent | conclusão coletiva | só um LR-02 intent |
 
 Eventos, intents, jobs, reviewer output/ACCEPT, merge, candidate e integration
 duplicados convergem para a mesma chave/recurso. A implementação deve testar em
@@ -376,18 +427,26 @@ unknown e applied-unrecorded; validation failure; integration unknown; cada
 crash; concurrent ACCEPT/merge; replay; revision antiga; recurso já CANCELLED;
 e coexistência legada. A matriz inclui explicitamente:
 
-1. três WIs com só um, ou N-1, `MERGE_RECORDED` não criam candidate;
+1. A/B/C merged/accepted criam candidate e promovem A/B/C juntos a
+   `READY_FOR_INTEGRATION`; com N-1 merges não há candidate nem promoção;
 2. o último WI e dois últimos merges concorrentes criam exatamente uma candidate;
-3. replay do último merge não duplica candidate; manifest completo, hash
-   determinístico e imutabilidade são provados;
-4. sucessão antes de ACCEPT, depois de ACCEPT/pre-effect e depois de merge
+   replay não duplica candidate, member transition, manifest, hash ou event;
+3. manifest completo, hash determinístico, membership imutável e projeção de
+   todos os membros para o mesmo candidate/hash são provados;
+4. falha forçada no segundo update de criação faz rollback: nenhum membro fica
+   `READY_FOR_INTEGRATION`; crash converge em nenhum ou todos;
+5. candidate integrada promove A/B/C a `INTEGRATED` em uma transação; falha no
+   segundo update e dois finalizadores não deixam promoção parcial nem attempt
+   lógico duplicado;
+6. stale, finding/rework, recovery/block ou cancel de WI-B antes de pre-effect
+   supersede a candidate inteira e integra zero subset;
+7. sucessão antes de ACCEPT, depois de ACCEPT/pre-effect e depois de merge
    produzem respectivamente supersession histórica, nenhum merge e nenhuma
    candidate nova; a nova revision não herda QA/ACCEPT;
-5. sucessão após pre-effect, `APPLIED_UNRECORDED` e `NOT_APPLIED` usam REC-01;
-6. candidate stale antes de integration é `SUPERSEDED`/`NO_OP`; integration
-   `EFFECT_UNKNOWN` stale reconcilia;
-7. candidate creation × revision succession, integration claim × succession,
-   crash/replay/fencing não duplicam candidate, merge nem integration.
+8. sucessão ou membro stale após pre-effect, `APPLIED_UNRECORDED` e
+   `NOT_APPLIED` usam REC-01; efeito confirmado finaliza todo manifest junto;
+9. candidate creation × revision succession, integration claim × succession,
+   crash/replay/fencing não duplicam candidate, merge, integration ou membro.
 
 ## Prontidão
 
