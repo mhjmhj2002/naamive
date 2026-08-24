@@ -9,6 +9,11 @@ pela `COMMITTED_MODULE_EVOLUTION_POLICY:v1` e o ledger reconstruível
 criação da instância e impediu reclassificação por rollout tardio. `AUT-02`
 implementou o contrato
 [`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`](AUT-02-automatic-qa-review-merge-integration-prevalidation.md).
+`AUT-02-FIX-01` substituiu cardinalidade por igualdade de identidade canônica
+do `RequiredWorkItemSet:v1`. A dívida independente
+[`MIG-FIX-01`](MIG-FIX-01-gate-catalog-fresh-migration-compatibility.md) também
+está `DONE`: a cadeia fresh 049/051 e o upgrade histórico foram validados sem
+reescrever migrations aplicadas.
 `AUT-03` é a próxima task da sequência serial.
 
 O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados

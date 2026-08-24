@@ -16,6 +16,7 @@ import { AUT02_PIPELINE_VERSION, AUT02_POLICY_VERSION, enqueueAut02Intent, type 
 
 export const DELIVERY_QA_POLICY_VERSION='DELIVERY_QA_POLICY:v1';
 export const CANDIDATE_VALIDATION_POLICY_VERSION='INTEGRATION_CANDIDATE_VALIDATION:v1';
+export const REQUIRED_WORK_ITEM_SET_POLICY_VERSION='RequiredWorkItemSet:v1';
 const leaseSeconds=120;
 const intentBackoffs=[5,15,30];
 const maxIntentAttempts=()=>Math.max(Number(config().agentMaxRetries)||0,0)+1;
@@ -27,6 +28,20 @@ export const canonicalJson=(value:unknown):string=>{
 };
 export const deterministicHash=(value:unknown)=>createHash('sha256').update(typeof value==='string'?value:canonicalJson(value)).digest('hex');
 const array=(value:unknown):any[]=>Array.isArray(value)?value:[];
+const canonicalWorkItemIdentity=(value:unknown)=>typeof value==='string'&&/^[a-z][a-z0-9_-]{0,99}$/.test(value)?value:null;
+const canonicalIdentitySet=(values:unknown[]):string[]|null=>{
+  const identities=values.map(canonicalWorkItemIdentity);
+  if(!identities.length||identities.some(identity=>identity===null))return null;
+  const sorted=(identities as string[]).sort();
+  return sorted.some((identity,index)=>index>0&&identity===sorted[index-1])?null:sorted;
+};
+export const deriveRequiredWorkItemSet=(planRevision:any):string[]|null=>canonicalIdentitySet(array(planRevision?.payload?.work_items).map(item=>item?.work_item_id));
+export const deriveObservedRequiredWorkItemSet=(members:any[]):string[]|null=>canonicalIdentitySet(array(members).map(member=>member?.plan_work_item_id));
+export const requiredWorkItemSetMatches=(expected:readonly string[]|null,observed:readonly string[]|null)=>{
+  const canonicalExpected=expected?canonicalIdentitySet([...expected]):null,canonicalObserved=observed?canonicalIdentitySet([...observed]):null;
+  return Boolean(canonicalExpected&&canonicalObserved&&canonicalExpected.length===canonicalObserved.length&&canonicalExpected.every((identity,index)=>identity===canonicalObserved[index]));
+};
+export const requiredWorkItemSetFingerprint=(scope:{module_plan_revision_id:string;module_revision_id:string;module_round_id:string},members:readonly string[])=>deterministicHash({policy_version:REQUIRED_WORK_ITEM_SET_POLICY_VERSION,module_plan_revision_id:scope.module_plan_revision_id,module_revision_id:scope.module_revision_id,module_round_id:scope.module_round_id,members});
 const shaList=(value:string)=>value.split(/\s+/).map(item=>item.trim()).filter(Boolean);
 const redact=(value:unknown)=>String(value??'').replace(/(?:token|password|secret|api[_-]?key)\s*[=:]\s*\S+/gi,'$1=[REDACTED]').slice(0,32768);
 const event=async(client:PoolClient,projectId:string,type:string,correlationId:string,payload:Record<string,unknown>,operationId?:string|null)=>
@@ -271,7 +286,7 @@ const requiredMemberRows=async(client:PoolClient,intent:any)=>{
   const round=(await client.query(`SELECT * FROM module_rounds WHERE id=$1 AND module_id=$2 AND revision_id=$3 FOR UPDATE`,[intent.module_round_id,intent.module_id,intent.module_revision_id])).rows[0];
   const plans=(await client.query(`SELECT * FROM module_plan_revisions WHERE module_id=$1 AND module_revision_id=$2 AND status='APPROVED' ORDER BY id FOR UPDATE`,[intent.module_id,intent.module_revision_id])).rows;
   if(!round||plans.length!==1)return{module,plan:null,round,members:[]};const plan=plans[0];
-  const members=(await client.query(`SELECT w.*,dc.id AS delivery_candidate_id,dc.work_item_revision_id,dc.delivery_id,dc.head_sha AS delivery_head_sha,dc.snapshot_hash,dc.qa_matrix_hash,
+  const members=(await client.query(`SELECT w.*,w.payload->>'work_item_id' AS plan_work_item_id,dc.id AS delivery_candidate_id,dc.work_item_revision_id,dc.delivery_id,dc.head_sha AS delivery_head_sha,dc.snapshot_hash,dc.qa_matrix_hash,
       qr.id AS qa_report_id,qr.report_hash AS qa_report_hash,qr.result AS qa_result,
       a.id AS acceptance_id,a.state AS acceptance_state,r.id AS review_id,rd.id AS review_decision_id,rd.decision,
       mr.id AS merge_result_id,mr.phase_before_sha,mr.phase_after_sha,mr.evidence_hash AS merge_evidence_hash,mr.observed_parents,mr.recorded_at,
@@ -288,22 +303,25 @@ const requiredMemberRows=async(client:PoolClient,intent:any)=>{
     LEFT JOIN review_decisions rd ON rd.review_id=r.id
     LEFT JOIN work_item_merge_results mr ON mr.delivery_candidate_id=dc.id AND mr.state='MERGE_RECORDED'
     WHERE w.module_id=$1 AND w.revision_id=$2 AND w.round_id=$3 AND w.workflow_code='WORK_ITEM_DELIVERY' AND w.workflow_version=2 AND w.payload->>'plan_revision_id'=$4::text
-    ORDER BY w.id::text FOR UPDATE OF w`,[intent.module_id,intent.module_revision_id,intent.module_round_id,plan.id])).rows;
+    ORDER BY w.payload->>'work_item_id',w.id::text FOR UPDATE OF w`,[intent.module_id,intent.module_revision_id,intent.module_round_id,plan.id])).rows;
   return{module,plan,round,members};
 };
 
 export const integrationCandidateMemberEligible=(member:any)=>Boolean(member.state==='ACCEPTED'&&member.delivery_candidate_id&&member.qa_result==='PASS'&&member.acceptance_state==='ACCEPTED'&&member.decision==='ACCEPT'&&member.merge_result_id&&member.phase_after_sha&&!member.open_finding&&!member.active_rework&&!member.active_recovery&&!member.active_external_blocker&&!member.active_block);
-export const integrationCandidateEligibleMembers=(requiredCount:number,members:any[])=>requiredCount>0&&members.length===requiredCount&&members.every(integrationCandidateMemberEligible);
+export const integrationCandidateEligibleMembers=(expected:readonly string[]|null,members:any[])=>requiredWorkItemSetMatches(expected,deriveObservedRequiredWorkItemSet(members))&&members.every(integrationCandidateMemberEligible);
 
 const executeCandidateReassessment=async(intent:any)=>withTransaction(async client=>{
   await lockIntent(client,intent);
   const {module,plan,round,members}=await requiredMemberRows(client,intent);
-  const expected=Array.isArray(plan?.payload?.work_items)?plan.payload.work_items.length:0;
+  const expected=deriveRequiredWorkItemSet(plan),observed=deriveObservedRequiredWorkItemSet(members);
   if(!module||!plan||!round||!integrationCandidateEligibleMembers(expected,members)){await completeIntent(client,intent,module?.current_revision_id!==intent.module_revision_id?'SUPERSEDED':'COMPLETED');return null;}
   const phaseSha=members.slice().sort((a:any,b:any)=>String(a.recorded_at).localeCompare(String(b.recorded_at))||String(a.id).localeCompare(String(b.id))).at(-1).phase_after_sha;
   if(gitValue(module.repository_path,'rev-parse','phases/3')!==phaseSha){await completeIntent(client,intent,'SUPERSEDED');return null;}
-  const manifestMembers=members.map((member:any,index:number)=>({member_index:index,work_item_id:String(member.id),work_item_revision_id:String(member.work_item_revision_id),delivery_candidate_id:String(member.delivery_candidate_id),delivery_id:String(member.delivery_id),delivery_head_sha:String(member.delivery_head_sha),snapshot_hash:String(member.snapshot_hash),qa_report_id:String(member.qa_report_id),qa_report_hash:String(member.qa_report_hash),qa_matrix_hash:String(member.qa_matrix_hash),work_acceptance_id:String(member.acceptance_id),assurance_review_id:String(member.review_id),review_decision_id:String(member.review_decision_id),merge_result_id:String(member.merge_result_id),merge_evidence_hash:String(member.merge_evidence_hash),phase_before_sha:String(member.phase_before_sha),merged_sha:String(member.phase_after_sha),merge_parents:member.observed_parents}));
-  const manifest={schema_version:'IntegrationCandidateManifest:v1',pipeline_version:AUT02_PIPELINE_VERSION,policy_version:AUT02_POLICY_VERSION,project_id:String(module.project_id),module_id:String(module.id),module_revision_id:String(intent.module_revision_id),module_round_id:String(intent.module_round_id),module_plan_revision_id:String(plan.id),phase_ref:'phases/3',phase_sha:String(phaseSha),integration_ref:'integration',members:manifestMembers};
+  const canonicalMembers=members.slice().sort((left:any,right:any)=>String(left.plan_work_item_id).localeCompare(String(right.plan_work_item_id))||String(left.id).localeCompare(String(right.id)));
+  const manifestMembers=canonicalMembers.map((member:any,index:number)=>({member_index:index,plan_work_item_id:String(member.plan_work_item_id),work_item_id:String(member.id),work_item_revision_id:String(member.work_item_revision_id),delivery_candidate_id:String(member.delivery_candidate_id),delivery_id:String(member.delivery_id),delivery_head_sha:String(member.delivery_head_sha),snapshot_hash:String(member.snapshot_hash),qa_report_id:String(member.qa_report_id),qa_report_hash:String(member.qa_report_hash),qa_matrix_hash:String(member.qa_matrix_hash),work_acceptance_id:String(member.acceptance_id),assurance_review_id:String(member.review_id),review_decision_id:String(member.review_decision_id),merge_result_id:String(member.merge_result_id),merge_evidence_hash:String(member.merge_evidence_hash),phase_before_sha:String(member.phase_before_sha),merged_sha:String(member.phase_after_sha),merge_parents:member.observed_parents}));
+  const setScope={module_plan_revision_id:String(plan.id),module_revision_id:String(intent.module_revision_id),module_round_id:String(intent.module_round_id)};
+  const requiredSetFingerprint=requiredWorkItemSetFingerprint(setScope,expected!);
+  const manifest={schema_version:'IntegrationCandidateManifest:v1',pipeline_version:AUT02_PIPELINE_VERSION,policy_version:AUT02_POLICY_VERSION,required_work_item_set_policy_version:REQUIRED_WORK_ITEM_SET_POLICY_VERSION,project_id:String(module.project_id),module_id:String(module.id),module_revision_id:String(intent.module_revision_id),module_round_id:String(intent.module_round_id),module_plan_revision_id:String(plan.id),required_work_item_set:expected,observed_work_item_set:observed,required_work_item_set_fingerprint:requiredSetFingerprint,phase_ref:'phases/3',phase_sha:String(phaseSha),integration_ref:'integration',members:manifestMembers};
   const manifestHash=deterministicHash(manifest),candidateKey=`candidate:v1:${intent.module_revision_id}:${intent.module_round_id}:${manifestHash}`;
   const old=(await client.query(`SELECT * FROM integration_candidates WHERE idempotency_key=$1`,[candidateKey])).rows[0];
   if(old){await completeIntent(client,intent,'COMPLETED');return old;}
@@ -356,7 +374,9 @@ const executeCandidateValidation=async(intent:any)=>withTransaction(async client
   if(!candidate||candidate.pipeline_version!==AUT02_PIPELINE_VERSION){await completeIntent(client,intent,'SUPERSEDED');return;}
   const prior=(await client.query(`SELECT * FROM integration_candidate_validation_reports WHERE candidate_id=$1`,[candidate.id])).rows[0];if(prior){await completeIntent(client,intent,'COMPLETED');return prior;}
   const members=(await client.query(`SELECT * FROM integration_candidate_members WHERE candidate_id=$1 ORDER BY member_index`,[candidate.id])).rows;
-  const checks:any[]=[];checks.push({code:'MANIFEST_HASH',pass:deterministicHash(candidate.manifest)===candidate.manifest_hash});checks.push({code:'MEMBERSHIP_CARDINALITY',pass:members.length>0&&members.length===array(candidate.manifest?.members).length});checks.push({code:'MEMBERSHIP_IDENTITY',pass:members.every((member:any,index:number)=>candidate.manifest.members[index]?.work_item_id===String(member.work_item_id)&&candidate.manifest.members[index]?.delivery_candidate_id===String(member.delivery_candidate_id))});checks.push({code:'REVISION_CURRENT',pass:candidate.current_revision_id===candidate.module_revision_id});
+  const manifestMembers=array(candidate.manifest?.members),requiredSet=deriveRequiredWorkItemSet({payload:{work_items:array(candidate.manifest?.required_work_item_set).map(work_item_id=>({work_item_id}))}}),observedSet=deriveObservedRequiredWorkItemSet(manifestMembers),persistedObservedSet=deriveObservedRequiredWorkItemSet(members.map((member:any)=>member.member_manifest));
+  const setScope={module_plan_revision_id:String(candidate.manifest?.module_plan_revision_id??''),module_revision_id:String(candidate.module_revision_id),module_round_id:String(candidate.module_round_id)};
+  const checks:any[]=[];checks.push({code:'MANIFEST_HASH',pass:deterministicHash(candidate.manifest)===candidate.manifest_hash});checks.push({code:'MEMBERSHIP_CARDINALITY',pass:members.length>0&&members.length===manifestMembers.length});checks.push({code:'MEMBERSHIP_IDENTITY',pass:members.every((member:any,index:number)=>manifestMembers[index]?.plan_work_item_id===member.member_manifest?.plan_work_item_id&&manifestMembers[index]?.work_item_id===String(member.work_item_id)&&manifestMembers[index]?.delivery_candidate_id===String(member.delivery_candidate_id))});checks.push({code:'REQUIRED_WORK_ITEM_SET_POLICY',pass:candidate.manifest?.required_work_item_set_policy_version===REQUIRED_WORK_ITEM_SET_POLICY_VERSION});checks.push({code:'REQUIRED_WORK_ITEM_SET_CANONICAL',pass:Boolean(requiredSet)&&canonicalJson(requiredSet)===canonicalJson(candidate.manifest?.required_work_item_set)});checks.push({code:'REQUIRED_WORK_ITEM_SET_EXACT',pass:requiredWorkItemSetMatches(requiredSet,observedSet)&&requiredWorkItemSetMatches(requiredSet,persistedObservedSet)&&canonicalJson(observedSet)===canonicalJson(candidate.manifest?.observed_work_item_set)});checks.push({code:'REQUIRED_WORK_ITEM_SET_FINGERPRINT',pass:Boolean(requiredSet)&&candidate.manifest?.required_work_item_set_fingerprint===requiredWorkItemSetFingerprint(setScope,requiredSet!)});checks.push({code:'REVISION_CURRENT',pass:candidate.current_revision_id===candidate.module_revision_id});
   let gitPass=true;try{gitPass=gitValue(candidate.repository_path,'rev-parse','phases/3')===candidate.phase_sha&&members.every((member:any)=>{try{gitValue(candidate.repository_path,'merge-base','--is-ancestor',member.merged_sha,candidate.phase_sha);return true;}catch{return false;}});}catch{gitPass=false;}checks.push({code:'GIT_STRUCTURE',pass:gitPass});
   const blockers=await candidateBlockers(client,candidate.id);checks.push({code:'MEMBERS_ELIGIBLE',pass:blockers.length===0});
   const passed=checks.every(check=>check.pass),report={schema_version:'IntegrationCandidateValidationReport:v1',candidate_id:candidate.id,manifest_hash:candidate.manifest_hash,policy_version:CANDIDATE_VALIDATION_POLICY_VERSION,checks};const reportHash=deterministicHash(report),op=await operation(client,candidate.project_id,'VALIDATE_INTEGRATION_CANDIDATE',`validate-operation:v1:${candidate.id}`,candidate.correlation_id),evidence=await artifact(client,candidate.project_id,'aut02-integration-candidate-validation',report,op),reportId=randomUUID();

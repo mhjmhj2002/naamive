@@ -457,6 +457,22 @@ PostgreSQL e Git reais cobrem a barreira N−1, rollback coletivo, manifests,
 finalizers concorrentes e `NOT_APPLIED`/`APPLIED_UNRECORDED`. AUT-03, REC-02 e
 GAT-02 permanecem fora deste escopo.
 
+O finding `AUT-02-FIX-01` foi fechado em 24/08/2026. O
+`RequiredWorkItemSet:v1` usa a identidade normativa `payload.work_item_id` da
+plan revision aprovada e exige igualdade exata com o conjunto observado,
+incluindo guards contra missing, extra e duplicatas. O manifest congela os dois
+conjuntos, a identidade lógica de cada membro e fingerprint ligado a plan,
+revision e round. A validação recompõe essa prova; cardinalidade isolada deixou
+de ser autoridade.
+
+A dívida independente `MIG-FIX-01` também foi fechada pela compatibilidade
+restrita do runner e pela migration 066. Fresh 049/051 publica legitimamente o
+mesmo conteúdo/hash em duas versões; o runner só remove a unicidade histórica
+quando filename, lineage, hash conhecido e transformação no-op coincidem, e
+051 continua sendo executada e registrada normalmente. Fresh, segundo migrate
+e upgrade histórico foram validados. Consulte
+`MIG-FIX-01-gate-catalog-fresh-migration-compatibility.md`.
+
 ---
 
 ### AUT-03 — TO_DO

@@ -13,7 +13,7 @@ if(!process.env.DATABASE_URL){
   process.env.NAAMIVE_OPERATOR_ID??='aut02-test-operator';
   const {pool,withTransaction}=await import('./db.js');
   const {AUT02_PIPELINE_VERSION,AUT02_POLICY_VERSION,enqueueAut02Intent}=await import('./aut02-ledger.js');
-  const {automaticAssuranceIntegrationProjection,deterministicHash,finalizeAut02IntegratedCandidate,reconcileAutomaticAssuranceIntegration}=await import('./automatic-assurance-integration.js');
+  const {automaticAssuranceIntegrationProjection,deterministicHash,finalizeAut02IntegratedCandidate,reconcileAutomaticAssuranceIntegration,requiredWorkItemSetFingerprint}=await import('./automatic-assurance-integration.js');
 
   const git=(cwd:string,...args:string[])=>execFileSync('git',['-C',cwd,...args],{encoding:'utf8'}).trim();
   const repository=()=>{
@@ -62,6 +62,14 @@ if(!process.env.DATABASE_URL){
       await pool.query(`INSERT INTO assurance_integration_intents(id,project_id,destination,kind,delivery_candidate_id,work_item_id,module_id,module_revision_id,module_round_id,correlation_id,idempotency_key,status,completed_at) VALUES($1,$2,'GIT_PHASE','MERGE_WORK_ITEM',$3,$4,$5,$6,$7,$8,$9,'COMPLETED',clock_timestamp())`,[mergeIntent,project,deliveryCandidate,workItem,module,moduleRevision,round,correlation,`merge:v1:${deliveryCandidate}`]);
       facts.push({workItem,deliveryCandidate,delivery,qaReport,acceptance,review,decision,mergeIntent,mergeResult,itemRevision,snapshotHash,qaHash,reportHash});
     }
+    const otherPlan=randomUUID(),otherRound=randomUUID(),otherRevision=randomUUID(),decoys=[randomUUID(),randomUUID(),randomUUID()];
+    await pool.query(`INSERT INTO module_revisions(id,project_id,module_key,revision,payload,status) VALUES($1,$2,'aut02',2,'{}','SUPERSEDED')`,[otherRevision,project]);
+    await pool.query(`INSERT INTO module_rounds(id,module_id,revision_id,round_number,state) VALUES($1,$2,$3,2,'WORK_ITEMS_ACTIVE')`,[otherRound,module,moduleRevision]);
+    await pool.query(`INSERT INTO module_plan_revisions(id,project_id,module_id,revision_number,module_revision_id,payload,payload_hash,json_artifact_hash,markdown_artifact_hash,author_id,status,work_item_workflow_code,work_item_workflow_version) VALUES($1,$2,$3,2,$4,$5,$6,$7,$8,'test','REJECTED','WORK_ITEM_DELIVERY',2)`,[otherPlan,project,module,moduleRevision,{work_items:[{work_item_id:'wi-1'}]},h('other-plan'),h('other-plan-json'),h('other-plan-md')]);
+    await pool.query(`INSERT INTO work_items(id,project_id,module_id,revision_id,round_id,title,payload,state,workflow_code,workflow_version) VALUES
+      ($1,$4,$5,$6,$7,'wrong plan',$8,'ACCEPTED','WORK_ITEM_DELIVERY',2),
+      ($2,$4,$5,$6,$9,'wrong round',$10,'ACCEPTED','WORK_ITEM_DELIVERY',2),
+      ($3,$4,$5,$11,$7,'wrong revision',$12,'ACCEPTED','WORK_ITEM_DELIVERY',2)`,[decoys[0],decoys[1],decoys[2],project,module,moduleRevision,round,{work_item_id:'wi-1',plan_revision_id:otherPlan},otherRound,{work_item_id:'wi-2',plan_revision_id:plan},otherRevision,{work_item_id:'wi-3',plan_revision_id:plan}]);
     const insertMerge=async(fact:any,index:number)=>pool.query(`INSERT INTO work_item_merge_results(id,project_id,delivery_candidate_id,work_item_id,intent_id,target_ref,phase_before_sha,delivery_head_sha,phase_after_sha,expected_parents,observed_parents,state,evidence,evidence_hash,recorded_at) VALUES($1,$2,$3,$4,$5,'phases/3',$6,$7,$7,$8,$8,'MERGE_RECORDED','{}',$9,clock_timestamp()+($10*interval '1 millisecond'))`,[fact.mergeResult,project,fact.deliveryCandidate,fact.workItem,fact.mergeIntent,repo.base,repo.phase,JSON.stringify([repo.base,repo.phase]),h(`merge-evidence-${index}`),index]);
     await insertMerge(facts[0],0);await insertMerge(facts[1],1);
     await withTransaction(client=>enqueueAut02Intent(client,{projectId:project,kind:'REASSESS_INTEGRATION_CANDIDATE',idempotencyKey:`candidate-test:n-minus-one:${project}`,correlationId:correlation,moduleId:module,moduleRevisionId:moduleRevision,moduleRoundId:round}));
@@ -70,6 +78,15 @@ if(!process.env.DATABASE_URL){
     assert.ok((await pool.query(`SELECT state FROM work_items WHERE project_id=$1 ORDER BY id`,[project])).rows.every((row:any)=>row.state==='ACCEPTED'));
 
     await insertMerge(facts[2],2);
+    await pool.query(`UPDATE work_items SET payload=jsonb_set(payload,'{work_item_id}','"wi-x"'::jsonb) WHERE id=$1`,[facts[2].workItem]);
+    await withTransaction(client=>enqueueAut02Intent(client,{projectId:project,kind:'REASSESS_INTEGRATION_CANDIDATE',idempotencyKey:`candidate-test:same-count-wrong-member:${project}`,correlationId:correlation,moduleId:module,moduleRevisionId:moduleRevision,moduleRoundId:round}));
+    await reconcileAutomaticAssuranceIntegration(10,'aut02-e2e-same-count-wrong-member');
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM integration_candidates WHERE project_id=$1 AND pipeline_version=$2`,[project,AUT02_PIPELINE_VERSION])).rows[0].n),0);
+    await pool.query(`UPDATE work_items SET payload=jsonb_set(payload,'{work_item_id}','"wi-2"'::jsonb) WHERE id=$1`,[facts[2].workItem]);
+    await withTransaction(client=>enqueueAut02Intent(client,{projectId:project,kind:'REASSESS_INTEGRATION_CANDIDATE',idempotencyKey:`candidate-test:duplicate-observed-member:${project}`,correlationId:correlation,moduleId:module,moduleRevisionId:moduleRevision,moduleRoundId:round}));
+    await reconcileAutomaticAssuranceIntegration(10,'aut02-e2e-duplicate-observed-member');
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM integration_candidates WHERE project_id=$1 AND pipeline_version=$2`,[project,AUT02_PIPELINE_VERSION])).rows[0].n),0);
+    await pool.query(`UPDATE work_items SET payload=jsonb_set(payload,'{work_item_id}','"wi-3"'::jsonb) WHERE id=$1`,[facts[2].workItem]);
     const failureFunction=`aut02_e2e_fail_ready_${randomUUID().replaceAll('-','')}`,failureTrigger=`aut02_e2e_fail_ready_${randomUUID().replaceAll('-','')}`;
     await pool.query(`CREATE FUNCTION ${failureFunction}() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN IF NEW.id='${facts[1].workItem}'::uuid AND NEW.state='READY_FOR_INTEGRATION' THEN RAISE EXCEPTION 'AUT02_E2E_CONTROLLED_READY_FAILURE'; END IF; RETURN NEW; END $$`);
     await pool.query(`CREATE TRIGGER ${failureTrigger} BEFORE UPDATE ON work_items FOR EACH ROW EXECUTE FUNCTION ${failureFunction}()`);
@@ -83,12 +100,18 @@ if(!process.env.DATABASE_URL){
     await Promise.all([reconcileAutomaticAssuranceIntegration(10,'aut02-e2e-last-a'),reconcileAutomaticAssuranceIntegration(10,'aut02-e2e-last-b')]);
     const candidates=(await pool.query(`SELECT * FROM integration_candidates WHERE project_id=$1 AND pipeline_version=$2`,[project,AUT02_PIPELINE_VERSION])).rows;assert.equal(candidates.length,1);const candidate=candidates[0];
     assert.equal(candidate.manifest.members.length,3);assert.equal(candidate.manifest_hash,deterministicHash(candidate.manifest));
+    assert.equal(candidate.manifest.required_work_item_set_policy_version,'RequiredWorkItemSet:v1');assert.deepEqual(candidate.manifest.required_work_item_set,['wi-1','wi-2','wi-3']);assert.deepEqual(candidate.manifest.observed_work_item_set,['wi-1','wi-2','wi-3']);assert.deepEqual(candidate.manifest.members.map((member:any)=>member.plan_work_item_id),['wi-1','wi-2','wi-3']);
+    assert.equal(candidate.manifest.required_work_item_set_fingerprint,requiredWorkItemSetFingerprint({module_plan_revision_id:plan,module_revision_id:moduleRevision,module_round_id:round},['wi-1','wi-2','wi-3']));
+    assert.ok(candidate.manifest.members.every((member:any)=>!decoys.includes(member.work_item_id)),'wrong plan, round and module revision rows are excluded');
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM integration_candidate_members WHERE candidate_id=$1`,[candidate.id])).rows[0].n),3);
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM artifacts WHERE project_id=$1 AND artifact_type='aut02-integration-candidate-manifest'`,[project])).rows[0].n),1,'canonical set manifest evidence is persisted');
+    await pool.query(`DELETE FROM work_items WHERE id=ANY($1::uuid[])`,[decoys]);await pool.query(`DELETE FROM module_plan_revisions WHERE id=$1`,[otherPlan]);await pool.query(`DELETE FROM module_rounds WHERE id=$1`,[otherRound]);await pool.query(`DELETE FROM module_revisions WHERE id=$1`,[otherRevision]);
     assert.ok((await pool.query(`SELECT state FROM work_items WHERE project_id=$1 ORDER BY id`,[project])).rows.every((row:any)=>row.state==='READY_FOR_INTEGRATION'));
     await assert.rejects(pool.query(`UPDATE integration_candidates SET manifest='{}' WHERE id=$1`,[candidate.id]),(error:any)=>error.code==='23514');
     await assert.rejects(pool.query(`UPDATE integration_candidate_members SET member_index=9 WHERE candidate_id=$1 AND member_index=0`,[candidate.id]),(error:any)=>error.code==='23514');
     await withTransaction(client=>enqueueAut02Intent(client,{projectId:project,kind:'REASSESS_INTEGRATION_CANDIDATE',idempotencyKey:`candidate-test:replay:${project}`,correlationId:correlation,moduleId:module,moduleRevisionId:moduleRevision,moduleRoundId:round}));await reconcileAutomaticAssuranceIntegration(10,'aut02-e2e-replay');
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM integration_candidates WHERE project_id=$1 AND pipeline_version=$2`,[project,AUT02_PIPELINE_VERSION])).rows[0].n),1);
+    const validation=(await pool.query(`SELECT report FROM integration_candidate_validation_reports WHERE candidate_id=$1`,[candidate.id])).rows[0];assert.ok(validation.report.checks.filter((check:any)=>check.code.startsWith('REQUIRED_WORK_ITEM_SET')).every((check:any)=>check.pass));
     const projected=await automaticAssuranceIntegrationProjection(project);assert.equal(projected.candidates[0].manifest_hash,candidate.manifest_hash);assert.equal(projected.work_items.length,3);assert.ok(projected.work_items.every((member:any)=>member.candidate_id===candidate.id&&member.candidate_manifest_hash===candidate.manifest_hash));
 
     git(repo.root,'checkout','integration');git(repo.root,'merge','--no-ff','--no-edit','phases/3');const integratedSha=git(repo.root,'rev-parse','HEAD'),integratedParents=git(repo.root,'show','-s','--format=%P',integratedSha).split(' '),attempt=randomUUID(),integrationOperation=randomUUID();

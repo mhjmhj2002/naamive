@@ -1,8 +1,9 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { canonicalJson, deterministicHash, integrationCandidateEligibleMembers, validateQaSnapshotContract } from './automatic-assurance-integration.js';
+import { canonicalJson, deriveObservedRequiredWorkItemSet, deriveRequiredWorkItemSet, deterministicHash, integrationCandidateEligibleMembers, requiredWorkItemSetFingerprint, requiredWorkItemSetMatches, validateQaSnapshotContract } from './automatic-assurance-integration.js';
 
-const eligible=(id:string)=>({id,delivery_candidate_id:`delivery-${id}`,qa_result:'PASS',acceptance_state:'ACCEPTED',decision:'ACCEPT',merge_result_id:`merge-${id}`,phase_after_sha:`sha-${id}`,state:'ACCEPTED',open_finding:false,active_rework:false,active_recovery:false,active_external_blocker:false,active_block:false});
+const eligible=(id:string)=>({id:`runtime-${id}`,plan_work_item_id:id,delivery_candidate_id:`delivery-${id}`,qa_result:'PASS',acceptance_state:'ACCEPTED',decision:'ACCEPT',merge_result_id:`merge-${id}`,phase_after_sha:`sha-${id}`,state:'ACCEPTED',open_finding:false,active_rework:false,active_recovery:false,active_external_blocker:false,active_block:false});
+const plan=(...work_item_ids:string[])=>({payload:{work_items:work_item_ids.map(work_item_id=>({work_item_id}))}});
 
 test('AUT-02 canonical manifest hashing is independent of object insertion order and sensitive to membership',()=>{
   const left={policy:'v1',members:[{work_item_id:'a',evidence:{qa:'1',merge:'2'}},{work_item_id:'b',evidence:{qa:'3',merge:'4'}}]};
@@ -11,16 +12,41 @@ test('AUT-02 canonical manifest hashing is independent of object insertion order
   assert.notEqual(deterministicHash(left),deterministicHash({...left,members:left.members.slice(0,1)}));
 });
 
-test('RequiredWorkItemSet eligibility is universal, never N-1 or heuristic',()=>{
+test('RequiredWorkItemSet:v1 compares exact canonical identities and fails closed for duplicates',()=>{
+  const expected=deriveRequiredWorkItemSet(plan('a','b','c'));
+  assert.deepEqual(expected,['a','b','c']);
+  assert.equal(requiredWorkItemSetMatches(expected,deriveObservedRequiredWorkItemSet([eligible('a'),eligible('b'),eligible('c')])),true,'happy set');
+  assert.equal(requiredWorkItemSetMatches(expected,deriveObservedRequiredWorkItemSet([eligible('a'),eligible('b'),eligible('x')])),false,'same count, wrong member');
+  assert.equal(requiredWorkItemSetMatches(expected,deriveObservedRequiredWorkItemSet([eligible('a'),eligible('b')])),false,'missing member');
+  assert.equal(requiredWorkItemSetMatches(deriveRequiredWorkItemSet(plan('a','b')),deriveObservedRequiredWorkItemSet([eligible('a'),eligible('b'),eligible('c')])),false,'extra member');
+  assert.equal(deriveRequiredWorkItemSet(plan('a','a','b')),null,'duplicate plan identity');
+  assert.equal(deriveObservedRequiredWorkItemSet([eligible('a'),eligible('a'),eligible('b')]),null,'duplicate observed identity');
+  assert.equal(requiredWorkItemSetMatches(deriveRequiredWorkItemSet(plan('c','a','b')),deriveObservedRequiredWorkItemSet([eligible('b'),eligible('c'),eligible('a')])),true,'same set in different order');
+});
+
+test('RequiredWorkItemSet eligibility is universal after exact membership is proven',()=>{
   const members=[eligible('a'),eligible('b'),eligible('c')];
-  assert.equal(integrationCandidateEligibleMembers(3,members.slice(0,1)),false);
-  assert.equal(integrationCandidateEligibleMembers(3,members.slice(0,2)),false);
-  assert.equal(integrationCandidateEligibleMembers(3,members),true);
-  for(const field of ['open_finding','active_rework','active_recovery','active_external_blocker','active_block'] as const)assert.equal(integrationCandidateEligibleMembers(3,members.map((member,index)=>index===1?{...member,[field]:true}:member)),false,field);
-  for(const state of ['CANCELLED','REWORK_REQUIRED','BLOCKED','WAITING_FOR_ESCALATION'])assert.equal(integrationCandidateEligibleMembers(3,members.map((member,index)=>index===1?{...member,state}:member)),false,state);
-  for(const state of ['QA_IN_PROGRESS','INDEPENDENT_REVIEW','READY_FOR_INTEGRATION','INTEGRATING','INTEGRATED'])assert.equal(integrationCandidateEligibleMembers(3,members.map((member,index)=>index===1?{...member,state}:member)),false,state);
-  assert.equal(integrationCandidateEligibleMembers(3,members.map((member,index)=>index===1?{...member,qa_result:'FAIL'}:member)),false);
-  assert.equal(integrationCandidateEligibleMembers(3,members.map((member,index)=>index===1?{...member,decision:'REWORK'}:member)),false);
+  const expected=deriveRequiredWorkItemSet(plan('a','b','c'));
+  assert.equal(integrationCandidateEligibleMembers(expected,members.slice(0,1)),false);
+  assert.equal(integrationCandidateEligibleMembers(expected,members.slice(0,2)),false);
+  assert.equal(integrationCandidateEligibleMembers(expected,members),true);
+  assert.equal(integrationCandidateEligibleMembers(expected,[eligible('a'),eligible('b'),eligible('x')]),false,'cardinality cannot substitute identity');
+  for(const field of ['open_finding','active_rework','active_recovery','active_external_blocker','active_block'] as const)assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,[field]:true}:member)),false,field);
+  for(const state of ['CANCELLED','REWORK_REQUIRED','BLOCKED','WAITING_FOR_ESCALATION'])assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,state}:member)),false,state);
+  for(const state of ['QA_IN_PROGRESS','INDEPENDENT_REVIEW','READY_FOR_INTEGRATION','INTEGRATING','INTEGRATED'])assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,state}:member)),false,state);
+  assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,qa_result:'FAIL'}:member)),false);
+  assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,decision:'REWORK'}:member)),false);
+});
+
+test('RequiredWorkItemSetFingerprint:v1 binds canonical members and plan/revision/round lineage',()=>{
+  const scope={module_plan_revision_id:'plan',module_revision_id:'revision',module_round_id:'round'},members=['a','b','c'];
+  const fingerprint=requiredWorkItemSetFingerprint(scope,members);
+  assert.match(fingerprint,/^[a-f0-9]{64}$/);
+  assert.equal(requiredWorkItemSetFingerprint(scope,[...members]),fingerprint);
+  assert.notEqual(requiredWorkItemSetFingerprint({...scope,module_plan_revision_id:'other-plan'},members),fingerprint);
+  assert.notEqual(requiredWorkItemSetFingerprint({...scope,module_revision_id:'other-revision'},members),fingerprint);
+  assert.notEqual(requiredWorkItemSetFingerprint({...scope,module_round_id:'other-round'},members),fingerprint);
+  assert.notEqual(requiredWorkItemSetFingerprint(scope,['a','b','x']),fingerprint);
 });
 
 test('frozen QA contract fails closed for missing evidence, invalid matrix, and tampered hashes',()=>{

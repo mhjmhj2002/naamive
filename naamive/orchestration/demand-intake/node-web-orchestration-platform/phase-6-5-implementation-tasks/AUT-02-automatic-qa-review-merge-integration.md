@@ -98,3 +98,21 @@ finalizers concorrentes, replay e projeção compartilhada por todos os membros.
 AUT-02 passam. A dívida histórica de quatro asserts de inventory
 (`FAILED` esperado versus `RETRYABLE` vigente) permanece preexistente e fora do
 escopo, conforme checkpoint de continuidade.
+
+## AUT-02-FIX-01 — RequiredWorkItemSet:v1 exato
+
+A auditoria posterior identificou que a primeira implementação usava apenas
+`plan.payload.work_items.length` como autoridade de membership. O fix preserva
+o identificador normativo já materializado, `payload.work_item_id`, deriva e
+ordena o conjunto congelado da plan revision `APPROVED`, deriva o conjunto
+observado apenas dos WIs da mesma plan revision/module revision/round e exige
+igualdade exata. Identidade inválida, ausente, extra ou duplicada falha fechada.
+
+O manifest agora congela `required_work_item_set`, `observed_work_item_set`, o
+`plan_work_item_id` de cada membro e o fingerprint
+`RequiredWorkItemSet:v1`, ligado também a plan revision, module revision e
+round. A validação da candidate recompõe e confere lista, identidade persistida
+e fingerprint. Testes unitários e PostgreSQL/Git E2E cobrem `A/B/C`, mesma
+contagem `A/B/X`, missing, extra, duplicata no plano e no observado, ordem
+diferente, lineage errado, manifest e replay. AUT-02 permanece `DONE` após o
+fechamento validado deste finding; AUT-03, REC-02 e GAT-02 não foram iniciadas.
