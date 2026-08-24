@@ -1,6 +1,6 @@
 # NAAMIVE — Resumo de Continuidade da Fase 6.5
 
-**Data do checkpoint:** 23/08/2026
+**Data do checkpoint:** 24/08/2026
 **Branch:** `phase6.5-lifecycle-alignment`  
 **Fase:** 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery  
 **Objetivo deste arquivo:** permitir retomar o trabalho em um novo chat sem reconstruir todo o histórico.
@@ -46,7 +46,7 @@ a pré-validação de LR-02:
 | 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
 | 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
 | 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **DONE** |
-| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / NEXT / PREVALIDATION_READY_FOR_IMPLEMENTATION** |
+| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **DONE** |
 | 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
@@ -414,20 +414,19 @@ pendentes por projeto.
 
 ---
 
-### LR-02 — TO_DO / NEXT / PREVALIDATION_READY_FOR_IMPLEMENTATION
+### LR-02 — DONE
 
 Sincronizar lifecycle macro de projeto e módulo com os novos contratos.
 
 Projeto, módulo, work item e execução precisam refletir coerentemente o progresso real.
 
-A pré-validação em `LR-02-synchronize-macro-lifecycle-prevalidation.md` está
-`PREVALIDATION_READY_FOR_IMPLEMENTATION` após a entrega do contrato LR-02A e
-da `COMMITTED_MODULE_EVOLUTION_POLICY:v1`. Ela fecha `SAME`, `CHANGED`,
-`ADDED`, `REMOVED`, `EffectiveRequiredModuleSet` e a fronteira GAT-02 sem
-iniciar LR-02. `CommittedModuleObligation:v1` e seu ledger reconstruível
-preservam uma chave `REMOVED` mesmo quando ela ainda não recebeu `module_id`;
-intent superseded não equivale a obrigação removida. LR-02 continua `TO_DO` e
-é a próxima task; AUT-02 e GAT-02 não foram iniciadas.
+A migration 063, o agregador puro versionado, o reconciler PostgreSQL, o
+ledger `CommittedModuleObligation:v1`, os checkpoints e a projeção API/SSE
+implementam `SAME`, `CHANGED`, `ADDED`, `REMOVED` e
+`EffectiveRequiredModuleSet`. Descoberta v4 e materialização são recuperáveis e
+idempotentes; sucessões, reintrodução, replay, concorrência, reabertura e
+fencing temporal foram validados em PostgreSQL real. O legado e os rollouts
+globais foram preservados. AUT-02 e GAT-02 não foram iniciadas.
 
 ---
 
@@ -518,10 +517,10 @@ Documentos históricos permanecem históricos; documentação corrente deve refl
 
 | Categoria | Quantidade |
 |---|---:|
-| DONE | 5 |
+| DONE | 7 |
 | DOING | 0 |
-| TO_DO | 9 |
-| Total | 14 |
+| TO_DO | 8 |
+| Total | 15 |
 
 Progresso funcional da F6.5:
 
@@ -530,6 +529,8 @@ Progresso funcional da F6.5:
 - **GAT-03: DONE**
 - **AUT-01: DONE**
 - **REC-01: DONE**
+- **LR-02A: DONE**
+- **LR-02: DONE**
 - restante: **TO_DO**
 
 Fase 7:
@@ -561,8 +562,8 @@ Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. retomar por **LR-02 — Sincronizar macro-lifecycle**, sem antecipar AUT-02;
+3. retomar por **AUT-02 — Pipeline automático QA → review → merge → integração**, sem antecipar GAT-02;
 4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
    lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 TO_DO/NEXT/PREVALIDATION_READY_FOR_IMPLEMENTATION`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 DONE → AUT-02 TO_DO/NEXT`.

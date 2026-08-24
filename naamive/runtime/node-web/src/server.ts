@@ -25,6 +25,7 @@ import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from '
 import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
 import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
 import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
+import { activateV4DiscoveryAfterRegistration, reconcileMacroLifecycle } from './macro-lifecycle.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -48,9 +49,10 @@ const decide = async (projectId: string, body: Record<string, unknown>, actor: A
   const correlation=randomUUID(); const product=row.kind==='PRODUCT_COMMITMENT'; await putArtifact(client, projectId, product?'product-commitment-decision':'gate-decision', JSON.stringify({ schema_version:1,decision: body.decision, feedback, version: row.version, evidence:row.evidence }), undefined, row.id);
   const target = await transitionTarget(client, projectId, product ? (approved?'PRODUCT_COMMITMENT_APPROVED':'PRODUCT_COMMITMENT_ADJUSTMENTS_REQUESTED') : (approved ? 'REGISTER_PROJECT_APPROVED' : 'REGISTER_PROJECT_REJECTED'));
   await client.query(`UPDATE gates SET status=$2,decided_at=now() WHERE id=$1`, [row.id, approved ? 'APPROVED' : 'REJECTED']); await client.query(`UPDATE projects SET state=$2 WHERE id=$1`, [projectId, target]);
+  const automaticDiscovery=!product&&approved?await activateV4DiscoveryAfterRegistration(client,projectId,row.revision_id):null;
   const workflow=(await client.query(`SELECT workflow_code,workflow_version FROM projects WHERE id=$1`,[projectId])).rows[0]; const prepare=product&&approved&&target==='TECHNOLOGY_SELECTION_PREPARING'&&workflow.workflow_code==='PROJECT_DISCOVERY'&&workflow.workflow_version===3;
   if(product&&(!approved||prepare)){const operationId=randomUUID(),jobId=randomUUID(),approvedKind=prepare?'PREPARE_TECHNOLOGY_SELECTION_CONTEXT':'PRODUCT_DISCOVERY';await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id,workflow_code,workflow_version) VALUES($1,$2,$3,'QUEUED',$4,$5,$6,$7,$8)`,[operationId,projectId,approvedKind,prepare?`selection-context:${row.id}:${row.version}`:`rework:${row.id}:${row.version}`,correlation,row.revision_id,prepare?workflow.workflow_code:null,prepare?workflow.workflow_version:null]);await client.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,idempotency_key) VALUES($1,$2,$3,$4,$5,$6)`,[jobId,operationId,projectId,row.revision_id,prepare?'PREPARE_TECHNOLOGY_SELECTION_CONTEXT':'DEFINE_PRODUCT_REQUIREMENTS',prepare?`selection-context:${operationId}`:`rework-requirements:${operationId}`]);}
-  await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,$2,$3,$4,$5)`, [projectId, product?(approved?'PRODUCT_COMMITMENT_APPROVED':'PRODUCT_COMMITMENT_ADJUSTMENTS_REQUESTED'):(approved ? 'PROJECT_REGISTERED' : 'GATE_REJECTED'), correlation, { gate_id: row.id,feedback }, actor.id]); return { project_id: projectId, state: target };
+  await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,$2,$3,$4,$5)`, [projectId, product?(approved?'PRODUCT_COMMITMENT_APPROVED':'PRODUCT_COMMITMENT_ADJUSTMENTS_REQUESTED'):(approved ? 'PROJECT_REGISTERED' : 'GATE_REJECTED'), correlation, { gate_id: row.id,feedback,automatic_discovery_intent_id:automaticDiscovery?.intentId??null }, actor.id]); return { project_id: projectId, state: automaticDiscovery?.state??target };
 });
 export const createApiServer = () => createServer(async (request, response) => { try {
   const url = new URL(request.url ?? '/', settings.webOrigin);
@@ -243,7 +245,7 @@ if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.
   // Server-side development reservation reconciliation runs OUTSIDE the worker
   // so a RESERVED delivery whose job is never consumed (or whose worker died)
   // is still reconciled to terminal/recoverable on a bounded schedule.
-  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
+  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler(),reconcileMacroLifecycle()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');clearInterval(reconcileTimer);server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }

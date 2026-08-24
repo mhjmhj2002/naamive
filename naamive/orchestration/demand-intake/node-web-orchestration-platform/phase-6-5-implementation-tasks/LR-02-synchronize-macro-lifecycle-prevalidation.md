@@ -2,7 +2,7 @@
 task: LR-02
 document_type: prevalidation
 status: PREVALIDATION_READY_FOR_IMPLEMENTATION
-implementation_status: TO_DO
+implementation_status: DONE
 created_at: 2026-08-23
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
@@ -18,8 +18,8 @@ inclusive obrigação ainda não materializada, estão fechados. A task bloquead
 publicou a fonte canônica/imutável dos módulos comprometidos, eliminando a
 reconstrução proibida de texto livre.
 
-LR-02 permanece `TO DO` e é a próxima task serial. Esta atualização de
-pré-validação não iniciou LR-02, AUT-02 ou GAT-02.
+LR-02 foi concluída em 2026-08-24 conforme este contrato. AUT-02 e GAT-02 não
+foram iniciadas; AUT-02 passa a ser a próxima task serial.
 
 ## Leitura e evidências examinadas
 
@@ -570,7 +570,7 @@ integração da revision anterior não são herdados; AUT-02 produzirá os novos
 fatos aplicáveis. LR-02 limita-se a materializar/evoluir, reabrir agregados e
 publicar facts/intents.
 
-### Matriz mínima de implementação futura
+### Matriz mínima de implementação
 
 | Grupo | Prova obrigatória em PostgreSQL real |
 | --- | --- |
@@ -642,7 +642,7 @@ predicados acima, sem antecipar aquele pipeline. GAT-02 implementará comandos,
 autoridade e políticas de pausa/cancelamento; LR-02 apenas reserva a semântica
 de agregação após fato GAT-02 válido.
 
-## Matriz de testes obrigatória para a implementação futura
+## Matriz de testes obrigatória para a implementação
 
 | Grupo | Casos mínimos |
 | --- | --- |
@@ -660,5 +660,5 @@ de agregação após fato GAT-02 válido.
 1. Fonte canônica versionada de módulos comprometidos publicada por LR-02A.
 2. Pré-validação atualizada para `PREVALIDATION_READY_FOR_IMPLEMENTATION` com schema,
    ownership e vínculo exato ao `PRODUCT_COMMITMENT` implementados.
-3. LR-02 pode implementar migration aditiva de intent/outbox, agregador,
-   reconciliador, rollout e sua matriz de testes; AUT-02 continua fora de escopo.
+3. LR-02 implementou a migration aditiva 063, intent/outbox, agregador,
+   reconciliador, projeção e sua matriz de testes; AUT-02 continua fora de escopo.

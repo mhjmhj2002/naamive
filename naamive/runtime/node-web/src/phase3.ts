@@ -14,6 +14,7 @@ import { developmentHealth } from './development-telemetry.js';
 import { modulePlanReview } from './module-plan-review.js';
 import { scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
 import { requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
+import { macroLifecycleProjection } from './macro-lifecycle.js';
 
 const event=(c:any,p:string,t:string,correlation:string,payload:object)=>c.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id,workflow_code,workflow_version)
   SELECT id,$2,$3,$4,$5,workflow_code,workflow_version FROM projects WHERE id=$1`,[p,t,correlation,payload,config().operatorId]);
@@ -193,7 +194,7 @@ export const phase3Detail=async(projectId:string)=>{
   const review=modulePlanReview(modules.rows,plans.rows,gates.rows);
   // The review endpoint intentionally does not expose raw plan payloads, prompt context,
   // job payloads or idempotency keys. module_plan_review is the sole public plan contract.
-  return {modules:expose(modules.rows),work_items:projectedWorkItems,deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),planning_jobs:expose(planningJobs.rows),planning_operations:expose(planningOperations.rows),module_plan_review:review,planning,planning_telemetry:planningTelemetry.rows.map((row:any)=>publicValue(row)),evidence:artifacts.rows};
+  return {modules:expose(modules.rows),work_items:projectedWorkItems,deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),planning_jobs:expose(planningJobs.rows),planning_operations:expose(planningOperations.rows),module_plan_review:review,planning,planning_telemetry:planningTelemetry.rows.map((row:any)=>publicValue(row)),evidence:artifacts.rows,macro_lifecycle:await macroLifecycleProjection(projectId)};
 };
 
 export const materializationBaselineOptions=async(projectId:string)=>{

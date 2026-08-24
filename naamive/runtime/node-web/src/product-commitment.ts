@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import { pool, withTransaction } from './db.js';
 import { decideCatalogGate, openCatalogGate, type GateDecision } from './gate-catalog.js';
+import { macroLifecycleProjection, synchronizeApprovedCommitment } from './macro-lifecycle.js';
 import { ApiError } from './service.js';
 
 export const PRODUCT_COMMITMENT_CONTRACT_VERSION = 'PRODUCT_COMMITMENT_MODULES:v1';
@@ -256,6 +257,7 @@ export const decideProductCommitmentGate = async (projectId:string, gateId:strin
   }
   await client.query(`UPDATE product_commitment_revisions SET status=$2,approved_at=CASE WHEN $2='APPROVED' THEN clock_timestamp() ELSE NULL END WHERE id=$1`,[row.id,target]);
   await auditEvent(client,projectId,target==='APPROVED'?'PRODUCT_COMMITMENT_APPROVED':'PRODUCT_COMMITMENT_REJECTED',decided.correlation_id,{revision_id:row.id,gate_record_id:gateId,gate_decision_id:decided.decision_id,decision:input.decision,canonical_sha256:row.canonical_sha256,contract_version:row.contract_version,reason:input.reason},input.actor_id);
+  if(target==='APPROVED') await synchronizeApprovedCommitment(client,projectId,row.id);
   return revisionProjection(client,row.id);
 });
 
@@ -264,5 +266,5 @@ export const productCommitmentProjection = async (projectId:string) => {
   const revisions=(await pool.query(`SELECT id FROM product_commitment_revisions WHERE project_id=$1 ORDER BY revision_number DESC`,[projectId])).rows;
   const items=[];
   for(const revision of revisions) items.push(await revisionProjection(pool as unknown as pg.PoolClient,revision.id));
-  return {contract_version:PRODUCT_COMMITMENT_CONTRACT_VERSION,approved_revision_id:items.find(item=>item.status==='APPROVED')?.id??null,items};
+  return {contract_version:PRODUCT_COMMITMENT_CONTRACT_VERSION,approved_revision_id:items.find(item=>item.status==='APPROVED')?.id??null,items,macro_lifecycle:await macroLifecycleProjection(projectId)};
 };

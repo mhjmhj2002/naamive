@@ -17,6 +17,7 @@ import { recordPlanRunBoundaries, createPlanTelemetrySink, terminatePlanTelemetr
 import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } from './development-telemetry.js';
 import { detectDevelopmentRuntimeInconsistencies, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { startRuntimeProcess } from './runtime-process.js';
+import { reconcileMacroLifecycle } from './macro-lifecycle.js';
 import { executeIndependentReview } from './assurance.js';
 import { configuredWorkerService } from './auth.js';
 import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
@@ -292,7 +293,7 @@ if (process.argv[1]?.endsWith('worker.ts') || process.argv[1]?.endsWith('worker.
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('worker','info','worker_stopped');await stopRuntime();await pool.end();process.exit(0);};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
   while (true) {
-    try { await runOnce(undefined,workerPrincipal.id); }
+    try { await reconcileMacroLifecycle(10,`macro-worker:${workerPrincipal.id}`); await runOnce(undefined,workerPrincipal.id); }
     catch (error) { log('worker', 'error', 'worker_cycle_failed', { error_kind: error instanceof Error ? error.constructor.name : 'UnknownError' }); }
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }

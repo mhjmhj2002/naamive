@@ -3,7 +3,7 @@ document_type: phase-planning
 status: READY_FOR_REVIEW
 created_at: 2026-08-22
 scope: planejamento da Fase 6.5, sem implementação funcional
-execution_checkpoint: 2026-08-23
+execution_checkpoint: 2026-08-24
 primary_roadmap: 01_DELIVERY_ROADMAP.md
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
@@ -42,18 +42,16 @@ as paradas humanas indevidas, as automações ausentes, os problemas de UI, o pl
 ordenado e os critérios finais da auditoria. A auditoria não é reinterpretada nem
 atualizada por esta fase.
 
-## Checkpoint vivo de execução — 2026-08-23
+## Checkpoint vivo de execução — 2026-08-24
 
-`LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01` e `LR-02A` estão `DONE`; os
-dois findings da auditoria de `9e9bdaf0` foram fechados. `LR-02` é a próxima
-task serial e sua pré-validação está `PREVALIDATION_READY_FOR_IMPLEMENTATION`.
-A `COMMITTED_MODULE_EVOLUTION_POLICY:v1` fecha o delta `SAME`/`CHANGED`/
-`ADDED`/`REMOVED`, o required-set efetivo e a fronteira de cancelamento GAT-02
-sem iniciar nenhuma dessas tasks. O required-set usa
-`CommittedModuleObligation:v1`, logo obrigação aprovada não desaparece por
-ainda não possuir `module_id`. A sequência
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01`, `LR-02A` e `LR-02` estão
+`DONE`; os dois findings da auditoria de `9e9bdaf0` foram fechados. LR-02
+implementou `COMMITTED_MODULE_EVOLUTION_POLICY:v1`, o required-set efetivo,
+intents/outbox recuperáveis e agregação macro versionada sem antecipar GAT-02
+ou AUT-02. O required-set usa `CommittedModuleObligation:v1`, logo obrigação
+aprovada não desaparece por ainda não possuir `module_id`. A sequência
 efetivamente concluída é
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A`.
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02`.
 
 LR-02A publicou o contrato canônico em `gate_records` (não na tabela legada
 `gates`) e separou o schema de materialization lineage da execução macro que

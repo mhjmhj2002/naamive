@@ -7,6 +7,7 @@ import { transitionTarget } from './workflow.js';
 import type pg from 'pg';
 import { publicEvent } from './projection.js';
 import { listProjectExecutionData } from './agent-execution-admin.js';
+import { macroLifecycleProjection } from './macro-lifecycle.js';
 
 type Intake = Record<string, unknown>;
 const fields = ['title', 'business_owner', 'business_problem', 'desired_outcome', 'success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions'];
@@ -173,6 +174,7 @@ export const projectDetail = async (projectId: string) => {
   const currentModule=await pool.query(`SELECT state FROM modules WHERE project_id=$1 ORDER BY version DESC LIMIT 1`,[projectId]);
   const reviewData=(review.rows[0]?.metadata??null) as Record<string,unknown>|null;
   const runtimeData = config().runtimeProjectionEnabled ? await listProjectExecutionData(projectId) : { executions: [], attempts: [] };
+  const macroLifecycle=await macroLifecycleProjection(projectId);
   const effectiveState=currentModule.rows[0]?.state??project.rows[0].state;
-  return { ...project.rows[0], ...display(effectiveState,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts };
+  return { ...project.rows[0], ...display(effectiveState,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts, macro_lifecycle:macroLifecycle };
 };

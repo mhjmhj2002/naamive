@@ -1,12 +1,17 @@
 ---
 task: LR-02
-status: TO DO
+status: DONE
 title: Sincronizar macro-lifecycle
 depends_on: [LR-01, GAT-01, AUT-01, REC-01, LR-02A]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # LR-02 — Sincronizar macro-lifecycle
+
+## Estado de implementação
+
+`DONE` em 2026-08-24. O contrato normativo da pré-validação foi implementado e
+validado, mantendo AUT-02 e GAT-02 fora de escopo.
 
 ## Objetivo e problema corrigido
 
@@ -109,3 +114,21 @@ publicada na pré-validação; ela é normativa e não é repetida aqui.
 Riscos: avanço prematuro, deadlock, agregação por contagem e reabertura incorreta.
 Evidências: tabela evento→estado, logs/eventos correlacionados, testes de corrida,
 snapshots de projeção e relatório de coexistência.
+
+## Evidência de conclusão
+
+- a migration aditiva `063_phase_6_5_macro_lifecycle.sql` publica obligations,
+  lineage, checkpoints, transições e intents/outbox com lease, retry e dedupe;
+- `MacroLifecycleAggregator` implementa somente o contrato versionado v4/v2/v2,
+  com predicados semânticos puros e resultados fechados; o reconciler PostgreSQL
+  materializa discovery e `SAME`/`CHANGED`/`ADDED`/`REMOVED`, cerca sucessões e
+  converge replay, crash e concorrência;
+- aprovação de `PRODUCT_COMMITMENT` persiste obligations antes dos efeitos, e a
+  projeção API/SSE expõe required-set efetivo, pendências, lineage e transições;
+- testes unitários e PostgreSQL cobrem predicados negativos, primeira revisão,
+  sucessões, reintrodução, lineage, reabertura, fencing temporal, required-set,
+  recovery preservado, lease expirado, dois reconcilers e idempotência;
+- `npm run migrate`, `npm run build` e as suítes focadas passaram. A suíte E2E
+  integral fechou com 98/102; as únicas quatro falhas são a dívida histórica de
+  `inventory.e2e.test.ts` (`FAILED` esperado versus `RETRYABLE`) autorizada pela
+  task. Rollouts globais permanecem desligados e o legado permanece inalterado.
