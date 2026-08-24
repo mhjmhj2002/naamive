@@ -7,7 +7,9 @@ entregou o agregador macro versionado, intents/outbox recuperáveis, materializa
 pela `COMMITTED_MODULE_EVOLUTION_POLICY:v1` e o ledger reconstruível
 `CommittedModuleObligation:v1`. `LR-02-FIX-01` fixou a seleção do workflow na
 criação da instância e impediu reclassificação por rollout tardio. `AUT-02`
-permanece `TO_DO` e é a próxima task da sequência serial.
+permanece `TO_DO`, está `PREVALIDATION_READY_FOR_IMPLEMENTATION` e é a próxima
+task da sequência serial. Seu contrato é
+[`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`](AUT-02-automatic-qa-review-merge-integration-prevalidation.md).
 
 O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
 podem evoluir por troca atômica da revisão corrente, mantendo uma única
@@ -25,7 +27,7 @@ Baseline histórica imutável:
 | 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `DONE` | LR-01, AUT-01 |
 | 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `DONE` | LR-01, GAT-01, GAT-03, REC-01 |
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `DONE` | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
-| 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
+| 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` / `PREVALIDATION_READY_FOR_IMPLEMENTATION` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `TO_DO` | AUT-03, GAT-01 |
 | 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `TO_DO` | LR-02, GAT-01, GAT-03 |

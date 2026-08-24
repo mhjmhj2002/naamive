@@ -47,7 +47,7 @@ a pré-validação de LR-02:
 | 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
 | 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **DONE** |
 | 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **DONE** |
-| 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
+| 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** / **PREVALIDATION_READY_FOR_IMPLEMENTATION** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
 | 10 | **GAT-02** | Lifecycle de entrega, pausa, retomada e cancelamento | **TO_DO** |
@@ -437,13 +437,19 @@ a transição explícita. Nenhum projeto existente teve workflow/estado migrado.
 
 ---
 
-### AUT-02 — TO_DO
+### AUT-02 — TO_DO / PREVALIDATION_READY_FOR_IMPLEMENTATION
 
 Automatizar:
 
 `QA → review → ACCEPT → merge → integração`
 
 quando não existir gate/blocker legítimo.
+
+O contrato `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` está em
+`AUT-02-automatic-qa-review-merge-integration-prevalidation.md`. Ele fecha
+snapshot imutável, QA determinístico, acceptance Assurance, REC-01, intents,
+crash/replay/concurrency e as fronteiras AUT-03/REC-02/GAT-02, sem iniciar
+implementação funcional.
 
 ---
 

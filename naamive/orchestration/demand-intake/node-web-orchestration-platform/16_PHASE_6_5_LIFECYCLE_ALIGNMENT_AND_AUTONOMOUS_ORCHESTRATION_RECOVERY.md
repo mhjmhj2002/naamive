@@ -51,7 +51,9 @@ intents/outbox recuperáveis e agregação macro versionada sem antecipar GAT-02
 ou AUT-02. O required-set usa `CommittedModuleObligation:v1`, logo obrigação
 aprovada não desaparece por ainda não possuir `module_id`. `LR-02-FIX-01`
 persiste a seleção de workflow na criação da instância e impede sua reavaliação
-no gate de registro. AUT-02 continua `TO_DO`. A sequência efetivamente concluída é
+no gate de registro. AUT-02 continua `TO_DO` e está
+`PREVALIDATION_READY_FOR_IMPLEMENTATION` pelo contrato
+`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`; a sequência efetivamente concluída é
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02`.
 
 A regra canônica é: a versão de workflow é selecionada na criação da instância e

@@ -1,6 +1,7 @@
 ---
 task: AUT-02
-status: TO DO
+status: TO_DO
+prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 title: Pipeline automático QA, review, merge e integração
 depends_on: [AUT-01, REC-01, LR-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -8,11 +9,15 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 # AUT-02 — Pipeline automático QA → review → merge → integração
 
+Contrato normativo obrigatório antes de qualquer código:
+[`AUT-02-automatic-qa-review-merge-integration-prevalidation.md`](AUT-02-automatic-qa-review-merge-integration-prevalidation.md)
+(`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`). A task permanece `TO_DO`.
+
 ## Objetivo e problema corrigido
 
-Encadear automaticamente output, QA, review independente, `ACCEPT`, merge,
-candidata, validação e integração. Corrige `QA_IN_PROGRESS` sem job e os cliques
-técnicos para `/qa`, `/merge`, candidata, validação e integração.
+Implementar o contrato versionado para encadear output, QA determinístico,
+review independente, `ACCEPT`, merge, candidata, validação e integração no
+`WORK_ITEM_DELIVERY:v2`.
 
 ## Contexto, atual e esperado
 
@@ -24,12 +29,12 @@ estado sem comando humano.
 
 ## Invariantes
 
-- output/sucesso técnico não é aceite;
-- QA e review usam SHA/evidência congelados;
-- cada handoff é idempotente e reconciliável após crash;
-- merge preserva ancestralidade e garantias Git F3;
-- finding impede candidata/integração; divergência não é resolvida implicitamente;
-- pipeline automático para apenas em gate explícito ou falha não recuperável.
+- sucesso técnico, QA, ACCEPT, merge e integração são fatos distintos;
+- QA/review/merge usam o mesmo snapshot imutável e SHA;
+- somente Assurance persiste `ACCEPT`; ausência de policy/reviewer nunca autoaceita;
+- REC-01 é a única autoridade para `EFFECT_UNKNOWN` e recovery;
+- merge/candidata/integração têm fencing, idempotência e reconciliação Git;
+- AUT-03, REC-02 e GAT-02 não são antecipadas; LR-02 é a única autoridade macro.
 
 ## Componentes prováveis
 
@@ -43,25 +48,26 @@ risco material e não substitui recuperação específica por retry genérico.
 
 ## Estratégia de implementação e compatibilidade
 
-Definir stateful saga/handoffs transacionais; criar jobs automáticos; congelar
-inputs/hashes; aplicar QA e review; em `ACCEPT`, agendar merge e próximos passos;
-usar reconciliador por intenção. Manter endpoints manuais apenas como recovery
-governado/admin enquanto houver coexistência, nunca como caminho ordinário.
+Implementar snapshot, ledger de intents, executores e projeções exatamente como
+prevalidados. Endpoints v2 tornam-se reemit/reconcile governado; v1 permanece
+legado, sem bypass de saga.
 
 ## Critérios de aceite
 
-- output cria QA e review sem comando externo;
-- `ACCEPT` promove e integra exatamente uma vez;
-- QA/review negativos geram finding/rework/block correto;
-- merge/candidata/validação/integração são automáticos e auditáveis;
-- crash em qualquer fronteira converge sem duplicação;
-- integração reavalia dependentes e macro-estados.
+- output cria QA automático sobre snapshot congelado;
+- QA pass cria review independente; só `ACCEPT` autoriza merge;
+- QA/review/validation negativos produzem finding, rework ou stop corretos;
+- merge, candidata, validation e integration são auditáveis e exatamente uma vez;
+- crash/replay/concurrency convergem sem repetir efeito externo;
+- WI integrado emite reavaliação LR-02, sem mutação macro direta;
+- recurso já `CANCELLED` é fenced/no-op; cancelamento funcional é GAT-02.
 
 ## Testes obrigatórios
 
-Happy path completo, QA reprovada, review `REWORK`/`BLOCK`, Git divergente,
-push falho, retry/restart, crash antes/depois de cada handoff, cancelamento
-concorrente, replay e cenário WI Persistência da auditoria em PostgreSQL real.
+Executar a matriz completa da prevalidation em PostgreSQL real, incluindo
+happy path, QA failure, `REWORK`/`BLOCK`/`ESCALATE`, no reviewer, stale SHA,
+REC-01 Git recovery, crash/replay, concorrência, revision antiga, recurso já
+`CANCELLED` e coexistência legada.
 
 ## Riscos e evidências esperadas
 
