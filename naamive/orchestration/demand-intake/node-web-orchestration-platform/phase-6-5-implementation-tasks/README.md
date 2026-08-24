@@ -5,7 +5,9 @@
 dois findings da auditoria de `9e9bdaf0` foram fechados. A fonte canônica de
 módulos comprometidos foi publicada e a próxima task serial é `LR-02`, cuja
 pré-validação está `PREVALIDATION_READY_FOR_IMPLEMENTATION` com a política
-`COMMITTED_MODULE_EVOLUTION_POLICY:v1` para sucessões aprovadas.
+`COMMITTED_MODULE_EVOLUTION_POLICY:v1` para sucessões aprovadas e o ledger
+reconstruível `CommittedModuleObligation:v1`, que preserva `REMOVED` antes da
+materialização.
 
 O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
 podem evoluir por troca atômica da revisão corrente, mantendo uma única

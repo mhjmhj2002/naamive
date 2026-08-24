@@ -12,8 +12,8 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ## Resultado
 
 **PREVALIDATION_READY_FOR_IMPLEMENTATION.** A matriz de lifecycle, os
-predicados, as fronteiras e a política de evolução entre revisões aprovadas
-estão fechados. A task bloqueadora
+predicados, as fronteiras e a política de evolução entre revisões aprovadas,
+inclusive obrigação ainda não materializada, estão fechados. A task bloqueadora
 [`LR-02A`](LR-02A-canonical-product-commitment-modules.md) está `DONE` e
 publicou a fonte canônica/imutável dos módulos comprometidos, eliminando a
 reconstrução proibida de texto livre.
@@ -109,9 +109,10 @@ normativa suficiente.
 | `moduleImplementationComplete` | todo WI requerido do plano/round ativo satisfaz `workItemNormativelySatisfied`; não há finding aberto, `RECOVERY_REQUIRED`, rework ativo, dependência necessária pendente, blocker impeditivo ou escalada sem continuação. | plano, acceptance, findings, blockers, REC-01 e integrações. |
 | `moduleIntegrationComplete` | candidata/attempt de integração aplicável confirma efeito integrado e não há divergência, candidata supersedida ou finding aberto imputável ao módulo. | integration candidate/attempt, Git reconciliation REC-01, findings. |
 | `moduleValidationComplete` | `moduleIntegrationComplete` e evidência de qualidade/segurança aceita existem; gates materiais, se aplicáveis, foram resolvidos. | validação/review/gate GAT-01. |
-| `projectImplementationStarted` | algum módulo requerido tem execução válida e nenhum precondition de compromisso/materialização está ausente. | módulos v2 e suas evidências. |
-| `projectImplementationComplete` | todo módulo requerido e ativo satisfaz `moduleIntegrationComplete`; módulos opcionais/cancelados só são excluídos por política GAT-02 persistida. | módulos, plano de compromisso, integration records. |
-| `projectValidationComplete` | todo módulo requerido satisfaz `moduleValidationComplete` e não há risco material/escalada impeditivos. | validações, gates e recovery. |
+| `projectImplementationStarted` | há ao menos uma obrigação requerida **materializada** em execução válida; obrigação sem `module_id` é projetada como blocker, mas não é avaliada como estado de módulo inexistente. | `EffectiveRequiredModuleSet:v1`, módulos v2 e suas evidências. |
+| `projectImplementationComplete` | toda obrigação requerida está materializada e todo módulo correspondente satisfaz `moduleIntegrationComplete`; módulos só saem do universal por política GAT-02 persistida. | obligations, módulos, plano de compromisso, integration records. |
+| `projectValidationComplete` | toda obrigação requerida está materializada, todo módulo correspondente satisfaz `moduleValidationComplete` e não há risco material/escalada impeditivos. | obligations, validações, gates e recovery. |
+| `projectReadyForDelivery` | `projectValidationComplete` é verdadeiro e não existe obrigação requerida sem materialização, `scope_change_pending` ou decisão GAT-02 pendente aplicável. | obligations, validações, gates GAT-01/GAT-02 quando aplicáveis. |
 
 `PAUSED` e `CANCELLED` ainda não são fatos operacionais implementados. Até
 GAT-02, eles são `UNSUPPORTED_FUTURE_HOOK`: não contam como concluídos nem são
@@ -157,6 +158,7 @@ blockers e módulos mais avançados sem transformar isso em transição.
 | um módulo em recovery/rework | fase anterior compatível, normalmente `IMPLEMENTATION`; `recovery_active=true` | recovery não é falha terminal nem aceite. | somente por finding/rework autorizado. |
 | módulos em fases diferentes | menor fase global comprovada por predicado, tipicamente `PLANNING` ou `IMPLEMENTATION` | distribuição por módulo na projeção. | não por regressão ordinal. |
 | todos integrados | `VALIDATION` | `projectImplementationComplete=true`. | não. |
+| obrigação requerida sem `module_id` | não promove além da fase já comprovada | `required_unmaterialized` e, se removida, `scope_change_pending`; não há estado de módulo a inferir. | somente por materialização de candidato atual ou decisão GAT-02. |
 | alguns bloqueados | mantém fase comprovada; `blocked_modules` explica impedimento | blocker não cria gate humano por si. | somente se o fato também for rework/finding autorizado. |
 | todos prontos para entrega | `DELIVERY` após validação global aceita | GAT-02 ainda faz o aceite final. | finding de entrega volta a `VALIDATION`. |
 | módulo opcional/cancelado | só excluído de universalidade por decisão GAT-02/escopo persistida; pausado continua impeditivo | contrato futuro, não implementação antecipada. | conforme decisão publicada. |
@@ -293,8 +295,8 @@ registrada também em `SAME`; ela não torna uma mudança de evidência invisív
 | --- | --- | --- | --- |
 | `SAME` | chave existe no baseline e fingerprint igual | reutiliza o mesmo `module_id` e a mesma `module_revision_id` semanticamente corrente; não cria revision. | grava lineage do candidato de `R` para os IDs reutilizados; não cria round e não reabre módulo/projeto. |
 | `CHANGED` | chave existe no baseline e fingerprint diferente | reutiliza obrigatoriamente o mesmo `module_id`; cria uma nova `module_revision` imutável, sucessora da corrente, e faz dela a `current_revision_id`. Criar outro módulo lógico é inválido. | cria um novo `module_round` para a nova revision, grava lineage e executa `REOPEN_TRANSITION` normativo. Evidência e critérios da revisão anterior continuam históricos, mas não satisfazem a nova. |
-| `ADDED` | chave não existe em nenhuma materialização requerida anterior do projeto | cria um novo `module_id` e sua primeira `module_revision` (`revision=1`). | cria o primeiro round e o lineage; registra fato de required-set e reabre o projeto quando a fase atual já pressupunha conjunto fechado. |
-| `REMOVED` | chave existe no `EffectiveRequiredModuleSet`/baseline, mas não ocorre em `R` | não cria nem altera módulo, revision ou round. | não cria linha artificial de lineage; preserva lineage anterior, registra fato de divergência de escopo e mantém a obrigação até GAT-02 decidir diferente. |
+| `ADDED` | chave não ocorre na revisão aprovada predecessora. Se há obligation ativa de geração anterior, ela é confirmada; se GAT-02 a encerrou, abre nova generation; se nunca existiu, introduz a primeira. | cria/reutiliza a obrigação lógica antes da materialização; se não há módulo físico, cria `module_id` e sua primeira `module_revision` (`revision=1`). | cria o primeiro round e o lineage; registra fato de required-set e reabre o projeto quando a fase atual já pressupunha conjunto fechado. |
+| `REMOVED` | chave integra a obrigação efetiva/baseline, mas não ocorre em `R` | não cria nem altera módulo, revision ou round; pode não existir `module_id`. | não cria linha artificial de lineage; preserva lineage anterior ou sua ausência, registra fato de divergência de escopo e mantém a obrigação até GAT-02 decidir diferente. |
 
 A classificação é por `module_key` no conjunto inteiro, não pareamento por
 posição. Em um delta misto, cada candidato é resolvido individualmente,
@@ -366,27 +368,113 @@ scheduling; REC-01 continua sendo a autoridade de recovery. Attempts da
 revision anterior são preservadas e só recebem supersession/rework por fato
 normativo posterior, nunca por delete implícito.
 
-### `EffectiveRequiredModuleSet:v1` e fronteira GAT-02
+### `CommittedModuleObligation:v1`, `EffectiveRequiredModuleSet:v1` e GAT-02
 
-`EffectiveRequiredModuleSet(project)` é a autoridade para os universais
-`projectImplementationComplete`, `projectValidationComplete` e
-`projectReadyForDelivery`; esses predicados não podem iterar simplesmente os
-`candidate_modules` da revisão aprovada corrente. Formalmente, ele contém todo
-`module_id` materializado por uma revisão aprovada do projeto e ainda não
-excluído por um fato de escopo/cancelamento GAT-02 persistido, autorizado e
-aplicável a esse módulo/revision. Para uma chave repetida, há um único módulo
-lógico; sua revision corrente é a obrigação ativa. Chaves de commitment
-posterior ainda não materializadas tornam a materialização incompleta e também
-impedem os predicados que a pressupõem.
+**Obrigação requerida não é módulo materializado.**
+`CommittedModuleObligation:v1` é a obrigação lógica identificada por
+`project_id + module_key`, introduzida por um `PRODUCT_COMMITMENT` aprovado e
+mantida até uma retirada autorizada. Sua fonte normativa são os snapshots
+imutáveis que efetivamente alcançaram `APPROVED` (inclusive os que depois estão
+`SUPERSEDED`, comprovados por `approved_at` e gate/decisão `APPROVE`) e, no
+futuro, o fato GAT-02 de retirada. `PENDING_APPROVAL` e `REJECTED` não criam
+obrigação efetiva. O APPROVE, e não o `INSERT` em `modules` nem a linha de
+materialization lineage, é o momento em que a obrigação nasce/confirma.
+Um candidato aprovado de `module_key` já required apenas confirma sua geração
+ativa; nunca duplica a obrigação lógica.
+
+Cada obrigação ativa expõe obrigatoriamente as quatro dimensões abaixo; o
+`module_id` é nullable e não participa da identidade:
+
+| Situação | `required` | `materialized` | `present_in_current_commitment` | `scope_change_pending` |
+| --- | ---: | ---: | ---: | ---: |
+| candidato corrente materializado | true | true | true | false |
+| candidato corrente ainda não materializado | true | false | true | false |
+| `REMOVED` já materializado | true | true | false | true |
+| `REMOVED` antes da materialização | true | false | false | true |
+
+`EffectiveRequiredModuleSet(project)` é o conjunto dessas obrigações com
+`required=true`, não uma lista de `module_id`. Ele é a autoridade para os
+universais `projectImplementationComplete`, `projectValidationComplete` e
+`projectReadyForDelivery`. Quando `materialized=false`, os predicados que
+exigem integração, validação ou entrega são `false` por blocker normativo; eles
+não tentam consultar estado de um módulo inexistente. A presença da obrigação
+também impede que uma projeção declare o projeto completo só porque os módulos
+físicos restantes terminaram.
 
 Assim, `REMOVED` significa somente “ausente da proposta comprometida corrente”.
 Ele não faz `DELETE`, `ARCHIVE`, `CANCEL`, `NOT_REQUIRED`, remoção do
-required-set, apagamento de lineage nem invalidação do histórico. A LR-02
-persiste/projeta `scope_change_pending` com a revisão que detectou a ausência e
-o módulo continua requerido e presente nos universais. GAT-02, que permanece
-`TO_DO`, será a única autoridade para produzir a decisão de scope/cancelamento
-que pode excluí-lo e autorizar a transição correspondente. A LR-02 não inventa
-decisão humana nem implementa GAT-02.
+required-set, apagamento de lineage nem invalidação do histórico. Para uma
+obrigação sem `module_id`, a ausência de
+`product_commitment_module_materializations` é correta e **não** prova ausência
+de obrigação. A LR-02 persiste/projeta `scope_change_pending` com a revisão que
+detectou a ausência; tanto o caso materializado quanto o não materializado
+continuam required. GAT-02, que permanece `TO_DO`, será a única autoridade para
+produzir decisão persistida/autorizada de `required=true → false` e a transição
+correspondente. A LR-02 não inventa essa decisão, não cria gate GAT-02 e não
+materializa automaticamente uma chave `REMOVED`.
+
+#### Estratégia escolhida: ledger de obrigações reconstruível
+
+A LR-02 deve implementar um ledger aditivo de projeção operacional,
+conceitualmente `committed_module_obligations`, em vez de derivar o required-set
+em toda consulta apenas por joins históricos. A derivação dinâmica continua
+sendo a especificação/rebuild de autoridade; o ledger é sua projeção persistida
+e auditável, nunca substitui os snapshots ou decisões GAT-02. A escolha é
+necessária porque o lineage de materialização tem `module_id NOT NULL`, GAT-02
+terá fatos de retirada posteriores e o reconciler/projeção precisam responder
+de modo consistente durante crash, replay e concorrência.
+
+O ledger deve ter, no mínimo, identidade `project_id,module_key,generation`,
+`required`, `materialized_module_id`/`materialized_module_revision_id`
+nullable, `introduced_by_revision_id`, `last_present_revision_id`,
+`removed_by_revision_id` nullable, `scope_change_pending`,
+`resolved_by_gate_decision_id` nullable, versão e timestamps. Deve impor uma
+única geração `required=true` por `(project_id,module_key)` e FKs compostas de
+projeto/chave onde aplicáveis. A alteração de uma revisão aprovada atualiza o
+ledger e cria intents na mesma unidade transacional do reconciler; se houver
+crash antes disso, ele é reconstruído pelo histórico de revisions aprovadas/
+supersedidas e decisões GAT-02, com chave determinística e sem duplicar
+obrigação ou generation. Até a projeção alcançar a revisão aprovada corrente,
+os predicados macro falham fechados como `obligation_projection_pending`.
+
+Uma `module_key` presente novamente antes de GAT-02 retirar a obrigação
+confirma a mesma geração: limpa `scope_change_pending`, define
+`present_in_current_commitment=true` e, sem `module_id`, volta a ser elegível à
+materialização `ADDED`; com módulo prévio, usa `SAME`/`CHANGED` normalmente. Se
+GAT-02 já fez `required=false`, uma revisão futura que a reintroduz cria nova
+generation de obligation com lineage próprio, mas reutiliza o mesmo `module_id`
+se ele existir — `module_key` continua a identidade lógica e nunca autoriza
+duplicar módulo físico.
+
+#### Cenário obrigatório: predecessora parcialmente materializada
+
+Para r1 `APPROVED` com A/B/C, o ledger cria três obrigações antes de qualquer
+`module_id`. Se A/B materializam e C permanece pendente, r2 `APPROVED` com
+A/B/D atualiza C para:
+
+```text
+required=true
+materialized=false
+present_in_current_commitment=false
+scope_change_pending=true
+module_id=null
+```
+
+O intent r1/C é superseded/no-op porque C não é candidato de r2, mas esse fato
+é distinto da obrigação e não a altera. D entra como obrigação `required=true`,
+`present_in_current_commitment=true` e `materialized=false` até sua própria
+materialização. C só volta a ser elegível se uma revisão futura a reintroduzir
+ou deixa o required-set após fato GAT-02 válido.
+
+#### Projeção e API/SSE
+
+O read model/API/SSE deve projetar obligations mesmo sem módulo físico, no
+mínimo com `module_key`, `required`, `materialized`,
+`present_in_current_commitment`, `scope_change_pending`,
+`source_commitment_revision_id` e `module_id: null` quando aplicável. Essa é
+uma projeção do ledger/fatos; não exige criar um resource ou JSON exatamente
+com esse nome. Ausência de `module_id` deve aparecer como blocker explicável,
+nunca como chave ausente do projeto.
 
 ### Completion, intents, materialização parcial e replay
 
@@ -400,21 +488,30 @@ persistida:
 
 `REMOVED` não é candidato da revisão nova e portanto não integra esse
 universal; é coberto pelo `EffectiveRequiredModuleSet`. Consequentemente,
-`PRODUCT_COMMITMENT_APPROVED != COMMITTED_MODULES_MATERIALIZED`. Enquanto uma
-resolução faltar, a projeção expõe `commitment_materialization_pending=true`,
-os candidate keys/intents pendentes e o motivo; o projeto não avança por um
-predicado que exija materialização completa. Exemplo: A `SAME` e B `CHANGED`
-concluídos, D `ADDED` pendente mantém `commitmentMaterializationComplete(r2)`
-falso após crash/restart, sem desfazer A ou B.
+`PRODUCT_COMMITMENT_APPROVED != COMMITTED_MODULES_MATERIALIZED` e
+`commitmentMaterializationComplete(current_revision)=true` **não** implica
+`projectImplementationComplete=true`. Uma obrigação anterior `REMOVED`,
+`required=true`, `materialized=false` e `scope_change_pending=true` continua
+blocker do projeto mesmo depois de todos os candidatos da revisão corrente
+estarem materializados. Enquanto uma resolução de candidato atual faltar, a
+projeção expõe `commitment_materialization_pending=true`; quando o blocker for
+uma obrigação pendente removida, expõe `required_unmaterialized` e
+`scope_change_pending`, sem fingir que existe um módulo físico. Exemplo: A e B
+`SAME` e D `ADDED` resolvidos tornam
+`commitmentMaterializationComplete(r2)=true`, mas C `REMOVED` antes de receber
+`module_id` mantém os predicados de completion do projeto falsos.
 
 Se uma sucessora se torna `APPROVED` antes de a predecessora completar a
 materialização, a predecessora deixa de ser elegível para novas inserções na
 tabela de lineage (a guarda LR-02A exige `APPROVED`). Seus intents pendentes
-terminam como superseded/no-op, sem rollback nem delete das resoluções já
-persistidas. O reconciler processa a sucessora pela cadeia acima e completa
-somente as chaves que ainda faltam; uma materialização parcial anterior segue
-auditável e pode servir de baseline por chave. A projeção mostra a pendência da
-revisão corrente, nunca uma falsa conclusão da predecessora supersedida.
+terminam como `SUPERSEDED`/`NO_OP`, sem rollback nem delete das resoluções já
+persistidas; **superseder um intent não remove nem resolve a obrigação**. O
+reconciler processa a sucessora pela cadeia e seu ledger: completa somente as
+chaves presentes na revisão corrente e ainda elegíveis. Uma chave ausente da
+sucessora, como C, permanece `required=true`, `materialized=false` e
+`scope_change_pending=true`; ela não é criada cegamente pelo intent velho. A
+projeção mostra a pendência da revisão corrente e a obrigação pendente, nunca
+uma falsa conclusão da predecessora supersedida.
 
 Cada ação durável recebe intent/outbox e chave determinística versionada:
 
@@ -425,23 +522,37 @@ committed-module-evolution:v1:<project>:<revision>:<module_key>:ADD_MODULE
 scope-divergence:v1:<project>:<revision>:<removed_module_key>
 ```
 
-O reconciler redescobre revisões aprovadas, recomputa o delta do estado
-persistido e cria somente intents faltantes. A unidade transacional de uma
-resolução contém seu intent/operação, objeto(s) alvo, lineage, fatos/eventos e
-pedido de reavaliação. Reprocessar a mesma revisão não cria module, revision,
-round, materialization, intent funcional ou reabertura duplicados; ele encontra
-as chaves/uniques e converge para `NO_CHANGE`.
+O reconciler redescobre revisions que foram aprovadas, inclusive ancestrais
+agora `SUPERSEDED`, recompõe o ledger e depois compara a revisão corrente. A
+unidade transacional de uma resolução contém atualização da obligation, seu
+intent/operação, objeto(s) alvo quando elegíveis, lineage, fatos/eventos e
+pedido de reavaliação. Reprocessar a mesma revisão não cria obligation,
+generation, module, revision, round, materialization, intent funcional ou
+reabertura duplicados; ele encontra as chaves/uniques e converge para
+`NO_CHANGE`.
 
 ### Concorrência, AUT-01, REC-01 e AUT-02
 
 PostgreSQL é a autoridade de concorrência. Para uma resolução LR-02, a ordem
-obrigatória de lock é `project → product_commitment_revision → modules` em
-ordem lexical de `module_key` → `module_revisions`/`module_rounds` → intent/
-operation. Lotes usam `FOR UPDATE SKIP LOCKED` somente para selecionar intents;
-cada handler relê revisão, materializations, required-set e predicados sob
-esses locks. A unicidade já publicada por candidato e por
-`(project,revision,module_key)`, mais as novas constraints de lineage/revision,
-é defesa em profundidade contra dois reconcilers ou duas intents da mesma chave.
+obrigatória de lock é `project → current ProductCommitmentRevision → obligation
+ledger` em ordem lexical de `module_key` → materialization target → `module`
+quando existir → `module_revisions`/`module_rounds` → intent/operation. Lotes
+usam `FOR UPDATE SKIP LOCKED` somente para selecionar intents; cada handler relê
+a revisão ainda corrente/aprovada, o candidato ainda presente, a obligation,
+materializations, required-set e predicados sob esses locks. A unicidade já
+publicada por candidato e por `(project,revision,module_key)`, a unicidade da
+generation ativa e as novas constraints de lineage/revision são defesa em
+profundidade contra dois reconcilers ou duas intents da mesma chave.
+
+O fencing de `ADD_MODULE` é obrigatório. Antes de criar o módulo, o worker
+relê que sua revisão é a `APPROVED` corrente, que o candidate ainda está nela e
+que a obligation está `required=true`, presente e sem materialização. Se a
+sucessão r2 já tornou C ausente, o intent r1/C converge para
+`SUPERSEDED`/`NO_OP`: C não recebe `module_id`, mas sua obrigação pendente
+permanece no ledger. Se o commit de materialização C ocorreu antes da aprovação
+de r2, a posterior sucessão não o desfaz: C fica
+`required=true`, `materialized=true`, `present_in_current_commitment=false` e
+`scope_change_pending=true`. Ambas as ordens de corrida convergem sem rollback.
 
 A LR-02 não obtém lock de WI, delivery, worktree, job, capacity ou
 `RecoveryDecision`; portanto não inverte a ordem de AUT-01 (WI antes do lock
@@ -468,10 +579,13 @@ publicar facts/intents.
 | `CHANGED` | r1/B → r2/B alterado mantém `module_id`, cria B2/round/lineage/predecessor/source e reabre pela regra conservadora. |
 | `ADDED` | r1 A/B → r2 A/B/D cria somente D como módulo novo. |
 | `REMOVED` | r1 A/B/C → r2 A/B preserva C, seus fatos e `required=true`; registra scope pendente e não cancela. |
+| `REMOVED` pré-materialização | r1 A/B/C, A/B materializados e C pendente; r2 A/B/D faz o intent r1/C `SUPERSEDED`/`NO_OP`, mas C segue `required=true`, `materialized=false`, ausente da corrente e `scope_change_pending=true`. |
+| Completion corrente vs. projeto | A/B/D de r2 materializados tornam `commitmentMaterializationComplete(r2)=true`; C pré-materialização removida mantém completion/validation/delivery do projeto falsos. |
+| Reintrodução e GAT-02 | r3 reintroduz C sem GAT-02: mesma obligation, pendência limpa e materialização volta a ser elegível; após fato GAT-02 `required=false`, r3 cria generation nova e reutiliza `module_id` se houver. |
 | Misto e sucessões | A `SAME`, B `CHANGED`, C `REMOVED`, D `ADDED`; r1 → r2 → r3 e r2 `REJECTED` preservam identidade/autoridade. |
 | Aceite/dependência | alteração de criteria não herda acceptance; alteração de dependency exige novo plano/guard, sem matar attempt ativo. |
 | Crash/replay | A/B concluídos e D pendente após crash processa só D; replay não duplica objetos, intent, lineage ou reopen. |
-| Concorrência/recovery | dois reconcilers resolvem uma vez por candidato; evolução durante recovery preserva `RecoveryDecision` e converge. |
+| Corridas/recovery | sucessão primeiro impede C antigo de materializar; materialização primeiro preserva C físico como scope pendente; dois reconcilers e evolução durante recovery preservam uma obrigação e `RecoveryDecision`. |
 | Agregação/GAT-02 | required-set bloqueia universais até decisão GAT-02 válida; revisão aprovada parcialmente materializada é projetada como pendente. |
 
 ## Desenho de agregação, atomicidade e concorrência

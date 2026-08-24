@@ -424,8 +424,10 @@ A pré-validação em `LR-02-synchronize-macro-lifecycle-prevalidation.md` está
 `PREVALIDATION_READY_FOR_IMPLEMENTATION` após a entrega do contrato LR-02A e
 da `COMMITTED_MODULE_EVOLUTION_POLICY:v1`. Ela fecha `SAME`, `CHANGED`,
 `ADDED`, `REMOVED`, `EffectiveRequiredModuleSet` e a fronteira GAT-02 sem
-iniciar LR-02. LR-02 continua `TO_DO` e é a próxima task; AUT-02 e GAT-02 não
-foram iniciadas.
+iniciar LR-02. `CommittedModuleObligation:v1` e seu ledger reconstruível
+preservam uma chave `REMOVED` mesmo quando ela ainda não recebeu `module_id`;
+intent superseded não equivale a obrigação removida. LR-02 continua `TO_DO` e
+é a próxima task; AUT-02 e GAT-02 não foram iniciadas.
 
 ---
 

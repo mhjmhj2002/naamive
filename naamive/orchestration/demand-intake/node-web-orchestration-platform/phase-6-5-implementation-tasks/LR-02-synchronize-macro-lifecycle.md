@@ -33,8 +33,9 @@ WI/candidata não promovem os agregados; estados normativos não são alcançado
 - Nenhum módulo ultrapassa o projeto; nenhum agregado avança sem evidência.
 - Finding/rework reabre a fase correta e preserva histórico.
 - `EffectiveRequiredModuleSet:v1`, e não apenas os candidatos da revisão
-  corrente, é a autoridade dos predicados universais; remoção de candidato
-  permanece requerida até decisão GAT-02 persistida.
+  corrente ou `module_id` materializado, é a autoridade dos predicados
+  universais; remoção de candidato permanece requerida até decisão GAT-02
+  persistida.
 - `commitmentMaterializationComplete(revision_id)` impede avanço prematuro e
   torna materialização parcial recuperável e observável.
 
@@ -60,6 +61,8 @@ Não implementa pipeline interno de WI (AUT-02),
 aceite final/pausa/cancelamento (GAT-02) nem altera históricos certificados.
 LR-02 detecta `REMOVED` e registra divergência de escopo, mas somente GAT-02
 pode retirar obrigação, cancelar ou autorizar a transição correspondente.
+Uma obligation `REMOVED` sem `module_id` continua required; intent superseded
+não elimina a obligation e a revisão corrente não a materializa automaticamente.
 
 ## Estratégia de implementação e compatibilidade
 
@@ -80,6 +83,10 @@ pode retirar obrigação, cancelar ou autorizar a transição correspondente.
 - lineage responde a candidate/commitment fonte e predecessor de cada nova
   module revision; `EffectiveRequiredModuleSet` e
   `commitmentMaterializationComplete` governam os universais e a projeção;
+- obrigação requerida ainda não materializada é persistida/projetável e bloqueia
+  completion do projeto; `REMOVED` sem `module_id` não se torna `NOT_REQUIRED`;
+- somente GAT-02 pode produzir `required=false`; intent superseded preserva a
+  obrigação e a materialização antiga é fenced pela revisão corrente;
 - projeto e módulo avançam e reabrem coerentemente com um ou vários módulos;
 - nenhum evento duplicado produz transição duplicada;
 - projeto não fica em materialização durante implementação;

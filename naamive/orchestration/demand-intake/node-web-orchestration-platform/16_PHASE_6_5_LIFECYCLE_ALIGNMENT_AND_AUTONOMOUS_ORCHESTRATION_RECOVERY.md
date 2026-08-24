@@ -49,7 +49,9 @@ dois findings da auditoria de `9e9bdaf0` foram fechados. `LR-02` é a próxima
 task serial e sua pré-validação está `PREVALIDATION_READY_FOR_IMPLEMENTATION`.
 A `COMMITTED_MODULE_EVOLUTION_POLICY:v1` fecha o delta `SAME`/`CHANGED`/
 `ADDED`/`REMOVED`, o required-set efetivo e a fronteira de cancelamento GAT-02
-sem iniciar nenhuma dessas tasks. A sequência
+sem iniciar nenhuma dessas tasks. O required-set usa
+`CommittedModuleObligation:v1`, logo obrigação aprovada não desaparece por
+ainda não possuir `module_id`. A sequência
 efetivamente concluída é
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A`.
 
