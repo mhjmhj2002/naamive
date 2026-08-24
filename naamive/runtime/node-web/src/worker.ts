@@ -21,6 +21,7 @@ import { reconcileMacroLifecycle } from './macro-lifecycle.js';
 import { executeIndependentReview } from './assurance.js';
 import { configuredWorkerService } from './auth.js';
 import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
+import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -169,6 +170,7 @@ export const runOnce = async (projectId?: string, actorId='system:worker'): Prom
   await detectDevelopmentRuntimeInconsistencies();
   await reconcileDevelopmentRuntime();
   await reconcileCauseAwareRecovery();
+  await reconcileAutomaticAssuranceIntegration();
   const lock = await pool.connect();
   try {
     const lockKey=projectId??randomUUID();

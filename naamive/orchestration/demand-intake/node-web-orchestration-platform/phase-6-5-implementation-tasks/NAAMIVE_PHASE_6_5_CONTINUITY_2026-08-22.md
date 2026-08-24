@@ -47,7 +47,7 @@ a pré-validação de LR-02:
 | 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
 | 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **DONE** |
 | 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **DONE** |
-| 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** / **PREVALIDATION_READY_FOR_IMPLEMENTATION** |
+| 7 | **AUT-02** | Automatizar QA → review → merge → integração | **DONE** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
 | 10 | **GAT-02** | Lifecycle de entrega, pausa, retomada e cancelamento | **TO_DO** |
@@ -426,7 +426,8 @@ implementam `SAME`, `CHANGED`, `ADDED`, `REMOVED` e
 `EffectiveRequiredModuleSet`. Descoberta v4 e materialização são recuperáveis e
 idempotentes; sucessões, reintrodução, replay, concorrência, reabertura e
 fencing temporal foram validados em PostgreSQL real. O legado e os rollouts
-globais foram preservados. AUT-02 e GAT-02 não foram iniciadas.
+globais foram preservados. GAT-02 não foi iniciada; AUT-02 foi implementada
+posteriormente sobre essas autoridades.
 
 O finding `LR-02-FIX-01` foi fechado pela migration 064 e por regressões HTTP e
 PostgreSQL. A seleção de `PROJECT_DISCOVERY` agora é congelada atomicamente na
@@ -437,7 +438,7 @@ a transição explícita. Nenhum projeto existente teve workflow/estado migrado.
 
 ---
 
-### AUT-02 — TO_DO / PREVALIDATION_READY_FOR_IMPLEMENTATION
+### AUT-02 — DONE
 
 Automatizar:
 
@@ -446,10 +447,15 @@ Automatizar:
 quando não existir gate/blocker legítimo.
 
 O contrato `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` está em
-`AUT-02-automatic-qa-review-merge-integration-prevalidation.md`. Ele fecha
-snapshot imutável, QA determinístico, acceptance Assurance, REC-01, intents,
-crash/replay/concurrency e as fronteiras AUT-03/REC-02/GAT-02, sem iniciar
-implementação funcional.
+`AUT-02-automatic-qa-review-merge-integration-prevalidation.md`. A migration
+065 e o executor AUT-02 implementam snapshot imutável, QA determinístico,
+review Assurance independente, `ACCEPT` como única autoridade de aceite, merge
+por WI, candidata multi-WI exata, integração coletiva e um único handoff
+`MACRO_REEVALUATE` para LR-02. Intents leased/fenced, REC-01, replay,
+concorrência, staleness e unknown effect falham de modo fechado. Regressões com
+PostgreSQL e Git reais cobrem a barreira N−1, rollback coletivo, manifests,
+finalizers concorrentes e `NOT_APPLIED`/`APPLIED_UNRECORDED`. AUT-03, REC-02 e
+GAT-02 permanecem fora deste escopo.
 
 ---
 
@@ -530,9 +536,9 @@ Documentos históricos permanecem históricos; documentação corrente deve refl
 
 | Categoria | Quantidade |
 |---|---:|
-| DONE | 7 |
+| DONE | 8 |
 | DOING | 0 |
-| TO_DO | 8 |
+| TO_DO | 7 |
 | Total | 15 |
 
 Progresso funcional da F6.5:
@@ -544,6 +550,7 @@ Progresso funcional da F6.5:
 - **REC-01: DONE**
 - **LR-02A: DONE**
 - **LR-02: DONE**
+- **AUT-02: DONE**
 - restante: **TO_DO**
 
 Fase 7:
@@ -577,8 +584,8 @@ Ao iniciar um novo chat:
 
 1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
 2. fornecer este arquivo;
-3. retomar por **AUT-02**, mantendo GAT-02 e REC-02 em `TO_DO`;
+3. retomar por **AUT-03**, mantendo GAT-02 e REC-02 em `TO_DO`;
 4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
    lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 DONE → AUT-02 TO_DO`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 DONE → AUT-02 DONE → AUT-03 TO_DO`.

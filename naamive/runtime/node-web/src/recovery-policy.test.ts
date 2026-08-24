@@ -32,6 +32,13 @@ test('unknown effect always reconciles before retry or restart',()=>{
   }
 });
 
+test('fenced AUT-02 recovery generations have distinct classification fingerprints',()=>{
+  const first=classifier.classify(signals('MERGE_TIMEOUT',{recoveryScopeKey:'intent:1'}));
+  const takeover=classifier.classify(signals('MERGE_TIMEOUT',{recoveryScopeKey:'intent:2'}));
+  assert.notEqual(first.classificationFingerprint,takeover.classificationFingerprint);
+  assert.equal(takeover.selectedAction,'RECONCILE');
+});
+
 test('absence of evidence never becomes NO_EFFECT while an authority is inconclusive',()=>{
   const decision=classifier.classify(signals('JOB_NOT_CONSUMED',{requiredAuthoritiesConclusive:false,noEffectVerified:false,worktreeObservation:'UNAVAILABLE'}));
   assert.equal(decision.effectCertainty,'EFFECT_UNKNOWN');assert.equal(decision.selectedAction,'RECONCILE');

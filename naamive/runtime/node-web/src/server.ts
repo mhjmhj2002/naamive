@@ -26,6 +26,7 @@ import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministra
 import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
 import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
 import { activateV4DiscoveryAfterRegistration, reconcileMacroLifecycle } from './macro-lifecycle.js';
+import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -253,7 +254,7 @@ if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.
   // Server-side development reservation reconciliation runs OUTSIDE the worker
   // so a RESERVED delivery whose job is never consumed (or whose worker died)
   // is still reconciled to terminal/recoverable on a bounded schedule.
-  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler(),reconcileMacroLifecycle()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
+  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler(),reconcileMacroLifecycle(),reconcileAutomaticAssuranceIntegration()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');clearInterval(reconcileTimer);server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }

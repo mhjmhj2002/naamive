@@ -1,7 +1,8 @@
 ---
 task: AUT-02
-status: TO_DO
+status: DONE
 prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
+implementation_completed_at: 2026-08-24
 title: Pipeline automático QA, review, merge e integração
 depends_on: [AUT-01, REC-01, LR-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -11,7 +12,7 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 Contrato normativo obrigatório antes de qualquer código:
 [`AUT-02-automatic-qa-review-merge-integration-prevalidation.md`](AUT-02-automatic-qa-review-merge-integration-prevalidation.md)
-(`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`). A task permanece `TO_DO`.
+(`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`). A implementação está `DONE`.
 
 ## Objetivo e problema corrigido
 
@@ -79,3 +80,21 @@ REC-01 Git recovery, crash/replay, concorrência, revision antiga, recurso já
 Riscos: autoaceite, merge duplicado, SHA obsoleto e saga parcial. Evidências:
 ledger de handoffs, intents/hashes, eventos ordenados, manifesto Git e resultados
 E2E do fluxo sem cliques técnicos.
+
+## Evidência de conclusão
+
+A migration `065_phase_6_5_automatic_assurance_integration.sql` publicou o
+ledger imutável de snapshots, QA, intents fenced, merges por WI, manifests
+multi-WI, validation reports e integração coletiva. O runtime passou a encadear
+automaticamente QA, Assurance independente, `ACCEPT`, merge, candidata,
+validação, integração e um único `MACRO_REEVALUATE`, mantendo endpoints v2 como
+reemit/reconcile e preservando o fluxo legado.
+
+As regressões AUT-02 usam PostgreSQL real e Git real para provar QA/review,
+ausência de autoaccept, REC-01 `NOT_APPLIED`/`APPLIED_UNRECORDED`, barreira N−1,
+concorrência do último merge, rollback coletivo controlado, manifest imutável,
+finalizers concorrentes, replay e projeção compartilhada por todos os membros.
+`npm run build`, as regressões AUT-01/REC-01/LR-02/Assurance/Phase 3 e os testes
+AUT-02 passam. A dívida histórica de quatro asserts de inventory
+(`FAILED` esperado versus `RETRYABLE` vigente) permanece preexistente e fora do
+escopo, conforme checkpoint de continuidade.

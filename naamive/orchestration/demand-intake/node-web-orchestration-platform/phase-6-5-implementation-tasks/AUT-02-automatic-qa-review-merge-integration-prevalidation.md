@@ -2,6 +2,7 @@
 task: AUT-02
 document_type: prevalidation
 status: PREVALIDATION_READY_FOR_IMPLEMENTATION
+implementation_status: DONE
 contract: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1
 governs: WORK_ITEM_DELIVERY:v2
 integrates_with: [MODULE_DELIVERY:v2, PROJECT_DISCOVERY:v4]
@@ -20,6 +21,10 @@ instâncias `WORK_ITEM_DELIVERY:v2`: QA determinístico, review independente,
 `ACCEPT`, merge para a phase ref, candidata, validação e integração. Ele entrega
 fatos a `MODULE_DELIVERY:v2` e `PROJECT_DISCOVERY:v4` somente por
 `MACRO_REEVALUATE`; LR-02 continua a única autoridade macro.
+
+**Checkpoint de implementação (24/08/2026): DONE.** O contrato abaixo foi
+materializado pela migration 065, pelo ledger/executor AUT-02 e pelas regressões
+PostgreSQL/Git de QA, Assurance, recovery e candidata multi-WI.
 
 O runtime já oferece `deliveries.qa_matrix`/`qa_matrices`, `work_acceptances`,
 `assurance_reviews`, `review_decisions`, `findings`, `rework_decisions`,

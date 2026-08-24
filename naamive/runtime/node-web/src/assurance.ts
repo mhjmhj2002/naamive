@@ -8,6 +8,7 @@ import { persistDiscoveryAgentOutcome } from './discovery-agent-jobs.js';
 import type { AgentResult } from './agent.js';
 import { config } from './config.js';
 import { gateDefinition } from './gate-catalog.js';
+import { recordAut02ReviewDecision } from './aut02-ledger.js';
 
 export const assuranceDecisions = ['ACCEPT', 'REWORK', 'BLOCK', 'ESCALATE'] as const;
 export const acceptanceStates = ['PENDING_PRODUCE','PENDING_REVIEW','WAITING_FOR_INDEPENDENT_REVIEWER','ACCEPTED','REWORK_REQUIRED','BLOCKED','ESCALATED','CANCELLED'] as const;
@@ -498,6 +499,7 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
     await client.query(`UPDATE jobs SET status='BLOCKED',lease_expires_at=NULL,last_error='ASSURANCE_REVIEW_BLOCK' WHERE id=$1 AND status NOT IN ('COMPLETED','CANCELLED')`,[review.job_id]);
     await client.query(`UPDATE operations SET status='BLOCKED',completed_at=NULL,failure_code='ASSURANCE_REVIEW_BLOCK' WHERE id=$1 AND status NOT IN ('SUCCEEDED','CANCELLED')`,[review.operation_id]);
   }
+  await recordAut02ReviewDecision(client,{acceptanceId:review.acceptance_id,reviewId,reviewDecisionId:result.id,decision,correlationId:review.correlation_id});
   await audit(client,review.project_id,'ASSURANCE_REVIEW_DECIDED',review.correlation_id,{review_id:reviewId,acceptance_id:review.acceptance_id,decision});
   return result;
 });

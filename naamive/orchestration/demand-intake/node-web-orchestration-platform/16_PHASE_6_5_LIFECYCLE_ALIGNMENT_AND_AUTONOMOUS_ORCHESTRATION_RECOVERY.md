@@ -44,17 +44,17 @@ atualizada por esta fase.
 
 ## Checkpoint vivo de execução — 2026-08-24
 
-`LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01`, `LR-02A` e `LR-02` estão
+`LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01`, `LR-02A`, `LR-02` e `AUT-02` estão
 `DONE`; os dois findings da auditoria de `9e9bdaf0` foram fechados. LR-02
 implementou `COMMITTED_MODULE_EVOLUTION_POLICY:v1`, o required-set efetivo,
 intents/outbox recuperáveis e agregação macro versionada sem antecipar GAT-02
-ou AUT-02. O required-set usa `CommittedModuleObligation:v1`, logo obrigação
+ou reimplementar a autoridade de AUT-02. O required-set usa `CommittedModuleObligation:v1`, logo obrigação
 aprovada não desaparece por ainda não possuir `module_id`. `LR-02-FIX-01`
 persiste a seleção de workflow na criação da instância e impede sua reavaliação
-no gate de registro. AUT-02 continua `TO_DO` e está
-`PREVALIDATION_READY_FOR_IMPLEMENTATION` pelo contrato
+no gate de registro. AUT-02 implementou o contrato
 `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`; a sequência efetivamente concluída é
-`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02`.
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02 → AUT-02`.
+AUT-03 é a próxima task serial.
 
 A regra canônica é: a versão de workflow é selecionada na criação da instância e
 nunca reavaliada na aprovação do gate; `NEW_PROJECTS` só afeta novas criações.

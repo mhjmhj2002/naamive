@@ -19,6 +19,7 @@ export type PersistedRecoveryDecision={
   evidence_refs:string[];finding_refs:string[];source_state:string;source_version:number;classification_key:string;classification_fingerprint:string;idempotency_key:string;operation_id:string;
   predecessor_decision_id:string|null;execution_state:string;execution_attempts:number;execution_result:Record<string,unknown>;created_at:string;executed_at:string|null;
   execution_lease_expires_at:string|null;execution_claim_id:string|null;execution_generation:number;
+  assurance_integration_intent_id:string|null;
 };
 
 export type RecoveryExecutionClaim=PersistedRecoveryDecision&{
@@ -103,6 +104,21 @@ export const collectIntegrationRecoverySignals=async(projectId:string,candidateI
     integrationObservation:observation,worktreeObservation:'NOT_APPLICABLE',requiredAuthoritiesConclusive:observation!=='UNAVAILABLE',noEffectVerified:observation==='NOT_APPLIED'};
 };
 
+const collectAut02MergeRecoverySignals=async(intentId:string,afterReconcile=false):Promise<RecoverySignals>=>{
+  const row=(await pool.query(`SELECT i.project_id,i.work_item_id,i.execution_generation,mr.id AS merge_result_id,mr.phase_before_sha,mr.delivery_head_sha,w.state,w.version,dc.delivery_id,dc.worktree_id,p.repository_path
+    FROM assurance_integration_intents i JOIN work_item_merge_results mr ON mr.intent_id=i.id JOIN work_item_delivery_candidates dc ON dc.id=mr.delivery_candidate_id
+    JOIN work_items w ON w.id=i.work_item_id JOIN projects p ON p.id=i.project_id WHERE i.id=$1`,[intentId])).rows[0];
+  if(!row)throw new ApiError(409,'AUT02_MERGE_RECOVERY_CONTEXT_NOT_FOUND');
+  let observation:'NOT_APPLIED'|'APPLIED_UNRECORDED'|'DIVERGED'|'UNAVAILABLE'=afterReconcile?'UNAVAILABLE':'UNAVAILABLE';
+  if(afterReconcile)try{
+    const current=gitValue(row.repository_path,'rev-parse','phases/3'),parents=gitValue(row.repository_path,'show','-s','--format=%P',current).split(/\s+/).filter(Boolean);
+    observation=current===row.phase_before_sha?'NOT_APPLIED':parents.length===2&&parents[0]===row.phase_before_sha&&parents[1]===row.delivery_head_sha?'APPLIED_UNRECORDED':'DIVERGED';
+  }catch{observation='UNAVAILABLE';}
+  const observedCause:RecoveryCause=!afterReconcile?'MERGE_TIMEOUT':observation==='NOT_APPLIED'?'INFRA_TRANSIENT':observation==='APPLIED_UNRECORDED'?'MERGE_APPLIED_UNRECORDED':observation==='DIVERGED'?'GIT_DIVERGED':'MERGE_TIMEOUT';
+  return{observedCause,projectId:row.project_id,sourceState:row.state,sourceVersion:Number(row.version),workItemId:row.work_item_id,deliveryId:row.delivery_id,worktreeId:row.worktree_id,recoveryScopeKey:`${intentId}:${row.execution_generation}`,
+    integrationObservation:observation,worktreeObservation:'NOT_APPLICABLE',requiredAuthoritiesConclusive:observation!=='UNAVAILABLE',noEffectVerified:observation==='NOT_APPLIED'};
+};
+
 const persistDecisionInTransaction=async(c:PoolClient,signals:RecoverySignals,idempotencyKey:string,predecessorDecisionId?:string|null):Promise<PersistedRecoveryDecision>=>{
   const classification=classifier.classify(signals);
   const resource=signals.workItemId??signals.integrationCandidateId!;
@@ -166,6 +182,7 @@ const withClaimedExternalEffect=async<T>(claim:RecoveryExecutionClaim,effect:()=
 const supersedeWithDecision=async(claim:RecoveryExecutionClaim,signals:RecoverySignals,idempotencyKey:string,result:Record<string,unknown>={})=>withTransaction(async c=>{
   await assertExecutionClaim(c,claim);
   const next=await persistDecisionInTransaction(c,signals,idempotencyKey,claim.id);
+  if(claim.assurance_integration_intent_id)await c.query(`UPDATE recovery_decisions SET assurance_integration_intent_id=$2 WHERE id=$1`,[next.id,claim.assurance_integration_intent_id]);
   await transitionClaim(c,claim,'SUPERSEDED',{...result,converged_to:next.id});
   return next;
 });
@@ -192,6 +209,10 @@ const scheduleAfterRelease=async(decision:RecoveryExecutionClaim,baseSha?:string
 };
 
 const executeRetry=async(decision:RecoveryExecutionClaim)=>{
+  if(decision.assurance_integration_intent_id){
+    if(decision.effect_certainty!=='NO_EFFECT')throw new ApiError(409,'RECOVERY_RETRY_EFFECT_NOT_ABSENT');
+    await withTransaction(async c=>{await assertExecutionClaim(c,decision);const intent=(await c.query(`SELECT * FROM assurance_integration_intents WHERE id=$1 FOR UPDATE`,[decision.assurance_integration_intent_id])).rows[0];if(!intent)throw new ApiError(409,'AUT02_MERGE_RECOVERY_CONTEXT_NOT_FOUND');await c.query(`UPDATE work_item_merge_results SET state='NOT_APPLIED' WHERE intent_id=$1 AND state='EFFECT_UNKNOWN'`,[intent.id]);await c.query(`UPDATE assurance_integration_intents SET status='PENDING',effect_state='NO_EFFECT',available_at=clock_timestamp(),lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,recovery_decision_id=$2,last_error=NULL,updated_at=clock_timestamp(),completed_at=NULL WHERE id=$1`,[intent.id,decision.id]);await transitionClaim(c,decision,'COMPLETED',{merge_retry_reemitted:true,intent_id:intent.id,reconciled_before_retry:true});});return;
+  }
   if(decision.integration_candidate_id)return executeIntegrationRetry(decision);
   const delay=delays[Math.min(Math.max(Number((await pool.query(`SELECT attempts FROM jobs WHERE id=$1`,[decision.job_id])).rows[0]?.attempts??1)-1,0),2)];
   await withTransaction(async c=>{
@@ -252,7 +273,7 @@ const executeRework=async(decision:RecoveryExecutionClaim)=>{
 };
 
 const executeReconcile=async(decision:RecoveryExecutionClaim)=>{
-  const signals=decision.work_item_id?await collectWorkItemRecoverySignals(decision.project_id,decision.work_item_id,decision.cause,true):await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,decision.cause,true);
+  const signals=decision.assurance_integration_intent_id?await collectAut02MergeRecoverySignals(decision.assurance_integration_intent_id,true):decision.work_item_id?await collectWorkItemRecoverySignals(decision.project_id,decision.work_item_id,decision.cause,true):await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,decision.cause,true);
   const classified=classifier.classify(signals);
   if(classified.selectedAction==='RECONCILE'&&classified.effectCertainty==='EFFECT_UNKNOWN'){
     await markClaimedRecoveryDecision(decision,'WAITING_RECONCILIATION',{last_observation:'INCONCLUSIVE',observed_at:new Date().toISOString()});return;
@@ -262,13 +283,22 @@ const executeReconcile=async(decision:RecoveryExecutionClaim)=>{
 };
 
 const executeRecordAndContinue=async(decision:RecoveryExecutionClaim)=>{
-  const row=(await pool.query(`SELECT a.id,p.repository_path FROM integration_attempts a JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
+  if(decision.assurance_integration_intent_id){const {recordAut02MergeAfterRecovery}=await import('./automatic-assurance-integration.js');const mergeSha=await recordAut02MergeAfterRecovery(decision.assurance_integration_intent_id,decision);await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{recorded_phase_sha:mergeSha,reapplied:false,merge_recorded:true});});return;}
+  const row=(await pool.query(`SELECT a.id,a.candidate_id,c.pipeline_version,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
   const remote=await withClaimedExternalEffect(decision,()=>gitValue(row.repository_path,'rev-parse','origin/integration'));
+  if(row.pipeline_version==='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1'){
+    const {finalizeAut02IntegratedCandidate}=await import('./automatic-assurance-integration.js');
+    await finalizeAut02IntegratedCandidate(row.candidate_id,row.id,remote,'RECOVERY',decision);
+    await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{recorded_remote_sha:remote,reapplied:false,collective_finalization:true});});
+    await scheduleEligibleWorkItems('AUT02_RECOVERY_INTEGRATION_COMPLETED');
+    return;
+  }
   await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=coalesce(merge_sha,$2),push_sha=coalesce(push_sha,$2) WHERE id=$1`,[decision.integration_attempt_id,remote]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{recorded_remote_sha:remote,reapplied:false});});
 };
 
 const executeIntegrationRecovery=async(decision:RecoveryExecutionClaim)=>withTransaction(async c=>{
   await assertExecutionClaim(c,decision);
+  if(decision.assurance_integration_intent_id){await c.query(`UPDATE work_item_merge_results SET state='DIVERGED' WHERE intent_id=$1`,[decision.assurance_integration_intent_id]);await c.query(`UPDATE assurance_integration_intents SET status='SUPERSEDED',recovery_decision_id=$2,updated_at=clock_timestamp(),completed_at=clock_timestamp() WHERE id=$1`,[decision.assurance_integration_intent_id,decision.id]);}
   if(decision.integration_candidate_id)await c.query(`UPDATE integration_candidates SET state='INTEGRATION_BLOCKED',blocked_kind='GIT_DIVERGED',version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);
   if(decision.work_item_id)await c.query(`UPDATE work_items SET state='WAITING_FOR_ESCALATION',version=version+1 WHERE id=$1`,[decision.work_item_id]);
   if(decision.integration_candidate_id&&decision.attempt_id)await c.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id,decision.cause]);
@@ -277,9 +307,9 @@ const executeIntegrationRecovery=async(decision:RecoveryExecutionClaim)=>withTra
 
 const executeIntegrationRetry=async(decision:RecoveryExecutionClaim)=>{
   if(decision.effect_certainty!=='NO_EFFECT')throw new ApiError(409,'RECOVERY_RETRY_EFFECT_NOT_ABSENT');
-  const row=(await pool.query(`SELECT a.*,c.phase_sha,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
+  const row=(await pool.query(`SELECT a.*,c.phase_sha,c.pipeline_version,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
   await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='RESERVED' WHERE id=$1`,[row.id]);await c.query(`UPDATE integration_candidates SET state='INTEGRATION_IN_PROGRESS',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);});
-  try{const result=await withClaimedExternalEffect(decision,()=>mergeAndPushDetached(row.repository_path,'phases/3','integration',row.candidate_sha,row.integration_before_sha));await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=$2,push_sha=$2 WHERE id=$1`,[row.id,result.mergeSha]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{merge_sha:result.mergeSha,reconciled_before_retry:true});});}
+  try{let result:any;if(row.pipeline_version==='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1'){const {finalizeAut02IntegratedCandidate,retryAut02IntegrationAfterRecoveryReconciliation}=await import('./automatic-assurance-integration.js');result=await retryAut02IntegrationAfterRecoveryReconciliation(row,decision);if(!result){await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{reconciled_before_retry:true,retry_suppressed:'STALE_OR_BLOCKED'});});return;}await finalizeAut02IntegratedCandidate(row.candidate_id,row.id,result.mergeSha,'RECOVERY',decision);await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{merge_sha:result.mergeSha,reconciled_before_retry:true,collective_finalization:true});});await scheduleEligibleWorkItems('AUT02_RECOVERY_INTEGRATION_COMPLETED');}else{result=await withClaimedExternalEffect(decision,()=>mergeAndPushDetached(row.repository_path,'phases/3','integration',row.candidate_sha,row.integration_before_sha));await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=$2,push_sha=$2 WHERE id=$1`,[row.id,result.mergeSha]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{merge_sha:result.mergeSha,reconciled_before_retry:true});});}}
   catch(error){if(error instanceof ApiError&&error.code==='RECOVERY_EXECUTION_FENCED')throw error;const signals=await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,'MERGE_TIMEOUT');const next=await supersedeWithDecision(decision,signals,`recovery-uncertain:${decision.id}`,{uncertain_external_result:true});await executeRecoveryDecision(next.id);}
 };
 
@@ -315,6 +345,12 @@ export const requestWorkItemRecovery=async(projectId:string,workItemId:string,id
   const signals=await collectWorkItemRecoverySignals(projectId,workItemId,observedCause);if(!observedCause&&signals.observedCause==='DELIVERY_PRESENT'&&signals.sourceState!=='RECOVERY_REQUIRED')throw new ApiError(409,'RECOVERY_NOT_REQUIRED');
   const decision=await persistDecision(signals,idempotencyKey);await executeRecoveryDecision(decision.id);return recoveryDecisionProjection(decision.id);
 };
+export const requestAut02MergeRecovery=async(projectId:string,workItemId:string,intentId:string,idempotencyKey:string)=>{
+  const signals=await collectAut02MergeRecoverySignals(intentId,false);if(signals.projectId!==projectId||signals.workItemId!==workItemId)throw new ApiError(409,'AUT02_MERGE_RECOVERY_LINEAGE_MISMATCH');
+  const decision=await persistDecision(signals,idempotencyKey);
+  await withTransaction(async c=>{await c.query(`UPDATE recovery_decisions SET assurance_integration_intent_id=$2 WHERE id=$1`,[decision.id,intentId]);await c.query(`UPDATE assurance_integration_intents SET recovery_decision_id=$2 WHERE id=$1`,[intentId,decision.id]);});
+  await executeRecoveryDecision(decision.id);return recoveryDecisionProjection(decision.id);
+};
 export const createWorkItemRecoveryDecision=async(projectId:string,workItemId:string,idempotencyKey:string,observedCause?:RecoveryCause)=>persistDecision(await collectWorkItemRecoverySignals(projectId,workItemId,observedCause),idempotencyKey);
 export const createIntegrationRecoveryDecision=async(projectId:string,candidateId:string,idempotencyKey:string,observedCause?:RecoveryCause)=>persistDecision(await collectIntegrationRecoverySignals(projectId,candidateId,observedCause),idempotencyKey);
 export const requestIntegrationRecovery=async(projectId:string,candidateId:string,idempotencyKey:string,observedCause?:RecoveryCause)=>{
@@ -340,5 +376,5 @@ export const reconcileCauseAwareRecovery=async()=>{
 };
 
 export const recoveryDecisionProjection=async(id:string)=>{
-  const row=(await pool.query(`SELECT id,policy_version,cause,effect_certainty,evidence_footprint,selected_action,reason,work_item_id,attempt_id,job_id,delivery_id,worktree_id,integration_candidate_id,integration_attempt_id,evidence_refs,finding_refs,source_state,source_version,operation_id,predecessor_decision_id,execution_state,execution_result,created_at,executed_at FROM recovery_decisions WHERE id=$1`,[id])).rows[0];if(!row)throw new ApiError(404,'RECOVERY_DECISION_NOT_FOUND');return row;
+  const row=(await pool.query(`SELECT id,policy_version,cause,effect_certainty,evidence_footprint,selected_action,reason,work_item_id,attempt_id,job_id,delivery_id,worktree_id,integration_candidate_id,integration_attempt_id,assurance_integration_intent_id,evidence_refs,finding_refs,source_state,source_version,operation_id,predecessor_decision_id,execution_state,execution_result,created_at,executed_at FROM recovery_decisions WHERE id=$1`,[id])).rows[0];if(!row)throw new ApiError(404,'RECOVERY_DECISION_NOT_FOUND');return row;
 };

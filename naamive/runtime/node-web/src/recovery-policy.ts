@@ -30,6 +30,7 @@ export type RecoverySignals={
   worktreeId?:string|null;
   integrationCandidateId?:string|null;
   integrationAttemptId?:string|null;
+  recoveryScopeKey?:string|null;
   jobStatus?:string|null;
   jobAttempts?:number;
   deliveryState?:string|null;
@@ -63,7 +64,8 @@ const fingerprint=(signals:RecoverySignals,certainty:EffectCertainty,footprint:E
   resource:signals.workItemId??signals.integrationCandidateId,attempt:signals.attemptId??signals.integrationAttemptId,
   job:signals.jobId,delivery:signals.deliveryId,worktree:signals.worktreeId,sourceState:signals.sourceState,
   sourceVersion:signals.sourceVersion,evidence:sorted([...(signals.executionEvidenceRefs??[]),...(signals.commitRefs??[])]),findings:sorted(signals.findingRefs??[]),
-  worktreeObservation:signals.worktreeObservation,integrationObservation:signals.integrationObservation
+  worktreeObservation:signals.worktreeObservation,integrationObservation:signals.integrationObservation,
+  recoveryScopeKey:signals.recoveryScopeKey??null
 })).digest('hex');
 
 const classified=(signals:RecoverySignals,certainty:EffectCertainty,footprint:EvidenceFootprint[],action:RecoveryAction,reason:string):RecoveryClassification=>({
