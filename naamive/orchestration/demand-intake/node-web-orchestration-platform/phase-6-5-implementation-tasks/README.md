@@ -4,7 +4,8 @@
 `LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01` e `LR-02A` estão `DONE`; os
 dois findings da auditoria de `9e9bdaf0` foram fechados. A fonte canônica de
 módulos comprometidos foi publicada e a próxima task serial é `LR-02`, cuja
-pré-validação está `READY_FOR_IMPLEMENTATION`.
+pré-validação está `PREVALIDATION_READY_FOR_IMPLEMENTATION` com a política
+`COMMITTED_MODULE_EVOLUTION_POLICY:v1` para sucessões aprovadas.
 
 O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
 podem evoluir por troca atômica da revisão corrente, mantendo uma única
@@ -21,7 +22,7 @@ Baseline histórica imutável:
 | 4 | [AUT-01 — Scheduler transacional de elegibilidade](AUT-01-transactional-eligibility-scheduler.md) | `DONE` | LR-01, GAT-01, GAT-03 |
 | 5 | [REC-01 — Recovery orientado pela causa](REC-01-cause-aware-recovery.md) | `DONE` | LR-01, AUT-01 |
 | 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `DONE` | LR-01, GAT-01, GAT-03, REC-01 |
-| 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (pré-validação `READY_FOR_IMPLEMENTATION`; próxima) | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
+| 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `TO_DO` (pré-validação `PREVALIDATION_READY_FOR_IMPLEMENTATION`; próxima) | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `TO_DO` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `TO_DO` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `TO_DO` | AUT-03, GAT-01 |

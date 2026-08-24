@@ -25,13 +25,18 @@ WI/candidata não promovem os agregados; estados normativos não são alcançado
 ## Comportamento esperado e invariantes
 
 - `REGISTER_PROJECT` aprovado despacha análise automaticamente.
-- `PRODUCT_COMMITMENT` materializa idempotentemente os módulos comprometidos.
+- `PRODUCT_COMMITMENT` materializa idempotentemente os módulos comprometidos
+  pela `COMMITTED_MODULE_EVOLUTION_POLICY:v1`: `SAME`, `CHANGED`, `ADDED` e
+  `REMOVED` possuem efeitos explícitos e auditáveis.
 - Eventos aceitos de WIs/candidatas reavaliam módulo e projeto na mesma unidade
   recuperável, sem contagens heurísticas.
 - Nenhum módulo ultrapassa o projeto; nenhum agregado avança sem evidência.
 - Finding/rework reabre a fase correta e preserva histórico.
-- Um e vários módulos, inclusive parcialmente cancelados/pausados, agregam de
-  modo determinístico.
+- `EffectiveRequiredModuleSet:v1`, e não apenas os candidatos da revisão
+  corrente, é a autoridade dos predicados universais; remoção de candidato
+  permanece requerida até decisão GAT-02 persistida.
+- `commitmentMaterializationComplete(revision_id)` impede avanço prematuro e
+  torna materialização parcial recuperável e observável.
 
 ## Componentes prováveis
 
@@ -47,16 +52,20 @@ GAT-03 é guardrail de identidade/RBAC para qualquer ação humana, mas não é
 dependência mecânica da agregação automática. A ordem serial é
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02`.
 
-O contrato de pré-validação está em
+O contrato detalhado, incluindo a política
+`COMMITTED_MODULE_EVOLUTION_POLICY:v1`, está em
 [`LR-02-synchronize-macro-lifecycle-prevalidation.md`](LR-02-synchronize-macro-lifecycle-prevalidation.md).
-Ele está `READY_FOR_IMPLEMENTATION` após a conclusão de LR-02A.
+Ele está `PREVALIDATION_READY_FOR_IMPLEMENTATION` após a conclusão de LR-02A.
 Não implementa pipeline interno de WI (AUT-02),
 aceite final/pausa/cancelamento (GAT-02) nem altera históricos certificados.
+LR-02 detecta `REMOVED` e registra divergência de escopo, mas somente GAT-02
+pode retirar obrigação, cancelar ou autorizar a transição correspondente.
 
 ## Estratégia de implementação e compatibilidade
 
 1. Definir regras agregadas por evento/evidência e versão de workflow.
-2. Encadear registro → análise e compromisso → materialização via outbox.
+2. Encadear registro → análise e compromisso → materialização/delta via outbox,
+   com intents determinísticas, lineage e evolução de revision.
 3. Implementar agregador transacional idempotente para projeto/módulo.
 4. Reconciliar eventos perdidos/repetidos e crashes entre fato e projeção.
 5. Manter versões antigas no comportamento certificado; migração ativa exige
@@ -65,6 +74,12 @@ aceite final/pausa/cancelamento (GAT-02) nem altera históricos certificados.
 ## Critérios de aceite
 
 - descoberta e materialização iniciam sem clique/redigitação adicional;
+- `SAME` reutiliza módulo/revision e somente grava lineage; `CHANGED` preserva
+  o módulo lógico, cria revision/round sucessores e reabre por fato; `ADDED`
+  cria somente a chave nova; `REMOVED` não cancela nem reduz required-set;
+- lineage responde a candidate/commitment fonte e predecessor de cada nova
+  module revision; `EffectiveRequiredModuleSet` e
+  `commitmentMaterializationComplete` governam os universais e a projeção;
 - projeto e módulo avançam e reabrem coerentemente com um ou vários módulos;
 - nenhum evento duplicado produz transição duplicada;
 - projeto não fica em materialização durante implementação;
@@ -79,6 +94,8 @@ regressão de versões antigas e API/SSE do macro-estado.
 Inclui a execução funcional transferida de LR-02A: intents e criação efetiva de
 um/vários módulos, replay parcial A/B/C, retries, reconciliador de
 materialização e preenchimento operacional do materialization lineage.
+Inclui a matriz de delta, crash/replay, concorrência, recovery e required-set
+publicada na pré-validação; ela é normativa e não é repetida aqui.
 
 ## Riscos e evidências esperadas
 

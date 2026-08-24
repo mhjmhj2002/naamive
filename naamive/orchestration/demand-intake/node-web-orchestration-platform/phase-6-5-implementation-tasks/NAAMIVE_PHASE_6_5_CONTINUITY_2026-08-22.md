@@ -46,7 +46,7 @@ a pré-validação de LR-02:
 | 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
 | 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
 | 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **DONE** |
-| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / NEXT / READY_FOR_IMPLEMENTATION** |
+| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **TO_DO / NEXT / PREVALIDATION_READY_FOR_IMPLEMENTATION** |
 | 7 | **AUT-02** | Automatizar QA → review → merge → integração | **TO_DO** |
 | 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
 | 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
@@ -414,15 +414,18 @@ pendentes por projeto.
 
 ---
 
-### LR-02 — TO_DO / NEXT / READY_FOR_IMPLEMENTATION
+### LR-02 — TO_DO / NEXT / PREVALIDATION_READY_FOR_IMPLEMENTATION
 
 Sincronizar lifecycle macro de projeto e módulo com os novos contratos.
 
 Projeto, módulo, work item e execução precisam refletir coerentemente o progresso real.
 
 A pré-validação em `LR-02-synchronize-macro-lifecycle-prevalidation.md` está
-`READY_FOR_IMPLEMENTATION` após a entrega do contrato LR-02A. LR-02 continua
-`TO_DO` e é a próxima task; AUT-02 não foi iniciada.
+`PREVALIDATION_READY_FOR_IMPLEMENTATION` após a entrega do contrato LR-02A e
+da `COMMITTED_MODULE_EVOLUTION_POLICY:v1`. Ela fecha `SAME`, `CHANGED`,
+`ADDED`, `REMOVED`, `EffectiveRequiredModuleSet` e a fronteira GAT-02 sem
+iniciar LR-02. LR-02 continua `TO_DO` e é a próxima task; AUT-02 e GAT-02 não
+foram iniciadas.
 
 ---
 
@@ -560,4 +563,4 @@ Ao iniciar um novo chat:
 4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
    lifecycle correto de finding e wake-up pós-commit de capacidade;
 5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
-   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 TO_DO/NEXT/READY_FOR_IMPLEMENTATION`.
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 TO_DO/NEXT/PREVALIDATION_READY_FOR_IMPLEMENTATION`.
