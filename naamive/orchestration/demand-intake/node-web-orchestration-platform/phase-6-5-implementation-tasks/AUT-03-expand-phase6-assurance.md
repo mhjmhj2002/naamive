@@ -21,69 +21,194 @@ funcional continua pendente.
 
 ## Objetivo e problema corrigido
 
-Aplicar o micro-lifecycle F6 aos trabalhos reais selecionados: planejamento,
-desenvolvimento, integração, QA, segurança, release e demais job kinds aprovados.
-Corrige o opt-in restrito à discovery e a ausência de `work_acceptance` no
-projeto real auditado. A característica opt-in histórica da Fase 6 não impede
-esta ampliação: a Fase 6.5 está autorizada a selecionar novos workflows, jobs e
-handoffs reais para assurance, preservando sem reinterpretar execuções históricas
-já concluídas. Em outros termos, o opt-in histórico da Fase 6 não obriga a Fase
-6.5 a manter o fluxo real fora de assurance.
+Aplicar o micro-lifecycle F6 aos trabalhos reais explicitamente cobertos pela
+matriz normativa de `ASSURANCE_EXPANSION_TO_REAL_WORK:v1`.
+
+O escopo desta revisão é fechado pelo contrato versionado e não pode ser ampliado
+por interpretação do implementador. Atualmente, a matriz cobre:
+
+- planning / `PLAN_MODULE_WORK_ITEMS`;
+- development / `DEVELOP_WORK_ITEM`;
+- QA / `RUN_DELIVERY_QA`, exclusivamente como evidência interna AUT-02;
+- integration / `MERGE_WORK_ITEM`, `REASSESS_INTEGRATION_CANDIDATE` e
+  `VALIDATE_INTEGRATION_CANDIDATE`, exclusivamente como evidência/validação
+  interna AUT-02;
+- release / `PREPARE_DELIVERY_PACKAGE`, reservado para ativação futura por
+  GAT-02 conforme o contrato.
+
+Nenhum job kind ou subject adicional, incluindo security, pode ser selecionado
+por AUT-03 sem nova revisão explícita do contrato normativo.
+
+AUT-03 corrige o opt-in restrito à discovery e a ausência de
+`work_acceptance` no projeto real auditado, sem reinterpretar execuções
+históricas já concluídas.
+
+A característica opt-in histórica da Fase 6 não impede esta ampliação: a
+Fase 6.5 está autorizada a selecionar novos workflows, jobs e handoffs reais
+para assurance somente dentro da matriz normativa publicada e preservando o
+histórico.
 
 ## Contexto, atual e esperado
 
 F6 certificou contracts, independence, review e blocks de modo aditivo, mas o
-`AgentExecutionService` e as políticas operacionais não cobrem os caminhos reais.
-Cada dispatch selecionado pela política deve criar `work_acceptance`, produzir
-output, aguardar revisão independente quando a política exigir e só gerar efeito
-de negócio após `ACCEPT`. Compatibilidade controla o rollout por versão/política;
-não mantém permanentemente o fluxo real fora de supervision/assurance.
+`AgentExecutionService` e as políticas operacionais não cobrem integralmente os
+caminhos reais agora normatizados.
+
+Cada dispatch selecionado pela policy deve seguir exatamente a linha aplicável
+da matriz do contrato:
+
+- planning possui acceptance técnica própria;
+- development reutiliza a mesma `work_acceptance` já normativa em AUT-02;
+- QA não possui acceptance própria e permanece evidência determinística AUT-02;
+- integration não possui acceptance própria e permanece evidence/validation
+  interna AUT-02;
+- release poderá possuir acceptance técnica própria somente quando GAT-02
+  publicar o job/subject reservado pelo contrato.
+
+Compatibilidade controla rollout por versão/policy e não mantém
+permanentemente o fluxo real fora de supervision/assurance.
 
 ## Invariantes
 
-- política publicada, versionada e opt-in seleciona job kinds explicitamente;
+- policy publicada, versionada e opt-in seleciona somente os job kinds
+  explicitamente permitidos pela matriz normativa;
 - nenhuma auto-review; identidade/contexto congelados preservam independência;
-- decisão terminal é única; retry/restart não duplica acceptance/review;
+- decisão terminal é única; retry/restart não duplica snapshot,
+  acceptance/review ou consequência;
+- development reutiliza a acceptance AUT-02 e não cria authority paralela;
+- QA e integration não possuem acceptance AUT-03 própria;
 - F3 continua autoridade para findings/rework de work item;
-- rollback só afeta novos dispatches e não reinterpreta histórico F4/F5/F6.
+- gates humanos GAT-01/GAT-02 não são substituídos por `ACCEPT` técnico;
+- rollback só afeta novos dispatches e não reinterpreta histórico F4/F5/F6;
+- novos job kinds/subjects exigem nova revisão versionada do contrato antes de
+  entrarem em policy AUT-03.
 
 ## Componentes prováveis
 
 `AgentExecutionService`, worker, assurance policies, dispatch contracts,
-review packages, handoffs AUT-02, jobs de planning/development/integration/QA/
-security/release, migrations somente se necessárias e projeções.
+`AssuranceDispatchSnapshot:v1`, review packages, handoffs AUT-02, producers e
+aplicadores de efeito das linhas normativas planning/development/QA/integration,
+migrations somente se necessárias e projeções.
+
+A fronteira release permanece reservada até GAT-02 publicar
+`PREPARE_DELIVERY_PACKAGE` e seu subject/generation conforme o contrato.
 
 ## Dependências e restrições
 
-Depende de AUT-02. Não tornar F6 universal sem política/rollout, não concluir
-trabalho em sucesso técnico e não criar coleção paralela de findings.
+Depende de AUT-02.
+
+Não:
+
+- tornar F6 universal sem policy/rollout;
+- concluir trabalho apenas por sucesso técnico;
+- criar coleção paralela de findings;
+- criar acceptance AUT-03 adicional para development;
+- criar acceptance própria para QA ou integration;
+- selecionar security ou qualquer outro job kind não publicado na matriz;
+- antecipar implementação funcional de GAT-02 ou REC-02.
 
 ## Estratégia de implementação e compatibilidade
 
-Inventariar job kinds e efeitos; publicar seletores por classificação; adaptar
-cada produtor ao handoff F6 e seu aplicador de efeito após `ACCEPT`; certificar
+Inventariar os job kinds estritamente previstos na matriz normativa e seus
+efeitos; publicar selectors por classificação; persistir o policy snapshot
+imutável no dispatch; adaptar cada produtor ao handoff correspondente; certificar
 review package específico sem conteúdo proibido; ativar por canário e medir.
-Publicar novos workflows/contratos quando necessário para substituir o
-comportamento operacional legado em novos dispatches, mantendo as versões
-históricas somente para consulta, recovery compatível e auditoria.
+
+Para development, integrar o snapshot ao pipeline AUT-02 sem criar nova
+`work_acceptance`.
+
+Para QA e integration, preservar integralmente os outcomes e a autoridade
+existentes em AUT-02; esses jobs são fronteiras internas de evidência e devem
+falhar fechado se alguma policy tentar selecioná-los para acceptance própria.
+
+Planning pode gerar acceptance técnica própria, mas
+`MODULE_PLAN_APPROVAL` permanece a única autoridade de aprovação do plano.
+
+Release permanece reservado até GAT-02 publicar o job/subject correspondente;
+eventual `RELEASE_TECHNICALLY_ACCEPTED` não pode executar
+`DELIVERY_ACCEPTANCE` nem `DELIVERY → DELIVERED`.
+
+Publicar novos workflows/contratos somente quando necessário para substituir
+comportamento operacional legado em novos dispatches, mantendo versões
+históricas para consulta, recovery compatível e auditoria.
 
 ## Critérios de aceite
 
-- todos os job kinds no escopo possuem política e teste explícitos;
-- dispatch selecionado cria acceptance; não selecionado preserva legado;
-- sucesso fica incompleto até `ACCEPT` e decisão negativa não promove;
-- planning, development, QA, integration, security e release passam pelo mesmo
-  contrato, com efeitos específicos somente após aceite;
-- rollout/reversão não alteram execuções existentes.
+- todos os job kinds da matriz normativa possuem comportamento e teste
+  explícitos;
+- dispatch selecionado persiste policy snapshot e cria a acceptance aplicável
+  somente quando a linha normativa declarar acceptance própria;
+- dispatch não selecionado preserva o comportamento legado/publicado;
+- planning selecionado pode gerar acceptance técnica própria e permanece
+  bloqueado de qualquer aprovação material do plano até `MODULE_PLAN_APPROVAL`;
+- development selecionado reutiliza exclusivamente a mesma acceptance AUT-02,
+  sem duplicação de authority;
+- QA permanece fato/evidência interna AUT-02 (`QA_ACCEPTED` /
+  `QA_REWORK_REQUIRED`) e não cria acceptance AUT-03;
+- integration permanece evidence/validation interna AUT-02 e não cria
+  acceptance AUT-03;
+- tentativa de policy selecionar QA/integration para acceptance própria falha
+  fechado;
+- security ou qualquer job kind/subject ausente da matriz não pode ser
+  selecionado por AUT-03;
+- release permanece não despachável por AUT-03 enquanto GAT-02 não publicar o
+  job/subject reservado; quando publicado, acceptance técnica não substitui
+  `DELIVERY_ACCEPTANCE`;
+- sucesso técnico nunca substitui a decisão/authority exigida pela linha
+  normativa;
+- decisão negativa não promove subject;
+- rollout/reversão não alteram dispatches, snapshots, acceptances ou execuções
+  existentes;
+- replay, retry, restart, redelivery e concorrência preservam subject,
+  generation, policy snapshot e unicidade;
+- stale revision/generation/SHA/candidate/manifest/round/PlanWorkItem identity
+  falha fechado antes de qualquer efeito.
 
 ## Testes obrigatórios
 
-Matriz por job kind, opt-in/off/rollback, independência, `ACCEPT`/`REWORK`/
-`BLOCK`/`ESCALATE`, restart, coexistência F3/F4/F5, classificação/redaction e
-regressão do projeto real com acceptance efetiva.
+Cobrir, no mínimo:
+
+- matriz normativa por job kind;
+- planning selecionado e não selecionado;
+- development com acceptance AUT-02 compartilhada;
+- QA rejeitado como job selecionável de acceptance própria;
+- integration rejeitada como job selecionável de acceptance própria;
+- security/outro job kind fora da matriz rejeitado;
+- release reservado e não despachável antes de GAT-02;
+- opt-in/off/rollback;
+- policy revision/hash congelados;
+- independência;
+- `ACCEPT`/`REWORK`/`BLOCK`/`ESCALATE` onde aplicáveis;
+- restart;
+- replay;
+- duplicate delivery;
+- concorrência PostgreSQL;
+- coexistência F3/F4/F5;
+- classificação/redaction;
+- stale revision/generation/SHA/candidate/manifest/round/PlanWorkItem identity;
+- planning sem bypass de `MODULE_PLAN_APPROVAL`;
+- release sem bypass de `DELIVERY_ACCEPTANCE` / `DELIVERY → DELIVERED`;
+- regressão do projeto real com acceptance efetiva;
+- ausência de acceptance dupla ou authority dupla em AUT-02.
 
 ## Riscos e evidências esperadas
 
-Riscos: efeito aplicado antes do review, política ampla e pacote inseguro.
-Evidências: matriz job→policy→effect, políticas publicadas, acceptances/reviews,
-testes de coexistência e métricas do rollout.
+Riscos:
+
+- efeito aplicado antes da authority aplicável;
+- policy mais ampla que a matriz normativa;
+- acceptance duplicada para development;
+- acceptance indevida para QA/integration;
+- implementação prematura de security/release fora do contrato;
+- pacote inseguro;
+- stale subject promovendo geração posterior.
+
+Evidências esperadas:
+
+- matriz job → subject → policy → evidence → acceptance/fact → effect;
+- policies publicadas e versionadas;
+- `AssuranceDispatchSnapshot:v1`;
+- acceptances/reviews somente onde normativamente aplicáveis;
+- rejeição explícita de QA/integration/security/outros kinds fora da matriz;
+- testes de coexistência, replay, restart, concurrency e fencing;
+- métricas do rollout.
