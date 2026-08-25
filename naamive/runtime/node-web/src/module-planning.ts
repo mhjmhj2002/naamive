@@ -4,6 +4,9 @@ import { config } from './config.js';
 import { putArtifact } from './artifacts.js';
 import { ApiError } from './service.js';
 import { selectedWorkflow } from './workflow.js';
+import { createAcceptance, submitOutputForReview } from './assurance.js';
+import { assuranceLineageFingerprint, reserveAssuranceDispatch } from './assurance-expansion.js';
+import { stableUuidFromText } from './phase4-ids.js';
 
 export const MODULE_PLAN_SCHEMA_VERSION='module-plan/v1';
 export const MODULE_PLAN_VALIDATOR_VERSION='module-plan-validator/v1';
@@ -182,6 +185,28 @@ export const persistPlan=async(job:any,plan:any)=>withTransaction(async c=>{
   const a=await artifact(c,job.project_id,'module-plan-proposal',{module_id:m.id,...payload},job.operation_id),id=randomUUID();
   const workflow=(await selectedWorkflow(c,'WORK_ITEM_DELIVERY','NEW_PLAN_MATERIALIZATION'))??{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:1};
   await c.query(`INSERT INTO module_plan_revisions(id,project_id,module_id,revision_number,supersedes_revision_id,module_revision_id,technology_baseline_revision_id,payload,payload_hash,json_artifact_hash,markdown_artifact_hash,author_id,context_schema_version,context_hash,validator_version,validation_hash,context_payload,work_item_workflow_code,work_item_workflow_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)`,[id,job.project_id,m.id,Number(previous?.revision_number??0)+1,previous?.id??null,m.current_revision_id,m.technology_baseline_revision_id,payload,hash(payload),a.a.hash,a.md.hash,config().operatorId,snapshot.context_schema_version,snapshot.context_hash,MODULE_PLAN_VALIDATOR_VERSION,payload.validation_hash,context,workflow.workflow_code,workflow.workflow_version]);
+  // A planning proposal becomes an AUT-03 subject only after its immutable
+  // plan/context artifacts exist.  The snapshot freezes that exact proposal;
+  // the following module gate remains the sole material approval authority.
+  const expansionPolicy=(await c.query(`SELECT 1 FROM assurance_policies WHERE enabled=true AND selectors->'jobKinds' ? 'PLAN_MODULE_WORK_ITEMS' AND selectors->'subjectKinds' ? 'ModulePlanProposal:v1' LIMIT 1`)).rows[0];
+  // Legacy planning remains untouched.  A selected expansion policy requires
+  // a published producer execution policy as well; this preserves the existing
+  // FK-backed runtime identity instead of manufacturing a service authority.
+  if(expansionPolicy) {
+    const producerPolicy=(await c.query(`SELECT * FROM agent_execution_policy ORDER BY published_at DESC,id DESC LIMIT 1`)).rows[0];
+    if(!producerPolicy) throw new ApiError(409,'ASSURANCE_PLANNING_PRODUCER_POLICY_REQUIRED');
+    const planningExecutionId=randomUUID(),operation=(await c.query(`SELECT correlation_id FROM operations WHERE id=$1`,[job.operation_id])).rows[0];
+    await c.query(`INSERT INTO agent_execution(id,job_id,operation_id,project_id,project_key,job_kind,idempotency_key,agent_id,agent_version,task_type,classification,policy_id,policy_name,policy_version,state,selection_reason,next_action)
+      VALUES($1,$2,$3,$4,$5,'PLAN_MODULE_WORK_ITEMS',$6,'module-planning-worker',$7,'PLAN_MODULE_WORK_ITEMS','INTERNAL',$8,$9,$10,'SUCCEEDED',$11,'Proposta técnica de plano persistida.')
+      ON CONFLICT(job_id,idempotency_key) DO NOTHING`,[planningExecutionId,job.id,job.operation_id,stableUuidFromText('project',job.project_id),job.project_id,`aut03-plan-producer:v1:${id}`,config().buildId,producerPolicy.id,producerPolicy.name,producerPolicy.version,{module_plan_revision_id:id,context_hash:snapshot.context_hash,server_derived:true}]);
+    const planningExecution=(await c.query(`SELECT * FROM agent_execution WHERE job_id=$1 AND idempotency_key=$2`,[job.id,`aut03-plan-producer:v1:${id}`])).rows[0];
+    const generation=`${m.id}:${m.current_revision_id}:${job.operation_id}:${snapshot.context_hash}`;
+    const dispatch=await reserveAssuranceDispatch(c,{jobId:job.id,operationId:job.operation_id,projectId:job.project_id,correlationId:operation.correlation_id,jobKind:'PLAN_MODULE_WORK_ITEMS',subjectKind:'ModulePlanProposal:v1',subjectId:id,normativeGeneration:generation,classification:'INTERNAL',lineageFingerprint:assuranceLineageFingerprint({module_id:m.id,module_revision_id:m.current_revision_id,plan_operation_id:job.operation_id,context_hash:snapshot.context_hash,module_plan_revision_id:id,payload_hash:hash(payload)}),producerExecutionId:planningExecution.id,moduleId:m.id,modulePlanRevisionId:id,agentPolicyName:planningExecution.policy_name});
+    if(dispatch.selection_result==='SELECTED') {
+      const acceptance=await createAcceptance(c,{id:planningExecution.id,project_key:job.project_id,policy_name:planningExecution.policy_name,task_type:'PLAN_MODULE_WORK_ITEMS',classification:'INTERNAL',agent_id:planningExecution.agent_id,agent_version:planningExecution.agent_version,policy_id:planningExecution.policy_id,policy_version:planningExecution.policy_version},operation.correlation_id,dispatch);
+      if(acceptance) await submitOutputForReview(c,planningExecution.id,{module_plan_revision_id:id,proposal_artifact_id:a.a.id,proposal_artifact_hash:a.a.hash,context_hash:snapshot.context_hash});
+    }
+  }
   const gate=randomUUID();
   await c.query(`INSERT INTO module_gates(id,project_id,module_id,revision_id,round_id,kind,plan_revision_id,evidence,technology_baseline_revision_id) SELECT $1,$2,$3,$4,id,'MODULE_PLAN_APPROVAL',$5,$6,$7 FROM module_rounds WHERE module_id=$3 ORDER BY round_number DESC LIMIT 1`,[gate,job.project_id,m.id,m.current_revision_id,id,{json_hash:a.a.hash,markdown_hash:a.md.hash},m.technology_baseline_revision_id]);
   await c.query(`INSERT INTO events(project_id,event_type,correlation_id,operation_id,job_id,payload,actor_id) VALUES($1,'MODULE_PLAN_PROPOSED',$2,$3,$4,$5,$6)`,[job.project_id,randomUUID(),job.operation_id,job.id,{module_id:m.id,plan_revision_id:id,gate_id:gate,work_item_workflow:workflow},config().operatorId]);

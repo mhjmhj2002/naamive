@@ -66,7 +66,7 @@ export const routingRoleForCategory = (category: string) => ({
 export const validateAssurancePolicy = (selectors: unknown, configuration: unknown) => {
   const asObject=(value:unknown,code:string)=>{if(!value||Array.isArray(value)||typeof value!=='object')throw new AssuranceError(code);return value as Record<string,unknown>;};
   const selected=asObject(selectors,'ASSURANCE_POLICY_SELECTORS_INVALID'), configured=asObject(configuration,'ASSURANCE_POLICY_CONFIGURATION_INVALID');
-  const selectorKeys=new Set(['agentPolicyNames','taskTypes','classifications']), configKeys=new Set(['schema_version','max_rework_rounds','minimum_progress_delta','reviewer_runtime_ids','runtime_exception_classifications','blockable_failure_codes']);
+  const selectorKeys=new Set(['agentPolicyNames','taskTypes','classifications','jobKinds','subjectKinds']), configKeys=new Set(['schema_version','max_rework_rounds','minimum_progress_delta','reviewer_runtime_ids','runtime_exception_classifications','blockable_failure_codes','aut02_shared_acceptance','rollout_id']);
   for(const key of Object.keys(selected))if(!selectorKeys.has(key))throw new AssuranceError('ASSURANCE_POLICY_SELECTOR_UNKNOWN');
   for(const key of Object.keys(configured))if(!configKeys.has(key))throw new AssuranceError('ASSURANCE_POLICY_CONFIGURATION_UNKNOWN');
   for(const key of selectorKeys)if(selected[key]!==undefined&&(!Array.isArray(selected[key])||!(selected[key] as unknown[]).every(v=>typeof v==='string')))throw new AssuranceError('ASSURANCE_POLICY_SELECTOR_INVALID');
@@ -74,6 +74,8 @@ export const validateAssurancePolicy = (selectors: unknown, configuration: unkno
   if(configured.max_rework_rounds!==undefined&&(!Number.isInteger(configured.max_rework_rounds)||Number(configured.max_rework_rounds)<0||Number(configured.max_rework_rounds)>2))throw new AssuranceError('ASSURANCE_POLICY_REWORK_LIMIT_INVALID');
   if(configured.minimum_progress_delta!==undefined&&(typeof configured.minimum_progress_delta!=='number'||configured.minimum_progress_delta<0||configured.minimum_progress_delta>1))throw new AssuranceError('ASSURANCE_POLICY_PROGRESS_INVALID');
   for(const key of ['reviewer_runtime_ids','runtime_exception_classifications','blockable_failure_codes'] as const)if(configured[key]!==undefined&&(!Array.isArray(configured[key])||!configured[key].every((value)=>typeof value==='string')))throw new AssuranceError('ASSURANCE_POLICY_CONFIGURATION_INVALID');
+  if(configured.aut02_shared_acceptance!==undefined&&typeof configured.aut02_shared_acceptance!=='boolean')throw new AssuranceError('ASSURANCE_POLICY_CONFIGURATION_INVALID');
+  if(configured.rollout_id!==undefined&&(typeof configured.rollout_id!=='string'||!configured.rollout_id.trim()))throw new AssuranceError('ASSURANCE_POLICY_CONFIGURATION_INVALID');
   const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if(Array.isArray(configured.reviewer_runtime_ids)&&(!configured.reviewer_runtime_ids.length||!configured.reviewer_runtime_ids.every((value)=>uuid.test(String(value)))||new Set(configured.reviewer_runtime_ids).size!==configured.reviewer_runtime_ids.length))throw new AssuranceError('ASSURANCE_POLICY_REVIEWER_RUNTIMES_INVALID');
   return {selectors:safeEvidence(selected),configuration:safeEvidence(configured)};
@@ -89,12 +91,14 @@ const replayCommand=async(client:pg.PoolClient,key:string|undefined,type:string,
 };
 const rememberCommand=(client:pg.PoolClient,key:string|undefined,type:string,resourceId:string,resultId:string)=>key?client.query(`INSERT INTO assurance_command_idempotency(idempotency_key,command_type,resource_id,result_id) VALUES($1,$2,$3,$4) ON CONFLICT(idempotency_key) DO NOTHING`,[key,type,resourceId,resultId]):Promise.resolve();
 
-export const createAcceptance = async (client: pg.PoolClient, execution: { id:string; project_key:string; policy_name:string; task_type:string; classification:string; agent_id:string; agent_version:string; selected_runtime_id?:string|null; selected_configuration_version?:number|null; policy_id:string; policy_version:number }, correlationId: string) => {
-  const policy = await client.query(`SELECT * FROM assurance_policies WHERE enabled=true AND (selectors->'agentPolicyNames' IS NULL OR selectors->'agentPolicyNames' ? $1) AND (selectors->'taskTypes' IS NULL OR selectors->'taskTypes' ? $2) AND (selectors->'classifications' IS NULL OR selectors->'classifications' ? $3) ORDER BY published_at DESC LIMIT 1`, [execution.policy_name,execution.task_type,execution.classification]);
-  if (!policy.rowCount) return null;
+export const createAcceptance = async (client: pg.PoolClient, execution: { id:string; project_key:string; policy_name:string; task_type:string; classification:string; agent_id:string; agent_version:string; selected_runtime_id?:string|null; selected_configuration_version?:number|null; policy_id:string; policy_version:number }, correlationId: string, dispatchSnapshot?: any) => {
+  const policy = dispatchSnapshot
+    ? await client.query(`SELECT * FROM assurance_policies WHERE id=$1 AND version=$2`,[dispatchSnapshot.policy_id,dispatchSnapshot.policy_version])
+    : await client.query(`SELECT * FROM assurance_policies WHERE enabled=true AND (selectors->'agentPolicyNames' IS NULL OR selectors->'agentPolicyNames' ? $1) AND (selectors->'taskTypes' IS NULL OR selectors->'taskTypes' ? $2) AND (selectors->'classifications' IS NULL OR selectors->'classifications' ? $3) ORDER BY published_at DESC LIMIT 1`, [execution.policy_name,execution.task_type,execution.classification]);
+  if (!policy.rowCount || (dispatchSnapshot&&dispatchSnapshot.selection_result!=='SELECTED')) return null;
   const id = randomUUID();
-  const assurancePolicy=policy.rows[0]; const producerIdentity = safeEvidence({ agent_id: execution.agent_id, agent_version: execution.agent_version, runtime_id: execution.selected_runtime_id, configuration_version: execution.selected_configuration_version, policy_id: execution.policy_id, policy_version: execution.policy_version, execution_context_hash: contextHash({ execution_id: execution.id, task_type: execution.task_type, classification: execution.classification }) }); const inserted = await client.query(`INSERT INTO work_acceptances(id,execution_id,project_id,correlation_id,policy_id,policy_version,producer_identity,state,classification)
-    VALUES($1,$2,$3,$4,$5,$6,$7,'PENDING_PRODUCE',$8) ON CONFLICT(execution_id) DO UPDATE SET execution_id=EXCLUDED.execution_id RETURNING *`, [id,execution.id,execution.project_key,correlationId,assurancePolicy.id,assurancePolicy.version,producerIdentity,execution.classification]);
+  const assurancePolicy=policy.rows[0]; const producerIdentity = safeEvidence({ agent_id: execution.agent_id, agent_version: execution.agent_version, runtime_id: execution.selected_runtime_id, configuration_version: execution.selected_configuration_version, policy_id: execution.policy_id, policy_version: execution.policy_version, execution_context_hash: contextHash({ execution_id: execution.id, task_type: execution.task_type, classification: execution.classification }) }); const acceptanceKey=dispatchSnapshot?`assurance-acceptance:v1:${dispatchSnapshot.subject_kind}:${dispatchSnapshot.subject_id}:${dispatchSnapshot.normative_generation}:${dispatchSnapshot.policy_id}:${dispatchSnapshot.policy_version}`:null; const inserted = await client.query(`INSERT INTO work_acceptances(id,execution_id,project_id,correlation_id,policy_id,policy_version,producer_identity,state,classification,assurance_dispatch_snapshot_id,acceptance_key)
+    VALUES($1,$2,$3,$4,$5,$6,$7,'PENDING_PRODUCE',$8,$9,$10) ON CONFLICT(execution_id) DO UPDATE SET execution_id=EXCLUDED.execution_id RETURNING *`, [id,execution.id,execution.project_key,correlationId,assurancePolicy.id,assurancePolicy.version,producerIdentity,execution.classification,dispatchSnapshot?.id??null,acceptanceKey]);
   return inserted.rows[0];
 };
 
@@ -408,7 +412,10 @@ export const cancelAcceptance = async (acceptanceId:string, reason:unknown, idem
 
 export const decideReview = async (reviewId:string, decision:AssuranceDecision, evidence:unknown, idempotencyKey:string) => withTransaction(async client => {
   if(!assuranceDecisions.includes(decision)) throw new AssuranceError('REVIEW_DECISION_INVALID');
-  const review=(await client.query(`SELECT r.*,a.project_id,a.execution_id,a.output_reference,a.correlation_id,a.state AS acceptance_state,e.job_id,e.operation_id,e.revision_id,e.job_kind FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id JOIN agent_execution e ON e.id=a.execution_id WHERE r.id=$1 FOR UPDATE`,[reviewId])).rows[0];
+  const review=(await client.query(`SELECT r.*,a.project_id,a.execution_id,a.output_reference,a.correlation_id,a.state AS acceptance_state,e.job_id,e.operation_id,e.revision_id,e.job_kind,
+    s.id AS assurance_dispatch_snapshot_id,s.subject_kind,s.subject_id,s.normative_generation,s.lineage_fingerprint
+    FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id JOIN agent_execution e ON e.id=a.execution_id
+    LEFT JOIN assurance_dispatch_snapshots s ON s.id=a.assurance_dispatch_snapshot_id WHERE r.id=$1 FOR UPDATE`,[reviewId])).rows[0];
   if(!review) throw new AssuranceError('REVIEW_NOT_FOUND',404); if(review.state==='CANCELLED'||review.acceptance_state==='CANCELLED') throw new AssuranceError('ASSURANCE_CANCELLED',409);
   if(review.state!=='DISPATCHED') throw new AssuranceError('REVIEW_NOT_DISPATCHED',409);
   const prior=await client.query(`SELECT * FROM review_decisions WHERE idempotency_key=$1 OR review_id=$2`,[idempotencyKey,reviewId]); if(prior.rowCount) return prior.rows[0];
@@ -430,6 +437,12 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
     }
     await client.query(`UPDATE work_acceptances SET state='ACCEPTED',updated_at=clock_timestamp() WHERE id=$1`,[review.acceptance_id]);
     await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Trabalho aceito.' WHERE id=$1`,[review.execution_id]);
+    if(review.subject_kind==='ModulePlanProposal:v1') {
+      const proposal=(await client.query(`SELECT p.id,p.status,p.module_revision_id,m.current_revision_id FROM module_plan_revisions p JOIN modules m ON m.id=p.module_id WHERE p.id=$1 FOR UPDATE`,[review.subject_id])).rows[0];
+      if(!proposal||proposal.status!=='PLAN_PROPOSED'||proposal.module_revision_id!==proposal.current_revision_id) {
+        await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,'STALE_ASSURANCE_SUBJECT',$2,$3,'system:assurance')`,[review.project_id,review.correlation_id,safeEvidence({snapshot_id:review.assurance_dispatch_snapshot_id,subject_kind:review.subject_kind,subject_id:review.subject_id,reason:'MODULE_PLAN_PROPOSAL_CHANGED'})]);
+      } else await audit(client,review.project_id,'PLAN_TECHNICALLY_ACCEPTED',review.correlation_id,{acceptance_id:review.acceptance_id,plan_revision_id:proposal.id,normative_generation:review.normative_generation});
+    }
     if (review.job_id) {
       await client.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp(),lease_expires_at=NULL WHERE id=$1`,[review.job_id]);
       if (review.operation_id) {

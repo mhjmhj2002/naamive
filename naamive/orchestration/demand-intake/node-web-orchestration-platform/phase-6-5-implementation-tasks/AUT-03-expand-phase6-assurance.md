@@ -1,6 +1,6 @@
 ---
 task: AUT-03
-status: READY_FOR_IMPLEMENTATION
+status: IN_PROGRESS
 prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 contract: ASSURANCE_EXPANSION_TO_REAL_WORK:v1
 title: Ampliar F6 aos trabalhos reais
@@ -212,3 +212,30 @@ Evidências esperadas:
 - rejeição explícita de QA/integration/security/outros kinds fora da matriz;
 - testes de coexistência, replay, restart, concurrency e fencing;
 - métricas do rollout.
+
+## Evidência parcial de implementação — 2026-08-25
+
+`068_phase_6_5_assurance_expansion.sql` publicou a persistência aditiva de
+`AssuranceDispatchSnapshot:v1`. O snapshot possui chave única de dispatch,
+policy/version/hash, seleção `SELECTED`/`NOT_SELECTED`, subject/generation,
+lineage e IDs de correlação; trigger impede reinterpretar esses campos. A
+acceptance possui `acceptance_key` único e referência única ao snapshot.
+
+`assurance-expansion.ts` contém a matriz fechada do contrato. Só planning e
+development podem ser selecionados; development exige
+`aut02_shared_acceptance=true`. QA e os jobs internos de integration retornam
+`ASSURANCE_INTERNAL_JOB_NOT_SELECTABLE`; release retorna
+`ASSURANCE_RELEASE_JOB_NOT_PUBLISHED`; security e kinds desconhecidos retornam
+`ASSURANCE_JOB_NOT_IN_NORMATIVE_MATRIX`.
+
+Policies AUT-03 recebem hash SHA-256 canônico na publicação. O rollback segue
+desabilitando somente versões para dispatches futuros; snapshots existentes
+continuam apontando à versão/hash publicada. Development reserva o dispatch na
+handoff AUT-02 e vincula-o à `work_acceptance` canônica por
+`delivery_candidate_id`, sem criar authority ou acceptance adicional. Planning
+cria sua acceptance técnica apenas sob policy publicada e producer policy
+existente; a proposta segue criando `MODULE_PLAN_APPROVAL`, que continua a
+única materialização de plano aprovado. Release e REC-02 não foram
+implementados. A task só pode mudar para `DONE` depois de completar a matriz
+de recovery, replay/concurrency e fencing exigida por este contrato e de obter
+a validação agregada limpa.
