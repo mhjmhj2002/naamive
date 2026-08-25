@@ -10,7 +10,9 @@ criação da instância e impediu reclassificação por rollout tardio. `AUT-02`
 implementou o contrato
 [`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`](AUT-02-automatic-qa-review-merge-integration-prevalidation.md).
 `AUT-02-FIX-01` substituiu cardinalidade por igualdade de identidade canônica
-do `RequiredWorkItemSet:v1`. A dívida independente
+do `RequiredWorkItemSet:v1`. `AUT-02-FIX-02` persiste e protege a identidade
+`PlanWorkItem → WorkItem` em `work_items.plan_work_item_id`; o required-set
+observado não depende mais do `payload` mutável. A dívida independente
 [`MIG-FIX-01`](MIG-FIX-01-gate-catalog-fresh-migration-compatibility.md) também
 está `DONE`: a cadeia fresh 049/051 e o upgrade histórico foram validados sem
 reescrever migrations aplicadas.

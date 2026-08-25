@@ -177,9 +177,11 @@ if (!databaseUrl) {
       approveModulePlan(id,module,{plan_revision_id:seeded.plan_revision_id,version:seeded.version},approvalKey)
     ]);
     assert.equal(replayed.operation_id,approved.operation_id);
-    const rows=(await pool.query(`SELECT id,payload->>'work_item_id' logical_id,state,workflow_version FROM work_items WHERE project_id=$1 ORDER BY payload->>'work_item_id'`,[id])).rows;
+    const rows=(await pool.query(`SELECT id,payload->>'work_item_id' logical_id,plan_work_item_id,module_plan_revision_id,state,workflow_version FROM work_items WHERE project_id=$1 ORDER BY plan_work_item_id`,[id])).rows;
     assert.deepEqual(Object.fromEntries(rows.map((row:any)=>[row.logical_id,row.state])),{ 'dependent-metric':'WAITING_FOR_DEPENDENCIES','external-ui':'WAITING_FOR_EXTERNAL_INPUT','root-store':'ELIGIBLE_FOR_DISPATCH' });
     assert.ok(rows.every((row:any)=>row.workflow_version===2));
+    assert.ok(rows.every((row:any)=>row.plan_work_item_id===row.logical_id&&row.module_plan_revision_id===seeded.plan_revision_id));
+    assert.equal(new Set(rows.map((row:any)=>row.plan_work_item_id)).size,3,'concurrent replay materializes one row per logical identity');
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore);
     const external=rows.find((row:any)=>row.logical_id==='external-ui');
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM work_item_external_blockers WHERE work_item_id=$1 AND state='ACTIVE'`,[external.id])).rows[0].n),2);

@@ -116,3 +116,22 @@ e fingerprint. Testes unitários e PostgreSQL/Git E2E cobrem `A/B/C`, mesma
 contagem `A/B/X`, missing, extra, duplicata no plano e no observado, ordem
 diferente, lineage errado, manifest e replay. AUT-02 permanece `DONE` após o
 fechamento validado deste finding; AUT-03, REC-02 e GAT-02 não foram iniciadas.
+
+## AUT-02-FIX-02 — identidade PlanWorkItem materializada imutável
+
+A migration `067_phase_6_5_immutable_plan_work_item_identity.sql` persiste
+`module_plan_revision_id` e `plan_work_item_id` no Work Item v2 materializado.
+O PostgreSQL valida a identidade contra a plan revision `APPROVED`, confere
+project/module/module revision/round, impede duplicação na mesma geração e
+torna toda a lineage normativa imutável. O backfill usa o payload apenas uma
+vez e somente quando a correspondência histórica é inequívoca; legado v1 e v2
+sem plan lineage continuam preservados.
+
+`RequiredWorkItemSet:v1` não depende mais de `work_items.payload`: o observed
+set vem de `work_items.plan_work_item_id`. O delivery candidate congela essa
+identidade no snapshot/hash, o manifest multi-WI a propaga por membro e a
+candidate validation recompõe a prova a partir do Work Item e do delivery
+candidate persistidos. Alterar `payload.work_item_id` não muda elegibilidade.
+Testes PostgreSQL cobrem mutation, lineage incorreta, duplicidade, concorrência,
+replay e legado; AUT-02 permanece `DONE`. AUT-03, REC-02 e GAT-02 não foram
+iniciadas.

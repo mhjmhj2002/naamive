@@ -33,10 +33,10 @@ if (!databaseUrl) {
       await pool.query('DELETE FROM events WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM artifacts WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM artifact_intents WHERE project_id=$1', [projectId]);
-      await pool.query('DELETE FROM module_gates WHERE project_id=$1', [projectId]);
-      await pool.query('DELETE FROM module_plan_revisions WHERE project_id=$1', [projectId]);
-      await pool.query('DELETE FROM module_plan_job_context WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM work_items WHERE project_id=$1', [projectId]);
+      await pool.query('DELETE FROM module_gates WHERE project_id=$1', [projectId]);
+      await pool.query('DELETE FROM module_plan_job_context WHERE project_id=$1', [projectId]);
+      await pool.query('DELETE FROM module_plan_revisions WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)', [projectId]);
       await pool.query('DELETE FROM modules WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM module_revisions WHERE project_id=$1', [projectId]);
@@ -66,10 +66,12 @@ if (!databaseUrl) {
     }], approveModulePlan, `phase3-plan-${randomUUID()}`);
     assert.equal(plan.status, 'ACCEPTED');
     assert.equal(plan.work_item_ids?.length, 1);
-    const item = await pool.query(`SELECT title,payload,state,workflow_code,workflow_version FROM work_items WHERE id=$1`, [plan.work_item_ids?.[0]]);
+    const item = await pool.query(`SELECT title,payload,state,workflow_code,workflow_version,module_plan_revision_id,plan_work_item_id FROM work_items WHERE id=$1`, [plan.work_item_ids?.[0]]);
     assert.equal(item.rows[0].state, 'ELIGIBLE_FOR_DISPATCH');
     assert.equal(item.rows[0].workflow_code, 'WORK_ITEM_DELIVERY');
     assert.equal(item.rows[0].workflow_version, 2);
+    assert.equal(item.rows[0].module_plan_revision_id, item.rows[0].payload.plan_revision_id);
+    assert.equal(item.rows[0].plan_work_item_id, item.rows[0].payload.work_item_id);
     assert.equal(item.rows[0].payload.plan_artifact_hash, plan.evidence_hash);
     // F5-23 persists the plan revision's criterion coverage (criterion_ids),
     // not the legacy free-text acceptance_criteria on each QA entry.

@@ -52,7 +52,9 @@ ou reimplementar a autoridade de AUT-02. O required-set usa `CommittedModuleObli
 aprovada não desaparece por ainda não possuir `module_id`. `LR-02-FIX-01`
 persiste a seleção de workflow na criação da instância e impede sua reavaliação
 no gate de registro. AUT-02 implementou o contrato
-`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`; a sequência efetivamente concluída é
+`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`. `AUT-02-FIX-02` tornou imutável
+a identidade materializada `PlanWorkItem → WorkItem`; `RequiredWorkItemSet:v1`
+não depende mais de `work_items.payload`. A sequência efetivamente concluída é
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02 → AUT-02`.
 AUT-03 é a próxima task serial.
 

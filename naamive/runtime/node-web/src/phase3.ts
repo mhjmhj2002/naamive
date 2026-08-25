@@ -69,6 +69,9 @@ export const approveModulePlan=async(projectId:string,moduleId:string,body:Recor
       blockers.set(logicalId,list);
     }
   }
+  // PostgreSQL accepts plan-derived v2 Work Items only from an approved plan.
+  // This update and all materialization remain atomic in the same transaction.
+  await c.query(`UPDATE module_plan_revisions SET status='APPROVED' WHERE id=$1`,[p.id]);
   for(const item of items){
     const id=randomUUID();ids.push(id);
     const itemBlockers=blockers.get(item.work_item_id)??[];
@@ -85,11 +88,12 @@ export const approveModulePlan=async(projectId:string,moduleId:string,body:Recor
       payload.external_blocked_dependency_id=itemBlockers[0].dependency_id;
       payload.external_blocked_justification=itemBlockers[0].justification;
     }
-    await c.query(`INSERT INTO work_items(id,project_id,module_id,revision_id,round_id,title,state,payload,technology_baseline_revision_id,workflow_code,workflow_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)`,[id,projectId,moduleId,m.current_revision_id,round.id,item.title,state,payload,m.technology_baseline_revision_id,workflow.workflow_code,workflow.workflow_version]);
+    const immutablePlanRevisionId=workflow.workflow_version===2?p.id:null;
+    const immutablePlanWorkItemId=workflow.workflow_version===2?item.work_item_id:null;
+    await c.query(`INSERT INTO work_items(id,project_id,module_id,revision_id,round_id,title,state,payload,technology_baseline_revision_id,workflow_code,workflow_version,module_plan_revision_id,plan_work_item_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,[id,projectId,moduleId,m.current_revision_id,round.id,item.title,state,payload,m.technology_baseline_revision_id,workflow.workflow_code,workflow.workflow_version,immutablePlanRevisionId,immutablePlanWorkItemId]);
     materialized.push({work_item_id:id,logical_id:item.work_item_id,state});
     for(const blocker of itemBlockers)await c.query(`INSERT INTO work_item_external_blockers(id,work_item_id,dependency_id,justification) VALUES($1,$2,$3,$4)`,[randomUUID(),id,blocker.dependency_id,blocker.justification]);
   }
-  await c.query(`UPDATE module_plan_revisions SET status='APPROVED' WHERE id=$1`,[p.id]);
   await c.query(`UPDATE module_gates SET status='APPROVED',decision='APPROVED',decided_at=clock_timestamp() WHERE id=$1`,[g.id]);
   await c.query(`UPDATE module_rounds SET state='WORK_ITEMS_ACTIVE',completed_at=clock_timestamp() WHERE id=$1`,[round.id]);
   await c.query(`UPDATE modules SET state='WORK_ITEMS_ACTIVE',version=version+1 WHERE id=$1`,[moduleId]);
@@ -126,7 +130,7 @@ export const authorizeWorkItem=async(projectId:string,moduleId:string,body:Recor
 export const phase3Detail=async(projectId:string)=>{
   const [modules,workItems,deliveries,findings,candidates,gates,planningJobs,artifacts,plans,planningOperations,planningTelemetry]=await Promise.all([
     pool.query(`SELECT m.id,m.module_key,m.workflow_code,m.workflow_version,m.state,coalesce(ws.metadata->>'canonical_state',m.state) AS canonical_state,m.version,m.created_at,extract(epoch FROM clock_timestamp()-m.created_at)::integer AS duration_seconds,r.id AS revision_id,r.revision,r.status AS revision_status,r.technology_baseline_revision_id,r.payload->>'name' AS name,r.payload->>'objective' AS objective,r.payload->'scope' AS scope,r.payload->'out_of_scope' AS out_of_scope,r.payload->'dependencies' AS dependencies,r.payload->'acceptance_criteria' AS acceptance_criteria FROM modules m JOIN module_revisions r ON r.id=m.current_revision_id LEFT JOIN workflow_definitions wd ON wd.code=m.workflow_code AND wd.version=m.workflow_version LEFT JOIN workflow_states ws ON ws.workflow_id=wd.id AND ws.code=m.state WHERE m.project_id=$1 ORDER BY m.created_at`,[projectId]),
-    pool.query(`SELECT w.id,w.module_id,w.title,w.workflow_code,w.workflow_version,w.state,coalesce(ws.metadata->>'canonical_state',w.state) AS canonical_state,w.version,w.rework_rounds,w.payload->'depends_on_ids' AS depends_on_ids,w.payload->>'work_item_id' AS plan_work_item_id,coalesce((w.payload->>'external_blocked')::boolean,false) AS external_blocked,w.payload->>'external_blocked_justification' AS external_blocked_justification,
+    pool.query(`SELECT w.id,w.module_id,w.title,w.workflow_code,w.workflow_version,w.state,coalesce(ws.metadata->>'canonical_state',w.state) AS canonical_state,w.version,w.rework_rounds,w.payload->'depends_on_ids' AS depends_on_ids,coalesce(w.plan_work_item_id,w.payload->>'work_item_id') AS plan_work_item_id,coalesce((w.payload->>'external_blocked')::boolean,false) AS external_blocked,w.payload->>'external_blocked_justification' AS external_blocked_justification,
       coalesce((SELECT jsonb_agg(jsonb_build_object('dependency_id',b.dependency_id,'justification',b.justification,'state',b.state,'created_at',b.created_at,'resolved_at',b.resolved_at) ORDER BY b.created_at) FROM work_item_external_blockers b WHERE b.work_item_id=w.id),'[]'::jsonb) AS external_blockers,
       (SELECT count(*)::int FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE') AS active_external_blocker_count,
       CASE WHEN rd.id IS NULL THEN NULL ELSE jsonb_build_object('id',rd.id,'policy_version',rd.policy_version,'cause',rd.cause,'effect_certainty',rd.effect_certainty,'evidence_footprint',rd.evidence_footprint,'selected_action',rd.selected_action,'reason',rd.reason,'execution_state',rd.execution_state,'created_at',rd.created_at,'executed_at',rd.executed_at) END AS recovery_decision,

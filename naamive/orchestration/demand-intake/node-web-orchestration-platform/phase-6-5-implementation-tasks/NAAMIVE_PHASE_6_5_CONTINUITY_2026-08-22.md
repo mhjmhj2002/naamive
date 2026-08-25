@@ -458,12 +458,19 @@ finalizers concorrentes e `NOT_APPLIED`/`APPLIED_UNRECORDED`. AUT-03, REC-02 e
 GAT-02 permanecem fora deste escopo.
 
 O finding `AUT-02-FIX-01` foi fechado em 24/08/2026. O
-`RequiredWorkItemSet:v1` usa a identidade normativa `payload.work_item_id` da
-plan revision aprovada e exige igualdade exata com o conjunto observado,
+`RequiredWorkItemSet:v1` usa a identidade normativa da plan revision aprovada e
+exige igualdade exata com o conjunto observado,
 incluindo guards contra missing, extra e duplicatas. O manifest congela os dois
 conjuntos, a identidade lógica de cada membro e fingerprint ligado a plan,
 revision e round. A validação recompõe essa prova; cardinalidade isolada deixou
 de ser autoridade.
+
+O finding `AUT-02-FIX-02` foi fechado em 25/08/2026. A identidade
+`PlanWorkItem → WorkItem` agora é persistida em `work_items.plan_work_item_id`,
+com `module_plan_revision_id`, validação e imutabilidade PostgreSQL. O observed
+set, o delivery snapshot, o manifest e a candidate validation usam essa
+lineage; `work_items.payload.work_item_id` deixou de ser autoridade. A migration
+067 faz backfill somente de v2 inequívoco e preserva v1/legado.
 
 A dívida independente `MIG-FIX-01` também foi fechada pela compatibilidade
 restrita do runner e pela migration 066. Fresh 049/051 publica legitimamente o
