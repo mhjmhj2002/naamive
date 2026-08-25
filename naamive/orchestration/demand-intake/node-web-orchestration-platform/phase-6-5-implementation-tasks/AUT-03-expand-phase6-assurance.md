@@ -1,12 +1,23 @@
 ---
 task: AUT-03
-status: TO DO
+status: READY_FOR_IMPLEMENTATION
+prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
+contract: ASSURANCE_EXPANSION_TO_REAL_WORK:v1
 title: Ampliar F6 aos trabalhos reais
 depends_on: [AUT-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # AUT-03 — Ampliar F6 aos trabalhos reais
+
+## Contrato obrigatório de pré-validação
+
+Implementar exclusivamente conforme
+[`AUT-03-expand-phase6-assurance-prevalidation.md`](AUT-03-expand-phase6-assurance-prevalidation.md)
+(`ASSURANCE_EXPANSION_TO_REAL_WORK:v1`). O contrato fecha subject, generation,
+policy snapshot, autoridade, compatibilidade AUT-02, rollout, idempotência e
+fronteira REC-02. AUT-03 está `READY_FOR_IMPLEMENTATION`; a implementação
+funcional continua pendente.
 
 ## Objetivo e problema corrigido
 
