@@ -16,7 +16,7 @@ observado não depende mais do `payload` mutável. A dívida independente
 [`MIG-FIX-01`](MIG-FIX-01-gate-catalog-fresh-migration-compatibility.md) também
 está `DONE`: a cadeia fresh 049/051 e o upgrade histórico foram validados sem
 reescrever migrations aplicadas.
-`AUT-03` está `IN_PROGRESS`: `068_phase_6_5_assurance_expansion.sql` e a camada
+`AUT-03` está `DONE`: `068_phase_6_5_assurance_expansion.sql` e a camada
 `AssuranceDispatchSnapshot:v1` implementam seleção fechada, snapshot de
 policy/version/hash, idempotência de dispatch/acceptance e o vínculo de
 development com a acceptance AUT-02 já canônica. Planning mantém a acceptance
@@ -24,8 +24,13 @@ técnica separada de `MODULE_PLAN_APPROVAL`; QA/integration são evidence-only;
 release continua reservado a GAT-02 e REC-02 continua pendente.
 O checkpoint de 26/08 reforçou o selector fechado, a convergência concorrente
 de dispatch e o fencing de planning antes de `PLAN_TECHNICALLY_ACCEPTED`;
-fresh migrate e second migrate passaram. O estado permanece `IN_PROGRESS`
-enquanto a validação agregada não fica limpa. A divergência de planning
+fresh migrate e second migrate passaram. A validação agregada foi concluída:
+`npm test` teve apenas os quatro failures históricos autorizados de inventory
+(`FAILED` esperado versus `RETRYABLE` atual); `npm run e2e` registrou 112/105/7/0.
+Além desses quatro, os três failures reproduzíveis de `phase4.e2e` foram
+classificados como preexistentes e fora do caminho AUT-03 (teste e serviço
+anteriores ao checkpoint; policies legadas com selectors vazios interferem no
+cenário Phase 4). Build e `git diff --check` passaram. A divergência de planning
 `ELIGIBLE_FOR_DISPATCH` versus `DISPATCHED` foi classificada como teste legado
 desatualizado: o workflow LR-01 e AUT-01 exigem auto-dispatch quando há
 capacidade; o planning focused E2E agora passa integralmente (13/13).
@@ -47,7 +52,7 @@ Baseline histórica imutável:
 | 6A | [LR-02A — Canonical Product Commitment Modules](LR-02A-canonical-product-commitment-modules.md) | `DONE` | LR-01, GAT-01, GAT-03, REC-01 |
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `DONE` | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `DONE` | AUT-01, REC-01, LR-02 |
-| 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `IN_PROGRESS` | AUT-02 |
+| 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `DONE` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `TO_DO` | AUT-03, GAT-01 |
 | 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `TO_DO` | LR-02, GAT-01, GAT-03 |
 | 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03 |

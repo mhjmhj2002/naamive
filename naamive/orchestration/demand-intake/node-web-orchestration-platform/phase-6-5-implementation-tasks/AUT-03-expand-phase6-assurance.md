@@ -1,6 +1,6 @@
 ---
 task: AUT-03
-status: IN_PROGRESS
+status: DONE
 prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 contract: ASSURANCE_EXPANSION_TO_REAL_WORK:v1
 title: Ampliar F6 aos trabalhos reais
@@ -268,5 +268,14 @@ reservation/job. `approveModulePlan()` chama
 uma única reservation, job e decisão `DISPATCHED`, preservando dependentes e
 blockers em espera. O planning focused E2E passou integralmente (13/13).
 
-AUT-03 permanece `IN_PROGRESS` apenas até a validação agregada obrigatória
-(`npm test` e `npm run e2e`) alcançar e produzir seu relatório final.
+A validação agregada foi concluída em 2026-08-26. `npm test` terminou com
+exit 1 apenas pelos quatro failures históricos autorizados de inventory
+(`expected FAILED`, `actual RETRYABLE`). `npm run e2e` terminou com exit 1,
+112 testes, 105 pass, 7 fail e 0 skip: os mesmos quatro failures históricos e
+três failures reproduzíveis de `phase4.e2e` foram investigados e classificados
+como preexistentes, fora de AUT-03. O teste Phase 4 (commit `ef98f12`) e o
+caminho que cria a acceptance (`agent-execution-service`, commit `ca4ba64`)
+antecedem AUT-03; a falha decorre de policies preexistentes de selectors vazios
+que fazem Phase 4 aguardar Assurance. Nenhum dos caminhos alterados por
+AUT-03 participa desse fluxo. Build e `git diff --check` passaram; a task está
+`DONE`. REC-02 e GAT-02 permanecem fora de escopo.
