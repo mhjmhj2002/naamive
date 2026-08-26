@@ -39,6 +39,11 @@ export const maximumClassification = (...values: string[]) => {
   return classificationOrder[Math.max(0, ...indexes)];
 };
 export const contextHash = (value: unknown) => createHash('sha256').update(JSON.stringify(safeEvidence(value))).digest('hex');
+const canonicalHash = (value: unknown): string => {
+  const normalize=(item:any):any=>Array.isArray(item)?item.map(normalize):item&&typeof item==='object'
+    ?Object.fromEntries(Object.keys(item).sort().map(key=>[key,normalize(item[key])])):item;
+  return createHash('sha256').update(JSON.stringify(normalize(value))).digest('hex');
+};
 export const independenceCheck = (producer: Identity, candidate: Identity, exceptionAllowed=false) => {
   const differentAgent = producer.agentId !== candidate.agentId;
   const differentContext = producer.executionContextHash !== candidate.executionContextHash;
@@ -442,6 +447,30 @@ export const cancelAcceptance = async (acceptanceId:string, reason:unknown, idem
   return result;
 });
 
+/** A planning decision is only meaningful for the exact proposal frozen by
+ * AUT-03.  This intentionally re-derives the generation and lineage under the
+ * proposal/module lock; current module state is never allowed to promote an
+ * older snapshot. */
+const planningSnapshotIsCurrent = async (client:pg.PoolClient, review:any) => {
+  if(!review.assurance_dispatch_snapshot_id)return true;
+  const proposal=(await client.query(`SELECT p.id,p.status,p.module_id,p.module_revision_id,p.context_hash,p.payload_hash,
+      m.current_revision_id,s.module_id AS snapshot_module_id,s.module_plan_revision_id,s.operation_id,s.normative_generation,s.lineage_fingerprint
+    FROM module_plan_revisions p
+    JOIN modules m ON m.id=p.module_id
+    JOIN assurance_dispatch_snapshots s ON s.id=$2
+    WHERE p.id=$1 FOR UPDATE OF p,m,s`,[review.subject_id,review.assurance_dispatch_snapshot_id])).rows[0];
+  if(!proposal||proposal.status!=='PLAN_PROPOSED'||proposal.module_revision_id!==proposal.current_revision_id||proposal.snapshot_module_id!==proposal.module_id||proposal.module_plan_revision_id!==proposal.id)return false;
+  const generation=`${proposal.module_id}:${proposal.module_revision_id}:${proposal.operation_id}:${proposal.context_hash}`;
+  const lineage=canonicalHash({module_id:proposal.module_id,module_revision_id:proposal.module_revision_id,plan_operation_id:proposal.operation_id,context_hash:proposal.context_hash,module_plan_revision_id:proposal.id,payload_hash:proposal.payload_hash});
+  return proposal.normative_generation===generation&&proposal.lineage_fingerprint===lineage;
+};
+
+const blockStalePlanningDecision = async (client:pg.PoolClient, review:any) => {
+  await client.query(`UPDATE work_acceptances SET state='BLOCKED',updated_at=clock_timestamp() WHERE id=$1 AND state NOT IN ('ACCEPTED','CANCELLED')`,[review.acceptance_id]);
+  await openBlock(client,{projectId:review.project_id,acceptanceId:review.acceptance_id,executionId:review.execution_id,sourceType:'ASSURANCE_REVIEW',sourceId:review.id,code:'STALE_ASSURANCE_SUBJECT',category:'POLICY',severity:'HIGH',correlationId:review.correlation_id,evidence:{snapshot_id:review.assurance_dispatch_snapshot_id,subject_kind:review.subject_kind,subject_id:review.subject_id,normative_generation:review.normative_generation,reason:'MODULE_PLAN_PROPOSAL_CHANGED',continuation:'REC-01'}});
+  await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,'STALE_ASSURANCE_SUBJECT',$2,$3,'system:assurance')`,[review.project_id,review.correlation_id,safeEvidence({snapshot_id:review.assurance_dispatch_snapshot_id,subject_kind:review.subject_kind,subject_id:review.subject_id,normative_generation:review.normative_generation,reason:'MODULE_PLAN_PROPOSAL_CHANGED'})]);
+};
+
 export const decideReview = async (reviewId:string, decision:AssuranceDecision, evidence:unknown, idempotencyKey:string) => withTransaction(async client => {
   if(!assuranceDecisions.includes(decision)) throw new AssuranceError('REVIEW_DECISION_INVALID');
   const review=(await client.query(`SELECT r.*,a.project_id,a.execution_id,a.output_reference,a.correlation_id,a.state AS acceptance_state,e.job_id,e.operation_id,e.revision_id,e.job_kind,
@@ -450,8 +479,14 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
     LEFT JOIN assurance_dispatch_snapshots s ON s.id=a.assurance_dispatch_snapshot_id WHERE r.id=$1 FOR UPDATE OF r,a,e`,[reviewId])).rows[0];
   if(!review) throw new AssuranceError('REVIEW_NOT_FOUND',404); if(review.state==='CANCELLED'||review.acceptance_state==='CANCELLED') throw new AssuranceError('ASSURANCE_CANCELLED',409);
   if(review.state!=='DISPATCHED') throw new AssuranceError('REVIEW_NOT_DISPATCHED',409);
-  const prior=await client.query(`SELECT * FROM review_decisions WHERE idempotency_key=$1 OR review_id=$2`,[idempotencyKey,reviewId]); if(prior.rowCount) return prior.rows[0];
   const decisionEvidence=validateDecisionEvidence(evidence);
+  const priorByKey=(await client.query(`SELECT * FROM review_decisions WHERE idempotency_key=$1`,[idempotencyKey])).rows[0];
+  if(priorByKey) {
+    if(priorByKey.review_id!==reviewId||priorByKey.decision!==decision||JSON.stringify(priorByKey.evidence)!==JSON.stringify(decisionEvidence))throw new AssuranceError('ASSURANCE_IDEMPOTENCY_CONFLICT',409);
+    return priorByKey;
+  }
+  const priorByReview=(await client.query(`SELECT * FROM review_decisions WHERE review_id=$1`,[reviewId])).rows[0];
+  if(priorByReview)throw new AssuranceError('REVIEW_ALREADY_DECIDED',409);
   const result=(await client.query(`INSERT INTO review_decisions(id,review_id,decision,evidence,idempotency_key) VALUES($1,$2,$3,$4,$5) RETURNING *`,[randomUUID(),reviewId,decision,decisionEvidence,idempotencyKey])).rows[0];
   await client.query(`UPDATE assurance_reviews SET state='DECIDED',decided_at=clock_timestamp() WHERE id=$1`,[reviewId]);
   // A human/API decision may arrive before the leased reviewer starts. Close
@@ -463,18 +498,17 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
     await client.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=(SELECT operation_id FROM agent_execution WHERE id=$1)`,[review.dispatch_execution_id]);
   }
   if(decision==='ACCEPT') {
+    if(review.subject_kind==='ModulePlanProposal:v1' && !await planningSnapshotIsCurrent(client,review)) {
+      await blockStalePlanningDecision(client,review);
+      return result;
+    }
     const submitted = await readStructuredOutput(client,review.output_reference);
     if (submitted && ['ANALYZE_PRODUCT_NEED','DEFINE_PRODUCT_REQUIREMENTS','REVIEW_PRODUCT_COMMITMENT'].includes(review.job_kind)) {
       await persistDiscoveryAgentOutcome(client,{id:review.job_id,kind:review.job_kind,project_id:review.project_id,operation_id:review.operation_id,revision_id:review.revision_id},submitted,review.output_reference?.artifact_hash);
     }
     await client.query(`UPDATE work_acceptances SET state='ACCEPTED',updated_at=clock_timestamp() WHERE id=$1`,[review.acceptance_id]);
     await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Trabalho aceito.' WHERE id=$1`,[review.execution_id]);
-    if(review.subject_kind==='ModulePlanProposal:v1') {
-      const proposal=(await client.query(`SELECT p.id,p.status,p.module_revision_id,m.current_revision_id FROM module_plan_revisions p JOIN modules m ON m.id=p.module_id WHERE p.id=$1 FOR UPDATE`,[review.subject_id])).rows[0];
-      if(!proposal||proposal.status!=='PLAN_PROPOSED'||proposal.module_revision_id!==proposal.current_revision_id) {
-        await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,'STALE_ASSURANCE_SUBJECT',$2,$3,'system:assurance')`,[review.project_id,review.correlation_id,safeEvidence({snapshot_id:review.assurance_dispatch_snapshot_id,subject_kind:review.subject_kind,subject_id:review.subject_id,reason:'MODULE_PLAN_PROPOSAL_CHANGED'})]);
-      } else await audit(client,review.project_id,'PLAN_TECHNICALLY_ACCEPTED',review.correlation_id,{acceptance_id:review.acceptance_id,plan_revision_id:proposal.id,normative_generation:review.normative_generation});
-    }
+    if(review.subject_kind==='ModulePlanProposal:v1') await audit(client,review.project_id,'PLAN_TECHNICALLY_ACCEPTED',review.correlation_id,{acceptance_id:review.acceptance_id,plan_revision_id:review.subject_id,normative_generation:review.normative_generation});
     if (review.job_id) {
       await client.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp(),lease_expires_at=NULL WHERE id=$1`,[review.job_id]);
       if (review.operation_id) {

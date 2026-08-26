@@ -22,6 +22,12 @@ policy/version/hash, idempotência de dispatch/acceptance e o vínculo de
 development com a acceptance AUT-02 já canônica. Planning mantém a acceptance
 técnica separada de `MODULE_PLAN_APPROVAL`; QA/integration são evidence-only;
 release continua reservado a GAT-02 e REC-02 continua pendente.
+O checkpoint de 26/08 reforçou o selector fechado, a convergência concorrente
+de dispatch e o fencing de planning antes de `PLAN_TECHNICALLY_ACCEPTED`;
+fresh migrate e second migrate passaram. O estado permanece `IN_PROGRESS`
+enquanto a validação agregada não fica limpa: a regressão focada de planning
+encontrou a divergência preexistente `ELIGIBLE_FOR_DISPATCH` versus `DISPATCHED`,
+que não foi reclassificada nesta task.
 
 O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
 podem evoluir por troca atômica da revisão corrente, mantendo uma única

@@ -239,3 +239,27 @@ existente; a proposta segue criando `MODULE_PLAN_APPROVAL`, que continua a
 implementados. A task só pode mudar para `DONE` depois de completar a matriz
 de recovery, replay/concurrency e fencing exigida por este contrato e de obter
 a validação agregada limpa.
+
+## Checkpoint adicional de assurance — 2026-08-26
+
+O selector AUT-03 agora exige igualdade exata entre os job kinds publicados e
+seus subject kinds normativos. `reserveAssuranceDispatch` distingue o release
+reservado com `ASSURANCE_RELEASE_JOB_NOT_PUBLISHED` e faz uma corrida da mesma
+dispatch key convergir para o snapshot já persistido, validando identidade
+imutável em vez de expor violação de unicidade.
+
+Antes de um `ACCEPT` de `ModulePlanProposal:v1`, Assurance relê sob lock a
+proposta, a revisão atual do módulo, generation e fingerprint de lineage. Uma
+divergência grava `STALE_ASSURANCE_SUBJECT`, abre block correlacionado e mantém
+a acceptance bloqueada; não publica `PLAN_TECHNICALLY_ACCEPTED` nem materializa
+aprovação de plano. Chaves idempotentes de decisão rejeitam reuso com review,
+decisão ou evidence divergentes.
+
+Validações: build; matriz/snapshot PostgreSQL AUT-03 (6/6); replay PostgreSQL
+de acceptance (6/6); regressão focada de Assurance/AUT-02; e migration fresh
+`001→070` seguida de segunda execução idempotente em
+`naamive_aut03_fresh_20260826`. A regressão focada de planning teve um failure
+fora desta alteração: a asserção LR-01 espera `ELIGIBLE_FOR_DISPATCH`, mas o
+estado real é `DISPATCHED`. Como a agregação completa ainda não possui resultado
+limpo e essa divergência não foi classificada pela baseline autorizada, AUT-03
+permanece `IN_PROGRESS`.

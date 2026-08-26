@@ -21,6 +21,7 @@ test('AUT-03 policy permits only planning and AUT-02 shared development',()=>{
   const development=validateAssuranceExpansionPolicy({jobKinds:['DEVELOP_WORK_ITEM'],subjectKinds:['WorkItemDeliveryCandidate:v1']},{schema_version:1,aut02_shared_acceptance:true});
   assert.equal(development.extension,true);
   assert.throws(()=>validateAssuranceExpansionPolicy({jobKinds:['DEVELOP_WORK_ITEM'],subjectKinds:['WorkItemDeliveryCandidate:v1']},{schema_version:1}),/ASSURANCE_AUT02_SHARED_ACCEPTANCE_REQUIRED/);
+  assert.throws(()=>validateAssuranceExpansionPolicy({jobKinds:['PLAN_MODULE_WORK_ITEMS'],subjectKinds:['ModulePlanProposal:v1','WorkItemDeliveryCandidate:v1']},{schema_version:1}),/ASSURANCE_EXPANSION_SUBJECT_MISMATCH/);
   // Each non-selectable internal job is rejected with its own normative subject.
   // Asserting the subject against the matrix first makes this prove the real
   // matrix rather than passing by coincidence (the selectable check throws
@@ -85,6 +86,7 @@ else test('AUT-03 freezes development NOT_SELECTED and blocks snapshot deletion 
     await client.query(`INSERT INTO assurance_policies(id,name,version,enabled,selectors,configuration,policy_hash,published_by) VALUES($1,$2,1,true,$3,$4,$5,'test')`,[policy,`aut03-later-${policy.slice(0,8)}`,selectors,configuration,assurancePolicyHash(selectors,configuration)]);
     const replay=await reserveAssuranceDispatch(client,input);
     assert.equal(replay.id,first.id);assert.equal(replay.selection_result,'NOT_SELECTED');assert.equal(replay.policy_id,null);assert.equal(replay.policy_hash,null);assert.equal(replay.legacy_policy_id,legacyPolicy);assert.equal(Number(replay.legacy_policy_version),1);
+    await assert.rejects(reserveAssuranceDispatch(client,{...input,jobKind:'PREPARE_DELIVERY_PACKAGE',subjectKind:'DeliveryPackage:v1'} as any),(error:any)=>error.code==='ASSURANCE_RELEASE_JOB_NOT_PUBLISHED');
     await assert.rejects(client.query(`DELETE FROM assurance_dispatch_snapshots WHERE id=$1`,[first.id]),(error:any)=>error.code==='23514');
   } finally { await client.query('ROLLBACK');client.release();await pool.end(); }
 });
