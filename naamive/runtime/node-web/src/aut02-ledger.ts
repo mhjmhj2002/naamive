@@ -1,8 +1,15 @@
 import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
 export const AUT02_PIPELINE_VERSION='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1';
 export const AUT02_POLICY_VERSION='AUT-02:v1';
+
+const canonicalJson=(value:unknown):string=>{
+  const normalize=(item:any):any=>Array.isArray(item)?item.map(normalize):item&&typeof item==='object'?Object.fromEntries(Object.keys(item).sort().map(key=>[key,normalize(item[key])])):item;
+  return JSON.stringify(normalize(value));
+};
+const aut03CandidateFingerprint=(candidate:any)=>createHash('sha256').update(canonicalJson({delivery_candidate_id:candidate.id,work_item_revision_id:candidate.work_item_revision_id,module_plan_revision_id:candidate.module_plan_revision_id,plan_work_item_id:candidate.plan_work_item_id,module_revision_id:candidate.module_revision_id,module_round_id:candidate.module_round_id,base_sha:candidate.base_sha,head_sha:candidate.head_sha,snapshot_hash:candidate.snapshot_hash})).digest('hex');
 
 export type Aut02IntentKind='RUN_DELIVERY_QA'|'START_INDEPENDENT_REVIEW'|'MERGE_WORK_ITEM'|'REASSESS_INTEGRATION_CANDIDATE'|'VALIDATE_INTEGRATION_CANDIDATE'|'INTEGRATE_CANDIDATE'|'SCHEDULE_REWORK'|'MACRO_REEVALUATE';
 
@@ -38,17 +45,29 @@ export const enqueueAut02Intent=async(client:PoolClient,input:{
 export const recordAut02ReviewDecision=async(client:PoolClient,input:{
   acceptanceId:string;reviewId:string;reviewDecisionId:string;decision:'ACCEPT'|'REWORK'|'BLOCK'|'ESCALATE';correlationId:string;
 })=>{
-  const row=(await client.query(`SELECT dc.*,w.state AS work_item_state,m.current_revision_id,qr.result AS qa_result
+  const row=(await client.query(`SELECT dc.*,w.state AS work_item_state,m.current_revision_id,qr.result AS qa_result,
+      s.id AS assurance_dispatch_snapshot_id,s.subject_kind,s.subject_id,s.normative_generation,s.lineage_fingerprint AS assurance_lineage_fingerprint,s.module_plan_revision_id AS assurance_plan_revision_id,s.plan_work_item_id AS assurance_plan_work_item_id,s.work_item_id AS assurance_work_item_id
     FROM work_acceptances a
     JOIN work_item_delivery_candidates dc ON dc.id=a.delivery_candidate_id
     JOIN work_items w ON w.id=dc.work_item_id
     JOIN modules m ON m.id=dc.module_id
     JOIN delivery_qa_reports qr ON qr.delivery_candidate_id=dc.id
+    LEFT JOIN assurance_dispatch_snapshots s ON s.id=a.assurance_dispatch_snapshot_id
     WHERE a.id=$1 FOR UPDATE OF w,m`,[input.acceptanceId])).rows[0];
   if(!row)return null;
   if(row.current_revision_id!==row.module_revision_id||row.state!=='ACTIVE'){
     await client.query(`UPDATE work_item_delivery_candidates SET state='SUPERSEDED' WHERE id=$1 AND state='ACTIVE'`,[row.id]);
     return {superseded:true};
+  }
+  if(row.assurance_dispatch_snapshot_id) {
+    const stale=row.subject_kind!=='WorkItemDeliveryCandidate:v1'||row.subject_id!==row.id||row.normative_generation!==row.id||
+      row.assurance_work_item_id!==row.work_item_id||row.assurance_plan_revision_id!==row.module_plan_revision_id||row.assurance_plan_work_item_id!==row.plan_work_item_id||
+      row.assurance_lineage_fingerprint!==aut03CandidateFingerprint(row);
+    if(stale) {
+      await client.query(`UPDATE work_item_delivery_candidates SET state='SUPERSEDED' WHERE id=$1 AND state='ACTIVE'`,[row.id]);
+      await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,'STALE_ASSURANCE_SUBJECT',$2,$3,'system:aut02')`,[row.project_id,input.correlationId,{acceptance_id:input.acceptanceId,snapshot_id:row.assurance_dispatch_snapshot_id,delivery_candidate_id:row.id}]);
+      return {stale:true};
+    }
   }
   if(input.decision==='ACCEPT'){
     if(row.qa_result!=='PASS')throw new Error('AUT02_ACCEPT_WITHOUT_QA_PASS');

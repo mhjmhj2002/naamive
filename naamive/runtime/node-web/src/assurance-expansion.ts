@@ -5,7 +5,7 @@ import { AssuranceError, safeEvidence } from './assurance.js';
 export const ASSURANCE_EXPANSION_CONTRACT='ASSURANCE_EXPANSION_TO_REAL_WORK:v1';
 export const ASSURANCE_DISPATCH_SNAPSHOT_VERSION='AssuranceDispatchSnapshot:v1';
 
-export type ExpansionSubjectKind='ModulePlanProposal:v1'|'WorkItemDeliveryCandidate:v1'|'DeliveryPackage:v1';
+export type ExpansionSubjectKind='ModulePlanProposal:v1'|'WorkItemDeliveryCandidate:v1'|'IntegrationCandidate:v1'|'DeliveryPackage:v1';
 export type ExpansionJobKind='PLAN_MODULE_WORK_ITEMS'|'DEVELOP_WORK_ITEM'|'RUN_DELIVERY_QA'|'MERGE_WORK_ITEM'|'REASSESS_INTEGRATION_CANDIDATE'|'VALIDATE_INTEGRATION_CANDIDATE'|'PREPARE_DELIVERY_PACKAGE';
 
 const canonical=(value:unknown):string=>{
@@ -20,9 +20,9 @@ const matrix:Record<ExpansionJobKind,{subject:ExpansionSubjectKind; selectable:b
   PLAN_MODULE_WORK_ITEMS:{subject:'ModulePlanProposal:v1',selectable:true,acceptance:'OWN',runtime:true},
   DEVELOP_WORK_ITEM:{subject:'WorkItemDeliveryCandidate:v1',selectable:true,acceptance:'AUT02_SHARED',runtime:true},
   RUN_DELIVERY_QA:{subject:'WorkItemDeliveryCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
-  MERGE_WORK_ITEM:{subject:'WorkItemDeliveryCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
-  REASSESS_INTEGRATION_CANDIDATE:{subject:'WorkItemDeliveryCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
-  VALIDATE_INTEGRATION_CANDIDATE:{subject:'WorkItemDeliveryCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
+  MERGE_WORK_ITEM:{subject:'IntegrationCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
+  REASSESS_INTEGRATION_CANDIDATE:{subject:'IntegrationCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
+  VALIDATE_INTEGRATION_CANDIDATE:{subject:'IntegrationCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
   PREPARE_DELIVERY_PACKAGE:{subject:'DeliveryPackage:v1',selectable:false,acceptance:'OWN',runtime:false}
 };
 export const assuranceExpansionMatrix=(kind:string)=>matrix[kind as ExpansionJobKind]??null;
@@ -51,7 +51,7 @@ export const validateAssuranceExpansionPolicy=(selectors:Record<string,unknown>,
   return {extension:true,jobKinds:uniqueJobs,subjectKinds:[...new Set(subjectKinds)]};
 };
 
-type DispatchInput={jobId:string;operationId:string;projectId:string;correlationId:string;jobKind:string;subjectKind:ExpansionSubjectKind;subjectId:string;normativeGeneration:string;classification:string;lineageFingerprint:string;producerExecutionId?:string|null;moduleId?:string|null;workItemId?:string|null;modulePlanRevisionId?:string|null;planWorkItemId?:string|null;agentPolicyName?:string|null};
+type DispatchInput={jobId:string;operationId:string;projectId:string;correlationId:string;jobKind:string;subjectKind:ExpansionSubjectKind;subjectId:string;normativeGeneration:string;classification:string;lineageFingerprint:string;producerExecutionId?:string|null;moduleId?:string|null;workItemId?:string|null;modulePlanRevisionId?:string|null;planWorkItemId?:string|null;agentPolicyName?:string|null;legacyPolicy?:{id:string;version:number}|null};
 const selectorMatches=(policy:any,input:DispatchInput)=>{
   const s=policy.selectors??{};
   const includes=(key:string,value:string)=>!Array.isArray(s[key])||s[key].includes(value);
@@ -66,15 +66,15 @@ export const reserveAssuranceDispatch=async(client:pg.PoolClient,input:DispatchI
   const key=`assurance-dispatch:v1:${input.subjectKind}:${input.subjectId}:${input.normativeGeneration}`;
   const prior=(await client.query(`SELECT * FROM assurance_dispatch_snapshots WHERE assurance_dispatch_key=$1 FOR UPDATE`,[key])).rows[0];
   if(prior){
-    if(prior.lineage_fingerprint!==input.lineageFingerprint||prior.job_id!==input.jobId)throw new AssuranceError('ASSURANCE_DISPATCH_IDENTITY_CONFLICT',409);
+    if(prior.lineage_fingerprint!==input.lineageFingerprint||prior.job_id!==input.jobId||prior.legacy_policy_id!==input.legacyPolicy?.id&&prior.legacy_policy_id!==null)throw new AssuranceError('ASSURANCE_DISPATCH_IDENTITY_CONFLICT',409);
     return prior;
   }
   const policies=(await client.query(`SELECT * FROM assurance_policies WHERE enabled=true ORDER BY published_at DESC,id DESC`)).rows;
   const policy=policies.find(row=>selectorMatches(row,input)&&validateAssuranceExpansionPolicy(row.selectors??{},row.configuration??{}).extension)??null;
   const id=randomUUID(),selected=Boolean(policy),hash=policy?String(policy.policy_hash??assurancePolicyHash(policy.selectors,policy.configuration)):null;
-  const inserted=await client.query(`INSERT INTO assurance_dispatch_snapshots(id,schema_version,assurance_dispatch_key,policy_id,policy_version,policy_hash,selection_result,subject_kind,subject_id,normative_generation,producer_execution_id,job_id,operation_id,correlation_id,project_id,module_id,work_item_id,module_plan_revision_id,plan_work_item_id,classification,lineage_fingerprint)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21) RETURNING *`,
-    [id,ASSURANCE_DISPATCH_SNAPSHOT_VERSION,key,policy?.id??null,policy?.version??null,hash,selected?'SELECTED':'NOT_SELECTED',input.subjectKind,input.subjectId,input.normativeGeneration,input.producerExecutionId??null,input.jobId,input.operationId,input.correlationId,input.projectId,input.moduleId??null,input.workItemId??null,input.modulePlanRevisionId??null,input.planWorkItemId??null,input.classification,input.lineageFingerprint]);
+  const inserted=await client.query(`INSERT INTO assurance_dispatch_snapshots(id,schema_version,assurance_dispatch_key,policy_id,policy_version,policy_hash,selection_result,subject_kind,subject_id,normative_generation,producer_execution_id,job_id,operation_id,correlation_id,project_id,module_id,work_item_id,module_plan_revision_id,plan_work_item_id,classification,lineage_fingerprint,legacy_policy_id,legacy_policy_version)
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23) RETURNING *`,
+    [id,ASSURANCE_DISPATCH_SNAPSHOT_VERSION,key,policy?.id??null,policy?.version??null,hash,selected?'SELECTED':'NOT_SELECTED',input.subjectKind,input.subjectId,input.normativeGeneration,input.producerExecutionId??null,input.jobId,input.operationId,input.correlationId,input.projectId,input.moduleId??null,input.workItemId??null,input.modulePlanRevisionId??null,input.planWorkItemId??null,input.classification,input.lineageFingerprint,selected?null:input.legacyPolicy?.id??null,selected?null:input.legacyPolicy?.version??null]);
   return inserted.rows[0];
 };
 

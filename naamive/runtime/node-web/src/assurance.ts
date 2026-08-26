@@ -91,9 +91,12 @@ const replayCommand=async(client:pg.PoolClient,key:string|undefined,type:string,
 };
 const rememberCommand=(client:pg.PoolClient,key:string|undefined,type:string,resourceId:string,resultId:string)=>key?client.query(`INSERT INTO assurance_command_idempotency(idempotency_key,command_type,resource_id,result_id) VALUES($1,$2,$3,$4) ON CONFLICT(idempotency_key) DO NOTHING`,[key,type,resourceId,resultId]):Promise.resolve();
 
-export const createAcceptance = async (client: pg.PoolClient, execution: { id:string; project_key:string; policy_name:string; task_type:string; classification:string; agent_id:string; agent_version:string; selected_runtime_id?:string|null; selected_configuration_version?:number|null; policy_id:string; policy_version:number }, correlationId: string, dispatchSnapshot?: any) => {
+export const createAcceptance = async (client: pg.PoolClient, execution: { id:string; project_key:string; policy_name:string; task_type:string; classification:string; agent_id:string; agent_version:string; selected_runtime_id?:string|null; selected_configuration_version?:number|null; policy_id:string; policy_version:number }, correlationId: string, dispatchSnapshot?: any, frozenPolicy?: {id:string;version:number}) => {
+  if(dispatchSnapshot&&frozenPolicy) throw new AssuranceError('ASSURANCE_POLICY_SELECTION_AMBIGUOUS',409);
   const policy = dispatchSnapshot
     ? await client.query(`SELECT * FROM assurance_policies WHERE id=$1 AND version=$2`,[dispatchSnapshot.policy_id,dispatchSnapshot.policy_version])
+    : frozenPolicy
+      ? await client.query(`SELECT * FROM assurance_policies WHERE id=$1 AND version=$2`,[frozenPolicy.id,frozenPolicy.version])
     : await client.query(`SELECT * FROM assurance_policies WHERE enabled=true AND (selectors->'agentPolicyNames' IS NULL OR selectors->'agentPolicyNames' ? $1) AND (selectors->'taskTypes' IS NULL OR selectors->'taskTypes' ? $2) AND (selectors->'classifications' IS NULL OR selectors->'classifications' ? $3) ORDER BY published_at DESC LIMIT 1`, [execution.policy_name,execution.task_type,execution.classification]);
   if (!policy.rowCount || (dispatchSnapshot&&dispatchSnapshot.selection_result!=='SELECTED')) return null;
   const id = randomUUID();
@@ -233,13 +236,13 @@ const buildReviewPackage = (acceptance: any, sourceExecution: any, outputReferen
   classification: acceptance.classification,
 });
 
-const dispatchIndependentReview = async (client: pg.PoolClient, acceptance: any, candidate: Identity, reviewPackage: unknown, gate: any = null) => {
+const dispatchIndependentReview = async (client: pg.PoolClient, acceptance: any, candidate: Identity, reviewPackage: unknown, gate: any = null, independenceExceptionRequired=false, candidateRuntimeIds: string[] = []) => {
   const frozenProducer=frozenProducerIdentity(acceptance);
   const runtime=await reviewerRuntime(client,candidate);
   const check=independenceCheck(frozenProducer,candidate,Boolean(gate));
   if(!runtime || !check.eligible) {
     await client.query(`UPDATE work_acceptances SET state='WAITING_FOR_INDEPENDENT_REVIEWER',updated_at=clock_timestamp() WHERE id=$1`,[acceptance.id]);
-    const block=await openBlock(client,{projectId:acceptance.project_id,acceptanceId:acceptance.id,executionId:acceptance.execution_id,sourceType:'WORK_ACCEPTANCE',sourceId:acceptance.id,code:'NO_INDEPENDENT_REVIEWER',category:'ENVIRONMENT',severity:'HIGH',correlationId:acceptance.correlation_id,evidence:{...check,runtime_available:Boolean(runtime)}});
+    const block=await openBlock(client,{projectId:acceptance.project_id,acceptanceId:acceptance.id,executionId:acceptance.execution_id,sourceType:'WORK_ACCEPTANCE',sourceId:acceptance.id,code:independenceExceptionRequired?'INDEPENDENCE_EXCEPTION_REQUIRED':'NO_INDEPENDENT_REVIEWER',category:independenceExceptionRequired?'POLICY':'ENVIRONMENT',severity:'HIGH',correlationId:acceptance.correlation_id,evidence:{...check,runtime_available:Boolean(runtime),candidate_runtime_id:candidate.runtimeId??null,candidate_runtime_ids:candidateRuntimeIds,waiting_state:'WAITING_FOR_INDEPENDENT_REVIEWER'}});
     await audit(client,acceptance.project_id,'ASSURANCE_REVIEWER_UNAVAILABLE',acceptance.correlation_id,{acceptance_id:acceptance.id,block_id:block.id,independence:check});
     return { acceptance_id: acceptance.id, state: 'WAITING_FOR_INDEPENDENT_REVIEWER', block_id: block.id };
   }
@@ -288,7 +291,7 @@ const ensureAutomaticReview = async (client: pg.PoolClient, acceptance: any, out
     policyVersion:producer.policyVersion,
     executionContextHash:contextHash({acceptance_id:acceptance.id,mode:'REVIEW',runtime_id:selected?.id??null,configuration_version:selected?.version??null}),
   };
-  return dispatchIndependentReview(client,acceptance,candidate,buildReviewPackage(acceptance,sourceExecution,outputReference));
+  return dispatchIndependentReview(client,acceptance,candidate,buildReviewPackage(acceptance,sourceExecution,outputReference),null,false,reviewerRuntimeIds);
 };
 
 export const createIndependentReview = async (acceptanceId:string, producer:Identity, candidate:Identity, reviewPackage:unknown, independenceGateId?: string) => withTransaction(async client => {
@@ -302,13 +305,16 @@ export const createIndependentReview = async (acceptanceId:string, producer:Iden
     AND expires_at IS NOT NULL AND expires_at > clock_timestamp()`, [independenceGateId, acceptance.project_id,acceptance.id,acceptance.policy_id,acceptance.policy_version])).rows[0] : null;
   const frozenProducer=frozenProducerIdentity(acceptance);
   if (!sameIdentity(producer,frozenProducer)) throw new AssuranceError('PRODUCER_IDENTITY_MISMATCH',409);
-  return dispatchIndependentReview(client,acceptance,candidate,reviewPackage,Boolean(gate)&&permitted?gate:null);
+  const requiresException=Boolean(permitted&&!gate&&frozenProducer.runtimeId===candidate.runtimeId&&frozenProducer.configurationVersion===candidate.configurationVersion&&producer.agentId!==candidate.agentId&&producer.executionContextHash!==candidate.executionContextHash);
+  return dispatchIndependentReview(client,acceptance,candidate,reviewPackage,Boolean(gate)&&permitted?gate:null,requiresException,candidate.runtimeId?[candidate.runtimeId]:[]);
 });
 
 export const openBlock = async (client: pg.PoolClient, input: { projectId:string; acceptanceId?:string; executionId?:string; sourceType:string; sourceId:string; code:string; category:string; severity:string; correlationId:string; classification?:string; symptoms?:unknown[]; attempts?:unknown[]; suspectedCauses?:unknown[]; responsibleRole?:string; evidence?:unknown }) => {
   const classification=maximumClassification(input.classification??'INTERNAL');
+  const snapshot=input.acceptanceId?(await client.query(`SELECT id,subject_kind,subject_id,normative_generation,policy_id,policy_version,policy_hash,selection_result FROM assurance_dispatch_snapshots WHERE id=(SELECT assurance_dispatch_snapshot_id FROM work_acceptances WHERE id=$1)`,[input.acceptanceId])).rows[0]:null;
+  const evidence={...(input.evidence&&typeof input.evidence==='object'?input.evidence as Record<string,unknown>:{}),...(snapshot?{assurance_dispatch_snapshot_id:snapshot.id,subject_kind:snapshot.subject_kind,subject_id:snapshot.subject_id,normative_generation:snapshot.normative_generation,policy_id:snapshot.policy_id,policy_version:snapshot.policy_version,policy_hash:snapshot.policy_hash,selection_result:snapshot.selection_result}:{})};
   const id=randomUUID(); const result=await client.query(`INSERT INTO work_blocks(id,project_id,acceptance_id,execution_id,source_type,source_id,block_code,category,severity,state,evidence,correlation_id,classification,symptoms,attempts,suspected_causes,responsible_role)
-    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'OPEN',$10,$11,$12,$13,$14,$15,$16) ON CONFLICT DO NOTHING RETURNING *`,[id,input.projectId,input.acceptanceId??null,input.executionId??null,input.sourceType,input.sourceId,input.code,input.category,input.severity,safeEvidence(input.evidence),input.correlationId,classification,JSON.stringify(input.symptoms??[]),JSON.stringify(input.attempts??[]),JSON.stringify(input.suspectedCauses??[]),input.responsibleRole??routingRoleForCategory(input.category)]);
+    VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,'OPEN',$10,$11,$12,$13,$14,$15,$16) ON CONFLICT DO NOTHING RETURNING *`,[id,input.projectId,input.acceptanceId??null,input.executionId??null,input.sourceType,input.sourceId,input.code,input.category,input.severity,safeEvidence(evidence),input.correlationId,classification,JSON.stringify(input.symptoms??[]),JSON.stringify(input.attempts??[]),JSON.stringify(input.suspectedCauses??[]),input.responsibleRole??routingRoleForCategory(input.category)]);
   if(result.rowCount) return result.rows[0]; return (await client.query(`SELECT * FROM work_blocks WHERE source_type=$1 AND source_id=$2 AND block_code=$3 AND state NOT IN ('RESOLVED','CANCELLED')`,[input.sourceType,input.sourceId,input.code])).rows[0];
 };
 
@@ -415,7 +421,7 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
   const review=(await client.query(`SELECT r.*,a.project_id,a.execution_id,a.output_reference,a.correlation_id,a.state AS acceptance_state,e.job_id,e.operation_id,e.revision_id,e.job_kind,
     s.id AS assurance_dispatch_snapshot_id,s.subject_kind,s.subject_id,s.normative_generation,s.lineage_fingerprint
     FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id JOIN agent_execution e ON e.id=a.execution_id
-    LEFT JOIN assurance_dispatch_snapshots s ON s.id=a.assurance_dispatch_snapshot_id WHERE r.id=$1 FOR UPDATE`,[reviewId])).rows[0];
+    LEFT JOIN assurance_dispatch_snapshots s ON s.id=a.assurance_dispatch_snapshot_id WHERE r.id=$1 FOR UPDATE OF r,a,e`,[reviewId])).rows[0];
   if(!review) throw new AssuranceError('REVIEW_NOT_FOUND',404); if(review.state==='CANCELLED'||review.acceptance_state==='CANCELLED') throw new AssuranceError('ASSURANCE_CANCELLED',409);
   if(review.state!=='DISPATCHED') throw new AssuranceError('REVIEW_NOT_DISPATCHED',409);
   const prior=await client.query(`SELECT * FROM review_decisions WHERE idempotency_key=$1 OR review_id=$2`,[idempotencyKey,reviewId]); if(prior.rowCount) return prior.rows[0];
