@@ -20,26 +20,44 @@ blocks. Ela não recria snapshots, acceptances ou subjects e não reinterpreta
 histórico com policy corrente.
 
 A unidade canônica de recovery é a acceptance já existente e sua identidade
-normativa congelada.
+histórica congelada. Há exatamente duas formas canônicas de `recovery_key`:
 
 ```text
+# snapshot-backed / AUT-03
 recovery_key =
   reviewer-recovery:v1:<acceptance_id>:<normative_generation>
+
+# legado sem AssuranceDispatchSnapshot:v1
+recovery_key =
+  reviewer-recovery:v1:<acceptance_id>:legacy:<policy_id>:<policy_version>
 ```
 
-A identidade do recovery é composta por:
+Para acceptance snapshot-backed, a identidade é composta por `acceptance_id`,
+`assurance_dispatch_snapshot_id`, `subject_kind`, `subject_id`,
+`normative_generation`, `policy_id` e `policy_version` persistidos por AUT-03.
+Ela sempre usa a primeira forma e nunca a forma legacy.
 
-- `acceptance_id`;
-- `assurance_dispatch_snapshot_id`, quando existir;
-- `subject_kind`;
-- `subject_id`;
-- `normative_generation`;
-- `policy_id`;
-- `policy_version`.
+Para acceptance legada sem `AssuranceDispatchSnapshot:v1`, a identidade
+histórica é formada exclusivamente por `acceptance_id` e pelo `policy_id` e
+`policy_version` originalmente vinculados. Ela sempre usa a segunda forma,
+nunca inventa `normative_generation` e nunca recebe snapshot retroativo.
+`subject_kind`, `subject_id` e `normative_generation` podem legitimamente não
+existir nesse caso.
 
-Retry, restart, redelivery, reconciler e troca de reviewer não criam nova
-recovery identity. REC-02 nunca cria nova acceptance para a mesma identidade
-normativa e nunca altera subject, generation ou policy/version já congelados.
+Policy corrente nunca entra na identidade legacy nem pode reinterpretar essa
+recovery. Se `policy_id` ou `policy_version` originalmente vinculados não
+puderem ser determinados de modo inequívoco, REC-02 falha fechado: não cria
+`recovery_key` nem recupera automaticamente a acceptance.
+
+Retry, restart, redelivery, reconciler e troca de reviewer usam exatamente a
+mesma `recovery_key` e não criam nova recovery identity. REC-02 nunca cria nova
+acceptance para a mesma identidade histórica e nunca altera os fatos
+snapshot-backed ou a policy/version originalmente vinculada ao legado.
+
+Neste contrato, "recovery generation" é o escopo lógico identificado pela
+`recovery_key`: para snapshot-backed, é a `normative_generation` congelada;
+para legado, é a identidade histórica legacy e não introduz um campo
+`normative_generation` inexistente.
 
 ## Objetivo e problema corrigido
 
@@ -142,16 +160,19 @@ incrementa versão.
 ## RecoveryStrategySnapshot:v1
 
 A implementação deve persistir ou projetar de forma durável uma visão canônica
-`RecoveryStrategySnapshot:v1` contendo, no mínimo:
+`RecoveryStrategySnapshot:v1`. A identidade persistida é condicional e não
+pode preencher artificialmente dados ausentes:
 
-- `recovery_key`;
-- `acceptance_id`;
-- `assurance_dispatch_snapshot_id`, quando existir;
-- `subject_kind`;
-- `subject_id`;
-- `normative_generation`;
-- `policy_id`;
-- `policy_version`;
+- para recovery snapshot-backed, persiste `recovery_key`, `acceptance_id`,
+  `assurance_dispatch_snapshot_id`, `subject_kind`, `subject_id`,
+  `normative_generation`, `policy_id` e `policy_version` do snapshot AUT-03;
+- para recovery legado, persiste `legacy = true`, `recovery_key`,
+  `acceptance_id`, `policy_id` original e `policy_version` original;
+  `subject_kind`, `subject_id` e `normative_generation` podem permanecer
+  ausentes por contrato e não podem ser inferidos ou criados retroativamente.
+
+Em ambos os casos, contém no mínimo:
+
 - `current_stage`;
 - `exhausted_stages`;
 - reviewer failure history;
@@ -182,10 +203,12 @@ Aplicável somente a falhas temporárias/retryable.
 - respeita attempts, lease e próxima elegibilidade;
 - ao esgotar budget, classifica como falha terminal e avança.
 
-### Stage 2 — Reviewer alternativo no policy set atual
+### Stage 2 — Reviewer alternativo no policy set congelado
 
 Selecionar reviewer independente ainda não terminalmente falho para a mesma
-recovery generation.
+recovery generation lógica, identificada pela mesma `recovery_key`. Para
+snapshot-backed, ela corresponde à `normative_generation` persistida; para
+legado, não adiciona nem presume `normative_generation`.
 
 A nova seleção cria nova review version e novo dispatch de review, mantendo a
 mesma acceptance.
@@ -197,9 +220,10 @@ respeitando classificação, configuração e independência.
 
 Policy corrente não substitui a policy/version congelada.
 
-### Stage 4 — Reviewer role alternativo permitido
+### Stage 4 — Reviewer role alternativo publicado
 
-Tentar outro reviewer role explicitamente permitido pelo contrato/policy.
+Tentar outro reviewer role publicado pela matriz versionada
+`REVIEWER_AND_BLOCK_RECOVERY:v1`, ainda elegível sob a policy congelada.
 
 Não inventar role novo em runtime.
 
@@ -238,10 +262,30 @@ A seleção não pode escolher:
 - runtime incompatível com classification;
 - configuração de runtime inelegível.
 
+Reviewer roles pertencem exclusivamente a este contrato versionado e à sua
+matriz de reviewer; a assurance policy não possui nem introduz
+`reviewer_roles`. A policy congelada limita somente runtimes elegíveis,
+configuração, classification e as demais constraints já publicadas.
+
+Um candidato só é elegível na interseção de:
+
+- reviewer role publicado pela matriz REC-02;
+- runtime/configuração permitido pela policy congelada;
+- classification compatível;
+- independence check válido; e
+- reviewer ainda não esgotado para a recovery generation lógica da mesma
+  `recovery_key`.
+
+Role priority vem do contrato REC-02; elegibilidade de runtime vem da policy
+congelada; nenhum dos dois substitui o independence check. Policy atual nunca
+altera a candidate ordering de recovery existente. Se um role publicado não
+possuir runtime/configuração elegível na policy congelada, ele é inelegível
+naquela recovery.
+
 Entre candidatos elegíveis, a implementação deve usar ordenação estável e
 determinística. Ordem normativa:
 
-1. prioridade do reviewer role permitido pela policy;
+1. prioridade do reviewer role publicada pela matriz REC-02;
 2. `quality_tier`;
 3. runtime name;
 4. runtime id;
@@ -336,14 +380,17 @@ Assistance não pode:
 
 Assistance não pode ser selecionada por Assurance.
 
-## RoutingDecision:v1
+## RoutingDecision:v1 e matriz de reviewer
 
-Routing é uma decisão determinística de próxima atividade/role permitida, não
-uma decisão de acceptance.
+Routing é uma decisão determinística de próxima atividade ou role
+advisory/specialist, não uma decisão de acceptance nem uma delegação de
+authority de review.
 
-Matriz base:
+### A. Routing roles para advisory/specialist
 
-| Categoria | Role |
+Esta matriz recomenda a próxima atividade/role de routing:
+
+| Categoria | Routing role |
 | --- | --- |
 | `REQUIREMENT_AMBIGUITY` | `requirements-engineering` |
 | `ARCHITECTURE_CONFLICT` | `solution-architecture` |
@@ -357,7 +404,32 @@ Matriz base:
 | `MISSING_INFORMATION` | `requirements-engineering` |
 
 Routing só pode selecionar roles publicados. Não cria role novo e não decide
-acceptance.
+acceptance. Um routing role pode recomendar uma atividade, mas não é, por essa
+razão, reviewer elegível: specialist/advisory roles não ganham authority de
+review por aparecerem nesta matriz.
+
+### B. Reviewer roles elegíveis para independent review
+
+Somente os roles fechados abaixo, publicados por
+`REVIEWER_AND_BLOCK_RECOVERY:v1`, podem ser selecionados como reviewer
+independente. A prioridade é parte desta matriz — menor número vence — e
+preserva a ordem de candidatos reviewer já publicada pelo runtime atual.
+
+| Prioridade | Reviewer role publicado |
+| --- | --- |
+| 1 | `governance-assurance` |
+| 2 | `quality-assurance` |
+| 3 | `security-assurance` |
+| 4 | `requirements-engineering` |
+| 5 | `solution-architecture` |
+| 6 | `integration-engineering` |
+
+Não há reviewer role implícito fora desse conjunto. Em particular,
+`engineering-operations` pode ser um routing role para categorias técnicas,
+ambientais ou de teste, mas não recebe authority de Assurance por esse motivo.
+Um role presente nas duas matrizes continua sujeito a runtime/configuração da
+policy congelada, classification, independence check e exhaustion da recovery;
+a presença na matriz de routing por si só não o torna elegível.
 
 ## Specialist dispatch
 
@@ -573,6 +645,15 @@ REC-02 só pode ser considerada concluída quando a implementação provar:
 - idempotency replay converge no mesmo registro;
 - idempotency divergente falha fechado;
 - histórico não é reinterpretado por policy atual;
+- snapshot-backed usa somente a recovery key com `normative_generation`;
+- legado usa somente a recovery key com policy original, sem snapshot ou
+  generation retroativos;
+- identidade de policy legacy ausente ou ambígua falha fechado sem recovery
+  automática;
+- reviewer role vem da matriz REC-02, nunca de campo inexistente da policy;
+- routing role não concede authority de reviewer;
+- seleção de reviewer prova a interseção de matriz REC-02, policy congelada,
+  classification, independence e exhaustion;
 - stale subject não é promovido;
 - automação esgotada termina em block/gate explícito;
 - nenhuma parada fica sem motivo, authority, evidência e continuação.
@@ -627,7 +708,22 @@ Usar PostgreSQL real para cobrir, no mínimo:
 - idempotency key com payload/identity divergente;
 - recovery histórico com snapshot AUT-03;
 - recovery legado sem snapshot;
+- recovery legado com policy original ausente/ambígua → fail closed sem
+  recuperação automática;
+- retry/restart/redelivery/troca de reviewer preservam a mesma `recovery_key`
+  nas formas snapshot-backed e legacy;
+- `RecoveryStrategySnapshot:v1` snapshot-backed contém subject/generation, e
+  o legacy contém somente flag/identity policy histórica sem preenchê-los;
 - nenhuma policy atual reinterpretando legado;
+- policy sem `reviewer_roles` continua válida e não pode publicar authority de
+  reviewer por esse campo;
+- seleção aplica a matriz fechada de reviewer roles e a interseção com runtime,
+  configuração e classification da policy congelada;
+- role publicado sem runtime elegível na policy congelada é inelegível;
+- ordenação por prioridade REC-02, quality tier, runtime name/id,
+  configuration version, agent id/version;
+- routing para `engineering-operations` não permite dispatch de independent
+  review;
 - nenhuma acceptance duplicada;
 - nenhuma decisão terminal duplicada;
 - E2E de recovery completo sem limbo.
