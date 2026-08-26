@@ -259,7 +259,14 @@ Validações: build; matriz/snapshot PostgreSQL AUT-03 (6/6); replay PostgreSQL
 de acceptance (6/6); regressão focada de Assurance/AUT-02; e migration fresh
 `001→070` seguida de segunda execução idempotente em
 `naamive_aut03_fresh_20260826`. A regressão focada de planning teve um failure
-fora desta alteração: a asserção LR-01 espera `ELIGIBLE_FOR_DISPATCH`, mas o
-estado real é `DISPATCHED`. Como a agregação completa ainda não possui resultado
-limpo e essa divergência não foi classificada pela baseline autorizada, AUT-03
-permanece `IN_PROGRESS`.
+que foi classificado em 2026-08-26 como teste legado desatualizado, e não
+regressão AUT-03. LR-01 publica `ELIGIBLE_FOR_DISPATCH` como espera do scheduler
+e AUT-01 exige a transição `DISPATCH_WORK_ITEM → DISPATCHED` quando cria a
+reservation/job. `approveModulePlan()` chama
+`scheduleEligibleWorkItems('MODULE_PLAN_APPROVED')` desde o commit AUT-01
+`4bdb878`, anterior à AUT-03. O teste agora garante capacidade isolada e prova
+uma única reservation, job e decisão `DISPATCHED`, preservando dependentes e
+blockers em espera. O planning focused E2E passou integralmente (13/13).
+
+AUT-03 permanece `IN_PROGRESS` apenas até a validação agregada obrigatória
+(`npm test` e `npm run e2e`) alcançar e produzir seu relatório final.

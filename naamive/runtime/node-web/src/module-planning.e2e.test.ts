@@ -28,7 +28,8 @@ if (!databaseUrl) {
     const cleanup = async () => {
       for (const sql of [
         'DELETE FROM events WHERE project_id=$1', 'DELETE FROM artifacts WHERE project_id=$1',
-        'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM jobs WHERE project_id=$1',
+        'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM work_item_scheduling_decisions WHERE project_id=$1',
+        'DELETE FROM jobs WHERE project_id=$1', 'DELETE FROM deliveries WHERE project_id=$1', 'DELETE FROM worktrees WHERE project_id=$1',
         'DELETE FROM work_items WHERE project_id=$1', 'DELETE FROM module_gates WHERE project_id=$1',
         'DELETE FROM module_plan_job_context WHERE project_id=$1', 'DELETE FROM module_plan_revisions WHERE project_id=$1',
         'DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)',
@@ -157,8 +158,16 @@ if (!databaseUrl) {
     await assert.rejects(() => startDevelopment(id, wi.id, {}, `mp-dev-${randomUUID()}`), /WORKFLOW_COMMAND_OBSOLETE_FOR_VERSION/);
   });
 
-  test('LR-01 materializes eligible, dependency-waiting and multiply-blocked WIs without dispatch', async (t) => {
+  test('AUT-01 dispatches the eligible root while preserving dependency and external-blocker waits', async (t) => {
     const { id, cleanup } = await setupProject(); t.after(cleanup);
+    // LR-01 publishes ELIGIBLE_FOR_DISPATCH as the scheduler waiting state;
+    // AUT-01 must atomically create the root attempt and move it to DISPATCHED.
+    // Give this isolated scenario a deterministic global capacity slot rather
+    // than making the asserted lifecycle depend on unrelated E2E deliveries.
+    const previousConcurrency=process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY;
+    const active=Number((await pool.query(`SELECT count(*)::int n FROM deliveries WHERE state IN ('RESERVED','PREPARING','DISPATCHED','RUNNING','DEVELOPMENT_IN_PROGRESS')`)).rows[0].n);
+    process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY=String(active+1);
+    t.after(()=>{if(previousConcurrency===undefined)delete process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY;else process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY=previousConcurrency;});
     const { module } = await toPlanning(id, 'Persist and expose requests', ['A request can be tracked'], ['Identity provider', 'Operations priority group']);
     const item=(logical_id:string,title:string,depends_on_ids:string[]=[])=>({logical_id,title,depends_on_ids,inputs:['input'],allowlist:[`src/${logical_id}.ts`],denylist:['.env'],output:`${title} output`,acceptance_criteria:['A request can be tracked'],qa_matrix:[{command:'true',cwd:'.',timeout_seconds:10}]});
     const seeded=await seedPlanRevision(id,module,[item('root-store','Store'),item('dependent-metric','Metric',['root-store']),item('external-ui','UI',['root-store'])]);
@@ -178,18 +187,21 @@ if (!databaseUrl) {
     ]);
     assert.equal(replayed.operation_id,approved.operation_id);
     const rows=(await pool.query(`SELECT id,payload->>'work_item_id' logical_id,plan_work_item_id,module_plan_revision_id,state,workflow_version FROM work_items WHERE project_id=$1 ORDER BY plan_work_item_id`,[id])).rows;
-    assert.deepEqual(Object.fromEntries(rows.map((row:any)=>[row.logical_id,row.state])),{ 'dependent-metric':'WAITING_FOR_DEPENDENCIES','external-ui':'WAITING_FOR_EXTERNAL_INPUT','root-store':'ELIGIBLE_FOR_DISPATCH' });
+    assert.deepEqual(Object.fromEntries(rows.map((row:any)=>[row.logical_id,row.state])),{ 'dependent-metric':'WAITING_FOR_DEPENDENCIES','external-ui':'WAITING_FOR_EXTERNAL_INPUT','root-store':'DISPATCHED' });
     assert.ok(rows.every((row:any)=>row.workflow_version===2));
     assert.ok(rows.every((row:any)=>row.plan_work_item_id===row.logical_id&&row.module_plan_revision_id===seeded.plan_revision_id));
     assert.equal(new Set(rows.map((row:any)=>row.plan_work_item_id)).size,3,'concurrent replay materializes one row per logical identity');
-    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore);
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore+1);
+    const root=rows.find((row:any)=>row.logical_id==='root-store');
+    assert.equal((await pool.query(`SELECT count(*)::int n FROM deliveries WHERE work_item_id=$1 AND state='RESERVED'`,[root.id])).rows[0].n,1);
+    assert.equal((await pool.query(`SELECT decision_code FROM work_item_scheduling_decisions WHERE work_item_id=$1 ORDER BY created_at DESC LIMIT 1`,[root.id])).rows[0].decision_code,'DISPATCHED');
     const external=rows.find((row:any)=>row.logical_id==='external-ui');
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM work_item_external_blockers WHERE work_item_id=$1 AND state='ACTIVE'`,[external.id])).rows[0].n),2);
     const first=await resolveExternalBlocker(id,external.id,{dependency_id:'dependency-1',justification:'Identity resolved'},`lr01-resolve-1-${randomUUID()}`);
     assert.deepEqual({state:first.state,remaining:first.remaining_active_blockers},{state:'WAITING_FOR_EXTERNAL_INPUT',remaining:1});
     const second=await resolveExternalBlocker(id,external.id,{dependency_id:'dependency-2',justification:'Priority resolved'},`lr01-resolve-2-${randomUUID()}`);
     assert.deepEqual({state:second.state,remaining:second.remaining_active_blockers},{state:'WAITING_FOR_DEPENDENCIES',remaining:0});
-    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore);
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore+1);
     const detail=await phase3Detail(id),projected:any=detail.work_items.find((row:any)=>(row as any).id===external.id);
     assert.equal(projected.workflow_version,2);
     assert.ok(!projected.allowed_actions.includes('START_DEVELOPMENT'));
