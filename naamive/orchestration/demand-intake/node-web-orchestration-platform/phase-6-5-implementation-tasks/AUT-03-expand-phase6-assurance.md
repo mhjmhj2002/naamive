@@ -273,9 +273,11 @@ exit 1 apenas pelos quatro failures históricos autorizados de inventory
 (`expected FAILED`, `actual RETRYABLE`). `npm run e2e` terminou com exit 1,
 112 testes, 105 pass, 7 fail e 0 skip: os mesmos quatro failures históricos e
 três failures reproduzíveis de `phase4.e2e` foram investigados e classificados
-como preexistentes, fora de AUT-03. O teste Phase 4 (commit `ef98f12`) e o
-caminho que cria a acceptance (`agent-execution-service`, commit `ca4ba64`)
-antecedem AUT-03; a falha decorre de policies preexistentes de selectors vazios
-que fazem Phase 4 aguardar Assurance. Nenhum dos caminhos alterados por
-AUT-03 participa desse fluxo. Build e `git diff --check` passaram; a task está
+como preexistentes, fora de AUT-03. Embora `AgentExecutionService` compartilhe
+a infraestrutura genérica e invoque `createAcceptance()`, a seleção é causada
+por policies legadas de selectors vazios, anteriores ao checkpoint, que fazem
+Phase 4 aguardar Assurance. O teste Phase 4 (commit `ef98f12`) e esse caminho
+genérico (`agent-execution-service`, commit `ca4ba64`) antecedem AUT-03; suas
+alterações em `createAcceptance()` não introduziram a seleção nem mudaram a
+causa observada. Build e `git diff --check` passaram; a task está
 `DONE`. REC-02 e GAT-02 permanecem fora de escopo.

@@ -28,9 +28,11 @@ fresh migrate e second migrate passaram. A validação agregada foi concluída:
 `npm test` teve apenas os quatro failures históricos autorizados de inventory
 (`FAILED` esperado versus `RETRYABLE` atual); `npm run e2e` registrou 112/105/7/0.
 Além desses quatro, os três failures reproduzíveis de `phase4.e2e` foram
-classificados como preexistentes e fora do caminho AUT-03 (teste e serviço
-anteriores ao checkpoint; policies legadas com selectors vazios interferem no
-cenário Phase 4). Build e `git diff --check` passaram. A divergência de planning
+classificados como preexistentes e fora do caminho AUT-03: embora
+`AgentExecutionService` compartilhe `createAcceptance()`, policies legadas com
+selectors vazios já selecionam essas execuções para Assurance; AUT-03 não
+introduziu essa seleção nem alterou a causa observada. Build e `git diff --check`
+passaram. A divergência de planning
 `ELIGIBLE_FOR_DISPATCH` versus `DISPATCHED` foi classificada como teste legado
 desatualizado: o workflow LR-01 e AUT-01 exigem auto-dispatch quando há
 capacidade; o planning focused E2E agora passa integralmente (13/13).
