@@ -91,6 +91,24 @@ const replayCommand=async(client:pg.PoolClient,key:string|undefined,type:string,
 };
 const rememberCommand=(client:pg.PoolClient,key:string|undefined,type:string,resourceId:string,resultId:string)=>key?client.query(`INSERT INTO assurance_command_idempotency(idempotency_key,command_type,resource_id,result_id) VALUES($1,$2,$3,$4) ON CONFLICT(idempotency_key) DO NOTHING`,[key,type,resourceId,resultId]):Promise.resolve();
 
+/** Normative identity of an acceptance is fixed once committed.  A replay may
+ * return the existing row only when every field below is exactly equal; any
+ * divergence (different dispatch snapshot, acceptance key, policy, or
+ * subject/generation via the snapshot) must fail closed instead of silently
+ * updating the frozen row. */
+const sameAcceptanceIdentity=(row:any,expected:{executionId:string;acceptanceKey:string|null;policyId:string;policyVersion:number;snapshotId:string|null;subjectKind:string|null;subjectId:string|null;normativeGeneration:string|null}):boolean=>{
+  if(String(row.execution_id)!==expected.executionId)return false;
+  if((row.acceptance_key??null)!==expected.acceptanceKey)return false;
+  if(String(row.policy_id)!==expected.policyId)return false;
+  if(Number(row.policy_version)!==expected.policyVersion)return false;
+  const rowSnapshot=row.assurance_dispatch_snapshot_id??null;
+  if(String(rowSnapshot)!==String(expected.snapshotId))return false;
+  if((row.subject_kind??null)!==expected.subjectKind)return false;
+  if((row.subject_id??null)!==expected.subjectId)return false;
+  if((row.normative_generation??null)!==expected.normativeGeneration)return false;
+  return true;
+};
+
 export const createAcceptance = async (client: pg.PoolClient, execution: { id:string; project_key:string; policy_name:string; task_type:string; classification:string; agent_id:string; agent_version:string; selected_runtime_id?:string|null; selected_configuration_version?:number|null; policy_id:string; policy_version:number }, correlationId: string, dispatchSnapshot?: any, frozenPolicy?: {id:string;version:number}) => {
   if(dispatchSnapshot&&frozenPolicy) throw new AssuranceError('ASSURANCE_POLICY_SELECTION_AMBIGUOUS',409);
   const policy = dispatchSnapshot
@@ -100,9 +118,17 @@ export const createAcceptance = async (client: pg.PoolClient, execution: { id:st
     : await client.query(`SELECT * FROM assurance_policies WHERE enabled=true AND (selectors->'agentPolicyNames' IS NULL OR selectors->'agentPolicyNames' ? $1) AND (selectors->'taskTypes' IS NULL OR selectors->'taskTypes' ? $2) AND (selectors->'classifications' IS NULL OR selectors->'classifications' ? $3) ORDER BY published_at DESC LIMIT 1`, [execution.policy_name,execution.task_type,execution.classification]);
   if (!policy.rowCount || (dispatchSnapshot&&dispatchSnapshot.selection_result!=='SELECTED')) return null;
   const id = randomUUID();
-  const assurancePolicy=policy.rows[0]; const producerIdentity = safeEvidence({ agent_id: execution.agent_id, agent_version: execution.agent_version, runtime_id: execution.selected_runtime_id, configuration_version: execution.selected_configuration_version, policy_id: execution.policy_id, policy_version: execution.policy_version, execution_context_hash: contextHash({ execution_id: execution.id, task_type: execution.task_type, classification: execution.classification }) }); const acceptanceKey=dispatchSnapshot?`assurance-acceptance:v1:${dispatchSnapshot.subject_kind}:${dispatchSnapshot.subject_id}:${dispatchSnapshot.normative_generation}:${dispatchSnapshot.policy_id}:${dispatchSnapshot.policy_version}`:null; const inserted = await client.query(`INSERT INTO work_acceptances(id,execution_id,project_id,correlation_id,policy_id,policy_version,producer_identity,state,classification,assurance_dispatch_snapshot_id,acceptance_key)
-    VALUES($1,$2,$3,$4,$5,$6,$7,'PENDING_PRODUCE',$8,$9,$10) ON CONFLICT(execution_id) DO UPDATE SET execution_id=EXCLUDED.execution_id RETURNING *`, [id,execution.id,execution.project_key,correlationId,assurancePolicy.id,assurancePolicy.version,producerIdentity,execution.classification,dispatchSnapshot?.id??null,acceptanceKey]);
-  return inserted.rows[0];
+  const assurancePolicy=policy.rows[0]; const producerIdentity = safeEvidence({ agent_id: execution.agent_id, agent_version: execution.agent_version, runtime_id: execution.selected_runtime_id, configuration_version: execution.selected_configuration_version, policy_id: execution.policy_id, policy_version: execution.policy_version, execution_context_hash: contextHash({ execution_id: execution.id, task_type: execution.task_type, classification: execution.classification }) }); const acceptanceKey=dispatchSnapshot?`assurance-acceptance:v1:${dispatchSnapshot.subject_kind}:${dispatchSnapshot.subject_id}:${dispatchSnapshot.normative_generation}:${dispatchSnapshot.policy_id}:${dispatchSnapshot.policy_version}`:null;
+  const snapshotId=dispatchSnapshot?.id??null;
+  const inserted = await client.query(`INSERT INTO work_acceptances(id,execution_id,project_id,correlation_id,policy_id,policy_version,producer_identity,state,classification,assurance_dispatch_snapshot_id,acceptance_key)
+    VALUES($1,$2,$3,$4,$5,$6,$7,'PENDING_PRODUCE',$8,$9,$10) ON CONFLICT DO NOTHING RETURNING *`, [id,execution.id,execution.project_key,correlationId,assurancePolicy.id,assurancePolicy.version,producerIdentity,execution.classification,snapshotId,acceptanceKey]);
+  if (inserted.rowCount) return inserted.rows[0];
+  // A replay or a concurrent retry already committed this acceptance.  Never
+  // silently UPDATE the frozen row: re-read it and return it only when every
+  // normative identity field matches exactly; otherwise fail closed.
+  const existing=(await client.query(`SELECT wa.*,s.subject_kind,s.subject_id,s.normative_generation FROM work_acceptances wa LEFT JOIN assurance_dispatch_snapshots s ON s.id=wa.assurance_dispatch_snapshot_id WHERE wa.execution_id=$1 OR (wa.acceptance_key=$2 AND $2 IS NOT NULL) OR (wa.assurance_dispatch_snapshot_id=$3 AND $3 IS NOT NULL)`,[execution.id,acceptanceKey,snapshotId])).rows;
+  if(existing.length!==1||!sameAcceptanceIdentity(existing[0],{executionId:execution.id,acceptanceKey,policyId:String(assurancePolicy.id),policyVersion:Number(assurancePolicy.version),snapshotId,subjectKind:dispatchSnapshot?.subject_kind??null,subjectId:dispatchSnapshot?.subject_id??null,normativeGeneration:dispatchSnapshot?.normative_generation??null}))throw new AssuranceError('ASSURANCE_ACCEPTANCE_IDENTITY_CONFLICT',409);
+  return existing[0];
 };
 
 export const submitOutputForReview = async (client: pg.PoolClient, executionId: string, outputReference: unknown) => {

@@ -52,6 +52,20 @@ export const validateAssuranceExpansionPolicy=(selectors:Record<string,unknown>,
 };
 
 type DispatchInput={jobId:string;operationId:string;projectId:string;correlationId:string;jobKind:string;subjectKind:ExpansionSubjectKind;subjectId:string;normativeGeneration:string;classification:string;lineageFingerprint:string;producerExecutionId?:string|null;moduleId?:string|null;workItemId?:string|null;modulePlanRevisionId?:string|null;planWorkItemId?:string|null;agentPolicyName?:string|null;legacyPolicy?:{id:string;version:number}|null};
+
+/** Frozen identity of a legacy-policy replay is a single nullable pair
+ * (legacy_policy_id, legacy_policy_version).  A replay is valid only when the
+ * input pair is null-safe exactly equal to the stored pair: both null, or both
+ * equal id AND equal version.  One null and one set — or a version change on
+ * the same id — is a conflict. */
+export const sameLegacyPolicyIdentity=(prior:{legacy_policy_id:string|null;legacy_policy_version:number|null},input:{legacyPolicy?:{id:string;version:number}|null}):boolean=>{
+  const priorId=prior.legacy_policy_id??null,priorVersion=prior.legacy_policy_version??null;
+  const inputId=input.legacyPolicy?.id??null,inputVersion=input.legacyPolicy?.version??null;
+  const priorPresent=priorId!==null,inputPresent=inputId!==null;
+  if(priorPresent!==inputPresent)return false;
+  if(!priorPresent)return true;
+  return priorId===inputId&&Number(priorVersion)===Number(inputVersion);
+};
 const selectorMatches=(policy:any,input:DispatchInput)=>{
   const s=policy.selectors??{};
   const includes=(key:string,value:string)=>!Array.isArray(s[key])||s[key].includes(value);
@@ -66,7 +80,7 @@ export const reserveAssuranceDispatch=async(client:pg.PoolClient,input:DispatchI
   const key=`assurance-dispatch:v1:${input.subjectKind}:${input.subjectId}:${input.normativeGeneration}`;
   const prior=(await client.query(`SELECT * FROM assurance_dispatch_snapshots WHERE assurance_dispatch_key=$1 FOR UPDATE`,[key])).rows[0];
   if(prior){
-    if(prior.lineage_fingerprint!==input.lineageFingerprint||prior.job_id!==input.jobId||prior.legacy_policy_id!==input.legacyPolicy?.id&&prior.legacy_policy_id!==null)throw new AssuranceError('ASSURANCE_DISPATCH_IDENTITY_CONFLICT',409);
+    if(prior.lineage_fingerprint!==input.lineageFingerprint||prior.job_id!==input.jobId||!sameLegacyPolicyIdentity(prior,input))throw new AssuranceError('ASSURANCE_DISPATCH_IDENTITY_CONFLICT',409);
     return prior;
   }
   const policies=(await client.query(`SELECT * FROM assurance_policies WHERE enabled=true ORDER BY published_at DESC,id DESC`)).rows;
