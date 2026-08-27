@@ -4,7 +4,9 @@ status: TO DO
 prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 contract: DELIVERY_PAUSE_CANCELLATION:v1
 title: Entrega, pausa e cancelamento
-depends_on: [LR-02, GAT-01, GAT-03]
+depends_on: [LR-02, GAT-01, GAT-03, AUT-03]
+consumes_contracts: [EffectiveRequiredModuleSet:v1, ASSURANCE_EXPANSION_TO_REAL_WORK:v1]
+conceptual_guardrails: [REC-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
@@ -14,9 +16,11 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 Implementar exclusivamente conforme
 [`GAT-02-delivery-pause-cancellation-prevalidation.md`](GAT-02-delivery-pause-cancellation-prevalidation.md)
-(`DELIVERY_PAUSE_CANCELLATION:v1`). A pré-validação fecha package de entrega,
-assurance técnica, aceite humano, pausa/retomada, cancelamento, required-set,
-efeitos em voo, RBAC, idempotência, concorrência e legado. Ela está
+(`DELIVERY_PAUSE_CANCELLATION:v1`). A pré-validação fecha a sequência não
+circular `DeliveryPreparationSnapshot:v1` → preparação → `DeliveryPackage:v1`
+final → assurance técnica → aceite humano, além de pausa/retomada,
+cancelamento, required-set, efeitos em voo, RBAC, idempotência, concorrência e
+legado. Ela está
 `PREVALIDATION_READY_FOR_IMPLEMENTATION`; GAT-02 continua funcionalmente
 `TO_DO` e nenhuma parte deste contrato foi implementada por esta alteração.
 
@@ -50,14 +54,20 @@ cancelamento/reconciliador, API/SSE/projeções e persistência.
 
 ## Dependências e restrições
 
-Depende de LR-02, GAT-01 e GAT-03. Não abre PR (F7), não remove archive legado e
-não cancela efeitos externos sem reconciliação/evidência.
+As dependências funcionais são LR-02 (required-set), GAT-01 (gate) e GAT-03
+(identidade/RBAC), além de AUT-03 para a Assurance técnica do package final.
+REC-02 é guardrail conceitual e consumidor posterior de blocks/recovery de
+Assurance: não é pré-requisito funcional para criar snapshot, job ou package.
+Não abre PR (F7), não remove archive legado e não cancela efeitos externos sem
+reconciliação/evidência.
 
 ## Estratégia de implementação e migração
 
-Definir pacote/evidências; abrir gate versionado; aplicar decisões; implementar
-last-active-state e precedência de pausa/cancelamento; reconciliar trabalho em
-curso; manter histórico `ARCHIVED` como legado, sem renomeá-lo retroativamente.
+Congelar inputs de preparação; persistir outputs e materializar o package final
+imutável; aplicar Assurance sobre o package final e abrir gate versionado;
+implementar last-active-state e precedência de pausa/cancelamento; reconciliar
+trabalho em curso; manter histórico `ARCHIVED` como legado, sem renomeá-lo
+retroativamente.
 
 ## Critérios de aceite
 

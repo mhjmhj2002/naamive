@@ -4,7 +4,9 @@ parent_task: GAT-02
 document_type: prevalidation
 status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 contract: DELIVERY_PAUSE_CANCELLATION:v1
-depends_on: [LR-02, GAT-01, GAT-03, AUT-03, REC-02]
+depends_on: [LR-02, GAT-01, GAT-03, AUT-03]
+consumes_contracts: [EffectiveRequiredModuleSet:v1, ASSURANCE_EXPANSION_TO_REAL_WORK:v1]
+conceptual_guardrails: [REC-02]
 governs: [PROJECT_DISCOVERY:v4, MODULE_DELIVERY:v2]
 validated_at: 2026-08-27
 ---
@@ -33,9 +35,13 @@ Precedência normativa, em ordem:
 
 Não há conflito material aberto: GAT-01 publica DELIVERY_ACCEPTANCE, LR-01
 reserva as transições, LR-02 define EffectiveRequiredModuleSet:v1 e AUT-03
-reserva PREPARE_DELIVERY_PACKAGE. ARCHIVED, cancelamento de acceptance de
-Assurance e APIs legadas não são CancellationRecord:v1 e não recebem semântica
-retroativa.
+publica a fronteira de Assurance. Este contrato distingue o subject produtor de
+PREPARE_DELIVERY_PACKAGE do subject de Assurance: o primeiro é o snapshot de
+preparação; o segundo é o package final. Assim, a linha release reservada por
+AUT-03 continua usando DeliveryPackage:v1 quando cria
+AssuranceDispatchSnapshot:v1, sem transformar o package ainda inexistente em
+subject do job produtor. ARCHIVED, cancelamento de acceptance de Assurance e
+APIs legadas não são CancellationRecord:v1 e não recebem semântica retroativa.
 
 ## 2. Invariantes
 
@@ -51,99 +57,138 @@ retroativa.
 - Mesma idempotency key com payload normativo canônico idêntico converge;
   mesma key com payload distinto falha fechado.
 
-## 3. DeliveryPackage:v1
+## 3. DeliveryPreparationSnapshot:v1
 
-### Identidade e campos
+### Identidade, campos e congelamento de input
 
-O package é o manifesto imutável de uma entrega de projeto em DELIVERY:
+Antes de qualquer job, GAT-02 persiste o snapshot imutável e reconstruível dos
+inputs de preparação:
 
-    package_id, delivery_package_key, project_id, delivery_revision,
+    preparation_snapshot_id, preparation_key, project_id, delivery_revision,
     normative_generation, workflow_code, workflow_version,
     product_commitment_revision_id, effective_required_module_set_hash,
-    committed_module_set, participants, artifacts,
-    release_evidence, operation_evidence, handover_evidence,
-    assurance_snapshot_id, acceptance_id, review/evidence references,
-    policy_id, policy_version, policy_hash, content_hash,
-    state (PREPARED|TECHNICALLY_ACCEPTED|SUPERSEDED),
-    created_at, source_operation_id, correlation_id
+    committed_module_set, participants, artifact_input_references,
+    validation_integration_lineage, policy_id, policy_version, policy_hash,
+    input_hash, created_at, source_operation_id, correlation_id
 
 committed_module_set é o snapshot ordenado de todas as
 CommittedModuleObligation:v1 com required=true: generation, module_key,
 referência física quando houver, estado e lineage. participants deve ser
-exatamente esse conjunto, com módulo físico, revision corrente,
+exatamente esse conjunto, com módulo físico, revisão corrente,
 READY_FOR_DELIVERY e evidence de integração/validação. Obrigação sem módulo,
-módulo CANCELLED, estado diverso ou evidence ausente impede a preparação; nunca
-é omitida por conveniência.
+módulo CANCELLED, estado diverso ou evidence ausente impede a criação do
+snapshot; nunca é omitida por conveniência.
 
     normative_generation = SHA-256(canonical(
       project_id, workflow_code, workflow_version, product_commitment_revision_id,
       EffectiveRequiredModuleSet:v1, participant module/revision/integration lineage,
-      artifact/evidence refs e hashes
+      artifact/input refs e hashes
     ))
-    delivery_package_key =
-      delivery-package:v1:<project_id>:<delivery_revision>:<normative_generation>
+    preparation_key =
+      delivery-preparation:v1:<project_id>:<delivery_revision>:<normative_generation>
+    input_hash = SHA-256(canonical(all normative preparation inputs))
 
-content_hash é SHA-256 do manifesto canonicalizado completo, excluindo somente
-timestamp e campos técnicos de tentativa/projeção. Arrays usam ordem lexical por
-module_key e artefato. O banco deve impor unicidade da key e de
-(project_id, delivery_revision).
+O snapshot não contém release_evidence, operation_evidence, handover_evidence,
+assurance_snapshot_id, acceptance_id, a decisão de Assurance ou o gate humano:
+esses fatos ainda não existem. O banco deve impor unicidade de preparation_key;
+mesma key com input_hash divergente falha fechado. O snapshot é imutável,
+versionado, replay-safe e stale-detectable; retry, restart e replay recuperam a
+mesma identidade e o mesmo input hash.
 
-### Versionamento, lineage e staleness
+### Staleness da preparação
 
-O package não pode mudar depois de criado. Só pode transitar PREPARED para
-TECHNICALLY_ACCEPTED ou, preservando todos os campos, para SUPERSEDED. Nova
-evidence, finding, required-set, módulo/revision, policy snapshot ou lineage
-cria nova delivery_revision e package novo. Retry, redelivery, lease recovery e
-replay do mesmo manifesto retornam o package existente.
+Antes de criar a intenção do job e antes de materializar seu efeito, o servidor
+relê sob lock workflow/version, commitment corrente, obligation ledger e
+módulos. Se required-set, participante, generation, revision, lineage, policy,
+pause, cancellation ou finding bloqueante divergir antes do package final, o
+snapshot fica stale. O job pode preservar evidência bruta de tentativa, mas não
+produz package nem outro efeito normativo; a continuação exige nova preparation
+generation. O significado do snapshot antigo nunca é recalculado.
 
-Antes de criar package, iniciar assurance, abrir/decidir gate ou promover
-entrega, o servidor relê sob lock workflow/version, commitment corrente,
-obligation ledger e módulos. Divergência de hash/generation/required-set,
-revision corrente, pause, cancellation ou finding bloqueante torna o package
-stale e impede efeito. GAT-02 é dona do lifecycle do package; LR-02 continua
-dona do required-set e AUT-03 do snapshot Assurance.
-
-## 4. PREPARE_DELIVERY_PACKAGE e Assurance
+## 4. PREPARE_DELIVERY_PACKAGE, DeliveryPackage:v1 final e Assurance
 
 ### Job, subject e contexto
 
 O job nasce exclusivamente quando reavaliação LR-02 constata projeto DELIVERY,
-não pausado/cancelado, com required-set inteiro elegível. GAT-02 persiste
-package e outbox/intenção do job na mesma transação; AUT-01 agenda, reserva e
-executa essa intenção. UI, advisory, gate humano e reconciler não podem criar o
-job por conta própria.
+não pausado/cancelado, com required-set inteiro elegível, e o
+DeliveryPreparationSnapshot:v1 já foi persistido. GAT-02 persiste o snapshot e
+outbox/intenção do job na mesma transação; AUT-01 agenda, reserva e executa essa
+intenção. UI, advisory, gate humano e reconciler não podem criar o job por conta
+própria.
 
-    subject_kind = DeliveryPackage:v1
-    subject_id = package_id
+    subject_kind = DeliveryPreparationSnapshot:v1
+    subject_id = preparation_snapshot_id
     release_generation = normative_generation
-    job_key = prepare-delivery-package:v1:<delivery_package_key>
+    job_key = prepare-delivery-package:v1:<preparation_key>
     fingerprint = SHA-256(canonical(
-      delivery_package_key, content_hash, effective_required_module_set_hash,
-      workflow_code, workflow_version
+      preparation_key, input_hash, effective_required_module_set_hash,
+      workflow_code, workflow_version, policy_id, policy_version, policy_hash
     ))
 
-O worker recebe apenas package/snapshot e suas referências persistidas:
-manifest, hashes de artefatos, participantes, evidence, workflow/version e
-policy explicitada. Não recebe nem reutiliza conversation/thread/session/chat
-history, transcript, resposta anterior ou qualquer estado opaco de provider.
-Toda tentativa é efêmera. Retry, restart e replay mantêm subject/generation e
-não recalculam seu significado com policy ou required-set atual.
+O worker recebe somente o snapshot e as referências persistidas de input. Não
+recebe nem reutiliza conversation/thread/session/chat history, transcript,
+resposta anterior ou qualquer estado opaco de provider. Toda tentativa é
+efêmera. Retry, restart e replay mantêm subject, generation e fingerprint; não
+recalculam seu significado com policy ou required-set atual.
 
-Outputs permitidos são evidence/artefatos de release, operação e handover por
-referência/hash, ou finding/block tipado. Texto livre de agente não adiciona ou
-remove participante.
+Outputs permitidos são release_evidence, operation_evidence, handover_evidence,
+artefatos por referência/hash ou finding/block tipado. Texto livre de agente não
+adiciona ou remove participante. Os outputs de sucesso são persistidos contra a
+identidade do snapshot antes de qualquer package; para a mesma preparation key,
+payload canônico de outputs divergente falha fechado.
+
+### DeliveryPackage:v1 final
+
+Somente depois de outputs bem-sucedidos e persistidos, GAT-02 materializa o
+manifesto final imutável:
+
+    package_id, delivery_package_key, project_id, delivery_revision,
+    normative_generation, preparation_snapshot_id, workflow_code,
+    workflow_version, product_commitment_revision_id,
+    effective_required_module_set_hash, committed_module_set, participants,
+    final_artifacts, release_evidence, operation_evidence, handover_evidence,
+    policy_id, policy_version, policy_hash, content_hash, created_at,
+    source_operation_id, correlation_id, preparation/output lineage references
+
+content_hash é SHA-256 do manifesto final canonicalizado completo, excluindo
+somente timestamp e campos técnicos de tentativa/projeção. Arrays usam ordem
+lexical por module_key e artefato. O banco deve impor unicidade de
+delivery_package_key e de (project_id, delivery_revision), onde:
+
+    output_hash = SHA-256(canonical(final artifacts + release/operation/handover
+      evidence refs and hashes))
+    delivery_package_key = delivery-package:v1:<project_id>:<delivery_revision>:
+      <normative_generation>:<output_hash>
+
+O package não contém assurance_snapshot_id, acceptance_id nem estado mutável de
+Assurance. A partir da criação, nenhum campo do manifesto nem seu content_hash
+pode mudar. Mesmo snapshot e mesmos outputs canônicos convergem no mesmo
+package; mudança normativa exige nova delivery_revision e package.
+
+### Staleness do package
+
+Após o package, a staleness é independente: required-set, participante,
+generation, revision, lineage, policy, pause, cancellation ou finding
+bloqueante divergente torna o package stale para efeitos futuros; ele não é
+mutado, rehashado nem reinterpretado. Uma nova revisão cria novo snapshot e
+package. GAT-02 é dona da sequência de preparação/package; LR-02 continua dona
+do required-set.
 
 ### Assurance técnica
 
-AUT-03 seleciona release somente para este subject, com
+AUT-03 seleciona Assurance somente para o package final, com
 AssuranceDispatchSnapshot:v1 congelado:
 
+    subject_kind = DeliveryPackage:v1
+    subject_id = package_id
     assurance_dispatch_key =
       assurance-dispatch:v1:DeliveryPackage:v1:<package_id>:<normative_generation>
     acceptance_key =
       assurance-acceptance:v1:DeliveryPackage:v1:<package_id>:<normative_generation>:
       <policy_id>:<policy_version>
 
+AssuranceDispatchSnapshot:v1 e acceptance_id pertencem à AUT-03 e referem o
+package externamente; não entram no manifesto nem no content_hash do package.
 ACCEPT técnico publica RELEASE_TECHNICALLY_ACCEPTED(package_id, content_hash,
 delivery_revision, normative_generation, acceptance_id) e mantém o projeto em
 DELIVERY. REWORK cria finding ligado ao package, preserva-o e exige nova
@@ -162,7 +207,8 @@ DELIVERY_OPERATION_HANDOVER_EVIDENCE, evidence release_evidence,
 operation_evidence e handover_evidence, authority BUSINESS_OWNER, decisões
 APPROVE e REWORK.
 
-A abertura exige package tecnicamente aceito e congela no gate record:
+A abertura exige o fato externo RELEASE_TECHNICALLY_ACCEPTED para o package
+final exato e congela no gate record:
 package_id, package_hash, delivery_revision, normative_generation e
 acceptance_id, além das três evidências catalogadas. GAT-03 autoriza
 DECIDE_CATALOG_GATE somente a principal autenticado BUSINESS_OWNER no projeto e
@@ -181,8 +227,8 @@ Correção e revalidação produzem nova package revision e novo gate.
 APPROVE só é válido, sob lock, se:
 
     project.state == DELIVERY
-    package.state == TECHNICALLY_ACCEPTED
-    gate package/hash/revision/generation == package tecnicamente aceito
+    existe RELEASE_TECHNICALLY_ACCEPTED para o package/content_hash exatos
+    gate package/hash/revision/generation == technical acceptance exata
     acceptance.state == ACCEPTED para o package exato
     EffectiveRequiredModuleSet == package.committed_module_set
     todo participante está READY_FOR_DELIVERY, corrente e não cancelado
@@ -204,10 +250,14 @@ participante não entregue é inválido e exige reconciliação.
 
 | Situação | Regra |
 | --- | --- |
-| package criado sem gate | reconciler abre somente gate do package tecnicamente aceito, por key determinística |
-| gate aberto sem decisão | preserva-o; replay retorna o mesmo gate |
-| crash antes do commit de approval | rollback deixa gate aberto; retry reaplica version/key |
-| commit confirmado, outbox não consumido | reconciler publica somente intent faltante; não retransiciona estados |
+| snapshot criado, job não criado | reconciler cria somente a intenção/job da preparation_key congelada; input divergente falha fechado |
+| job criado, não executado | scheduler reutiliza a mesma job_key, subject, generation e fingerprint |
+| job executado, outputs persistidos, package não materializado | reconciler materializa somente o package determinístico do snapshot e output_hash persistidos |
+| package criado, Assurance não iniciada | AUT-03 reserva somente o dispatch do package final pela key congelada |
+| Assurance criada, sem acceptance | replay converge no mesmo AssuranceDispatchSnapshot/acceptance; não recria package |
+| technical acceptance persistida, gate não aberto | reconciler abre somente DELIVERY_ACCEPTANCE do package/hash/acceptance exatos |
+| gate aberto, sem decisão | preserva-o; replay retorna o mesmo gate |
+| decisão persistida, transição não commitada | rollback deixa gate aberto; retry reaplica version/key; commit confirmado só republica outbox faltante |
 | módulos atualizados sem projeto | impossível pelo commit único; RECONCILE_REQUIRED, sem completar silenciosamente |
 | replay de decisão | mesmo payload retorna decisão/transição; payload diferente falha fechado |
 
@@ -330,8 +380,9 @@ implícito.
 
 | Operação | Key |
 | --- | --- |
-| package | delivery-package:v1:<project>:<revision>:<generation> |
-| prepare job | prepare-delivery-package:v1:<delivery-package-key> |
+| preparation snapshot | delivery-preparation:v1:<project>:<revision>:<generation> |
+| prepare job | prepare-delivery-package:v1:<preparation-key> |
+| final package | delivery-package:v1:<project>:<revision>:<generation>:<output-hash> |
 | assurance | keys AUT-03 da seção 4 |
 | gate opening | delivery-gate:v1:<package_id>:<content_hash>:<generation> |
 | gate decision | delivery-gate-decision:v1:<gate_id>:<version>:<decision> |
@@ -342,10 +393,10 @@ implícito.
 | finding | delivery-finding:v1:<package-id>:<rule-or-fingerprint> |
 
 Lock order: project → current ProductCommitmentRevision → obligation ledger
-(lexical module_key) → modules (mesma ordem) → package → acceptance/gate →
-pause/cancellation/external effect → intent/outbox. SKIP LOCKED seleciona
-somente intents; handlers relêem invariantes sob lock. Version/fence mismatch
-é conflito, não last-write-wins.
+(lexical module_key) → modules (mesma ordem) → preparation snapshot → package
+→ acceptance/gate → pause/cancellation/external effect → intent/outbox. SKIP
+LOCKED seleciona somente intents; handlers relêem invariantes sob lock.
+Version/fence mismatch é conflito, não last-write-wins.
 
 | Corrida | Winner / resultado |
 | --- | --- |
@@ -382,7 +433,7 @@ somente consumirão esses fatos.
 
 | Grupo | Casos mínimos |
 | --- | --- |
-| delivery | package creation/replay/stale, assurance, approve, rework, stale decision, crash/replay, dois decisores e atomicidade projeto+módulos |
+| delivery | preparation snapshot creation/replay/stale, job/output persistence, final package creation/replay/stale, assurance, approve, rework, stale decision, crash/replay, dois decisores e atomicidade projeto+módulos |
 | pause/resume | todo estado ativo; queue/lease/running; review, assurance, recovery, specialist, gate e delivery; parent pausado/cancelado e resume stale |
 | cancellation | projeto/módulo required ou não; queue/lease/running; review, assurance, recovery, specialist, gate, handoff, approve/cancel, pause/cancel e resume/cancel |
 | external effect | todos os estados, crash, reconciliation, compensação e aplicação após cancellation |
