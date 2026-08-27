@@ -257,7 +257,7 @@ participante não entregue é inválido e exige reconciliação.
 | Assurance criada, sem acceptance | replay converge no mesmo AssuranceDispatchSnapshot/acceptance; não recria package |
 | technical acceptance persistida, gate não aberto | reconciler abre somente DELIVERY_ACCEPTANCE do package/hash/acceptance exatos |
 | gate aberto, sem decisão | preserva-o; replay retorna o mesmo gate |
-| decisão persistida, transição não commitada | rollback deixa gate aberto; retry reaplica version/key; commit confirmado só republica outbox faltante |
+| tentativa de decisão iniciada, commit coordenado não confirmado | decisão e transição não ficam confirmadas; gate permanece aberto/current; retry usa a mesma version/idempotency key conforme contrato; se o commit foi confirmado, decisão/transição são fatos persistidos e apenas a entrega de outbox pode precisar de replay |
 | módulos atualizados sem projeto | impossível pelo commit único; RECONCILE_REQUIRED, sem completar silenciosamente |
 | replay de decisão | mesmo payload retorna decisão/transição; payload diferente falha fechado |
 
