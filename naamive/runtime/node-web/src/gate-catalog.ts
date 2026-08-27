@@ -154,6 +154,14 @@ export const decideCatalogGate = async (client:pg.PoolClient, projectId:string, 
   await client.query(`INSERT INTO gate_decisions(id,gate_id,catalog_version,gate_version,decision,actor_id,actor_role,reason,evidence,idempotency_key) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,[decisionId,gate.id,GATE_CATALOG_VERSION,gate.version,input.decision,input.actor_id,input.actor_role,input.reason,evidence,input.idempotency_key??null]);
   const decided=(await client.query(`UPDATE gate_records SET status='DECIDED',decision=$2,decision_id=$3,decided_at=clock_timestamp(),version=version+1 WHERE id=$1 RETURNING *`,[gate.id,input.decision,decisionId])).rows[0];
   await client.query(`INSERT INTO events(project_id,event_type,correlation_id,payload,actor_id) VALUES($1,'CATALOG_GATE_DECIDED',$2,$3,$4)`,[projectId,gate.correlation_id,{gate_id:gate.id,gate_code:gate.gate_code,catalog_version:GATE_CATALOG_VERSION,decision:input.decision,effect},input.actor_id]);
+  // REC-02 has a concrete, catalog-published continuation for this gate.  It
+  // runs under the same transaction and locks the persisted recovery case,
+  // making approval restart-safe and preventing a current_stage=7 wait from
+  // becoming a terminal-stage limbo.
+  if(gate.gate_code==='INDEPENDENCE_EXCEPTION'&&input.decision==='APPROVE') {
+    const { resumeReviewerRecoveryForCatalogGate }=await import('./assurance.js');
+    await resumeReviewerRecoveryForCatalogGate(client,decided);
+  }
   return {...decided,effect};
 };
 

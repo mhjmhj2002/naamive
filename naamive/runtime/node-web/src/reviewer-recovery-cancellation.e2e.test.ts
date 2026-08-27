@@ -15,7 +15,7 @@ if (!process.env.DATABASE_URL) {
   const { decideCatalogGate } = await import('./gate-catalog.js');
   const { runOnce } = await import('./worker.js');
 
-  const createFixture = async (gateAllowed = false) => withTransaction(async client => {
+  const createFixture = async (gateAllowed = false, sameRuntimeCandidate = false) => withTransaction(async client => {
     const project = randomUUID(), operation = randomUUID(), job = randomUUID(), execution = randomUUID();
     const runtime = randomUUID(), executionPolicy = randomUUID(), assurancePolicy = randomUUID(), correlation = randomUUID();
     const policyName = `rec02-cancel-execution-${executionPolicy.slice(0, 8)}`;
@@ -29,7 +29,7 @@ if (!process.env.DATABASE_URL) {
     await client.query(`INSERT INTO assurance_policies(id,name,version,enabled,selectors,configuration,policy_hash,published_by)
       VALUES($1,$2,1,false,$3,$4,$5,'test')`, [assurancePolicy, `rec02-cancel-frozen-${assurancePolicy.slice(0, 8)}`,
       { agentPolicyNames: [policyName], taskTypes: ['ASSURANCE_TEST'], classifications: ['INTERNAL'] },
-      { schema_version: 1, reviewer_runtime_ids: [], runtime_exception_classifications: gateAllowed ? ['INTERNAL'] : [], blockable_failure_codes: [] }, 'a'.repeat(64)]);
+      { schema_version: 1, reviewer_runtime_ids: sameRuntimeCandidate ? [runtime] : [], runtime_exception_classifications: gateAllowed ? ['INTERNAL'] : [], blockable_failure_codes: [] }, 'a'.repeat(64)]);
     await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id)
       VALUES($1,$2,'ASSURANCE_TEST','QUEUED',$3,$4)`, [operation, project, `rec02-cancel-op:${operation}`, correlation]);
     await client.query(`INSERT INTO jobs(id,operation_id,project_id,kind,status,idempotency_key)
@@ -66,11 +66,11 @@ if (!process.env.DATABASE_URL) {
   };
 
   const cleanup = async (fixture: any) => {
+    await pool.query(`DELETE FROM reviewer_recovery_strategies WHERE acceptance_id=$1`, [fixture.acceptanceId]);
     await pool.query(`UPDATE gate_records SET decision_id=NULL WHERE project_id=$1`, [fixture.project]);
     await pool.query(`DELETE FROM gate_decisions WHERE gate_id IN (SELECT id FROM gate_records WHERE project_id=$1)`, [fixture.project]);
     await pool.query(`DELETE FROM gate_records WHERE project_id=$1`, [fixture.project]);
     await pool.query(`DELETE FROM assistance_proposals WHERE block_id IN (SELECT id FROM work_blocks WHERE project_id=$1)`, [fixture.project]);
-    await pool.query(`DELETE FROM reviewer_recovery_strategies WHERE acceptance_id=$1`, [fixture.acceptanceId]);
     await pool.query(`DELETE FROM review_decisions WHERE review_id IN (SELECT id FROM assurance_reviews WHERE acceptance_id=$1)`, [fixture.acceptanceId]);
     await pool.query(`DELETE FROM assurance_reviews WHERE acceptance_id=$1`, [fixture.acceptanceId]);
     await pool.query(`DELETE FROM assurance_command_idempotency WHERE resource_id=$1::text OR result_id=$1::text`, [fixture.acceptanceId]);
@@ -100,7 +100,7 @@ if (!process.env.DATABASE_URL) {
     const fixture = await createFixture();
     try {
       const before = await counts(fixture);
-      assert.deepEqual({ stage: before.current_stage, assistance: before.assistance, specialist: before.specialist, gates: before.gates, reviews: before.reviews }, { stage: 6, assistance: 1, specialist: 0, gates: 0, reviews: 0 });
+      assert.deepEqual({ stage: before.current_stage, assistance: before.assistance, specialist: before.specialist, gates: before.gates, reviews: before.reviews }, { stage: 5, assistance: 1, specialist: 0, gates: 0, reviews: 0 });
       const proposal = (await pool.query(`SELECT p.id FROM assistance_proposals p JOIN work_blocks b ON b.id=p.block_id WHERE b.acceptance_id=$1`, [fixture.acceptanceId])).rows[0];
       await cancelAndReconcile(fixture);
       const after = await counts(fixture);
@@ -116,7 +116,7 @@ if (!process.env.DATABASE_URL) {
       await recoverReviewerAcceptance(fixture.acceptanceId, 'advance-to-specialist');
       const before = await counts(fixture);
       const specialist = (await pool.query(`SELECT r.id,r.job_id,j.status,o.status AS operation_status FROM reviewer_recovery_specialist_recommendations r JOIN jobs j ON j.id=r.job_id JOIN operations o ON o.id=j.operation_id WHERE r.recovery_key=(SELECT recovery_key FROM reviewer_recovery_strategies WHERE acceptance_id=$1)`, [fixture.acceptanceId])).rows[0];
-      assert.deepEqual({ stage: before.current_stage, assistance: before.assistance, specialist: before.specialist, gates: before.gates }, { stage: 7, assistance: 1, specialist: 1, gates: 0 });
+      assert.deepEqual({ stage: before.current_stage, assistance: before.assistance, specialist: before.specialist, gates: before.gates }, { stage: 6, assistance: 1, specialist: 1, gates: 0 });
       assert.equal(specialist.status, 'PENDING');
       await cancelAndReconcile(fixture);
       const after = await counts(fixture);
@@ -137,7 +137,7 @@ if (!process.env.DATABASE_URL) {
       await recoverReviewerAcceptance(fixture.acceptanceId, 'advance-to-gate');
       const before = await counts(fixture);
       const gate = (await pool.query(`SELECT * FROM gate_records WHERE project_id=$1 AND gate_code='INDEPENDENCE_EXCEPTION'`, [fixture.project])).rows[0];
-      assert.deepEqual({ stage: before.current_stage, assistance: before.assistance, specialist: before.specialist, gates: before.gates, reviews: before.reviews }, { stage: 8, assistance: 1, specialist: 1, gates: 1, reviews: 0 });
+      assert.deepEqual({ stage: before.current_stage, assistance: before.assistance, specialist: before.specialist, gates: before.gates, reviews: before.reviews }, { stage: 7, assistance: 1, specialist: 1, gates: 1, reviews: 0 });
       await cancelAcceptance(fixture.acceptanceId, { reason: 'REC-02 gate wait cancellation', evidence: { reference: 'cancelled-gate' } }, `rec02-gate-cancel:${fixture.acceptanceId}`);
       // Gate decisions remain historical catalog facts, but their late arrival
       // has no continuation path into the cancelled recovery.
@@ -148,6 +148,29 @@ if (!process.env.DATABASE_URL) {
       assert.equal(after.acceptance_state, 'CANCELLED');
       assert.deepEqual(after, { ...before, acceptance_state: 'CANCELLED' });
       assert.deepEqual((await pool.query(`SELECT status,decision FROM gate_records WHERE id=$1`, [gate.id])).rows[0], { status: 'DECIDED', decision: 'APPROVE' });
+    } finally { await cleanup(fixture); }
+  });
+
+  test('REC-02 GAT-01 approval resumes the same recovery key and dispatches a distinct reviewer', async () => {
+    const fixture = await createFixture(true, true);
+    try {
+      await recoverReviewerAcceptance(fixture.acceptanceId, 'advance-to-specialist');
+      const specialist=(await pool.query(`SELECT r.job_id FROM reviewer_recovery_specialist_recommendations r JOIN reviewer_recovery_strategies s ON s.recovery_key=r.recovery_key WHERE s.acceptance_id=$1`,[fixture.acceptanceId])).rows[0];
+      await pool.query(`UPDATE jobs SET available_at=clock_timestamp() WHERE id=$1`,[specialist.job_id]);
+      assert.equal(await runOnce(fixture.project),true);
+      await recoverReviewerAcceptance(fixture.acceptanceId,'open-independence-gate');
+      const before=(await pool.query(`SELECT recovery_key,current_stage,recovery_state,gate_reference FROM reviewer_recovery_strategies WHERE acceptance_id=$1`,[fixture.acceptanceId])).rows[0];
+      const gate=(await pool.query(`SELECT * FROM gate_records WHERE id=$1`,[before.gate_reference])).rows[0];
+      assert.deepEqual({stage:Number(before.current_stage),state:before.recovery_state},{stage:7,state:'WAITING_FOR_GATE'});
+      await withTransaction(client=>decideCatalogGate(client,fixture.project,gate.id,{version:Number(gate.version),decision:'APPROVE',reason:'bounded capacity exception',evidence:{reference:'rec02-positive-gate'},actor_id:'tech-lead',actor_role:'TECH_LEAD',idempotency_key:`rec02-positive-approve:${gate.id}`}));
+      const after=(await pool.query(`SELECT recovery_key,current_stage,recovery_state,gate_reference,selected_candidate FROM reviewer_recovery_strategies WHERE acceptance_id=$1`,[fixture.acceptanceId])).rows[0];
+      const review=(await pool.query(`SELECT r.*,e.selected_runtime_id FROM assurance_reviews r JOIN agent_execution e ON e.id=r.dispatch_execution_id WHERE r.acceptance_id=$1`,[fixture.acceptanceId])).rows[0];
+      assert.equal(after.recovery_key,before.recovery_key); assert.equal(after.gate_reference,before.gate_reference);
+      assert.equal(after.recovery_state,'ACTIVE'); assert.ok([2,3,4].includes(Number(after.current_stage)));
+      assert.equal(review.state,'DISPATCHED'); assert.equal(review.reviewer_agent_id==='producer',false); assert.equal(review.selected_runtime_id,fixture.runtime);
+      assert.equal(review.independence_check.exception_used,true); assert.equal(review.independence_check.gate_id,gate.id);
+      assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM gate_records WHERE project_id=$1 AND gate_code='INDEPENDENCE_EXCEPTION'`,[fixture.project])).rows[0].n),1);
+      assert.equal((await pool.query(`SELECT state FROM work_acceptances WHERE id=$1`,[fixture.acceptanceId])).rows[0].state,'WAITING_FOR_INDEPENDENT_REVIEWER');
     } finally { await cleanup(fixture); }
   });
 

@@ -1,6 +1,6 @@
 ---
 task: REC-02
-status: DONE
+status: IN_PROGRESS
 title: Recuperação de reviewer e blocks
 depends_on: [AUT-03, GAT-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -9,6 +9,23 @@ prevalidation_status: READY_FOR_IMPLEMENTATION
 ---
 
 # REC-02 — Recuperação de reviewer e blocks
+
+## Reabertura de auditoria — 27/08/2026
+
+REC-02 foi reaberta por findings pós-commit e permanece `IN_PROGRESS`. Esta
+reabertura não altera o contrato `REVIEWER_AND_BLOCK_RECOVERY:v1`; ela exige
+que o runtime volte a aderir a ele antes de novo aceite.
+
+| Finding | Correção documental exigida | Critério de fechamento |
+| --- | --- | --- |
+| F-01 | `INDEPENDENCE_EXCEPTION` deve ter `gate_records`/`gate_decisions` do catálogo GAT-01 como authority canônica; `assurance_human_gates` só pode permanecer em fluxos legados que não sejam REC-02. | Dispatch e decisão do review consomem e revalidam o mesmo gate catalogado. |
+| F-02 | Diferenciar espera de gate humano da escalada terminal e retomar a mesma `recovery_key` após `APPROVE`. | A aprovação cria somente o review/dispatch permitido; não cria producer rerun, acceptance, gate ou recovery novos. |
+| F-03 | A expiração deve persistir o fail-closed antes de retornar `INDEPENDENCE_EXCEPTION_EXPIRED`. | Sem `review_decision`; review inutilizável, acceptance em espera e block deduplicado persistidos. |
+| F-04 | Persistir e tornar auditável a máquina 1–8: retry, reviewer, runtime, role, assistance/routing, specialist, gate e escalada. | Restart evidencia estágio, esgotamento, tentativas, candidate set e candidato selecionado, sem loop. |
+
+Nesta fase documental não se executam testes, migrations ou comandos de build.
+REC-02 só pode retornar a `DONE` após uma fase de desenvolvimento e validação
+autorizada produzir as evidências previstas na seção de critérios de aceite.
 
 ## Contrato normativo
 
