@@ -237,6 +237,128 @@ When changing an API or internal contract:
 
 Do not expose internal implementation state unless the contract explicitly requires it.
 
+## Agent context isolation and ephemerality
+
+Context isolation is a repository-wide architectural invariant. Preserve it in every current or future path that invokes, retries, reviews, replaces, routes, assists, recovers, or otherwise delegates work to an AI/model provider.
+
+The authoritative state of NAAMIVE must live outside the model, in canonical persisted state such as database records, versioned contracts, snapshots, artifacts/evidence, jobs/operations, and Git state. Provider conversation memory, local model session state, transcripts, hidden context, or opaque continuation state must never become authoritative project state.
+
+Every provider invocation must be treated as disposable and independently reconstructable.
+
+When implementing or modifying any agent execution path:
+
+1. construct model input explicitly from canonical persisted state and explicitly allowed artifacts/evidence;
+2. keep the execution context minimal sufficient for the task;
+3. bound context by explicit size/count/token policies where applicable;
+4. make every reused source, prior output, or prior decision explicit and auditable;
+5. do not rely on provider-side conversational memory for correctness, recovery, or continuation;
+6. preserve enough persisted state to discard a degraded execution and start another without losing authoritative project state.
+
+### Forbidden implicit conversational carry-over
+
+Do not introduce or propagate conversational continuation state between independent dispatches unless a future versioned architectural contract explicitly authorizes it.
+
+This includes, but is not limited to:
+
+- `conversation_id`;
+- `thread_id`;
+- `previous_response_id`;
+- provider session/thread references;
+- `previous_messages`;
+- chat history;
+- transcript;
+- hidden/opaque continuation handles;
+- automatic resume/fork behavior;
+- producer reasoning or conversational context injected into a reviewer.
+
+Authentication/session mechanisms used only to authenticate a CLI or provider are not model conversation state and must not be repurposed as such.
+
+### Retry semantics
+
+A retry is a new concrete provider invocation, not continuation of the previous model conversation.
+
+For a pure retry:
+
+- do not send the prior attempt transcript, prompt history, model reasoning, stdout/stderr, or provider conversation state;
+- prefer the same frozen execution-context snapshot/hash as the failed attempt;
+- if canonical context must materially change, represent that change explicitly through a new execution/version or other governed lifecycle transition instead of silently changing the meaning of a retry;
+- make retry context identity auditable.
+
+A logical `AgentExecution` may have multiple attempts, but sharing logical execution identity must never imply sharing model conversation state.
+
+### Reviewer independence
+
+An independent reviewer must receive only the explicitly governed review package, referenced structured output, and other evidence explicitly allowed by the review contract.
+
+A reviewer must not inherit:
+
+- producer conversation history;
+- producer prompt history;
+- producer reasoning;
+- producer stdout/stderr;
+- producer tool-call transcript;
+- producer provider thread/session identifiers;
+- unrelated execution history.
+
+Reviewer retry and reviewer replacement must preserve the same isolation principle. A failed or degraded reviewer must be disposable without requiring its conversational state to continue review processing.
+
+### Planning, repair, assistance, routing, specialist and recovery flows
+
+Do not recursively accumulate conversational history across planning, semantic repair, assistance, routing, specialist, recovery, or assurance stages.
+
+If a prior candidate/output must be reused, pass it as explicit structured data through a defined contract. Keep it bounded, sanitized, versioned or hashed where appropriate, and distinguish it from conversational memory.
+
+Semantic repair may use a prior candidate only when deliberately required by the repair contract; this must remain bounded and must not evolve into open-ended transcript accumulation.
+
+Recovery should prefer deterministic reconstruction from persisted facts whenever possible.
+
+### Provider/runtime isolation
+
+Use the strongest supported ephemeral/non-resume execution mode for normal provider invocations.
+
+For Codex CLI execution paths, use `--ephemeral` when the invoked command/runtime supports it, unless a versioned architectural contract explicitly requires a different mode.
+
+Do not add `resume`, thread reuse, conversation reuse, or equivalent behavior as an implementation convenience.
+
+Temporary workdirs, local provider homes, caches, credentials, or authentication sessions must not create an implicit dependency on conversational state from an earlier dispatch.
+
+### Context bounds and observability
+
+When introducing or modifying an execution context, review package, artifact/evidence collection, or prior-output reference set:
+
+- define reasonable bounds for arrays, strings, references, bytes, or estimated tokens;
+- avoid unbounded "all history", "all events", "all artifacts", "all attempts", or "all logs" context construction;
+- prefer source references, versions, hashes, and selected structured fields over bulk history;
+- preserve an auditable context identity without persisting raw prompts, secrets, reasoning, or sensitive provider payloads.
+
+Where the runtime supports it, prefer recording metadata such as:
+
+- context schema/version;
+- context hash;
+- source/reference count;
+- context byte size;
+- estimated input tokens;
+- pruning/truncation indicators;
+- ephemeral/non-ephemeral execution mode.
+
+### Required validation for context-sensitive changes
+
+Any task that creates or changes an agent/provider execution path must verify the isolation invariant as part of implementation.
+
+When applicable, add or update tests proving that:
+
+- retries create a new provider invocation;
+- pure retries do not inherit opaque conversational state;
+- frozen context identity remains stable across a pure retry;
+- reviewers do not receive producer conversational state;
+- oversized context is bounded or rejected deterministically;
+- long-running/repeated cycles do not grow context monotonically merely because execution history exists;
+- new provider adapters do not silently add conversation/thread continuation.
+
+Do not consider a new agent execution path complete if it depends on opaque conversational state or if its context growth is unbounded without an explicit contract.
+
+If a task appears to require violating this invariant, stop treating the change as an ordinary implementation detail. Inspect the authoritative architecture/lifecycle documents and require an explicit versioned contract change rather than silently weakening isolation.
+
 ## Git discipline
 
 Before declaring a task complete:
