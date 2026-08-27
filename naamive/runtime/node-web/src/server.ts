@@ -27,6 +27,7 @@ import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkIte
 import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
 import { activateV4DiscoveryAfterRegistration, reconcileMacroLifecycle } from './macro-lifecycle.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
+import { cancelResource, decideDeliveryAcceptance, deliveryLifecycleProjection, markExternalEffectInFlight, markExternalEffectUnknown, materializeDeliveryPackage, openDeliveryAcceptanceGate, pauseResource, persistDeliveryPreparationOutputs, prepareDeliveryPackage, recordTechnicalAcceptance, reconcileDeliveryLifecycle, resumeResource } from './delivery-lifecycle.js';
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
@@ -85,6 +86,8 @@ export const createApiServer = () => createServer(async (request, response) => {
   const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|restart-development|retry-development|qa|rework|rework-decision|merge|reconcile|recovery|resolve-external-blocker)$/);
   const developmentRuntimeMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/development-runtime$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|recovery|escalate|archive)$/);
+  const deliveryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/delivery(?:\/(prepare|projection|pause|cancel|packages\/([^/]+)\/(outputs|materialize|technical-acceptance|gate)|gates\/([^/]+)\/decision|pauses\/([^/]+)\/resume|external-effects\/([^/]+)\/(start|unknown)))?$/);
+  const moduleLifecycleMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules\/([^/]+)\/lifecycle\/(pause|cancel)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
   const baselineRevisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baseline\/revisions\/([^/]+)\/start-revision$/);
   const technologyCatalogRevisionMatch = url.pathname.match(/^\/api\/technology\/catalog-revisions\/([^/]+)$/);
@@ -121,7 +124,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method==='POST' && url.pathname==='/api/internal/worker/authorize') { const body=await json(request); await authorize(principal!,{action:'WORKER_EXECUTE',projectId:typeof body.project_id==='string'?body.project_id:undefined,resourceType:typeof body.resource_type==='string'?body.resource_type:undefined,resourceId:typeof body.resource_id==='string'?body.resource_id:undefined,roles:['WORKER_SERVICE']}); return respond(response,204,{}); }
   if (!publicRoute && url.pathname==='/api/projects') await authorize(principal!,{action:request.method==='GET'?'LIST_PROJECTS':'CREATE_PROJECT',roles:['OPERATOR']});
   const scopedProject=/^\/api\/projects\/([^/]+)/.exec(url.pathname)?.[1];
-  if(scopedProject && !catalogGateDecisionMatch) {
+  if(scopedProject && !catalogGateDecisionMatch && !deliveryMatch && !moduleLifecycleMatch) {
     const assurancePath=url.pathname.includes('/assurance/');
     if(assurancePath && request.method==='POST') {
       const action=url.pathname.includes('/reviews/')&&url.pathname.endsWith('/decision')?'ASSURANCE_REVIEW':url.pathname.endsWith('/gates')?'ASSURANCE_GATE':'ASSURANCE_ON_CALL';
@@ -133,6 +136,27 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
   if (request.method === 'GET' && url.pathname === '/api/gate-catalog') return respond(response, 200, await publishedGateCatalog());
+  if (deliveryMatch) {
+    const projectId=deliveryMatch[1],action=deliveryMatch[2],packageId=deliveryMatch[3],packageAction=deliveryMatch[4],gateId=deliveryMatch[5],pauseId=deliveryMatch[6],effectId=deliveryMatch[7],effectAction=deliveryMatch[8];
+    if(request.method==='GET'&&(!action||action==='projection')) { await authorize(principal!,{action:'READ_PROJECT',projectId,roles:['OPERATOR','ON_CALL_OWNER','BUSINESS_OWNER']}); return respond(response,200,await deliveryLifecycleProjection(projectId)); }
+    const body=await json(request),key=request.headers['idempotency-key']?.toString()?.trim(); if(!key)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
+    if(action==='pause'&&request.method==='POST'){const auth=await authorize(principal!,{action:'DELIVERY_PAUSE_RESUME',projectId,resourceType:'PROJECT',resourceId:projectId,roles:['ON_CALL_OWNER']});return respond(response,202,await pauseResource('PROJECT',projectId,projectId,{reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,authority_role:auth.role,idempotency_key:key}));}
+    if(action==='cancel'&&request.method==='POST'){const auth=await authorize(principal!,{action:'DELIVERY_CANCEL',projectId,resourceType:'PROJECT',resourceId:projectId,roles:['BUSINESS_OWNER']});return respond(response,202,await cancelResource('PROJECT',projectId,projectId,{reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,authority_role:auth.role,idempotency_key:key}));}
+    if(action==='prepare'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await prepareDeliveryPackage(projectId,key));}
+    if(action?.startsWith('packages/')&&packageAction==='outputs'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await persistDeliveryPreparationOutputs(packageId,body));}
+    if(action?.startsWith('packages/')&&packageAction==='materialize'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await materializeDeliveryPackage(packageId));}
+    if(action?.startsWith('packages/')&&packageAction==='technical-acceptance'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await recordTechnicalAcceptance(packageId,{assurance_dispatch_snapshot_id:typeof body.assurance_dispatch_snapshot_id==='string'?body.assurance_dispatch_snapshot_id:undefined,work_acceptance_id:typeof body.work_acceptance_id==='string'?body.work_acceptance_id:undefined}));}
+    if(action?.startsWith('packages/')&&packageAction==='gate'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await openDeliveryAcceptanceGate(packageId));}
+    if(action?.startsWith('gates/')&&gateId&&request.method==='POST'){const auth=await authorize(principal!,{action:'DECIDE_CATALOG_GATE',projectId,resourceType:'PROJECT',resourceId:projectId,roles:['BUSINESS_OWNER']});return respond(response,202,await decideDeliveryAcceptance(projectId,gateId,{version:Number(body.version),decision:body.decision==='REWORK'?'REWORK':'APPROVE',reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,actor_role:auth.role,idempotency_key:key}));}
+    if(action?.startsWith('pauses/')&&pauseId&&request.method==='POST'){const pause=(await pool.query(`SELECT resource_kind,resource_id FROM pause_records WHERE id=$1 AND project_id=$2`,[pauseId,projectId])).rows[0];if(!pause)throw new ApiError(404,'PAUSE_NOT_FOUND');const auth=await authorize(principal!,{action:'DELIVERY_PAUSE_RESUME',projectId,resourceType:pause.resource_kind,resourceId:pause.resource_id,roles:['ON_CALL_OWNER']});return respond(response,202,await resumeResource(pauseId,{expected_pause_version:Number(body.expected_pause_version),evidence:body.evidence,actor_id:principal!.id,authority_role:auth.role,idempotency_key:key}));}
+    if(action?.startsWith('external-effects/')&&effectAction==='start'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await markExternalEffectInFlight({project_id:projectId,resource_kind:body.resource_kind==='MODULE'?'MODULE':'PROJECT',resource_id:String(body.resource_id??projectId),effect_key:key,target:body.target}));}
+    if(action?.startsWith('external-effects/')&&effectAction==='unknown'&&request.method==='POST'){await authorize(principal!,{action:'DELIVERY_EXECUTE',projectId,roles:['AGENT_SERVICE','WORKER_SERVICE']});return respond(response,202,await markExternalEffectUnknown(effectId,body.evidence));}
+  }
+  if (moduleLifecycleMatch && request.method==='POST') {
+    const [,projectId,moduleId,command]=moduleLifecycleMatch,body=await json(request),key=request.headers['idempotency-key']?.toString()?.trim();if(!key)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
+    if(command==='pause'){const auth=await authorize(principal!,{action:'DELIVERY_PAUSE_RESUME',projectId,resourceType:'MODULE',resourceId:moduleId,roles:['ON_CALL_OWNER']});return respond(response,202,await pauseResource('MODULE',projectId,moduleId,{reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,authority_role:auth.role,idempotency_key:key}));}
+    const auth=await authorize(principal!,{action:'DELIVERY_CANCEL',projectId,resourceType:'MODULE',resourceId:moduleId,roles:['BUSINESS_OWNER']});return respond(response,202,await cancelResource('MODULE',projectId,moduleId,{reason:String(body.reason??''),evidence:body.evidence,actor_id:principal!.id,authority_role:auth.role,idempotency_key:key,obligation_resolution:body.obligation_resolution}));
+  }
   if (request.method === 'GET' && url.pathname === '/health/runtime') { const health=await runtimeHealth(); return respond(response,health.healthy?200:503,health); }
   if (developmentRuntimeMatch && request.method === 'GET') return respond(response,200,await developmentRuntime(developmentRuntimeMatch[1],developmentRuntimeMatch[2]));
   if (request.method === 'GET' && url.pathname === '/api/technology/categories') return respond(response, 200, await listTechnologyCategories());
@@ -254,7 +278,7 @@ if (process.argv[1]?.endsWith('server.ts') || process.argv[1]?.endsWith('server.
   // Server-side development reservation reconciliation runs OUTSIDE the worker
   // so a RESERVED delivery whose job is never consumed (or whose worker died)
   // is still reconciled to terminal/recoverable on a bounded schedule.
-  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler(),reconcileMacroLifecycle(),reconcileAutomaticAssuranceIntegration()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
+  const reconcileTimer=setInterval(()=>{ void Promise.all([reconcileDevelopmentRuntime(),reconcileCauseAwareRecovery(),reconcileEligibilityScheduler(),reconcileMacroLifecycle(),reconcileAutomaticAssuranceIntegration(),reconcileDeliveryLifecycle()]).catch((error)=>log('server','error','development_reconcile_failed',{error_kind:error instanceof Error?error.constructor.name:'UnknownError'})); },Math.max(settings.developmentReconcileIntervalSeconds,1)*1000);
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('server','info','server_stopping');clearInterval(reconcileTimer);server.close();await stopRuntime();await pool.end();log('server','info','server_stopped');};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
 }

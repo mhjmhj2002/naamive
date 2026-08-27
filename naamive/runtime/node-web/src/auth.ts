@@ -9,7 +9,7 @@ const scrypt=promisify(scryptCallback);
 const sessionCookie='naamive_session';
 const sessionHours=Number(process.env.NAAMIVE_AUTH_SESSION_HOURS??8);
 const allowedRoles=new Set(['OPERATOR','BUSINESS_INTAKE_AUTHORITY','BUSINESS_OWNER','MODULE_PRODUCT_OWNER','TECH_LEAD','REPOSITORY_OWNER','ON_CALL_OWNER','ASSURANCE_REVIEWER','CONFIGURATION_ADMIN','WORKER_SERVICE','AGENT_SERVICE']);
-const allowedActions=new Set(['CREATE_PROJECT','LIST_PROJECTS','READ_PROJECT','OPERATE_PROJECT','DECIDE_CATALOG_GATE','ASSURANCE_ON_CALL','ASSURANCE_REVIEW','ASSURANCE_GATE','ADMIN_CONFIG','WORKER_EXECUTE','AGENT_EXECUTE']);
+const allowedActions=new Set(['CREATE_PROJECT','LIST_PROJECTS','READ_PROJECT','OPERATE_PROJECT','DECIDE_CATALOG_GATE','ASSURANCE_ON_CALL','ASSURANCE_REVIEW','ASSURANCE_GATE','DELIVERY_PAUSE_RESUME','DELIVERY_CANCEL','DELIVERY_EXECUTE','ADMIN_CONFIG','WORKER_EXECUTE','AGENT_EXECUTE']);
 export type AuthenticatedPrincipal={id:string;type:'HUMAN'|'SERVICE';username:string;sessionId?:string};
 export type Authorization={principal:AuthenticatedPrincipal;role:string;grantId:string};
 export type GrantInput={role_code:string;action_code:string;project_id?:string|null;resource_type?:string|null;resource_id?:string|null;expires_at?:string|null};
@@ -71,7 +71,7 @@ export const logout=async(principal:AuthenticatedPrincipal,response:ServerRespon
 export const authorize=async(principal:AuthenticatedPrincipal,input:{action:string;projectId?:string;resourceType?:string;resourceId?:string;roles?:string[]})=>{
   if(!allowedActions.has(input.action))return deny(principal,input.action,input.projectId,'AUTH_ACTION_NOT_PUBLISHED');
   if(principal.type!=='SERVICE'&&['WORKER_EXECUTE','AGENT_EXECUTE'].includes(input.action))return deny(principal,input.action,input.projectId,'AUTH_HUMAN_SERVICE_ACTION_FORBIDDEN');
-  if(principal.type==='SERVICE'&&['DECIDE_CATALOG_GATE','ASSURANCE_ON_CALL','ASSURANCE_REVIEW','ASSURANCE_GATE','ADMIN_CONFIG'].includes(input.action))return deny(principal,input.action,input.projectId,'AUTH_SERVICE_HUMAN_ACTION_FORBIDDEN');
+  if(principal.type==='SERVICE'&&['DECIDE_CATALOG_GATE','ASSURANCE_ON_CALL','ASSURANCE_REVIEW','ASSURANCE_GATE','DELIVERY_PAUSE_RESUME','DELIVERY_CANCEL','ADMIN_CONFIG'].includes(input.action))return deny(principal,input.action,input.projectId,'AUTH_SERVICE_HUMAN_ACTION_FORBIDDEN');
   const roles=input.roles??[];const result=await pool.query(`SELECT g.id,g.role_code FROM auth_role_grants g JOIN auth_principals p ON p.id=g.principal_id WHERE g.principal_id=$1 AND p.status='ACTIVE' AND g.status='ACTIVE' AND (g.expires_at IS NULL OR g.expires_at>clock_timestamp()) AND g.action_code=$2 AND (($3::text IS NULL AND g.project_id IS NULL) OR ($3::text IS NOT NULL AND g.project_id=$3)) AND (g.resource_type IS NULL OR (g.resource_type=$4 AND g.resource_id=$5)) ${roles.length?'AND g.role_code=ANY($6::text[])':''} ORDER BY g.created_at LIMIT 1`,roles.length?[principal.id,input.action,input.projectId??null,input.resourceType??null,input.resourceId??null,roles]:[principal.id,input.action,input.projectId??null,input.resourceType??null,input.resourceId??null]);
   if(!result.rowCount)return deny(principal,input.action,input.projectId,'AUTH_GRANT_DENIED');const value={principal,role:result.rows[0].role_code,grantId:result.rows[0].id};await audit({principal,action:input.action,projectId:input.projectId,resourceType:input.resourceType,resourceId:input.resourceId,role:value.role,grantId:value.grantId,outcome:'ALLOWED',reason:'GRANT_MATCHED'});return value;
 };

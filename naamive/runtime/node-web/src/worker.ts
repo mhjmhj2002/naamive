@@ -22,6 +22,7 @@ import { completeRecoverySpecialist, executeIndependentReview, recordRetryableRe
 import { configuredWorkerService } from './auth.js';
 import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
+import { reconcileDeliveryLifecycle } from './delivery-lifecycle.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -33,6 +34,10 @@ const leaseJob = (projectId?: string) => withTransaction(async (client) => {
   const leased = await client.query(`WITH candidate AS (
       SELECT id FROM jobs
       WHERE ($2::text IS NULL OR project_id=$2)
+        AND NOT EXISTS (SELECT 1 FROM pause_records p WHERE p.resource_kind='PROJECT' AND p.resource_id=jobs.project_id AND p.status='ACTIVE')
+        AND NOT EXISTS (SELECT 1 FROM cancellation_records c WHERE c.resource_kind='PROJECT' AND c.resource_id=jobs.project_id)
+        AND NOT EXISTS (SELECT 1 FROM pause_records p WHERE p.resource_kind='MODULE' AND p.resource_id=jobs.module_id::text AND p.status='ACTIVE')
+        AND NOT EXISTS (SELECT 1 FROM cancellation_records c WHERE c.resource_kind='MODULE' AND c.resource_id=jobs.module_id::text)
         AND (((status IN ('PENDING','RETRYABLE')) AND available_at<=clock_timestamp()) OR (status='LEASED' AND lease_expires_at<clock_timestamp()))
       ORDER BY available_at
       FOR UPDATE SKIP LOCKED
@@ -302,7 +307,7 @@ if (process.argv[1]?.endsWith('worker.ts') || process.argv[1]?.endsWith('worker.
   let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('worker','info','worker_stopped');await stopRuntime();await pool.end();process.exit(0);};
   process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
   while (true) {
-    try { await reconcileMacroLifecycle(10,`macro-worker:${workerPrincipal.id}`); await runOnce(undefined,workerPrincipal.id); }
+    try { await reconcileMacroLifecycle(10,`macro-worker:${workerPrincipal.id}`); await reconcileDeliveryLifecycle(10); await runOnce(undefined,workerPrincipal.id); }
     catch (error) { log('worker', 'error', 'worker_cycle_failed', { error_kind: error instanceof Error ? error.constructor.name : 'UnknownError' }); }
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }
