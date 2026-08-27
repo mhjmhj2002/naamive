@@ -776,16 +776,12 @@ Evidências esperadas:
 
 ## Estado da task
 
-`REC-02` está `DONE`.
+`REC-02` está `IN_PROGRESS` após a reabertura de auditoria de 27/08/2026.
 
-O contrato `REVIEWER_AND_BLOCK_RECOVERY:v1` foi certificado com PostgreSQL real:
-os E2Es cobrem recovery snapshot-backed AUT-03, legacy com identidade original
-incompleta em fail-closed e cancellation durante assistance, specialist e gate
-wait. O aggregate final de 26/08/2026 registrou `npm run e2e` com 117 testes,
-110 aprovados, 7 falhas históricas conhecidas e 0 skips; não houve falha nova
-de REC-02. `npm test` reproduziu somente os quatro failures históricos de
-inventory (`FAILED` esperado versus `RETRYABLE` atual). `npm run build` e
-`git diff --check` foram aprovados na certificação final.
+Os findings F-01 a F-04 exigem desenvolvimento e uma nova certificação
+autorizada. Evidências históricas anteriores não certificam a implementação
+reaberta nem substituem a validação PostgreSQL, build e verificações de diff
+da rodada posterior.
 
 AUT-03 permanece `DONE`.
 GAT-02 permanece `TO_DO`.

@@ -259,7 +259,7 @@ const reviewerRuntime = async (client: pg.PoolClient, candidate: Identity) => {
 /** GAT-01 is the only REC-02 authority for an independence exception.  The
  * legacy assurance_human_gates table remains for unrelated older flows, but
  * reviewer dispatch and decisions intentionally never consult it. */
-const approvedIndependenceCatalogGate = async (client: pg.PoolClient, acceptance: any, gateId: string | null | undefined, lock=false) => {
+const approvedIndependenceCatalogGate = async (client: pg.PoolClient, acceptance: any, gateId: string | null | undefined, lock=false, recoveryKey?:string|null) => {
   if (!gateId) return null;
   const gate=(await client.query(`SELECT g.*,d.actor_id AS decision_actor_id,d.actor_role AS decision_actor_role,d.created_at AS decision_recorded_at
     FROM gate_records g JOIN gate_decisions d ON d.id=g.decision_id
@@ -267,8 +267,9 @@ const approvedIndependenceCatalogGate = async (client: pg.PoolClient, acceptance
       AND g.status='DECIDED' AND g.decision='APPROVE'
       AND g.scope_type='EXECUTION' AND g.scope_id=$3
       AND g.evidence->>'acceptance_id'=$4 AND g.evidence->>'policy_id'=$5
-      AND g.evidence->>'policy_version'=$6 ${lock?'FOR SHARE':''}`,
-    [gateId,acceptance.project_id,acceptance.execution_id,acceptance.id,acceptance.policy_id,String(acceptance.policy_version)])).rows[0];
+      AND g.evidence->>'policy_version'=$6
+      AND ($7::text IS NULL OR g.evidence->>'recovery_key'=$7) ${lock?'FOR SHARE':''}`,
+    [gateId,acceptance.project_id,acceptance.execution_id,acceptance.id,acceptance.policy_id,String(acceptance.policy_version),recoveryKey??null])).rows[0];
   if(!gate) return null;
   const expiresAt=typeof gate.evidence?.expires_at==='string'?new Date(gate.evidence.expires_at):null;
   return expiresAt && !Number.isNaN(expiresAt.getTime()) && expiresAt.getTime()>Date.now() ? gate : null;
@@ -394,8 +395,20 @@ const recoverReviewerInTransaction=async(client:pg.PoolClient,acceptanceId:strin
   if(['ACCEPTED','REWORK_REQUIRED','ESCALATED'].includes(acceptance.state)) return {acceptance_id:acceptance.id,state:acceptance.state};
   const strategy=await ensureReviewerRecoveryStrategy(client,acceptance);
   if(strategy.recovery_state==='TERMINAL_ESCALATION') return {acceptance_id:acceptance.id,state:'ESCALATED'};
-  const exceptionGate=await approvedIndependenceCatalogGate(client,acceptance,strategy.gate_reference,true);
-  if(strategy.recovery_state==='WAITING_FOR_GATE'&&!exceptionGate) return {acceptance_id:acceptance.id,state:'WAITING_FOR_INDEPENDENT_REVIEWER',waiting_for_gate:true};
+  const exceptionGate=await approvedIndependenceCatalogGate(client,acceptance,strategy.gate_reference,true,strategy.recovery_key);
+  if(strategy.recovery_state==='WAITING_FOR_GATE'&&!exceptionGate) {
+    const gate=(await client.query(`SELECT status,decision,evidence->>'expires_at' AS expires_at FROM gate_records WHERE id=$1 FOR SHARE`,[strategy.gate_reference])).rows[0]??null;
+    const expiresAt=gate?.expires_at?new Date(gate.expires_at):null;
+    const expired=Boolean(expiresAt&&!Number.isNaN(expiresAt.getTime())&&expiresAt.getTime()<=Date.now());
+    if(!expired) return {acceptance_id:acceptance.id,state:'WAITING_FOR_INDEPENDENT_REVIEWER',waiting_for_gate:true};
+    await client.query(`UPDATE gate_records SET status='CANCELLED',version=version+1
+      WHERE id=$1 AND status='OPEN'`,[strategy.gate_reference]);
+    await client.query(`UPDATE reviewer_recovery_strategies
+      SET gate_reference=NULL,recovery_state='ACTIVE',updated_at=clock_timestamp()
+      WHERE recovery_key=$1 AND gate_reference=$2`,[strategy.recovery_key,strategy.gate_reference]);
+    await recoveryBlock(client,acceptance,'INDEPENDENCE_EXCEPTION_REQUIRED','POLICY',{recovery_key:strategy.recovery_key,expired_gate_id:strategy.gate_reference,reason:'INDEPENDENCE_EXCEPTION_EXPIRED'});
+    return recoverReviewerInTransaction(client,acceptance.id,'expired-independence-exception');
+  }
   const active=(await client.query(`SELECT * FROM assurance_reviews WHERE acceptance_id=$1 AND state IN ('PENDING','DISPATCHED') FOR UPDATE`,[acceptance.id])).rows[0];
   if(active) return active; // stage 1 retries the exact durable review/job.
   // A specialist is a real asynchronous, advisory dispatch.  Stage 7 cannot
@@ -469,14 +482,15 @@ const recoverReviewerInTransaction=async(client:pg.PoolClient,acceptanceId:strin
   }
   const exceptionAllowed=Array.isArray(policy.configuration?.runtime_exception_classifications)&&policy.configuration.runtime_exception_classifications.includes(acceptance.classification);
   if(exceptionAllowed&&!strategy.gate_reference) {
-    const gate=await openCatalogGate(client,acceptance.project_id,{gate_code:'INDEPENDENCE_EXCEPTION',scope_type:'EXECUTION',scope_id:acceptance.execution_id,condition_code:'INDEPENDENCE_EXCEPTION_POLICY_MATCHED',reason:'No independent reviewer remains in the frozen policy set.',correlation_id:acceptance.correlation_id,idempotency_key:`recovery-gate:v1:${strategy.recovery_key}:7`,evidence:{acceptance_id:acceptance.id,policy_id:strategy.policy_id,policy_version:strategy.policy_version,expires_at:new Date(Date.now()+3600000).toISOString(),unavailable_reviewer_evidence:{recovery_key:strategy.recovery_key,candidates:candidates.length}}});
+    const gateAttempt=Number(strategy.stage_attempts?.['7']??0)+1;
+    const gate=await openCatalogGate(client,acceptance.project_id,{gate_code:'INDEPENDENCE_EXCEPTION',scope_type:'EXECUTION',scope_id:acceptance.execution_id,condition_code:'INDEPENDENCE_EXCEPTION_POLICY_MATCHED',reason:'No independent reviewer remains in the frozen policy set.',correlation_id:acceptance.correlation_id,idempotency_key:`recovery-gate:v1:${strategy.recovery_key}:7:${gateAttempt}`,evidence:{acceptance_id:acceptance.id,recovery_key:strategy.recovery_key,policy_id:strategy.policy_id,policy_version:strategy.policy_version,expires_at:new Date(Date.now()+3600000).toISOString(),unavailable_reviewer_evidence:{recovery_key:strategy.recovery_key,candidates:candidates.length}}});
     await client.query(`UPDATE reviewer_recovery_strategies SET current_stage=7,recovery_state='WAITING_FOR_GATE',exhausted_stages=exhausted_stages || '6'::jsonb,
       stage_attempts=stage_attempts || jsonb_build_object('7',coalesce((stage_attempts->>'7')::int,0)+1),gate_reference=$2,updated_at=clock_timestamp() WHERE recovery_key=$1`,[strategy.recovery_key,gate.id]);
     return {acceptance_id:acceptance.id,state:'WAITING_FOR_INDEPENDENT_REVIEWER',block_id:block.id,gate_id:gate.id};
   }
   await client.query(`UPDATE work_blocks SET state='ESCALATED',updated_at=clock_timestamp() WHERE id=$1 AND state NOT IN ('RESOLVED','CANCELLED','ESCALATED')`,[block.id]);
   await client.query(`UPDATE work_acceptances SET state='ESCALATED',updated_at=clock_timestamp() WHERE id=$1 AND state<>'CANCELLED'`,[acceptance.id]);
-  await client.query(`UPDATE reviewer_recovery_strategies SET current_stage=8,recovery_state='TERMINAL_ESCALATION',exhausted_stages=exhausted_stages || '7'::jsonb || '8'::jsonb,
+  await client.query(`UPDATE reviewer_recovery_strategies SET current_stage=8,recovery_state='TERMINAL_ESCALATION',exhausted_stages=exhausted_stages || '6'::jsonb || '7'::jsonb || '8'::jsonb,
     stage_attempts=stage_attempts || jsonb_build_object('8',coalesce((stage_attempts->>'8')::int,0)+1),updated_at=clock_timestamp() WHERE recovery_key=$1`,[strategy.recovery_key]);
   await audit(client,acceptance.project_id,'ASSURANCE_RECOVERY_ESCALATED',acceptance.correlation_id,{acceptance_id:acceptance.id,recovery_key:strategy.recovery_key,block_id:block.id,reason:'RECOVERY_STAGES_EXHAUSTED'});
   return {acceptance_id:acceptance.id,state:'ESCALATED',block_id:block.id};
@@ -497,7 +511,7 @@ export const resumeReviewerRecoveryForCatalogGate=async(client:pg.PoolClient,gat
     JOIN work_acceptances a ON a.id=s.acceptance_id
     WHERE s.gate_reference=$1 FOR UPDATE OF s,a`,[gate.id])).rows[0];
   if(!strategy||strategy.state==='CANCELLED'||strategy.recovery_state!=='WAITING_FOR_GATE') return null;
-  const verified=await approvedIndependenceCatalogGate(client,strategy,gate.id,true);
+  const verified=await approvedIndependenceCatalogGate(client,strategy,gate.id,true,strategy.recovery_key);
   if(!verified) return null;
   await client.query(`UPDATE reviewer_recovery_strategies SET recovery_state='ACTIVE',updated_at=clock_timestamp()
     WHERE recovery_key=$1 AND recovery_state='WAITING_FOR_GATE'`,[strategy.recovery_key]);
@@ -518,6 +532,24 @@ export const recoverTerminalReviewerFailure=async(client:pg.PoolClient,jobId:str
     stage_attempts=stage_attempts || jsonb_build_object('1',coalesce((stage_attempts->>'1')::int,0)+$3),updated_at=clock_timestamp() WHERE recovery_key=$1`,[strategy.recovery_key,JSON.stringify([{identity,review_id:row.review_id,job_id:jobId,code,attempts,terminal:true}]),Math.max(1,attempts)]);
   await openBlock(client,{projectId:row.project_id,acceptanceId:row.acceptance_id,executionId:row.execution_id,sourceType:'ASSURANCE_REVIEW',sourceId:jobId,code:'REVIEWER_TERMINAL_FAILURE',category:'ENVIRONMENT',severity:'HIGH',correlationId:row.correlation_id,evidence:{review_job_id:jobId,attempts,last_error:code,recovery_key:strategy.recovery_key}});
   return recoverReviewerInTransaction(client,row.acceptance_id,'terminal-reviewer-failure');
+};
+
+/** Stage 1 records the existing global retry policy on the same durable
+ * reviewer dispatch. It never changes that policy or creates a replacement. */
+export const recordRetryableReviewerFailure=async(client:pg.PoolClient,jobId:string,code:string,attempts:number)=>{
+  const row=(await client.query(`SELECT a.* FROM assurance_reviews r
+    JOIN agent_execution e ON e.id=r.dispatch_execution_id
+    JOIN work_acceptances a ON a.id=r.acceptance_id
+    WHERE e.job_id=$1 AND r.state='DISPATCHED' FOR UPDATE OF r,a`,[jobId])).rows[0];
+  if(!row||row.state==='CANCELLED') return null;
+  const strategy=await ensureReviewerRecoveryStrategy(client,row);
+  await client.query(`UPDATE reviewer_recovery_strategies
+    SET current_stage=1,recovery_state='ACTIVE',
+        stage_attempts=stage_attempts || jsonb_build_object('1',coalesce((stage_attempts->>'1')::int,0)+1),
+        updated_at=clock_timestamp()
+    WHERE recovery_key=$1`,[strategy.recovery_key]);
+  await audit(client,row.project_id,'ASSURANCE_REVIEWER_RETRY_SCHEDULED',row.correlation_id,{acceptance_id:row.id,recovery_key:strategy.recovery_key,review_job_id:jobId,code,attempts});
+  return strategy;
 };
 
 export const reconcileReviewerRecovery=async()=>{
@@ -557,7 +589,9 @@ export const createIndependentReview = async (acceptanceId:string, producer:Iden
   if(!['PENDING_REVIEW','WAITING_FOR_INDEPENDENT_REVIEWER'].includes(acceptance.state)) throw new AssuranceError('ACCEPTANCE_NOT_PENDING_REVIEW',409);
   const policy=(await client.query(`SELECT configuration FROM assurance_policies WHERE id=$1 AND version=$2`,[acceptance.policy_id,acceptance.policy_version])).rows[0];
   const permitted=Array.isArray(policy?.configuration?.runtime_exception_classifications)&&policy.configuration.runtime_exception_classifications.includes(acceptance.classification);
-  const gate = await approvedIndependenceCatalogGate(client,acceptance,independenceGateId,true);
+  const strategy=(await client.query(`SELECT * FROM reviewer_recovery_strategies WHERE acceptance_id=$1 FOR UPDATE`,[acceptance.id])).rows[0]??null;
+  if(independenceGateId&&(!strategy||String(strategy.gate_reference??'')!==independenceGateId)) throw new AssuranceError('INDEPENDENCE_EXCEPTION_RECOVERY_MISMATCH',409);
+  const gate = await approvedIndependenceCatalogGate(client,acceptance,independenceGateId,true,strategy?.recovery_key);
   const frozenProducer=frozenProducerIdentity(acceptance);
   if (!sameIdentity(producer,frozenProducer)) throw new AssuranceError('PRODUCER_IDENTITY_MISMATCH',409);
   const requiresException=Boolean(permitted&&!gate&&frozenProducer.runtimeId===candidate.runtimeId&&frozenProducer.configurationVersion===candidate.configurationVersion&&producer.agentId!==candidate.agentId&&producer.executionContextHash!==candidate.executionContextHash);
@@ -744,10 +778,16 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
   // exception or turn it into an acceptance.
   const exceptionGateId=review.independence_check?.gate_id;
   if(exceptionGateId) {
-    const gate=await approvedIndependenceCatalogGate(client,{...review,id:review.acceptance_id,policy_id:review.acceptance_policy_id,policy_version:review.acceptance_policy_version},exceptionGateId,true);
+    const strategy=(await client.query(`SELECT recovery_key,gate_reference FROM reviewer_recovery_strategies WHERE acceptance_id=$1 FOR UPDATE`,[review.acceptance_id])).rows[0]??null;
+    const gate=strategy&&String(strategy.gate_reference??'')===String(exceptionGateId)
+      ? await approvedIndependenceCatalogGate(client,{...review,id:review.acceptance_id,policy_id:review.acceptance_policy_id,policy_version:review.acceptance_policy_version},exceptionGateId,true,strategy.recovery_key)
+      : null;
     if(!gate) {
       await client.query(`UPDATE assurance_reviews SET state='CANCELLED',decided_at=clock_timestamp() WHERE id=$1 AND state='DISPATCHED'`,[reviewId]);
       await client.query(`UPDATE work_acceptances SET state='WAITING_FOR_INDEPENDENT_REVIEWER',updated_at=clock_timestamp() WHERE id=$1 AND state NOT IN ('ACCEPTED','CANCELLED')`,[review.acceptance_id]);
+      await client.query(`UPDATE reviewer_recovery_strategies
+        SET gate_reference=NULL,recovery_state='ACTIVE',updated_at=clock_timestamp()
+        WHERE acceptance_id=$1 AND gate_reference=$2`,[review.acceptance_id,exceptionGateId]);
       await openBlock(client,{projectId:review.project_id,acceptanceId:review.acceptance_id,executionId:review.execution_id,sourceType:'ASSURANCE_REVIEW',sourceId:reviewId,code:'INDEPENDENCE_EXCEPTION_REQUIRED',category:'POLICY',severity:'HIGH',correlationId:review.correlation_id,evidence:{review_id:reviewId,independence_gate_id:exceptionGateId,reason:'INDEPENDENCE_EXCEPTION_EXPIRED'}});
       independenceExceptionExpired=true;
       return null;

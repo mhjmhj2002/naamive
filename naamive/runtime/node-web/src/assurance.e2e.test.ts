@@ -109,6 +109,8 @@ if (!process.env.DATABASE_URL) {
     process.env.NAAMIVE_AGENT_ADAPTER='codex'; process.env.NAAMIVE_CODEX_COMMAND='false'; process.env.NAAMIVE_AGENT_MAX_RETRIES='1';
     assert.equal(await runOnce(project),true);
     assert.equal((await pool.query(`SELECT status FROM jobs WHERE id=(SELECT job_id FROM agent_execution WHERE id=$1)`,[durable.rows[0].dispatch_id])).rows[0].status,'RETRYABLE');
+    const retryStage=(await pool.query(`SELECT current_stage,stage_attempts FROM reviewer_recovery_strategies WHERE acceptance_id=$1`,[ready.acceptance])).rows[0];
+    assert.equal(Number(retryStage.current_stage),1); assert.equal(Number(retryStage.stage_attempts['1']),1);
     const specialistWait=(await pool.query(`SELECT s.current_stage,s.gate_reference,j.status FROM reviewer_recovery_strategies s JOIN reviewer_recovery_specialist_recommendations r ON r.id=s.specialist_reference JOIN jobs j ON j.id=r.job_id WHERE s.acceptance_id=$1`,[unavailable.acceptance])).rows[0];
     assert.deepEqual({stage:Number(specialistWait.current_stage),gate:specialistWait.gate_reference,status:specialistWait.status},{stage:6,gate:null,status:'PENDING'});
     process.env.NAAMIVE_AGENT_ADAPTER='controlled';
@@ -214,7 +216,9 @@ if (!process.env.DATABASE_URL) {
 
     for(const gateType of ['SCOPE_ARCHITECTURE_POLICY','ACCEPTED_RISK']) assert.equal((await fetch(gateUrl,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'REPOSITORY_OWNER','idempotency-key':`gate-${gateType}`},body:JSON.stringify({gate_type:gateType,decision:'REJECTED',reason:'reserved decision remains human',evidence:{reference:`evidence-${gateType}`},scope:{project_id:project},classification:'INTERNAL'})})).status,202);
     const exceptionGate:any=await withTransaction(async client => {
-      const opened=await openCatalogGate(client,project,{gate_code:'INDEPENDENCE_EXCEPTION',scope_type:'EXECUTION',scope_id:unavailable.execution,condition_code:'INDEPENDENCE_EXCEPTION_POLICY_MATCHED',reason:'isolated runtime capacity',idempotency_key:`runtime-exception:${unavailable.acceptance}`,evidence:{acceptance_id:unavailable.acceptance,policy_id:assurancePolicy,policy_version:1,expires_at:new Date(Date.now()+60_000).toISOString(),unavailable_reviewer_evidence:{reference:'exception-1'}}});
+      const recovery=(await client.query(`SELECT recovery_key FROM reviewer_recovery_strategies WHERE acceptance_id=$1 FOR UPDATE`,[unavailable.acceptance])).rows[0];
+      const opened=await openCatalogGate(client,project,{gate_code:'INDEPENDENCE_EXCEPTION',scope_type:'EXECUTION',scope_id:unavailable.execution,condition_code:'INDEPENDENCE_EXCEPTION_POLICY_MATCHED',reason:'isolated runtime capacity',idempotency_key:`runtime-exception:${unavailable.acceptance}`,evidence:{acceptance_id:unavailable.acceptance,recovery_key:recovery.recovery_key,policy_id:assurancePolicy,policy_version:1,expires_at:new Date(Date.now()+60_000).toISOString(),unavailable_reviewer_evidence:{reference:'exception-1'}}});
+      await client.query(`UPDATE reviewer_recovery_strategies SET gate_reference=$2,current_stage=7,recovery_state='WAITING_FOR_GATE' WHERE acceptance_id=$1`,[unavailable.acceptance,opened.id]);
       return decideCatalogGate(client,project,opened.id,{version:Number(opened.version),decision:'APPROVE',reason:'bounded runtime exception',evidence:{reference:'approved'},actor_id:'tech-lead',actor_role:'TECH_LEAD',idempotency_key:`runtime-exception-approve:${unavailable.acceptance}`});
     });
     const exceptionReview:any=await createIndependentReview(unavailable.acceptance,producer(unavailable.execution),{...producer(unavailable.execution),agentId:'governance-assurance',runtimeId:runtimeA,configurationVersion:1,executionContextHash:'exception-review-context'},pkg,exceptionGate.id); assert.equal(exceptionReview.independence_check.exception_used,true);
@@ -230,8 +234,11 @@ if (!process.env.DATABASE_URL) {
     assert.equal((await pool.query(`SELECT state FROM assurance_reviews WHERE id=$1`,[exceptionReview.id])).rows[0].state,'CANCELLED');
     assert.equal((await pool.query(`SELECT state FROM work_acceptances WHERE id=$1`,[unavailable.acceptance])).rows[0].state,'WAITING_FOR_INDEPENDENT_REVIEWER');
     assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM work_blocks WHERE source_type='ASSURANCE_REVIEW' AND source_id=$1::text AND block_code='INDEPENDENCE_EXCEPTION_REQUIRED' AND state='OPEN'`,[exceptionReview.id])).rows[0].n),1);
-    const expiredRestart:any=await createIndependentReview(unavailable.acceptance,producer(unavailable.execution),{...producer(unavailable.execution),agentId:'governance-assurance',runtimeId:runtimeA,configurationVersion:1,executionContextHash:'expired-restart-context'},pkg,exceptionGate.id);
-    assert.equal(expiredRestart.state,'WAITING_FOR_INDEPENDENT_REVIEWER');
+    await pool.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp() WHERE id=(SELECT r.job_id FROM reviewer_recovery_specialist_recommendations r JOIN reviewer_recovery_strategies s ON s.recovery_key=r.recovery_key WHERE s.acceptance_id=$1)`,[unavailable.acceptance]);
+    await recoverReviewerAcceptance(unavailable.acceptance,'expired-gate-restart');
+    const expiredRestart=(await pool.query(`SELECT recovery_key,gate_reference,recovery_state,stage_attempts FROM reviewer_recovery_strategies WHERE acceptance_id=$1`,[unavailable.acceptance])).rows[0];
+    assert.notEqual(expiredRestart.gate_reference,exceptionGate.id); assert.equal(expiredRestart.recovery_state,'WAITING_FOR_GATE');
+    assert.equal(Number(expiredRestart.stage_attempts['7']),2);
     assert.equal((await fetch(`${base}/api/projects/${project}/assurance/acceptances/${unavailable.acceptance}/cancel`,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'ON_CALL_OWNER'},body:JSON.stringify({reason:'exception scenario complete',evidence:{reference:'exception-complete'}})})).status,202);
 
     // Terminal replacement is serialized on acceptance: two concurrent

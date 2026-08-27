@@ -77,6 +77,11 @@ const catalog: GateDefinition[] = [
 ];
 
 const canonical = (value: unknown): string => JSON.stringify(value);
+const canonicalPayload = (value: unknown): string => {
+  const normalize=(item:any):any=>Array.isArray(item)?item.map(normalize):item&&typeof item==='object'
+    ?Object.fromEntries(Object.keys(item).sort().map(key=>[key,normalize(item[key])])):item;
+  return JSON.stringify(normalize(value));
+};
 export const gateCatalogHash = createHash('sha256').update(canonical({version:GATE_CATALOG_VERSION,gates:catalog})).digest('hex');
 export const gateCatalog = (): readonly GateDefinition[] => catalog;
 export const publishedGateCatalog = async () => {
@@ -123,7 +128,12 @@ export const openCatalogGate = async (client: pg.PoolClient, projectId:string, i
   const {entry,evidence}=validateGateOpeningFor(publishedDefinition(manifest.rows[0].catalog,input.gate_code),input);
   if(input.idempotency_key) {
     const replay=await client.query(`SELECT * FROM gate_records WHERE idempotency_key=$1`,[input.idempotency_key]);
-    if(replay.rowCount) return replay.rows[0];
+    if(replay.rowCount) {
+      const existing=replay.rows[0];
+      const same=existing.project_id===projectId&&existing.gate_code===entry.code&&existing.scope_type===input.scope_type&&existing.scope_id===input.scope_id&&existing.condition_code===input.condition_code&&existing.reason===input.reason&&existing.correlation_id===(input.correlation_id??existing.correlation_id)&&canonicalPayload(existing.evidence)===canonicalPayload(evidence);
+      if(!same) throw new ApiError(409,'GATE_IDEMPOTENCY_CONFLICT');
+      return existing;
+    }
   }
   const existing=await client.query(`SELECT id FROM gate_records WHERE project_id=$1 AND gate_code=$2 AND scope_type=$3 AND scope_id=$4 AND status='OPEN' FOR UPDATE`,[projectId,entry.code,input.scope_type,input.scope_id]);
   if(existing.rowCount) throw new ApiError(409,'GATE_ALREADY_OPEN');
@@ -135,8 +145,16 @@ export const openCatalogGate = async (client: pg.PoolClient, projectId:string, i
 
 export type GateDecision = { version: number; decision: string; reason: string; evidence: unknown; actor_id: string; actor_role: string; idempotency_key?: string };
 export const decideCatalogGate = async (client:pg.PoolClient, projectId:string, gateId:string, input:GateDecision) => {
-  const replay=input.idempotency_key ? await client.query(`SELECT g.* FROM gate_decisions d JOIN gate_records g ON g.id=d.gate_id WHERE d.idempotency_key=$1`,[input.idempotency_key]) : null;
-  if(replay?.rowCount) return replay.rows[0];
+  const replay=input.idempotency_key ? await client.query(`SELECT * FROM gate_decisions WHERE idempotency_key=$1`,[input.idempotency_key]) : null;
+  if(replay?.rowCount) {
+    const prior=replay.rows[0];
+    const same=prior.gate_id===gateId&&Number(prior.gate_version)===Number(input.version)&&prior.decision===input.decision&&prior.actor_id===input.actor_id&&prior.actor_role===input.actor_role&&prior.reason===input.reason&&canonicalPayload(prior.evidence)===canonicalPayload(input.evidence);
+    if(!same) throw new ApiError(409,'GATE_IDEMPOTENCY_CONFLICT');
+    const gate=(await client.query(`SELECT * FROM gate_records WHERE id=$1 AND project_id=$2`,[gateId,projectId])).rows[0];
+    if(!gate) throw new ApiError(404,'GATE_NOT_FOUND');
+    const effects=object(gate.decision_effects,'GATE_CATALOG_SNAPSHOT_MISSING') as Record<string,DecisionEffect>;
+    return {...gate,effect:effects[gate.decision]};
+  }
   const gate=(await client.query(`SELECT * FROM gate_records WHERE id=$1 AND project_id=$2 FOR UPDATE`,[gateId,projectId])).rows[0];
   if(!gate) throw new ApiError(404,'GATE_NOT_FOUND');
   if(gate.status!=='OPEN'||Number(input.version)!==Number(gate.version)) throw new ApiError(409,'GATE_VERSION_CONFLICT');
