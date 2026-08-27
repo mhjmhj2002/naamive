@@ -21,11 +21,15 @@ reescrever migrations aplicadas.
 policy/version/hash, idempotência de dispatch/acceptance e o vínculo de
 development com a acceptance AUT-02 já canônica. Planning mantém a acceptance
 técnica separada de `MODULE_PLAN_APPROVAL`; QA/integration são evidence-only;
-release continua reservado a GAT-02. `REC-02` está `IN_PROGRESS` após
-reabertura de auditoria: os findings F-01 a F-04 exigem alinhar a authority de
-`INDEPENDENCE_EXCEPTION`, a retomada do gate, o fail-closed por expiração e a
-máquina de stages publicada. A tarefa não deve ser novamente marcada `DONE`
-antes de desenvolvimento e validação autorizados.
+release continua reservado a GAT-02. `REC-02` está `DONE`: a reabertura de
+auditoria foi fechada com F-01 a F-04 em `PASS`, após alinhar a authority de
+`INDEPENDENCE_EXCEPTION`, a retomada pelo gate, o fail-closed por expiração e
+a máquina auditável de stages. A certificação incluiu migrations fresh 001–072,
+second migrate, focused/regressões de REC-02, GAT-01, GAT-03 e AUT-03, build e
+`git diff --check`. Os aggregates foram executados manualmente pelo operador,
+pois a limitação conhecida do ambiente Codex está documentada em `AGENTS.md`;
+somente as quatro baselines Inventory e três baselines Phase4 foram observadas,
+sem regressão nova da REC-02 e sem alterar a retry policy.
 O checkpoint de 26/08 reforçou o selector fechado, a convergência concorrente
 de dispatch e o fencing de planning antes de `PLAN_TECHNICALLY_ACCEPTED`;
 fresh migrate e second migrate passaram. A validação agregada foi concluída:
@@ -59,7 +63,7 @@ Baseline histórica imutável:
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `DONE` | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `DONE` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `DONE` | AUT-02 |
-| 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `IN_PROGRESS` | AUT-03, GAT-01 |
+| 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `DONE` | AUT-03, GAT-01 |
 | 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `TO_DO` | LR-02, GAT-01, GAT-03 |
 | 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03 |
 | 12 | [UI-02 — Superfícies completas de parada](UI-02-complete-stop-surfaces.md) | `TO_DO` | UI-01, REC-02, GAT-02 |

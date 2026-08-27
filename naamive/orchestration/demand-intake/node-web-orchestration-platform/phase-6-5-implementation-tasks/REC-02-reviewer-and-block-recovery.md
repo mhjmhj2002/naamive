@@ -1,6 +1,6 @@
 ---
 task: REC-02
-status: IN_PROGRESS
+status: DONE
 title: Recuperação de reviewer e blocks
 depends_on: [AUT-03, GAT-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -12,20 +12,42 @@ prevalidation_status: READY_FOR_IMPLEMENTATION
 
 ## Reabertura de auditoria — 27/08/2026
 
-REC-02 foi reaberta por findings pós-commit e permanece `IN_PROGRESS`. Esta
+REC-02 foi reaberta por findings pós-commit. Esta
 reabertura não altera o contrato `REVIEWER_AND_BLOCK_RECOVERY:v1`; ela exige
 que o runtime volte a aderir a ele antes de novo aceite.
 
-| Finding | Correção documental exigida | Critério de fechamento |
-| --- | --- | --- |
-| F-01 | `INDEPENDENCE_EXCEPTION` deve ter `gate_records`/`gate_decisions` do catálogo GAT-01 como authority canônica; `assurance_human_gates` só pode permanecer em fluxos legados que não sejam REC-02. | Dispatch e decisão do review consomem e revalidam o mesmo gate catalogado. |
-| F-02 | Diferenciar espera de gate humano da escalada terminal e retomar a mesma `recovery_key` após `APPROVE`. | A aprovação cria somente o review/dispatch permitido; não cria producer rerun, acceptance, gate ou recovery novos. |
-| F-03 | A expiração deve persistir o fail-closed antes de retornar `INDEPENDENCE_EXCEPTION_EXPIRED`. | Sem `review_decision`; review inutilizável, acceptance em espera e block deduplicado persistidos. |
-| F-04 | Persistir e tornar auditável a máquina 1–8: retry, reviewer, runtime, role, assistance/routing, specialist, gate e escalada. | Restart evidencia estágio, esgotamento, tentativas, candidate set e candidato selecionado, sem loop. |
+| Finding | Estado de fechamento | Correção documental exigida | Critério de fechamento |
+| --- | --- | --- | --- |
+| F-01 | `PASS` — fechado | `INDEPENDENCE_EXCEPTION` deve ter `gate_records`/`gate_decisions` do catálogo GAT-01 como authority canônica; `assurance_human_gates` só pode permanecer em fluxos legados que não sejam REC-02. | Dispatch e decisão do review consomem e revalidam o mesmo gate catalogado. |
+| F-02 | `PASS` — fechado | Diferenciar espera de gate humano da escalada terminal e retomar a mesma `recovery_key` após `APPROVE`. | A aprovação cria somente o review/dispatch permitido; não cria producer rerun, acceptance, gate ou recovery novos. |
+| F-03 | `PASS` — fechado | A expiração deve persistir o fail-closed antes de retornar `INDEPENDENCE_EXCEPTION_EXPIRED`. | Sem `review_decision`; review inutilizável, acceptance em espera e block deduplicado persistidos. |
+| F-04 | `PASS` — fechado | Persistir e tornar auditável a máquina 1–8: retry, reviewer, runtime, role, assistance/routing, specialist, gate e escalada. | Restart evidencia estágio, esgotamento, tentativas, candidate set e candidato selecionado, sem loop. |
 
-Nesta fase documental não se executam testes, migrations ou comandos de build.
-REC-02 só pode retornar a `DONE` após uma fase de desenvolvimento e validação
-autorizada produzir as evidências previstas na seção de critérios de aceite.
+## Certificação final — 27/08/2026
+
+REC-02 foi certificada `DONE` após a correção funcional validada que, na
+expiração de um gate já consumido, preserva o primeiro attempt do stage 7 antes
+da abertura do gate substituto. Os findings F-01 a F-04 estão fechados com
+`PASS`.
+
+Evidência executada na rodada de certificação:
+
+- migrations fresh 001–072 e second migrate;
+- focused de identity, cancellation e assurance;
+- retomada positiva do gate GAT-01, persistência fail-closed de expiry e modelo
+  de stages 1–8;
+- regressões GAT-01, GAT-03 e AUT-03;
+- build e `git diff --check`.
+
+Os aggregates `npm test` e `npm run e2e` foram executados **manualmente pelo
+operador**, não pelo Codex, porque o ambiente Codex possui a limitação de
+execução longa documentada em `AGENTS.md`. Foram observadas somente baselines
+históricas: quatro falhas Inventory com `expected FAILED` e `actual RETRYABLE`;
+e três falhas Phase4 — duas com `expected WAITING_FOR_PRODUCT_COMMITMENT` e
+`actual ANALYSIS_IN_PROGRESS`, e uma no cleanup da FK
+`work_acceptances_execution_id_fkey` (`SQLSTATE 23503`). Nenhuma falha nova da
+REC-02 foi observada e nenhuma retry policy foi alterada para acomodar essas
+baselines.
 
 ## Contrato normativo
 
@@ -776,12 +798,10 @@ Evidências esperadas:
 
 ## Estado da task
 
-`REC-02` está `IN_PROGRESS` após a reabertura de auditoria de 27/08/2026.
-
-Os findings F-01 a F-04 exigem desenvolvimento e uma nova certificação
-autorizada. Evidências históricas anteriores não certificam a implementação
-reaberta nem substituem a validação PostgreSQL, build e verificações de diff
-da rodada posterior.
+`REC-02` está `DONE`. A reabertura de auditoria de 27/08/2026 permanece como
+histórico; F-01, F-02, F-03 e F-04 foram fechados com `PASS` pela certificação
+posterior, incluindo validação PostgreSQL, build, verificações de diff e os
+aggregates manuais do operador registrados acima.
 
 AUT-03 permanece `DONE`.
 GAT-02 permanece `TO_DO`.
