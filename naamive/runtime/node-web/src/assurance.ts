@@ -785,8 +785,14 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
     if(!gate) {
       await client.query(`UPDATE assurance_reviews SET state='CANCELLED',decided_at=clock_timestamp() WHERE id=$1 AND state='DISPATCHED'`,[reviewId]);
       await client.query(`UPDATE work_acceptances SET state='WAITING_FOR_INDEPENDENT_REVIEWER',updated_at=clock_timestamp() WHERE id=$1 AND state NOT IN ('ACCEPTED','CANCELLED')`,[review.acceptance_id]);
+      // The dispatched review proves that stage 7 was consumed even when the
+      // strategy was created by an older/manual recovery handoff that did not
+      // record its first gate attempt.  Preserve that fact before the restart
+      // opens a replacement gate, so its attempt is auditably number two.
       await client.query(`UPDATE reviewer_recovery_strategies
-        SET gate_reference=NULL,recovery_state='ACTIVE',updated_at=clock_timestamp()
+        SET gate_reference=NULL,current_stage=7,recovery_state='ACTIVE',
+            stage_attempts=stage_attempts || jsonb_build_object('7',greatest(coalesce((stage_attempts->>'7')::int,0),1)),
+            updated_at=clock_timestamp()
         WHERE acceptance_id=$1 AND gate_reference=$2`,[review.acceptance_id,exceptionGateId]);
       await openBlock(client,{projectId:review.project_id,acceptanceId:review.acceptance_id,executionId:review.execution_id,sourceType:'ASSURANCE_REVIEW',sourceId:reviewId,code:'INDEPENDENCE_EXCEPTION_REQUIRED',category:'POLICY',severity:'HIGH',correlationId:review.correlation_id,evidence:{review_id:reviewId,independence_gate_id:exceptionGateId,reason:'INDEPENDENCE_EXCEPTION_EXPIRED'}});
       independenceExceptionExpired=true;

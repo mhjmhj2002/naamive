@@ -125,6 +125,39 @@ When database behavior is part of the task, use the repository's real PostgreSQL
 
 When workflow or orchestration behavior changes, test both the expected transition and the behavior that must not occur.
 
+## Aggregate test execution limitation
+
+The Codex execution environment currently terminates long-running silent
+processes after approximately 30–40 seconds.
+
+`macro-lifecycle.e2e.test.ts` has been diagnostically verified to be progressing
+normally in PostgreSQL when this external termination occurs. The observed
+failure is an execution-environment limitation, not a repository test hang,
+deadlock, open handle, timer, socket, worker, or application defect.
+
+Therefore, Codex agents MUST NOT execute:
+
+- `npm test`;
+- `npm run e2e`;
+- `macro-lifecycle.e2e.test.ts`; or
+- any equivalent full aggregate validation that includes this long-running test.
+
+The only exceptions are when the operator explicitly instructs that these
+commands be retried or confirms that the execution environment has changed.
+Those validations remain manual operator validations.
+
+Agents must not repeatedly retry, instrument, split, heartbeat, monitor, or
+attempt workarounds solely to bypass this external execution timeout. When a
+certification requires one of these validations, report
+`MANUAL_OPERATOR_VALIDATION_REQUIRED` and continue with other safe
+validations.
+
+Do not classify these manual validations as PASS or FAIL without
+operator-provided results. The prior diagnostic established that
+`macro-lifecycle.e2e.test.ts` progresses normally past PostgreSQL
+reconciliation work and is externally terminated around 30–38 seconds before
+completion.
+
 ## Change discipline
 
 Preserve existing behavior that is outside the requested scope.
