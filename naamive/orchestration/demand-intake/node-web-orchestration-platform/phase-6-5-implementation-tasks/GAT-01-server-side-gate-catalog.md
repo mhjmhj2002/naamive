@@ -21,7 +21,8 @@ Gates legítimos existem de forma dispersa e estados técnicos viraram aprovaç�
 O servidor deve preservar `REGISTER_PROJECT`, `PRODUCT_COMMITMENT`,
 `MODULE_PLAN_APPROVAL` e aceite final; avaliar materialidade para arquitetura,
 risco, segurança/compliance, independência e rework esgotado; impedir qualquer
-gate não publicado.
+gate não publicado. Para arquitetura e risco material, a avaliação também pode
+ocorrer em `EXECUTION` pelo gate code concreto compatível com esse scope.
 
 ## Trava de pré-validação do catálogo
 
@@ -37,8 +38,8 @@ não pode ser preenchida por conveniência de implementação.
 | `PRODUCT_COMMITMENT` | humano normativo | condição normativa publicada | evidência normativa aplicável | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
 | `MODULE_PLAN_APPROVAL` | humano normativo | condição normativa publicada | evidência normativa aplicável | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
 | aceite final de entrega | humano normativo | condição normativa publicada | evidência normativa aplicável | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
-| arquitetura material | condicional | materialidade publicada | evidência que prova a materialidade | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
-| risco residual/produção de alto risco | condicional | risco publicado | evidência que prova o risco | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
+| arquitetura material — `MATERIAL_ARCHITECTURE` (projeto/módulo) e `SCOPE_ARCHITECTURE_POLICY` (execução) | condicional | `MATERIALITY_POLICY_MATCHED` | `policy_id`, `policy_version`, `material_impacts`, `alternatives`, `affected_boundaries` | `TECH_LEAD`/`REPOSITORY_OWNER` no scope publicado | `APPROVE` + `REWORK` (projeto/módulo); `APPROVE` + `REJECT` (execução) | fecha/aceita a decisão material ou registra/recusa com rework | `PLANNING`/`ARCHITECTED` ou retorno arquitetural; em execução, `RESUME_POLICY_PATH` ou `REWORK_REQUIRED` |
+| risco residual/produção de alto risco — `MATERIAL_RISK` (projeto) e `ACCEPTED_RISK` (execução) | condicional | `MATERIAL_RISK_POLICY_MATCHED` | `policy_id`, `policy_version`, `residual_risk`, `impact`, `mitigations` | `TECH_LEAD`/`REPOSITORY_OWNER` no scope publicado | `ACCEPT_RISK` + `REWORK` (projeto); `APPROVE` + `REJECT` (execução) | aceita o risco explicitamente ou o devolve para correção | `DELIVERY`/`IMPLEMENTATION`; em execução, `RESUME_POLICY_PATH` ou `REWORK_REQUIRED` |
 | segurança/compliance quando aplicável | condicional | aplicabilidade publicada | evidência que prova a aplicabilidade | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
 | exceção de independência | condicional | exceção publicada | evidência que prova a exceção | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
 | rework esgotado/material | condicional | limite/materialidade publicados | evidência que prova limite ou materialidade | papel/escopo publicado | decisões publicadas | efeito determinístico publicado | próximo estado publicado |
@@ -49,6 +50,23 @@ confirmar que toda linha tem condição, evidência, autoridade, decisões,
 consequência e continuação determinísticas. Se algum valor não puder ser
 derivado da documentação normativa ou de política publicada, registrar
 `DECISÃO ARQUITETURAL NECESSÁRIA` e parar antes de implementar o gate afetado.
+
+### Reconciliação documental dos gate codes concretos
+
+`SCOPE_ARCHITECTURE_POLICY` e `ACCEPTED_RISK` foram publicados no catálogo
+GAT-01 v1 e preservados no v2, respectivamente como gates condicionais de
+`EXECUTION` para `MATERIALITY_POLICY_MATCHED` e
+`MATERIAL_RISK_POLICY_MATCHED`. São implementações concretas das linhas
+normativas de arquitetura material e risco residual/produção de alto risco,
+com a mesma authority (`TECH_LEAD`/`REPOSITORY_OWNER`) e a mesma evidência
+exigida para cada condição.
+
+Eles não são aliases intercambiáveis de `MATERIAL_ARCHITECTURE` ou
+`MATERIAL_RISK`: os pares possuem scopes e continuações publicados distintos.
+Essa diferença é compatível com a norma, pois preserva a mesma decisão material
+no contexto de execução sem introduzir nova authority, condição ou evidência.
+Assim, a matriz usa o gate code compatível com o scope; REC-02 pode depender
+desses codes de execução sem criar `RECOVERY_OVERRIDE` nem alterar GAT-02.
 
 ## Distinção entre gate humano, estado e controle técnico
 
