@@ -1,12 +1,24 @@
 ---
 task: GAT-02
 status: TO DO
+prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
+contract: DELIVERY_PAUSE_CANCELLATION:v1
 title: Entrega, pausa e cancelamento
 depends_on: [LR-02, GAT-01, GAT-03]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # GAT-02 — Entrega, pausa e cancelamento
+
+## Contrato obrigatório de pré-validação
+
+Implementar exclusivamente conforme
+[`GAT-02-delivery-pause-cancellation-prevalidation.md`](GAT-02-delivery-pause-cancellation-prevalidation.md)
+(`DELIVERY_PAUSE_CANCELLATION:v1`). A pré-validação fecha package de entrega,
+assurance técnica, aceite humano, pausa/retomada, cancelamento, required-set,
+efeitos em voo, RBAC, idempotência, concorrência e legado. Ela está
+`PREVALIDATION_READY_FOR_IMPLEMENTATION`; GAT-02 continua funcionalmente
+`TO_DO` e nenhuma parte deste contrato foi implementada por esta alteração.
 
 ## Objetivo e problema corrigido
 
