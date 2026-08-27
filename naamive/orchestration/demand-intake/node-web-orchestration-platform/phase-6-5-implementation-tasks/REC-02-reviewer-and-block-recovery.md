@@ -1,6 +1,6 @@
 ---
 task: REC-02
-status: TO DO
+status: DONE
 title: Recuperação de reviewer e blocks
 depends_on: [AUT-03, GAT-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -759,10 +759,16 @@ Evidências esperadas:
 
 ## Estado da task
 
-`REC-02` permanece `TO DO`.
+`REC-02` está `DONE`.
 
-O contrato `REVIEWER_AND_BLOCK_RECOVERY:v1` está fechado e a task está
-`READY_FOR_IMPLEMENTATION`.
+O contrato `REVIEWER_AND_BLOCK_RECOVERY:v1` foi certificado com PostgreSQL real:
+os E2Es cobrem recovery snapshot-backed AUT-03, legacy com identidade original
+incompleta em fail-closed e cancellation durante assistance, specialist e gate
+wait. O aggregate final de 26/08/2026 registrou `npm run e2e` com 117 testes,
+110 aprovados, 7 falhas históricas conhecidas e 0 skips; não houve falha nova
+de REC-02. `npm test` reproduziu somente os quatro failures históricos de
+inventory (`FAILED` esperado versus `RETRYABLE` atual). `npm run build` e
+`git diff --check` foram aprovados na certificação final.
 
 AUT-03 permanece `DONE`.
 GAT-02 permanece `TO_DO`.

@@ -21,12 +21,14 @@ reescrever migrations aplicadas.
 policy/version/hash, idempotência de dispatch/acceptance e o vínculo de
 development com a acceptance AUT-02 já canônica. Planning mantém a acceptance
 técnica separada de `MODULE_PLAN_APPROVAL`; QA/integration são evidence-only;
-release continua reservado a GAT-02 e REC-02 continua pendente.
+release continua reservado a GAT-02. `REC-02` está `DONE`: a migration 071 e
+o recovery de reviewer/block preservam a identidade histórica, convergem replay
+e restart na mesma recovery key e vencem qualquer continuação após cancellation.
 O checkpoint de 26/08 reforçou o selector fechado, a convergência concorrente
 de dispatch e o fencing de planning antes de `PLAN_TECHNICALLY_ACCEPTED`;
 fresh migrate e second migrate passaram. A validação agregada foi concluída:
 `npm test` teve apenas os quatro failures históricos autorizados de inventory
-(`FAILED` esperado versus `RETRYABLE` atual); `npm run e2e` registrou 112/105/7/0.
+(`FAILED` esperado versus `RETRYABLE` atual); `npm run e2e` registrou 117/110/7/0.
 Além desses quatro, os três failures reproduzíveis de `phase4.e2e` foram
 classificados como preexistentes e fora do caminho AUT-03: embora
 `AgentExecutionService` compartilhe `createAcceptance()`, policies legadas com
@@ -55,7 +57,7 @@ Baseline histórica imutável:
 | 6 | [LR-02 — Sincronizar macro-lifecycle](LR-02-synchronize-macro-lifecycle.md) | `DONE` | LR-01, GAT-01, AUT-01, REC-01, LR-02A |
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `DONE` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `DONE` | AUT-02 |
-| 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `TO_DO` | AUT-03, GAT-01 |
+| 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `DONE` | AUT-03, GAT-01 |
 | 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `TO_DO` | LR-02, GAT-01, GAT-03 |
 | 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03 |
 | 12 | [UI-02 — Superfícies completas de parada](UI-02-complete-stop-surfaces.md) | `TO_DO` | UI-01, REC-02, GAT-02 |

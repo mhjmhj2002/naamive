@@ -11,7 +11,7 @@ if (!process.env.DATABASE_URL) {
   process.env.NAAMIVE_AGENT_ADAPTER = 'controlled';
   process.env.NAAMIVE_OPERATOR_ID ??= 'f6-e2e-operator';
   const { pool, withTransaction } = await import('./db.js');
-  const { assuranceProjection, createAcceptance, createIndependentReview, submitOutputForReview, transitionBlock } = await import('./assurance.js');
+  const { assuranceProjection, cancelAcceptance, createAcceptance, createIndependentReview, decideReview, recoverReviewerAcceptance, recoverTerminalReviewerFailure, submitOutputForReview, transitionBlock } = await import('./assurance.js');
   const { putArtifact } = await import('./artifacts.js');
   const { runOnce } = await import('./worker.js');
   const { createApiServer } = await import('./server.js');
@@ -81,6 +81,10 @@ if (!process.env.DATABASE_URL) {
 
     const unavailable=await makeAcceptance();
     assert.equal((await pool.query('SELECT state FROM work_acceptances WHERE id=$1',[unavailable.acceptance])).rows[0].state,'WAITING_FOR_INDEPENDENT_REVIEWER');
+    const zeroReviewerRecovery=(await pool.query(`SELECT recovery_key,legacy,current_stage,assistance_reference,specialist_reference,gate_reference,candidate_set FROM reviewer_recovery_strategies WHERE acceptance_id=$1`,[unavailable.acceptance])).rows[0];
+    assert.match(zeroReviewerRecovery.recovery_key,new RegExp(`^reviewer-recovery:v1:${unavailable.acceptance}:legacy:${assurancePolicy}:1$`));
+    assert.equal(zeroReviewerRecovery.legacy,true); assert.equal(Number(zeroReviewerRecovery.current_stage),6);
+    assert.ok(zeroReviewerRecovery.assistance_reference); assert.equal(zeroReviewerRecovery.specialist_reference,null); assert.equal(zeroReviewerRecovery.gate_reference,null); assert.deepEqual(zeroReviewerRecovery.candidate_set,[]);
     const waiting:any=await createIndependentReview(unavailable.acceptance,producer(unavailable.execution),{...producer(unavailable.execution),agentId:'unregistered-reviewer',executionContextHash:'different-context'},pkg);
     assert.equal(waiting.state,'WAITING_FOR_INDEPENDENT_REVIEWER');
 
@@ -100,6 +104,8 @@ if (!process.env.DATABASE_URL) {
     process.env.NAAMIVE_AGENT_ADAPTER='codex'; process.env.NAAMIVE_CODEX_COMMAND='false'; process.env.NAAMIVE_AGENT_MAX_RETRIES='1';
     assert.equal(await runOnce(project),true);
     assert.equal((await pool.query(`SELECT status FROM jobs WHERE id=(SELECT job_id FROM agent_execution WHERE id=$1)`,[durable.rows[0].dispatch_id])).rows[0].status,'RETRYABLE');
+    const specialistWait=(await pool.query(`SELECT s.current_stage,s.gate_reference,j.status FROM reviewer_recovery_strategies s JOIN reviewer_recovery_specialist_recommendations r ON r.id=s.specialist_reference JOIN jobs j ON j.id=r.job_id WHERE s.acceptance_id=$1`,[unavailable.acceptance])).rows[0];
+    assert.deepEqual({stage:Number(specialistWait.current_stage),gate:specialistWait.gate_reference,status:specialistWait.status},{stage:7,gate:null,status:'PENDING'});
     process.env.NAAMIVE_AGENT_ADAPTER='controlled';
     if(previousCommand===undefined) delete process.env.NAAMIVE_CODEX_COMMAND; else process.env.NAAMIVE_CODEX_COMMAND=previousCommand;
     await pool.query(`UPDATE jobs SET available_at=clock_timestamp() WHERE id=(SELECT job_id FROM agent_execution WHERE id=$1)`,[durable.rows[0].dispatch_id]);
@@ -206,7 +212,39 @@ if (!process.env.DATABASE_URL) {
     assert.equal(exceptionResponse.status,202); const exceptionGate:any=await exceptionResponse.json();
     const exceptionReviewResponse=await fetch(`${base}/api/projects/${project}/assurance/acceptances/${unavailable.acceptance}/reviews`,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'ON_CALL_OWNER'},body:JSON.stringify({producer:producer(unavailable.execution),candidate:{...producer(unavailable.execution),agentId:'governance-assurance',runtimeId:runtimeA,configurationVersion:1,executionContextHash:'exception-review-context'},review_package:pkg,independence_gate_id:exceptionGate.id})});
     assert.equal(exceptionReviewResponse.status,202); const exceptionReview:any=await exceptionReviewResponse.json(); assert.equal(exceptionReview.independence_check.exception_used,true);
+    assert.notEqual(exceptionReview.reviewer_agent_id,'producer'); assert.equal(exceptionReview.independence_check.gate_id,exceptionGate.id);
+    // A valid exception is persisted at dispatch, but its expiry is checked
+    // again immediately before the terminal decision.  An expired gate may
+    // neither decide the review nor be reused after a recovery restart.
+    await pool.query(`UPDATE assurance_human_gates SET expires_at=clock_timestamp()-interval '1 second' WHERE id=$1`,[exceptionGate.id]);
+    await assert.rejects(()=>decideReview(exceptionReview.id,'ACCEPT',{reference:'expired-exception'},`expired-exception:${exceptionReview.id}`),/INDEPENDENCE_EXCEPTION_EXPIRED/);
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM review_decisions WHERE review_id=$1`,[exceptionReview.id])).rows[0].n),0);
+    assert.equal((await pool.query(`SELECT state FROM work_acceptances WHERE id=$1`,[unavailable.acceptance])).rows[0].state,'WAITING_FOR_INDEPENDENT_REVIEWER');
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM work_blocks WHERE acceptance_id=$1 AND block_code='INDEPENDENCE_EXCEPTION_REQUIRED' AND state='OPEN'`,[unavailable.acceptance])).rows[0].n),1);
+    const expiredRestart:any=await createIndependentReview(unavailable.acceptance,producer(unavailable.execution),{...producer(unavailable.execution),agentId:'governance-assurance',runtimeId:runtimeA,configurationVersion:1,executionContextHash:'expired-restart-context'},pkg,exceptionGate.id);
+    assert.equal(expiredRestart.state,'WAITING_FOR_INDEPENDENT_REVIEWER');
     assert.equal((await fetch(`${base}/api/projects/${project}/assurance/acceptances/${unavailable.acceptance}/cancel`,{method:'POST',headers:{'content-type':'application/json','x-actor-role':'ON_CALL_OWNER'},body:JSON.stringify({reason:'exception scenario complete',evidence:{reference:'exception-complete'}})})).status,202);
+
+    // Terminal replacement is serialized on acceptance: two concurrent
+    // recovery calls converge on one durable replacement dispatch, while the
+    // producer execution remains exactly as it was before reviewer failure.
+    const terminal=await makeAcceptance();
+    const firstTerminal=(await pool.query(`SELECT r.*,e.job_id FROM assurance_reviews r JOIN agent_execution e ON e.id=r.dispatch_execution_id WHERE r.acceptance_id=$1`,[terminal.acceptance])).rows[0];
+    const producerBefore=(await pool.query(`SELECT e.state,j.status,o.status AS operation_status FROM agent_execution e JOIN jobs j ON j.id=e.job_id JOIN operations o ON o.id=e.operation_id WHERE e.id=$1`,[terminal.execution])).rows[0];
+    await withTransaction(c=>recoverTerminalReviewerFailure(c,firstTerminal.job_id,'REC02_TEST_TERMINAL',2));
+    await Promise.all([recoverReviewerAcceptance(terminal.acceptance,'concurrent-a'),recoverReviewerAcceptance(terminal.acceptance,'concurrent-b')]);
+    const replacements=(await pool.query(`SELECT version,state,reviewer_agent_id,dispatch_execution_id FROM assurance_reviews WHERE acceptance_id=$1 ORDER BY version`,[terminal.acceptance])).rows;
+    assert.equal(replacements.length,2); assert.deepEqual({version:Number(replacements[0].version),state:replacements[0].state},{version:1,state:'FAILED'}); assert.deepEqual({version:Number(replacements[1].version),state:replacements[1].state},{version:2,state:'DISPATCHED'});
+    assert.notEqual(replacements[0].reviewer_agent_id,replacements[1].reviewer_agent_id); assert.notEqual(replacements[0].dispatch_execution_id,replacements[1].dispatch_execution_id);
+    assert.deepEqual((await pool.query(`SELECT e.state,j.status,o.status AS operation_status FROM agent_execution e JOIN jobs j ON j.id=e.job_id JOIN operations o ON o.id=e.operation_id WHERE e.id=$1`,[terminal.execution])).rows[0],producerBefore);
+    const failureHistory=(await pool.query(`SELECT reviewer_failure_history FROM reviewer_recovery_strategies WHERE acceptance_id=$1`,[terminal.acceptance])).rows[0].reviewer_failure_history;
+    assert.equal(failureHistory.length,1); assert.equal(failureHistory[0].review_id,firstTerminal.id);
+
+    const cancelledRecovery=await makeAcceptance();
+    await cancelAcceptance(cancelledRecovery.acceptance,{reason:'REC02 cancellation'},`rec02-cancel:${cancelledRecovery.acceptance}`);
+    const cancelledResources=await pool.query(`SELECT (SELECT count(*)::int FROM assurance_reviews WHERE acceptance_id=$1) reviews,(SELECT count(*)::int FROM reviewer_recovery_strategies WHERE acceptance_id=$1) strategies`,[cancelledRecovery.acceptance]);
+    await assert.rejects(()=>recoverReviewerAcceptance(cancelledRecovery.acceptance,'after-cancel'),/ASSURANCE_CANCELLED/);
+    assert.deepEqual((await pool.query(`SELECT (SELECT count(*)::int FROM assurance_reviews WHERE acceptance_id=$1) reviews,(SELECT count(*)::int FROM reviewer_recovery_strategies WHERE acceptance_id=$1) strategies`,[cancelledRecovery.acceptance])).rows[0],cancelledResources.rows[0]);
 
     for(const state of ['RESOLUTION_SELECTED','RESOLVING','RESOLVED']) await transitionBlock(reviewerBlock,state,{reason:'review block resolved',evidence:{hash:'c'.repeat(64)}},`review-block:${state}`);
     assert.deepEqual((await pool.query(`SELECT a.state,j.status AS job_status,o.status AS operation_status FROM work_acceptances a JOIN agent_execution e ON e.id=a.execution_id JOIN jobs j ON j.id=e.job_id JOIN operations o ON o.id=e.operation_id WHERE a.id=$1`,[blocked.acceptance])).rows[0],{state:'PENDING_PRODUCE',job_status:'RETRYABLE',operation_status:'QUEUED'});

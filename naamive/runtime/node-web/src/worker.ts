@@ -18,7 +18,7 @@ import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } fro
 import { detectDevelopmentRuntimeInconsistencies, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { startRuntimeProcess } from './runtime-process.js';
 import { reconcileMacroLifecycle } from './macro-lifecycle.js';
-import { executeIndependentReview, openBlock } from './assurance.js';
+import { completeRecoverySpecialist, executeIndependentReview, recoverTerminalReviewerFailure } from './assurance.js';
 import { configuredWorkerService } from './auth.js';
 import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
@@ -92,10 +92,7 @@ const failLegacyJob = async (job: any, error: unknown) => withTransaction(async 
       WHERE job_id=$1 AND job_kind='REVIEW' AND state NOT IN ('SUCCEEDED','CANCELLED')`, [job.id, permanent ? 'FAILED' : 'SELECTED', permanent ? 'Reviewer indisponível; intervenção necessária.' : 'Reviewer será reexecutado pelo worker.']);
     if (permanent) await client.query(`UPDATE work_acceptances SET state='WAITING_FOR_INDEPENDENT_REVIEWER',updated_at=clock_timestamp()
       WHERE id=(SELECT acceptance_id FROM assurance_reviews WHERE dispatch_execution_id=(SELECT id FROM agent_execution WHERE job_id=$1 AND job_kind='REVIEW')) AND state NOT IN ('ACCEPTED','CANCELLED')`, [job.id]);
-    if (permanent) {
-      const acceptance=(await client.query(`SELECT a.id,a.project_id,a.execution_id,a.correlation_id FROM work_acceptances a JOIN assurance_reviews r ON r.acceptance_id=a.id JOIN agent_execution e ON e.id=r.dispatch_execution_id WHERE e.job_id=$1 AND e.job_kind='REVIEW'`,[job.id])).rows[0];
-      if(acceptance) await openBlock(client,{projectId:acceptance.project_id,acceptanceId:acceptance.id,executionId:acceptance.execution_id,sourceType:'ASSURANCE_REVIEW',sourceId:job.id,code:'REVIEWER_TERMINAL_FAILURE',category:'ENVIRONMENT',severity:'HIGH',correlationId:acceptance.correlation_id,evidence:{review_job_id:job.id,attempts:Number(current.attempts),last_error:code,continuation:'REC-02'}});
-    }
+    if (permanent) await recoverTerminalReviewerFailure(client,job.id,code,Number(current.attempts));
   }
   if (job.kind === 'DEVELOP_WORK_ITEM') {
     // A failed executor never leaves a work item claiming active development
@@ -174,6 +171,8 @@ export const runOnce = async (projectId?: string, actorId='system:worker'): Prom
   await detectDevelopmentRuntimeInconsistencies();
   await reconcileDevelopmentRuntime();
   await reconcileCauseAwareRecovery();
+  const { reconcileReviewerRecovery } = await import('./assurance.js');
+  await reconcileReviewerRecovery();
   await reconcileAutomaticAssuranceIntegration();
   const lock = await pool.connect();
   try {
@@ -191,6 +190,9 @@ export const runOnce = async (projectId?: string, actorId='system:worker'): Prom
         await executeIndependentReview(job);
         step = 'persist_result';
         await completeJob(job,undefined,actorId);
+      } else if (job.kind === 'ASSURANCE_RECOVERY_SPECIALIST') {
+        step = 'recovery_specialist';
+        await completeRecoverySpecialist(job);
       } else if (job.kind === 'DEVELOP_WORK_ITEM') {
         step = 'prepare_isolated_worktree';
         const delivery=await prepareDevelopmentJob(job);
