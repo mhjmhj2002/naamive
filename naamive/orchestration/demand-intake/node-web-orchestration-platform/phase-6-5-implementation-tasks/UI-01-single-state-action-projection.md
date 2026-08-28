@@ -2,7 +2,7 @@
 task: UI-01
 status: TO DO
 title: Projeção única de estado e allowed_actions
-depends_on: [AUT-01, REC-01, GAT-01, GAT-03]
+depends_on: [AUT-01, REC-01, GAT-01, GAT-03, AUT-03, REC-02, GAT-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
@@ -36,9 +36,11 @@ state/action schemas, session GAT-03 e testes DOM/browser.
 
 ## Dependências e restrições
 
-Depende de AUT-01, REC-01, GAT-01 e GAT-03. UI-02 cobre painéis específicos.
-Não introduzir polling simulando progresso nem reescrever frontend além do menor
-refactor que garanta ownership único.
+Depende de AUT-01, REC-01, GAT-01, GAT-03, AUT-03, REC-02 e GAT-02. O contrato
+normativo de implementação é
+[`STATE_ACTION_PROJECTION:v1`](UI-01-single-state-action-projection-prevalidation.md).
+UI-02 cobre painéis específicos. Não introduzir polling simulando progresso nem
+reescrever frontend além do menor refactor que garanta ownership único.
 
 ## Estratégia de implementação e compatibilidade
 

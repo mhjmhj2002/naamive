@@ -78,7 +78,7 @@ Baseline histórica imutável:
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `DONE` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `DONE` | AUT-03, GAT-01 |
 | 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `DONE` | LR-02, GAT-01, GAT-03 |
-| 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03 |
+| 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03, AUT-03, REC-02, GAT-02 |
 | 12 | [UI-02 — Superfícies completas de parada](UI-02-complete-stop-surfaces.md) | `TO_DO` | UI-01, REC-02, GAT-02 |
 | 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `TO_DO` | todas as tasks funcionais |
 | 14 | [DOC-01 — Reconciliar documentação F5/F6/F6.5](DOC-01-reconcile-phase5-phase6-docs.md) | `TO_DO` | TST-01 |
