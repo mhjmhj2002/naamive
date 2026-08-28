@@ -23,7 +23,7 @@ const matrix:Record<ExpansionJobKind,{subject:ExpansionSubjectKind; selectable:b
   MERGE_WORK_ITEM:{subject:'IntegrationCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
   REASSESS_INTEGRATION_CANDIDATE:{subject:'IntegrationCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
   VALIDATE_INTEGRATION_CANDIDATE:{subject:'IntegrationCandidate:v1',selectable:false,acceptance:'NONE',runtime:true},
-  PREPARE_DELIVERY_PACKAGE:{subject:'DeliveryPackage:v1',selectable:false,acceptance:'OWN',runtime:false}
+  PREPARE_DELIVERY_PACKAGE:{subject:'DeliveryPackage:v1',selectable:true,acceptance:'OWN',runtime:true}
 };
 export const assuranceExpansionMatrix=(kind:string)=>matrix[kind as ExpansionJobKind]??null;
 
@@ -39,12 +39,11 @@ export const validateAssuranceExpansionPolicy=(selectors:Record<string,unknown>,
   if(uniqueJobs.length!==jobKinds.length)throw new AssuranceError('ASSURANCE_EXPANSION_JOB_KINDS_INVALID');
   for(const jobKind of uniqueJobs){
     const line=assuranceExpansionMatrix(jobKind);
-    if(!line){ if(jobKind==='PREPARE_DELIVERY_PACKAGE')throw new AssuranceError('ASSURANCE_RELEASE_JOB_NOT_PUBLISHED'); throw new AssuranceError('ASSURANCE_JOB_NOT_IN_NORMATIVE_MATRIX'); }
-    if(jobKind==='PREPARE_DELIVERY_PACKAGE')throw new AssuranceError('ASSURANCE_RELEASE_JOB_NOT_PUBLISHED');
+    if(!line)throw new AssuranceError('ASSURANCE_JOB_NOT_IN_NORMATIVE_MATRIX');
     if(!line.selectable)throw new AssuranceError('ASSURANCE_INTERNAL_JOB_NOT_SELECTABLE');
     if(!subjectKinds.includes(line.subject))throw new AssuranceError('ASSURANCE_EXPANSION_SUBJECT_MISMATCH');
   }
-  for(const subjectKind of subjectKinds)if(!(['ModulePlanProposal:v1','WorkItemDeliveryCandidate:v1'] as string[]).includes(subjectKind))throw new AssuranceError('ASSURANCE_SUBJECT_NOT_IN_NORMATIVE_MATRIX');
+  for(const subjectKind of subjectKinds)if(!(['ModulePlanProposal:v1','WorkItemDeliveryCandidate:v1','DeliveryPackage:v1'] as string[]).includes(subjectKind))throw new AssuranceError('ASSURANCE_SUBJECT_NOT_IN_NORMATIVE_MATRIX');
   // Selectors are a closed declaration, not a permissive filter.  A policy
   // may name both published lines, but it cannot smuggle in an extra subject
   // alongside one valid job kind.
@@ -82,7 +81,6 @@ const selectorMatches=(policy:any,input:DispatchInput)=>{
 export const reserveAssuranceDispatch=async(client:pg.PoolClient,input:DispatchInput)=>{
   const line=assuranceExpansionMatrix(input.jobKind);
   if(!line)throw new AssuranceError('ASSURANCE_JOB_NOT_IN_NORMATIVE_MATRIX');
-  if(input.jobKind==='PREPARE_DELIVERY_PACKAGE')throw new AssuranceError('ASSURANCE_RELEASE_JOB_NOT_PUBLISHED');
   if(line.subject!==input.subjectKind||!line.selectable)throw new AssuranceError('ASSURANCE_INTERNAL_JOB_NOT_SELECTABLE');
   const key=`assurance-dispatch:v1:${input.subjectKind}:${input.subjectId}:${input.normativeGeneration}`;
   const prior=(await client.query(`SELECT * FROM assurance_dispatch_snapshots WHERE assurance_dispatch_key=$1 FOR UPDATE`,[key])).rows[0];

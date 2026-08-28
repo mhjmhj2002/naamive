@@ -22,7 +22,7 @@ import { completeRecoverySpecialist, executeIndependentReview, recordRetryableRe
 import { configuredWorkerService } from './auth.js';
 import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
-import { reconcileDeliveryLifecycle } from './delivery-lifecycle.js';
+import { deliveryPreparationExecutionContext, persistDeliveryPreparationOutputs, reconcileDeliveryLifecycle } from './delivery-lifecycle.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -253,6 +253,20 @@ export const runOnce = async (projectId?: string, actorId='system:worker'): Prom
       } else if (job.kind === 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
         step = 'technology_selection_context';
         await withTransaction((client) => prepareTechnologySelectionContext(client, job));
+        step = 'persist_result';
+        await completeJob(job,undefined,actorId);
+      } else if (job.kind === 'PREPARE_DELIVERY_PACKAGE') {
+        step = 'load_frozen_delivery_preparation';
+        const snapshot=(await pool.query(`SELECT * FROM delivery_preparation_snapshots WHERE source_operation_id=$1`,[job.operation_id])).rows[0];
+        if(!snapshot) throw new ApiError(409,'DELIVERY_PREPARATION_SNAPSHOT_MISSING');
+        // This path intentionally does not read intake or any generic discovery
+        // context. Every retry starts a fresh ephemeral provider invocation from
+        // the same durable snapshot identity.
+        step = 'dispatch_frozen_delivery_preparation';
+        const result=await executeAgent('PREPARE_DELIVERY_PACKAGE',deliveryPreparationExecutionContext(snapshot));
+        if(result.result!=='READY_FOR_GATE') throw new ApiError(422,'DELIVERY_PREPARATION_OUTPUT_NOT_READY');
+        step = 'persist_closed_delivery_outputs';
+        await persistDeliveryPreparationOutputs(snapshot.id,result.evidence);
         step = 'persist_result';
         await completeJob(job,undefined,actorId);
       } else if (agentExecutionService.isEnabled() && agentExecutionService.handlesJob(job.kind)) {

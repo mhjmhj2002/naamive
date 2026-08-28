@@ -1,6 +1,6 @@
 ---
 task: GAT-02
-status: TO DO
+status: DONE
 prevalidation_status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 contract: DELIVERY_PAUSE_CANCELLATION:v1
 title: Entrega, pausa e cancelamento
@@ -21,8 +21,9 @@ circular `DeliveryPreparationSnapshot:v1` → preparação → `DeliveryPackage:
 final → assurance técnica → aceite humano, além de pausa/retomada,
 cancelamento, required-set, efeitos em voo, RBAC, idempotência, concorrência e
 legado. Ela está
-`PREVALIDATION_READY_FOR_IMPLEMENTATION`; GAT-02 continua funcionalmente
-`TO_DO` e nenhuma parte deste contrato foi implementada por esta alteração.
+`PREVALIDATION_READY_FOR_IMPLEMENTATION`; esse registro de pré-validação é
+preservado como evidência histórica. A implementação e o aceite focado foram
+concluídos conforme o registro de encerramento abaixo.
 
 ## Objetivo e problema corrigido
 
@@ -94,3 +95,43 @@ job/review/handoff/gate, precedência, idempotência, autorização e coexistên
 Riscos: entregar sem evidência, restaurar cegamente estado stale e efeito após
 cancelamento. Evidências: pacote/hashes, gates/atores, histórico de
 `previous_active_state`, cancel records e E2E até `DELIVERED`.
+
+## Encerramento e aceite — 28/08/2026
+
+**Status final: `DONE`.** A tarefa foi aceita sob seus critérios normativos:
+`GAT-02 focused acceptance PASS; aggregate legacy regression has deferred
+non-blocking failures.` Não há gap funcional conhecido de GAT-02 na sua suíte
+de aceite focada.
+
+### Evidência de aceite focado
+
+- `npm run migrate` — PASS;
+- `npm run build` — PASS;
+- matriz focada de entrega, pacote determinístico imutável, assurance técnica
+  AUT-03, binding exato de gate, `APPROVE`/`REWORK`, atomicidade, rollback,
+  concorrência, replay idempotente, required-set/participante/workflow stale,
+  pausa/retomada, cancelamento, fencing de efeito externo, reconciler e
+  HTTP/RBAC com proteção contra spoofing — PASS;
+- `REMAINING FUNCTIONAL GAPS = NONE`;
+- `REMAINING FOCUSED TEST GAPS = NONE`.
+
+### Validação agregada manual e dívida diferida
+
+O operador executou manualmente `npm test`: **132 testes, 124 PASS e 8 FAIL**.
+Essas falhas agregadas legadas são não bloqueantes para o aceite com escopo de
+GAT-02 e serão tratadas em uma passagem dedicada de reconciliação após a
+sequência atual da Fase 6.5:
+
+- `inventory.e2e` (4): expectativas legadas de `FAILED` enquanto o retry atual
+  produz `RETRYABLE`;
+- `phase4.e2e` (3): expectativa de `WAITING_FOR_PRODUCT_COMMITMENT` versus
+  `ANALYSIS_IN_PROGRESS`, além de ordenação de cleanup stale contra
+  `work_acceptances_execution_id_fkey`;
+- `macro-lifecycle.e2e` (1):
+  `COMMITTED_MODULE_OBLIGATION_MATERIALIZATION_INVALID`.
+
+Os testes focados de obligation/required-set/delivery de GAT-02 passam. A falha
+agregada de `macro-lifecycle.e2e` continua uma incompatibilidade/regressão não
+resolvida; sua investigação foi adiada por decisão do operador e ela não foi
+provada como não relacionada a GAT-02. Ela não bloqueia este aceite de tarefa
+com escopo definido.

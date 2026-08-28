@@ -49,6 +49,19 @@ O finding LR-02A-FIX-01 foi fechado pela migration 062: compromissos aprovados
 podem evoluir por troca atômica da revisão corrente, mantendo uma única
 `APPROVED`, uma única proposta pendente e todo o histórico imutável.
 
+Checkpoint em 28/08/2026: `GAT-02` está `DONE` sob aceite focado da tarefa.
+Migration, build e a matriz focada de entrega, package, assurance, gates,
+atomicidade, concorrência, pause/resume, cancellation, fencing, reconciler e
+HTTP/RBAC passaram, sem gap funcional ou de testes focados remanescente. O
+operador executou manualmente `npm test`: 124/132 testes passaram; as 8 falhas
+agregadas legadas foram diferidas, sem bloquear este aceite: quatro em
+`inventory.e2e` (`FAILED` esperado versus `RETRYABLE` atual), três em
+`phase4.e2e` (estado legado e cleanup por
+`work_acceptances_execution_id_fkey`) e uma em `macro-lifecycle.e2e`
+(`COMMITTED_MODULE_OBLIGATION_MATERIALIZATION_INVALID`). Esta última permanece
+uma incompatibilidade/regressão não resolvida e não foi provada como não
+relacionada a GAT-02; a investigação foi adiada por decisão do operador.
+
 Baseline histórica imutável:
 `orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`.
 
@@ -64,7 +77,7 @@ Baseline histórica imutável:
 | 7 | [AUT-02 — Pipeline automático QA → review → merge → integração](AUT-02-automatic-qa-review-merge-integration.md) | `DONE` | AUT-01, REC-01, LR-02 |
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `DONE` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `DONE` | AUT-03, GAT-01 |
-| 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `TO_DO` | LR-02, GAT-01, GAT-03 |
+| 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `DONE` | LR-02, GAT-01, GAT-03 |
 | 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03 |
 | 12 | [UI-02 — Superfícies completas de parada](UI-02-complete-stop-surfaces.md) | `TO_DO` | UI-01, REC-02, GAT-02 |
 | 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `TO_DO` | todas as tasks funcionais |

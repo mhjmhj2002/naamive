@@ -313,7 +313,7 @@ const dispatchIndependentReview = async (client: pg.PoolClient, acceptance: any,
   const job=(await client.query(`SELECT id FROM jobs WHERE idempotency_key=$1`,[`${dispatchKey}:job`])).rows[0];
   await client.query(`INSERT INTO agent_execution(id,job_id,operation_id,project_id,project_key,revision_id,job_kind,idempotency_key,agent_id,agent_version,task_type,classification,policy_id,policy_name,policy_version,state,selected_runtime_id,selected_configuration_version,selected_runtime_name,selected_adapter_type,selection_reason,next_action)
     VALUES($1,$2,$3,$4,$5,$6,'REVIEW',$7,$8,$9,'REVIEW',$10,$11,$12,$13,'SELECTED',$14,$15,$16,$17,$18,'Reviewer independente aguardando worker.')
-    ON CONFLICT(job_id,idempotency_key) DO NOTHING`,[dispatchId,job.id,operation.id,acceptance.project_id,acceptance.project_id,sourceExecution.revision_id??null,`${dispatchKey}:execution`,candidate.agentId,candidate.agentVersion,acceptance.classification,sourceExecution.policy_id,sourceExecution.policy_name,sourceExecution.policy_version,candidate.runtimeId,candidate.configurationVersion,runtime.name,runtime.adapter_type,safeEvidence({review_id:reviewId,classification:acceptance.classification})]);
+    ON CONFLICT(job_id,idempotency_key) DO NOTHING`,[dispatchId,job.id,operation.id,randomUUID(),acceptance.project_id,sourceExecution.revision_id??null,`${dispatchKey}:execution`,candidate.agentId,candidate.agentVersion,acceptance.classification,sourceExecution.policy_id,sourceExecution.policy_name,sourceExecution.policy_version,candidate.runtimeId,candidate.configurationVersion,runtime.name,runtime.adapter_type,safeEvidence({review_id:reviewId,classification:acceptance.classification})]);
   const dispatch=(await client.query(`SELECT id FROM agent_execution WHERE job_id=$1 AND idempotency_key=$2`,[job.id,`${dispatchKey}:execution`])).rows[0];
   const inserted=await client.query(`INSERT INTO assurance_reviews(id,acceptance_id,version,dispatch_execution_id,reviewer_agent_id,reviewer_agent_version,reviewer_runtime_id,reviewer_configuration_version,reviewer_policy_id,reviewer_policy_version,execution_context_hash,independence_check,state,review_package)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,'DISPATCHED',$13) RETURNING *`,[reviewId,acceptance.id,version,dispatch.id,candidate.agentId,candidate.agentVersion,candidate.runtimeId,candidate.configurationVersion,candidate.policyId,candidate.policyVersion,candidate.executionContextHash,{...check,gate_id:gate?.id??null},packageForReviewer]);
@@ -821,6 +821,10 @@ export const decideReview = async (reviewId:string, decision:AssuranceDecision, 
     await client.query(`UPDATE work_acceptances SET state='ACCEPTED',updated_at=clock_timestamp() WHERE id=$1`,[review.acceptance_id]);
     await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Trabalho aceito.' WHERE id=$1`,[review.execution_id]);
     if(review.subject_kind==='ModulePlanProposal:v1') await audit(client,review.project_id,'PLAN_TECHNICALLY_ACCEPTED',review.correlation_id,{acceptance_id:review.acceptance_id,plan_revision_id:review.subject_id,normative_generation:review.normative_generation});
+    if(review.subject_kind==='DeliveryPackage:v1') {
+      const { recordTechnicalAcceptanceInTransaction }=await import('./delivery-lifecycle.js');
+      await recordTechnicalAcceptanceInTransaction(client,review.subject_id,{assurance_dispatch_snapshot_id:review.assurance_dispatch_snapshot_id,work_acceptance_id:review.acceptance_id});
+    }
     if (review.job_id) {
       await client.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp(),lease_expires_at=NULL WHERE id=$1`,[review.job_id]);
       if (review.operation_id) {
