@@ -56,12 +56,23 @@ recovery, activity, stop e capability usam esse mesmo snapshot; não é válido
 juntar resultados de consultas independentes que possam observar gerações
 distintas.
 
+`snapshot_now` é um único instante capturado uma vez para a construção da
+projeção. Junto ao snapshot read-only do banco, ele forma a fronteira temporal
+da observação. Toda decisão temporal nessa resposta — expiração de lease,
+grant, credential/principal quando aplicável e outra expiração específica da
+projeção — usa exatamente esse valor. Não é permitido consultar o relógio de
+parede novamente em etapas diferentes da construção. `snapshot_now` é interno
+por padrão e só pode ser exposto como diagnóstico explícito, nunca como uma
+nova fonte de autoridade para o cliente.
+
 `as_of_event_id` é o maior `events.id` do projeto visível no snapshot. É o
-cursor monotônico da resposta, inclusive quando uma alteração sem evento não
-cria nova aparência pública: nesse caso a implementação deve materializar ou
-publicar um evento de projeção antes de afirmar a convergência. O valor `0` só
-é válido para projeto sem evento. Uma resposta não pode usar relógio, ordem de
-fetch ou versão de recurso como substituto desse cursor.
+cursor monotônico dos fatos/eventos server-side e o valor `0` só é válido para
+projeto sem evento. Ele não ordena requests concorrentes do cliente e não deve
+exigir a criação artificial de evento somente para cercar uma corrida de GET.
+Quando uma mutação autoritativa precisar ser observável publicamente, seu
+contrato de origem continua responsável por persistir o fato/evento durável.
+Uma resposta não pode usar relógio, ordem de fetch ou versão de recurso como
+substituto do cursor factual.
 
 O contrato público é allowlist. A implementação deve montar novos objetos com
 os campos abaixo; aplicar `publicValue()` a um agregado interno é somente uma
@@ -97,10 +108,11 @@ StateActionProjection:v1
   activity:
     state: IDLE | QUEUED | RUNNING | RETRYABLE | WAITING_RECONCILIATION |
            PAUSED | CANCELLED | UNKNOWN
-    job_id: string | null
-    kind: string | null
-    lease_expires_at: ISO-8601 instant | null
-    heartbeat_at: ISO-8601 instant | null
+    running_count: non-negative integer
+    queued_count: non-negative integer
+    retryable_count: non-negative integer
+    reconciliation_count: non-negative integer
+    items: ActivityProjection[]
 
   stop:
     paused: StopRecordSummary | null
@@ -115,6 +127,18 @@ StateActionProjection:v1
 
   next_action: NextActionSummary | null
   allowed_actions: ActionDescriptor[]
+```
+
+```text
+ActivityProjection
+  job_id: string | null
+  resource_kind: PROJECT | MODULE | WORK_ITEM | EXECUTION
+  resource_id: string
+  kind: string
+  state: QUEUED | RUNNING | RETRYABLE | WAITING_RECONCILIATION | UNKNOWN
+  lease_expires_at: ISO-8601 instant | null
+  heartbeat_at: ISO-8601 instant | null
+  execution_or_attempt_id: string | null
 ```
 
 Cada `ModuleProjection` e `WorkItemProjection` tem, no mínimo, identidade,
@@ -151,18 +175,28 @@ declarar que ele satisfaz o lifecycle corrente.
 
 ## 4. Activity truth e paradas
 
-`RUNNING` significa atividade runtime comprovada, e somente pode ser publicado
-quando o snapshot contém um job/attempt correspondente com:
+Cada `ActivityProjection` representa uma atividade concreta e nunca uma escolha
+arbitrária de “job atual”. Uma atividade `RUNNING` significa atividade runtime
+comprovada, e somente pode ser publicada quando o snapshot contém o
+job/attempt correspondente com:
 
 ```text
 job.status = LEASED
 AND job.lease_expires_at > snapshot_now
 ```
 
-`job_id`, `kind`, `lease_expires_at` e `heartbeat_at` vêm desse mesmo fato. Um
-heartbeat pode enriquecer a mensagem; não substitui o lease. `operations.status
-= RUNNING`, o nome do lifecycle ou uma operação sem attempt/lease nunca provam
-que um agente está executando.
+`job_id`, `kind`, `lease_expires_at`, `heartbeat_at` e, quando necessário, a
+identidade durável de execution/attempt vêm desse mesmo fato. Um heartbeat pode
+enriquecer a mensagem; não substitui o lease. `operations.status = RUNNING`, o
+nome do lifecycle ou uma operação sem attempt/lease nunca provam que um agente
+está executando. Lease expirado não é `RUNNING` e não contribui para
+`running_count`.
+
+Os contadores são a cardinalidade de `items` na respectiva classificação. Uma
+atividade ambígua/expirada/não classificável pode ser preservada como item
+`UNKNOWN`, mas não aumenta os quatro contadores. A agregação não remove itens
+de atividades concorrentes: dois jobs válidos de work items distintos resultam
+em dois itens e `running_count = 2`.
 
 | Fato runtime observado | `activity.state` | Nunca afirmar |
 | --- | --- | --- |
@@ -177,7 +211,21 @@ que um agente está executando.
 `stop` é calculado do mesmo snapshot. Pause, cancellation, archive e
 reconciliation exigida são fatos independentes da atividade e devem ser
 mostrados separadamente; cancellation vence toda continuação ainda não
-confirmada, conforme GAT-02.
+confirmada, conforme GAT-02. O `activity.state` agregado é somente um resumo
+de apresentação, não altera o estado dos recursos ou itens, e é calculado na
+seguinte precedência determinística:
+
+1. cancellation efetiva: `CANCELLED`;
+2. pause efetivo: `PAUSED`;
+3. algum item exigindo reconciliação: `WAITING_RECONCILIATION`;
+4. algum item com lease válido: `RUNNING`;
+5. algum item retryable: `RETRYABLE`;
+6. algum item queued: `QUEUED`;
+7. evidência operacional ambígua, expirada ou não classificável: `UNKNOWN`;
+8. ausência das condições anteriores: `IDLE`.
+
+Itens podem continuar visíveis como observações históricas/runtime durante
+pause ou cancellation, mas sua mera existência não cria continuação na UI.
 
 ## 5. Capability read-only e descritores de ação
 
@@ -256,16 +304,35 @@ for adotada; uma resposta parcial não é aceitável.
 
 O SSE conserva eventos como notificações, não como patch autoritativo de DOM.
 Cada evento relevante solicita `refreshProjection()` coalescido. O cliente
-mantém `selected_project`, `selection_generation`, `last_projection_seq`, um
+mantém `selected_project`, `selection_generation`, `refresh_generation`,
+`last_applied_refresh_generation`, `last_projection_seq`, um
 `AbortController` para a request corrente e no máximo um refresh pendente.
+Cada invocação de `refreshProjection()` incrementa `refresh_generation` e
+captura `request_selection_generation` e `request_refresh_generation`.
 
 Uma resposta somente pode ser aplicada se:
 
 ```text
 response.project_id === selected_project
-AND request.selection_generation === selection_generation
+AND request_selection_generation === selection_generation
+AND request_refresh_generation === refresh_generation
+AND request_refresh_generation > last_applied_refresh_generation
 AND response.as_of_event_id >= last_projection_seq
 ```
+
+Após aplicação bem-sucedida, o cliente grava:
+
+```text
+last_applied_refresh_generation = request_refresh_generation
+last_projection_seq = response.as_of_event_id
+```
+
+`as_of_event_id` cerca progressão factual server-side;
+`selection_generation` cerca troca de projeto; `refresh_generation` cerca a
+ordem de requests dentro da mesma seleção. Eles não são intercambiáveis. Assim,
+uma resposta tardia de refresh mais antigo deve ser ignorada mesmo que tenha o
+mesmo `as_of_event_id` — ou cursor maior — que a projeção já aplicada, pois
+pode conter capability observada antes de expiração/revogação de grant.
 
 Ao selecionar outro projeto, o cliente fecha o SSE anterior, aborta a request
 anterior quando possível, incrementa `selection_generation`, zera o cursor da
@@ -273,7 +340,8 @@ seleção nova e ignora todas as respostas tardias. Eventos repetidos, replay e
 reconnect podem produzir no máximo um refresh coalescido por ciclo; nunca
 podem restaurar ação que a projeção posterior retirou. O cursor só avança após
 uma resposta aplicada com sucesso. A implementação deve testar explicitamente
-o caso A antigo terminar depois do caso B novo.
+o caso A antigo terminar depois do caso B novo, inclusive quando ambos possuem
+o mesmo cursor factual e B remove uma capability por expiração/revogação.
 
 ## 7. Ownership de renderização e segurança de DOM
 
@@ -311,9 +379,9 @@ não respostas fabricadas que ignorem as regras de capability.
 | --- | --- |
 | Projeção | workflow/estado canônico; legado conhecido; legado desconhecido read-only; estados separados de projeto/módulo/WI/execution; gate aberto/fechado; delivery, recovery, assurance; pause, cancel e archive |
 | Capability | principal autorizado/não autorizado; resource scope; grant expirado/revogado; serviço sem ação humana; descriptor completo; confirmação/input; version/fence; grant removido entre render e clique (`403`); estado alterado (`409`/fail-closed) |
-| Activity | lease válido é `RUNNING`; lease expirado não é ativo; queued, retryable, waiting reconciliation e paused não são running; operação RUNNING sem lease não inventa agente |
+| Activity | lease válido é `RUNNING`; lease expirado não é ativo; queued, retryable, waiting reconciliation e paused não são running; operação RUNNING sem lease não inventa agente; dois leases válidos preservam dois itens e `running_count = 2`; atividade mista preserva itens e aplica a precedência agregada; pause/cancel vencem somente o resumo agregado |
 | Caminho automático | não há botão Start Dev, QA, merge ou integração no caminho AUT-01/AUT-02; continuação automática é mostrada apenas como status |
-| SSE/concurrency | cursor, replay, evento duplicado, refresh coalescido, completion fora de ordem, reconnect, troca de projeto, resposta tardia do projeto anterior e action obsoleta que não reaparece |
+| SSE/concurrency | cursor factual, replay, evento duplicado, refresh coalescido, completion fora de ordem, reconnect, troca de projeto, resposta tardia do projeto anterior e action obsoleta que não reaparece; A/B da mesma seleção e mesmo `as_of_event_id`, com B iniciado depois, aplicado primeiro e A descartado pelo `refresh_generation` |
 | DOM/browser | único owner; nenhum botão duplicado; retirada de action some; atores com grants distintos veem capabilities distintas; comando real converge para nova projeção; nenhum loop de fetch por observer |
 | Regressão | endpoints de comando continuam com enforcement/auditoria; leitura de projetos históricos permanece possível; APIs legadas mantidas somente enquanto houver cliente compatível |
 
@@ -323,6 +391,15 @@ permitir o efeito. A matriz deve registrar o inventário dos renderers, observer
 e derivadores de action removidos/substituídos, a contagem de requests por SSE
 coalescido e evidência DOM/browser correspondente.
 
+Em particular, a matriz de capability deve executar: actor recebe ação; GET A
+começa; grant expira ou é revogado; GET B começa sem a ação; ambos podem ter o
+mesmo `as_of_event_id`; B é aplicado; A chega depois e é descartado por
+`refresh_generation`; e o POST da ação previamente renderizada falha pela
+autorização independente do servidor. A matriz de activity deve cobrir dois
+leases válidos, mistura de `RUNNING`/`QUEUED`/`RETRYABLE`, expiração de um lease
+antes de `snapshot_now`, pause e cancellation com itens preservados mas resumo
+agregado em `PAUSED`/`CANCELLED`.
+
 ## 9. Resolução dos findings da auditoria
 
 | Finding | Fechamento normativo neste contrato |
@@ -330,9 +407,9 @@ coalescido e evidência DOM/browser correspondente.
 | UI01-F01 | Seções 1–2 definem `STATE_ACTION_PROJECTION:v1`, schema allowlist, snapshot e `as_of_event_id`. |
 | UI01-F02 | Seção 5 exige capability por principal read-only compartilhando a regra de enforcement sem criar audit falso. |
 | UI01-F03 | Seção 2 separa identities/estados e limita `journey_status` a resumo explícito. |
-| UI01-F04 | Seção 4 define `RUNNING` por lease válido e distingue queue/retry/reconcile/pause/expired lease. |
+| UI01-F04 | Seção 4 define `RUNNING` por lease válido, distingue queue/retry/reconcile/pause/expired lease e preserva atividades concorrentes sem colapsá-las em um job arbitrário. |
 | UI01-F05 | Seção 7 estabelece owner único, veda wrappers/observers de I/O e derivação client-side. |
-| UI01-F06 | Seção 6 estabelece cursor, generation, abort, coalescing e regras de aplicação. |
+| UI01-F06 | Seção 6 distingue `as_of_event_id` para fatos server-side, `selection_generation` para seleção e `refresh_generation` para ordem de requests, com abort, coalescing e regras de aplicação. |
 | UI01-F07 | Front matter e UI-01 atualizado incluem AUT-03, REC-02 e GAT-02 como dependências. |
 | UI01-F08 | Seção 3 define adapters versionados e fallback legado read-only fail-closed. |
 | UI01-F09 | Seção 5 fecha `ActionDescriptor`, confirmação/input, expected version/fence e revalidação. |
