@@ -256,7 +256,7 @@ const LEGACY_ADAPTERS: Record<string, LegacyAdapter> = {
 
 type WorkflowKind = { current: boolean; legacy: boolean; unknown: boolean; journey_status: string };
 
-const workflowKind = (code: string | null | undefined, version: number | null | undefined, published: string | null | undefined): WorkflowKind => {
+export const workflowKind = (code: string | null | undefined, version: number | null | undefined, published: string | null | undefined): WorkflowKind => {
   const key = code && version != null ? `${code}:${version}` : null;
   if (key && CURRENT_WORKFLOWS.has(key) && published === 'PUBLISHED') return { current: true, legacy: false, unknown: false, journey_status: 'ACTIVE' };
   if (key && LEGACY_ADAPTERS[key]) return { current: false, legacy: true, unknown: false, journey_status: LEGACY_ADAPTERS[key].journey_status };
@@ -391,20 +391,18 @@ const readLegacyGateFacts = async (client: pg.PoolClient, projectId: string) => 
 };
 
 const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
-  const [pauses, cancellations, effects, resumeReconciliations, recoveryReconciliations] = await Promise.all([
-    client.query(
+  const pauses = await client.query(
       `SELECT id,resource_kind,resource_id,reason,version,pause_fence,previous_active_state,created_at
-       FROM pause_records WHERE project_id=$1 AND status='ACTIVE' ORDER BY created_at DESC`, [projectId]),
-    client.query(
+       FROM pause_records WHERE project_id=$1 AND status='ACTIVE' ORDER BY created_at DESC`, [projectId]);
+  const cancellations = await client.query(
       `SELECT id,resource_kind,resource_id,reason,version,cancellation_fence,created_at
-       FROM cancellation_records WHERE project_id=$1 ORDER BY created_at DESC, id DESC`, [projectId]),
-    client.query(
-      `SELECT resource_kind,resource_id,status FROM external_effect_records WHERE project_id=$1 AND status IN ('EFFECT_UNKNOWN','RECONCILE_REQUIRED') ORDER BY updated_at DESC`, [projectId]),
-    client.query(
-      `SELECT 1 FROM resume_records r JOIN pause_records p ON p.id=r.pause_id WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' LIMIT 1`, [projectId]),
-    client.query(
-      `SELECT 1 FROM recovery_decisions WHERE project_id=$1 AND execution_state='WAITING_RECONCILIATION' LIMIT 1`, [projectId]),
-  ]);
+       FROM cancellation_records WHERE project_id=$1 ORDER BY created_at DESC, id DESC`, [projectId]);
+  const effects = await client.query(
+      `SELECT resource_kind,resource_id,status FROM external_effect_records WHERE project_id=$1 AND status IN ('EFFECT_UNKNOWN','RECONCILE_REQUIRED') ORDER BY updated_at DESC`, [projectId]);
+  const resumeReconciliations = await client.query(
+      `SELECT 1 FROM resume_records r JOIN pause_records p ON p.id=r.pause_id WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' LIMIT 1`, [projectId]);
+  const recoveryReconciliations = await client.query(
+      `SELECT 1 FROM recovery_decisions WHERE project_id=$1 AND execution_state='WAITING_RECONCILIATION' LIMIT 1`, [projectId]);
   const projectPause = pauses.rows.find((row) => row.resource_kind === 'PROJECT');
   const projectCancellation = cancellations.rows.find((row) => row.resource_kind === 'PROJECT');
   const toStopRecord = (row: { id: string; resource_kind: 'PROJECT' | 'MODULE'; resource_id: string; reason: string; version: string | number; pause_fence?: string | number | bigint; cancellation_fence?: string | number | bigint; previous_active_state?: string | null; created_at: string | Date }): StopRecordSummary => ({
@@ -422,21 +420,19 @@ const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
     projectPause: projectPause ? toStopRecord(projectPause) : null,
     cancellations: cancellations.rows.map(toStopRecord),
     projectCancellation: projectCancellation ? toStopRecord(projectCancellation) : null,
-    reconciliation_required: effects.rows.length > 0 || resumeReconciliations.rowCount > 0 || recoveryReconciliations.rowCount > 0,
+    reconciliation_required: effects.rows.length > 0 || (resumeReconciliations.rowCount ?? 0) > 0 || (recoveryReconciliations.rowCount ?? 0) > 0,
   };
 };
 
 /** Delivery lifecycle summary (allowlisted) derived from the shared snapshot. */
 const readDeliverySummary = async (client: pg.PoolClient, projectId: string) => {
-  const [project, pkg, acceptance, deliveryGate] = await Promise.all([
-    client.query(`SELECT state,workflow_code,workflow_version FROM projects WHERE id=$1`, [projectId]),
-    client.query(
-      `SELECT id,delivery_revision,content_hash,normative_generation,delivered_at FROM delivery_packages WHERE project_id=$1 ORDER BY delivery_revision DESC LIMIT 1`, [projectId]),
-    client.query(
-      `SELECT a.state,a.content_hash,a.delivery_revision FROM delivery_technical_acceptances a JOIN delivery_packages p ON p.id=a.package_id WHERE p.project_id=$1 ORDER BY a.created_at DESC LIMIT 1`, [projectId]),
-    client.query(
-      `SELECT id,status,version,decision FROM gate_records WHERE project_id=$1 AND gate_code='DELIVERY_ACCEPTANCE' ORDER BY created_at DESC LIMIT 1`, [projectId]),
-  ]);
+  const project = await client.query(`SELECT state,workflow_code,workflow_version FROM projects WHERE id=$1`, [projectId]);
+  const pkg = await client.query(
+      `SELECT id,delivery_revision,content_hash,normative_generation,delivered_at FROM delivery_packages WHERE project_id=$1 ORDER BY delivery_revision DESC LIMIT 1`, [projectId]);
+  const acceptance = await client.query(
+      `SELECT a.state,a.content_hash,a.delivery_revision FROM delivery_technical_acceptances a JOIN delivery_packages p ON p.id=a.package_id WHERE p.project_id=$1 ORDER BY a.created_at DESC LIMIT 1`, [projectId]);
+  const deliveryGate = await client.query(
+      `SELECT id,status,version,decision FROM gate_records WHERE project_id=$1 AND gate_code='DELIVERY_ACCEPTANCE' ORDER BY created_at DESC LIMIT 1`, [projectId]);
   if (!project.rowCount) return null;
   const deliveryGateRow = deliveryGate.rows[0];
   return {
@@ -486,18 +482,16 @@ const readRecoveryFacts = async (client: pg.PoolClient, projectId: string) => {
 };
 
 const readAssuranceFacts = async (client: pg.PoolClient, projectId: string) => {
-  const [acceptances, blocks, reviews] = await Promise.all([
-    client.query(
+  const acceptances = await client.query(
       `SELECT a.id,a.state,a.classification,a.version,a.created_at,a.updated_at,
          s.subject_kind,s.subject_id,s.normative_generation
        FROM work_acceptances a
        LEFT JOIN assurance_dispatch_snapshots s ON s.id=a.assurance_dispatch_snapshot_id
-       WHERE a.project_id=$1 ORDER BY a.created_at DESC, a.id DESC LIMIT 50`, [projectId]),
-    client.query(
-      `SELECT id,acceptance_id,block_code,category,severity,state,created_at FROM work_blocks WHERE project_id=$1 ORDER BY created_at DESC, id DESC LIMIT 50`, [projectId]),
-    client.query(
-      `SELECT r.id,r.acceptance_id,r.version,r.state,r.created_at FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id WHERE a.project_id=$1 ORDER BY r.created_at DESC, r.id DESC LIMIT 50`, [projectId]),
-  ]);
+       WHERE a.project_id=$1 ORDER BY a.created_at DESC, a.id DESC LIMIT 50`, [projectId]);
+  const blocks = await client.query(
+      `SELECT id,acceptance_id,block_code,category,severity,state,created_at FROM work_blocks WHERE project_id=$1 ORDER BY created_at DESC, id DESC LIMIT 50`, [projectId]);
+  const reviews = await client.query(
+      `SELECT r.id,r.acceptance_id,r.version,r.state,r.created_at FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id WHERE a.project_id=$1 ORDER BY r.created_at DESC, r.id DESC LIMIT 50`, [projectId]);
   return {
     acceptances: acceptances.rows.map((row) => ({
       id: String(row.id),
@@ -842,7 +836,7 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
       actions.push(descriptor(ctx, {
         code: 'PAUSE_MODULE', resourceKind: 'MODULE', resourceId: module.id,
         href: `/api/projects/${projectId}/modules/${module.id}/lifecycle/pause`, idempotencyRequired: true,
-        resourceVersion: module.version, fence: moduleCancellation?.fence,
+        resourceVersion: module.version,
         confirmationRequired: true, schema: stopInputSchema(true),
       }));
     }
@@ -850,7 +844,7 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
       actions.push(descriptor(ctx, {
         code: 'CANCEL_MODULE', resourceKind: 'MODULE', resourceId: module.id,
         href: `/api/projects/${projectId}/modules/${module.id}/lifecycle/cancel`, idempotencyRequired: true,
-        resourceVersion: module.version, fence: moduleCancellation?.fence,
+        resourceVersion: module.version,
         confirmationRequired: true,
         schema: jsonSchema(
           { reason: { type: 'string' }, evidence: { type: 'object' }, obligation_resolution: { type: 'object', description: 'Required when the module has a committed obligation.' } },
@@ -1071,18 +1065,16 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const readVerdict = await resolveCapability(principal, { action: 'READ_PROJECT', projectId }, snapshotNow, client);
     if (!readVerdict.allowed) throw new ApiError(403, 'READ_PROJECT_DENIED');
     const project = await readProjectFacts(client, projectId);
-    const [modules, workItems, gates, legacyGates, stop, delivery, recovery, assurance, activityFacts, asOfEventRow] = await Promise.all([
-      readModuleFacts(client, projectId),
-      readWorkItemFacts(client, projectId),
-      readGateFacts(client, projectId),
-      readLegacyGateFacts(client, projectId),
-      readStopFacts(client, projectId),
-      readDeliverySummary(client, projectId),
-      readRecoveryFacts(client, projectId),
-      readAssuranceFacts(client, projectId),
-      readActivityFacts(client, projectId, snapshotNow),
-      client.query(`SELECT COALESCE(MAX(id),0)::bigint AS as_of_event_id FROM events WHERE project_id=$1`, [projectId]),
-    ]);
+    const modules = await readModuleFacts(client, projectId);
+    const workItems = await readWorkItemFacts(client, projectId);
+    const gates = await readGateFacts(client, projectId);
+    const legacyGates = await readLegacyGateFacts(client, projectId);
+    const stop = await readStopFacts(client, projectId);
+    const delivery = await readDeliverySummary(client, projectId);
+    const recovery = await readRecoveryFacts(client, projectId);
+    const assurance = await readAssuranceFacts(client, projectId);
+    const activityFacts = await readActivityFacts(client, projectId, snapshotNow);
+    const asOfEventRow = await client.query(`SELECT COALESCE(MAX(id),0)::bigint AS as_of_event_id FROM events WHERE project_id=$1`, [projectId]);
     const asOfEventId = Number(asOfEventRow.rows[0].as_of_event_id ?? 0);
 
     const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, assurance };

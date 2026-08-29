@@ -82,7 +82,8 @@
       </section>
     </div>
   </main>
-  <script>
+  <script type="module">
+    import { canApplyProjection } from './projection-refresh.js';
     const notice = document.querySelector('#notice');
     const projectList = document.querySelector('#projects');
     const detail = document.querySelector('#detail');
@@ -222,11 +223,16 @@
           if (requestSelectionGeneration === projectionState.selectionGeneration && !controller.signal.aborted) showMessage(projection.code || 'Não foi possível carregar a projeção.', 'danger');
           return;
         }
-        const canApply = projection.project_id === projectionState.selectedProject
-          && requestSelectionGeneration === projectionState.selectionGeneration
-          && requestRefreshGeneration === projectionState.refreshGeneration
-          && requestRefreshGeneration > projectionState.lastAppliedRefreshGeneration
-          && Number(projection.as_of_event_id) >= projectionState.lastProjectionSeq;
+        const canApply = canApplyProjection({
+          projection,
+          selectedProject: projectionState.selectedProject,
+          selectionGeneration: projectionState.selectionGeneration,
+          requestSelectionGeneration,
+          refreshGeneration: projectionState.refreshGeneration,
+          requestRefreshGeneration,
+          lastAppliedRefreshGeneration: projectionState.lastAppliedRefreshGeneration,
+          lastProjectionSeq: projectionState.lastProjectionSeq
+        });
         if (!canApply) return;
         projectionState.lastAppliedRefreshGeneration = requestRefreshGeneration;
         projectionState.lastProjectionSeq = Number(projection.as_of_event_id);
