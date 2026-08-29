@@ -202,13 +202,31 @@ export const phase3Detail=async(projectId:string)=>{
   return {modules:expose(modules.rows),work_items:projectedWorkItems,deliveries:expose(deliveries.rows),findings:expose(findings.rows),candidates:expose(candidates.rows),gates:expose(gates.rows),planning_jobs:expose(planningJobs.rows),planning_operations:expose(planningOperations.rows),module_plan_review:review,planning,planning_telemetry:planningTelemetry.rows.map((row:any)=>publicValue(row)),evidence:artifacts.rows,macro_lifecycle:await macroLifecycleProjection(projectId),automatic_assurance_integration:await automaticAssuranceIntegrationProjection(projectId)};
 };
 
-export const materializationBaselineOptions=async(projectId:string)=>{
-  const project=(await pool.query(`SELECT workflow_code,workflow_version FROM projects WHERE id=$1`,[projectId])).rows[0];
+export type MaterializationBaselineOptions = {
+  baseline_required: boolean;
+  baseline_requirement: 'BASELINE_REQUIRED' | 'BASELINE_NOT_REQUIRED_LEGACY';
+  approved_revisions: Array<{ id: string; revision_number: number }>;
+};
+
+/**
+ * Read-only materialization eligibility facts.  The caller owns the database
+ * boundary so the state-action projection can read these facts within its
+ * single repeatable-read snapshot, while the legacy endpoint retains its
+ * existing pool-backed behaviour.
+ */
+export const materializationBaselineOptionsForClient=async(client:{query:(query:string, values?:unknown[])=>Promise<{rows:any[]}>},projectId:string):Promise<MaterializationBaselineOptions>=>{
+  const project=(await client.query(`SELECT workflow_code,workflow_version FROM projects WHERE id=$1`,[projectId])).rows[0];
   if(!project)throw new ApiError(404,'PROJECT_NOT_FOUND');
   const v3=project.workflow_code==='PROJECT_DISCOVERY'&&Number(project.workflow_version)===3;
-  const revisions=v3?(await pool.query(`SELECT id,revision_number FROM technology_baseline_revisions WHERE project_key=$1 AND status='APPROVED' ORDER BY revision_number DESC`,[projectId])).rows:[];
-  return { baseline_required:v3, baseline_requirement:v3?'BASELINE_REQUIRED':'BASELINE_NOT_REQUIRED_LEGACY', approved_revisions:revisions };
+  const revisions=v3?(await client.query(`SELECT id,revision_number FROM technology_baseline_revisions WHERE project_key=$1 AND status='APPROVED' ORDER BY revision_number DESC`,[projectId])).rows:[];
+  return {
+    baseline_required:v3,
+    baseline_requirement:v3?'BASELINE_REQUIRED':'BASELINE_NOT_REQUIRED_LEGACY',
+    approved_revisions:revisions.map(row=>({id:String(row.id),revision_number:Number(row.revision_number)})),
+  };
 };
+
+export const materializationBaselineOptions=async(projectId:string)=>materializationBaselineOptionsForClient(pool,projectId);
 
 export const findingFingerprint=(description:string)=>createHash('sha256').update(description.trim().toLowerCase()).digest('hex');
 

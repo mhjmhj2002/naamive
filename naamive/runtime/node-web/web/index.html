@@ -312,9 +312,17 @@
 
     function actionInput(control, property, descriptor) {
       const label = element('label', 'form-label small', property);
-      const type = descriptor.input.schema.properties[property].type;
+      const schema = descriptor.input.schema.properties[property];
+      const type = schema.type;
       let input;
-      if (type === 'object' || type === 'array') {
+      if (Array.isArray(schema.enum)) {
+        input = element('select', 'form-select form-select-sm');
+        for (const value of schema.enum) {
+          const option = element('option', '', schema.enum_labels?.[value] || value);
+          option.value = value;
+          input.append(option);
+        }
+      } else if (type === 'object' || type === 'array') {
         input = element('textarea', 'form-control form-control-sm');
         input.rows = 2;
         input.placeholder = type === 'object' ? '{ }' : '[ ]';

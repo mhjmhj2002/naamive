@@ -25,6 +25,7 @@ import { withReadOnlySnapshot } from './db.js';
 import { resolveCapability, type AuthenticatedPrincipal } from './auth.js';
 import { ApiError } from './service.js';
 import { publicValue } from './projection.js';
+import { materializationBaselineOptionsForClient, type MaterializationBaselineOptions } from './phase3.js';
 
 export const STATE_ACTION_PROJECTION_SCHEMA = 'STATE_ACTION_PROJECTION:v1';
 
@@ -124,7 +125,7 @@ export type AssuranceSummary = {
 
 export type ActionInputSchema = {
   type: 'object';
-  properties: Record<string, { type: string; enum?: string[]; description?: string }>;
+  properties: Record<string, { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }>;
   required: string[];
 };
 
@@ -197,7 +198,7 @@ const CURRENT_WORKFLOWS = new Set<string>([
 
 /** Explicitly declared legacy workflow/version adapters. Each may publish only
  * the actions it declares; anything else stays read-only fail-closed. */
-type LegacyActionCode = 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK';
+type LegacyActionCode = 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE';
 
 type LegacyAdapter = {
   /** Human-readable journey summary for this historical workflow. */
@@ -224,6 +225,7 @@ const LEGACY_ADAPTERS: Record<string, LegacyAdapter> = {
       WAITING_FOR_PRODUCT_COMMITMENT: ['PRODUCT_COMMITMENT_DECISION'],
       WAITING_FOR_REVIEW_ADJUSTMENT: ['APPLY_REVIEW_ADJUSTMENTS'],
       DISCOVERY_FAILED: ['RETRY_DISCOVERY'],
+      PRODUCT_COMMITMENT: ['MATERIALIZE_MODULE'],
     },
   },
   'PROJECT_DISCOVERY:3': {
@@ -232,6 +234,7 @@ const LEGACY_ADAPTERS: Record<string, LegacyAdapter> = {
       WAITING_FOR_PRODUCT_COMMITMENT: ['PRODUCT_COMMITMENT_DECISION'],
       WAITING_FOR_REVIEW_ADJUSTMENT: ['APPLY_REVIEW_ADJUSTMENTS'],
       DISCOVERY_FAILED: ['RETRY_DISCOVERY'],
+      READY_FOR_MODULE_MATERIALIZATION: ['MATERIALIZE_MODULE'],
     },
   },
   'PROJECT_ARCHIVING:1': {
@@ -706,9 +709,10 @@ type DescriptorContext = {
   stop: Awaited<ReturnType<typeof readStopFacts>>;
   recovery: RecoverySummary[];
   assurance: Awaited<ReturnType<typeof readAssuranceFacts>>;
+  materializationBaseline: MaterializationBaselineOptions;
 };
 
-const jsonSchema = (properties: Record<string, { type: string; enum?: string[]; description?: string }>, required: string[]): ActionInputSchema => ({ type: 'object', properties, required });
+const jsonSchema = (properties: Record<string, { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }>, required: string[]): ActionInputSchema => ({ type: 'object', properties, required });
 
 const descriptor = (
   ctx: DescriptorContext,
@@ -763,6 +767,31 @@ const stopInputSchema = (withEvidence: boolean) => jsonSchema(
     ...(withEvidence ? { evidence: { type: 'object', description: 'Evidence of the stop operation.' } } : {}),
   },
   withEvidence ? ['reason', 'evidence'] : ['reason']
+);
+
+/** Mirrors materializeModule's persisted payload contract.  Only module_key is
+ * command-required today; the remaining proposal fields stay optional exactly
+ * as the command accepts them. */
+const materializationInputSchema = (baseline: MaterializationBaselineOptions) => jsonSchema(
+  {
+    module_key: { type: 'string', description: 'Lowercase kebab-case module identifier.' },
+    name: { type: 'string', description: 'Human-readable module name.' },
+    objective: { type: 'string', description: 'Business objective of the module.' },
+    scope: { type: 'array', description: 'In-scope capabilities.' },
+    out_of_scope: { type: 'array', description: 'Explicit exclusions.' },
+    dependencies: { type: 'array', description: 'Module dependencies.' },
+    acceptance_criteria: { type: 'array', description: 'Acceptance criteria.' },
+    source_gate: { type: 'string', description: 'Optional source gate reference.' },
+    ...(baseline.baseline_required ? {
+      technology_baseline_revision_id: {
+        type: 'string',
+        enum: baseline.approved_revisions.map((revision) => revision.id),
+        enum_labels: Object.fromEntries(baseline.approved_revisions.map((revision) => [revision.id, `Approved baseline #${revision.revision_number}`])),
+        description: 'Approved Technology Baseline revision used for this module.',
+      },
+    } : {}),
+  },
+  ['module_key']
 );
 
 const buildCurrentProjectActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>) => {
@@ -921,6 +950,18 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
         href: `/api/projects/${projectId}/retry-discovery`, idempotencyRequired: true,
         confirmationRequired: true, schema: null,
       }));
+    } else if (code === 'MATERIALIZE_MODULE') {
+      // This action is intentionally published only by declared legacy
+      // adapters.  v3 additionally requires approved revisions from the same
+      // projection snapshot; legacy v2 never gains that new requirement.
+      if (project.archived) continue;
+      if (ctx.materializationBaseline.baseline_required && !ctx.materializationBaseline.approved_revisions.length) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'MATERIALIZE_MODULE', resourceKind: 'PROJECT', resourceId: projectId,
+        href: `/api/projects/${projectId}/modules`, idempotencyRequired: true,
+        confirmationRequired: false, schema: materializationInputSchema(ctx.materializationBaseline),
+      }));
     }
   }
   return actions;
@@ -1073,11 +1114,12 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const delivery = await readDeliverySummary(client, projectId);
     const recovery = await readRecoveryFacts(client, projectId);
     const assurance = await readAssuranceFacts(client, projectId);
+    const materializationBaseline = await materializationBaselineOptionsForClient(client, projectId);
     const activityFacts = await readActivityFacts(client, projectId, snapshotNow);
     const asOfEventRow = await client.query(`SELECT COALESCE(MAX(id),0)::bigint AS as_of_event_id FROM events WHERE project_id=$1`, [projectId]);
     const asOfEventId = Number(asOfEventRow.rows[0].as_of_event_id ?? 0);
 
-    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, assurance };
+    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, assurance, materializationBaseline };
     const can = capabilityResolver(principal, snapshotNow, client);
 
     // ----- resource projections (state separation preserved) -----
