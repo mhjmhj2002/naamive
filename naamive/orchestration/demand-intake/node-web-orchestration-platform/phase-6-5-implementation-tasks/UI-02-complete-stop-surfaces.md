@@ -6,7 +6,7 @@ depends_on: [UI-01, REC-02, GAT-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 document_type: implementation-specification
 prevalidation_status: READY_FOR_IMPLEMENTATION
-consumes_contracts: [STATE_ACTION_PROJECTION:v1, RECOVERY_POLICY:v1, REVIEWER_AND_BLOCK_RECOVERY:v1, DELIVERY_PAUSE_CANCELLATION:v1]
+consumes_contracts: [STATE_ACTION_PROJECTION:v1, RECOVERY_POLICY:v1, REVIEWER_AND_BLOCK_RECOVERY:v1, DELIVERY_PAUSE_CANCELLATION:v1, GAT-01, GAT-03, AUT-03]
 introduces_additive_projection: STOP_SURFACE_PROJECTION:v1
 validated_at: 2026-08-29
 ---
@@ -73,9 +73,9 @@ Os gaps a fechar pela UI-02 são:
 - `AUTHORIZE_REWORK` legado pede `finding_ids`, `delivery_id` e
   `head_sha`; `gateDecisionSchema` pede `version`; e os schemas de
   resume/cancel podem expor versão, fence ou resolução interna;
-- `TRANSITION_BLOCK`, `RECONCILE_ACCEPTANCE`, `RECORD_HUMAN_GATE` e
-  `DECIDE_REVIEW` ainda podem aparecer como comandos ordinários mesmo quando o
-  contrato REC-02 exige continuação automática ou gate catalogado.
+- `TRANSITION_BLOCK`, `RECONCILE_ACCEPTANCE`, `RECORD_HUMAN_GATE`,
+  `DECIDE_REVIEW` e `CANCEL_ACCEPTANCE` ainda podem aparecer como comandos
+  ordinários sem a classificação de apresentação exigida pelo contrato.
 
 ## 4. Invariantes de UI-02
 
@@ -100,6 +100,11 @@ Os gaps a fechar pela UI-02 são:
 7. Workflow desconhecido falha fechado: `legacy=true`,
    `journey_status=LEGACY_READ_ONLY`, `allowed_actions=[]`, orientação de
    consulta e nenhuma ação inferida.
+8. `LEGACY_READ_ONLY` é reservado exclusivamente a workflow/version legacy
+   conhecido sem capability comprovável, ou workflow/version ausente ou
+   desconhecido, nos termos de UI-01. Recurso de workflow atual publicado com
+   parada normativa conhecida sem adapter/surface é defeito de projeção, não
+   legado.
 
 ## 5. Extensão aditiva: `STOP_SURFACE_PROJECTION:v1`
 
@@ -113,36 +118,54 @@ StateActionProjection:v1 (additive)
 StopSurfaceProjection:v1
   schema_version: "STOP_SURFACE_PROJECTION:v1"
   id: stable, deterministic stop-surface identity
-  resource_kind: PROJECT | MODULE | WORK_ITEM | EXECUTION | GATE | ACCEPTANCE | BLOCK
+  resource_kind: PROJECT | MODULE | WORK_ITEM | EXECUTION | GATE | ACCEPTANCE | BLOCK | PAUSE
   resource_id: string
   category: RECOVERY | REVIEWER_RECOVERY | BLOCK | ESCALATION | GATE |
-            INTEGRATION | PAUSE | CANCELLATION | DELIVERY | LEGACY | LIFECYCLE
+            INTEGRATION | PAUSE | CANCELLATION | DELIVERY | LEGACY | LIFECYCLE |
+            PROJECTION_DIAGNOSTIC
   type: published stop code
-  lifecycle_state: string
+  resource_state: string
+  lifecycle_state: string | null
   canonical_state: string | null
+  subject: { kind: string; id: string; generation?: string | number } | null
   cause: { code: string; message: string; reason: string | null }
   operational_message: string
   waiting_for: string | null
   continuation:
     kind: AUTOMATIC | HUMAN_ACTION | EXTERNAL_WAIT | RECONCILIATION |
-          TERMINAL | LEGACY_READ_ONLY
+          TERMINAL | LEGACY_READ_ONLY | UNMAPPED
     expected: string
     progress: { stage?: string; attempt?: number; exhausted?: boolean } | null
   authority: { required_roles: string[]; scope_kind: string; scope_id: string } | null
   decisions: [{ code: string; label: string; consequence: string }]
   evidence: [{ reference: string; summary: string; classification: PUBLIC | RESTRICTED }]
-  action_descriptor_code: string | null
+  action_descriptor_id: string | null
   terminal: boolean
   redaction: { classification: PUBLIC | RESTRICTED; redacted: boolean }
 ```
 
+`resource_kind` conserva exclusivamente os kinds canônicos de UI-01. Delivery
+preparation/package ancora em `PROJECT`; technical delivery assurance em
+`ACCEPTANCE`; delivery acceptance em `GATE`; e integration recovery em
+`WORK_ITEM` ou `EXECUTION`, conforme o fato persistido. Package, candidate,
+snapshot e demais subjects não são falsos recursos de lifecycle: são referidos
+somente por `subject` (por exemplo, `DELIVERY_PREPARATION_SNAPSHOT`,
+`DELIVERY_PACKAGE` ou `INTEGRATION_CANDIDATE`) e generation quando existir.
+`resource_state` é o state/status publicado do anchor. `lifecycle_state` e
+`canonical_state` só existem para resources que os possuem; GATE, ACCEPTANCE,
+BLOCK e PAUSE usam `resource_state`, sem lifecycle inventado.
+
 `id` é estável por fato normativo (por exemplo, record/gate/recovery/block e
 versão/generation aplicável), não pelo texto mostrado. `decisions` vem do
-catálogo ou contrato que governa o recurso; `action_descriptor_code` só é
-preenchido se o mesmo descriptor estiver presente em `allowed_actions` para o
-principal atual. Portanto a tela pode explicar a authority a qualquer leitor,
-mas somente renderiza botão para capability publicada. Evidência `RESTRICTED`
-é resumida/redatada ou omitida conforme o grant de leitura, sem trocar a
+catálogo ou contrato que governa o recurso. A associação à capability é
+inequívoca: cada `ActionDescriptor` recebe `descriptor_id` server-side,
+único dentro da resposta da projeção, e a superfície referencia somente
+`action_descriptor_id`. O renderer resolve igualdade exata de ID; nunca
+procura por `code`, nem compõe target no browser. O ID só é publicado quando o
+descriptor correspondente está em `allowed_actions` para o principal atual.
+Portanto a tela pode explicar a authority a qualquer leitor, mas somente
+renderiza botão para capability publicada. Evidência `RESTRICTED` é
+resumida/redatada ou omitida conforme o grant de leitura, sem trocar a
 classificação do fato.
 
 O builder server-side cria as superfícies a partir dos mesmos fatos e do mesmo
@@ -151,11 +174,20 @@ nome de estado. Uma resource sem parada não recebe superfície. Pausa,
 cancelamento e archive preservam observações concorrentes, porém suas regras
 de precedência determinam a continuação de cada superfície.
 
+Para workflow atual publicado, se uma parada normativa conhecida não puder ser
+mapeada, o builder publica uma superfície diagnóstica
+`type=UNMAPPED_STOP_SURFACE`, `category=PROJECTION_DIAGNOSTIC`,
+`continuation.kind=UNMAPPED`, mensagem operacional segura,
+`action_descriptor_id=null` e nenhuma decisão/ação. Ela preserva os states
+reais, não muda lifecycle nem `legacy`, e gera sinal testável de telemetria.
+Isso é fail-closed e defeito de implementação a corrigir; nunca fallback para
+`LEGACY_READ_ONLY`.
+
 ## 6. Coleção, seleção e apresentação
 
 As superfícies são agrupadas por resource, com cabeçalho de projeto/módulo/WI
-e ordenadas deterministamente por: terminal/cancelamento aplicável, scope,
-severidade operacional publicada, creation/event cursor e `id`. Essa ordem não
+e ordenadas deterministamente no servidor por: terminal/cancelamento aplicável,
+scope, `resource_kind`/`resource_id`, creation/event cursor e `id`. Essa ordem não
 altera `continuation`, nem substitui um recurso executando por outro bloqueado.
 Uma mesma página pode mostrar, simultaneamente, módulo pausado, WI em recovery,
 aceite aguardando reviewer, gate aberto e delivery bloqueada.
@@ -188,18 +220,19 @@ adaptável há a superfície fail-closed `LEGACY_READ_ONLY`.
 | escalada | block/gate | condição material, authority, decisões e efeitos | `HUMAN_ACTION` | `REWORK_ESCALATION`/`ESCALATED_CLOSURE` | `DECIDE_GATE`, não `RECORD_HUMAN_GATE` genérico |
 | gate aberto ordinário/condicional | gate | `gate_code`, condição, scope, authority, evidence e consequência | `HUMAN_ACTION` | roles e decisões exatas do catálogo | `DECIDE_GATE`/`DECIDE_DELIVERY_ACCEPTANCE` autorizado |
 | `PAUSED` PROJECT | project | motivo, estado prévio e fence; trabalho não avança | `HUMAN_ACTION` ou `RECONCILIATION` no resume | `ON_CALL_OWNER`: RESUME_PROJECT; BUSINESS_OWNER pode cancelar | descriptor de resume apenas se publicado; record público permitido |
-| `PAUSED` MODULE | module | motivo/estado prévio do módulo e efeito da pausa pai | `HUMAN_ACTION` ou `RECONCILIATION` | `ON_CALL_OWNER`: RESUME_MODULE | descriptor próprio de módulo; não usar pause de projeto |
+| `PAUSED` MODULE | module | motivo/estado prévio do módulo e efeito da pausa pai | `HUMAN_ACTION` ou `RECONCILIATION` | `ON_CALL_OWNER`: RESUME_MODULE; `BUSINESS_OWNER`: CANCEL_MODULE quando publicado | descriptors próprios de módulo; não usar pause de projeto nem confundir as authorities |
 | `CANCELLED` PROJECT | project | decisão terminal e fatos preservados | `TERMINAL` | BUSINESS_OWNER foi authority histórica; nenhuma decisão futura | nenhum descriptor; records/evidence redatados |
 | `CANCELLED` MODULE | module | decisão terminal/obligation resolution | `TERMINAL` | BUSINESS_OWNER histórica; nenhuma ação futura | nenhum descriptor; não revive no resume pai |
 | `RESUME_RECONCILIATION_REQUIRED` | project/module | resume não pode restaurar cegamente; guard divergente | `RECONCILIATION` | nenhuma escolha técnica | sem botão técnico; intent/evidence resumida |
-| preparation de delivery | project/package | snapshot e package em preparação | `AUTOMATIC` | nenhuma | sem botão; progresso/evidence release permitida |
-| assurance técnica de delivery | acceptance/package | assurance do package exato e seu resultado | `AUTOMATIC` / `RECONCILIATION` | nenhum gate antes de acceptance técnica | sem decisão de entrega |
-| `DELIVERY_ACCEPTANCE` aberto | project/gate | package/hash/revision, evidências release/operation/handover | `HUMAN_ACTION` | BUSINESS_OWNER: `APPROVE`, `REWORK` | `DECIDE_DELIVERY_ACCEPTANCE`; **nunca REJECT** |
-| delivery `REWORK` | project/package | finding e nova revisão necessária | `AUTOMATIC` ou gate material | owner corretivo derivado server-side | sem atribuir produtor ou pedir IDs técnicos |
+| preparation de delivery | PROJECT + subject package/preparation | snapshot e package em preparação | `AUTOMATIC` | nenhuma | sem botão; progresso/evidence release permitida |
+| assurance técnica de delivery | ACCEPTANCE + subject package | assurance do package exato e seu resultado | `AUTOMATIC` / `RECONCILIATION` | nenhum gate antes de acceptance técnica | sem decisão de entrega |
+| `DELIVERY_ACCEPTANCE` aberto | GATE + subject package | package/hash/revision, evidências release/operation/handover | `HUMAN_ACTION` | BUSINESS_OWNER: `APPROVE`, `REWORK` | `DECIDE_DELIVERY_ACCEPTANCE`; **nunca REJECT** |
+| delivery `REWORK` | PROJECT + subject package | finding e nova revisão necessária | `AUTOMATIC` ou gate material | owner corretivo derivado server-side | sem atribuir produtor ou pedir IDs técnicos |
 | `DELIVERED` | project/module | entrega autoritativa concluída | `TERMINAL` | nenhuma | nenhum descriptor; não confundir aceite técnico |
 | `ARCHIVED` conhecido | project/module | arquivo administrativo legado | `LEGACY_READ_ONLY` ou consulta | nenhuma | sem ação nova; não afirmar aderência retroativa |
 | workflow legado conhecido | qualquer | adapter/version e orientação limitada | conforme adapter explícito | somente capabilities declaradas | descriptor legado explicitamente suportado |
 | workflow desconhecido | qualquer | estado bruto e incompatibilidade | `LEGACY_READ_ONLY` | nenhuma | `allowed_actions=[]` |
+| stop normativo sem mapper em workflow atual | resource canônico | indisponibilidade operacional segura, sem mascarar o state real | `UNMAPPED` | nenhuma | `UNMAPPED_STOP_SURFACE`; sem ação, telemetria/teste obrigatório |
 
 Outras paradas já identificadas pela auditoria usam a mesma matriz: discovery
 `FAILED` com retry publicado, `WAITING_FOR_EXTERNAL_INPUT` como
@@ -232,8 +265,9 @@ Classificação dos descritores atuais a ser implementada na migração UI-02:
 | `TRANSITION_BLOCK` | operação administrativa legada | não é continuação ordinária REC-02; ocultar das stages automáticas e só mostrar se futuro contrato publicar uma decisão humana específica do block |
 | `RECONCILE_ACCEPTANCE` | operação técnica | não renderizar como clique ordinário; REC-02/reconciler faz a reconciliação. Publicação atual é gap de projeção/UI |
 | `RECORD_HUMAN_GATE` | incompatibilidade com contrato fechado | substituir na superfície por gate GAT-01 e `DECIDE_GATE`; não permitir seleção livre de `gate_type`/decisão |
-| `DECIDE_REVIEW` | ação humana normativa restrita | somente para reviewer independente autenticado e review atribuído; é fila de trabalho de review, não recuperação geral nem decisão do operador |
-| `AUTHORIZE_REWORK` | legado explícito | nunca no fluxo v2; se adapter legado o publicar, server deriva finding/delivery/SHA e UI coleta apenas justificativa humana permitida |
+| `DECIDE_REVIEW` | `TECHNICAL_OPERATION` não-humana | REVIEW é execução técnica independente de Assurance/AUT-03. A surface mostra review pendente/em execução, reviewer/routing sanitizado, estado, progresso, evidence e recovery REC-02; nunca oferece ACCEPT/REWORK/BLOCK/ESCALATE ao operador humano. Review humano futuro exige contrato próprio explícito |
+| `CANCEL_ACCEPTANCE` | `HUMAN_OPERATION` limitada | somente `ON_CALL_OWNER` com capability `ASSURANCE_ON_CALL`, para a acceptance indicada e com confirmação/motivo humano permitido. Cancela acceptance, reviews/dispatches de assurance pendentes e suas continuações REC-02 aplicáveis; não é `CancellationRecord:v1`, não cancela PROJECT/MODULE e não torna o lifecycle do projeto/módulo `CANCELLED` |
+| `AUTHORIZE_REWORK` | legado explícito, fail-closed | nunca no fluxo v2. Só pode ser publicado se o mesmo snapshot provar uma única combinação válida de findings, delivery, SHA/lineage, resource version e fence; ausência, ambiguidade ou fence/lineage inválida remove a capability e deixa o adapter read-only com orientação segura |
 
 ## 9. Gates, delivery, pause, resume e cancellation
 
@@ -260,6 +294,7 @@ UI-02 estende o descriptor de modo aditivo para eliminar heurísticas por nome:
 
 ```text
 ActionDescriptor (additive)
+  descriptor_id: server-generated identifier unique within this projection
   presentation: { kind: HUMAN_DECISION | HUMAN_OPERATION | TECHNICAL_OPERATION |
                         ADMINISTRATIVE | LEGACY; label: string; description: string }
   input_binding:
@@ -283,12 +318,27 @@ Os schemas existentes de `version`, `expected_pause_version`, `fence`,
 bindings, não labels a esconder. O renderer remove o preenchimento baseado em
 nomes e não mostra textarea JSON genérico para objetos internos.
 
+Para `AUTHORIZE_REWORK` legado, a derivação server-side não é permissiva: o
+adapter consulta fatos persistidos no mesmo snapshot e só publica a capability
+quando encontra **exatamente uma** combinação pertinente e válida de finding(s),
+delivery, SHA/lineage, resource version e fence. Zero ou múltiplas combinações,
+ou lineage/fence impossível de provar, removem o descriptor; a UI apresenta
+somente a orientação legacy read-only. O operador nunca fornece IDs para
+desambiguar a escolha.
+
 ## 11. Frontend, segurança e acessibilidade
 
 `renderProjection()` continua o único dono e recebe a coleção já aplicada pelo
 fencing UI-01. A implementação acrescenta `renderStopSurfaces(projection)` sem
-I/O e liga um botão somente pelo `action_descriptor_code` presente. SSE continua
+I/O e liga um botão somente pelo `action_descriptor_id` presente. SSE continua
 invalidação, sem patch de DOM, com refresh no reconnect e sem polling.
+
+O renderer só produz formulário/botão para descriptor de apresentação
+`HUMAN_DECISION` ou `HUMAN_OPERATION` referenciado pelo
+`action_descriptor_id` exato da superfície. `TECHNICAL_OPERATION`,
+`ADMINISTRATIVE` e `LEGACY` não viram controle ordinário. Em particular,
+`DECIDE_REVIEW` nunca expõe ACCEPT/REWORK/BLOCK/ESCALATE a operador humano;
+seus fatos aparecem somente no cartão de progresso/recovery de Assurance.
 
 Cada superfície possui heading legível, descrição sem código técnico como única
 informação, relação explícita entre botão e consequência, ordem de tabulação
@@ -312,6 +362,8 @@ payload interno, mesmo a usuário autorizado a executar a ação.
    migrar primeiro gates, pause/resume/cancel, delivery e assurance/recovery.
 3. Atualizar renderer para cartões por resource, progresso automático,
    authority/decisões/evidence e formulários somente de `HUMAN_INPUT`.
+   Resolver surface → action exclusivamente por `action_descriptor_id`/
+   `descriptor_id`; não usar code ou target composto no browser.
 4. Preservar response fencing/UI-01 e substituir o formulário global genérico
    sem introduzir fetches ou inferências client-side.
 5. Testar contrato, RBAC, DOM e PostgreSQL onde comando/persistência forem
@@ -324,13 +376,14 @@ payload interno, mesmo a usuário autorizado a executar a ação.
 | superfícies | cada classe da matriz, causa/mensagem/espera/continuação, múltiplas paradas e resource correto |
 | RBAC | autorizado recebe somente descriptor compatível; não autorizado vê authority sem botão; cross-project/revogado negados pelo servidor |
 | automação | retry/restart/reconcile, preparation/assurance e stages REC-02 1--6 têm progresso e nenhum botão |
-| reviewer/block | zero reviewer, falha terminal, stages 7/8, exception expirada, block/escalation e prova de não rerodar produtor |
+| reviewer/block | zero reviewer, falha terminal, stages 7/8, exception expirada, block/escalation, review técnico sem botão humano DECIDE_REVIEW e prova de não rerodar produtor |
 | gates/delivery | gate real e stale version; APPROVE/REWORK; inexistência de REJECT; package/technical acceptance não confundidos com DELIVERED |
 | pause/cancel | PAUSE/RESUME/CANCEL de PROJECT e MODULE, resume reconciliation, cancellation terminal e concorrência/fence |
-| descriptor | bindings HUMAN/SERVER_BOUND/SERVER_DERIVED; nenhum input técnico editável; gate enum catalogada; legado AUTHORIZE_REWORK seguro |
+| descriptor | bindings HUMAN/SERVER_BOUND/SERVER_DERIVED; IDs de descriptor únicos e surface→action exata; nenhum input técnico editável; gate enum catalogada; AUTHORIZE_REWORK com zero/uma/múltiplas combinações e fence inválida |
+| acceptance cancellation | CANCEL_ACCEPTANCE permitido somente a ON_CALL_OWNER no scope; cancela somente acceptance/review/dispatch de assurance, sem CancellationRecord ou CANCELLED de project/module |
 | consistência | selection/refresh fencing, resposta tardia, SSE reconnect/coalescing, cursor factual e ausência de polling |
 | segurança/a11y | redaction, sem dados de provider/segredo, teclado, foco, aria-live, confirmação, erro stale legível e responsividade |
-| legado | adapter conhecido somente com capability declarada; workflow desconhecido LEGACY_READ_ONLY e lista vazia |
+| legado/projeção | adapter conhecido somente com capability declarada; workflow desconhecido LEGACY_READ_ONLY e lista vazia; workflow atual com parada sem mapper gera UNMAPPED_STOP_SURFACE, sem ação e com telemetria |
 
 ## 14. Critérios objetivos de aceite
 
@@ -339,10 +392,20 @@ payload interno, mesmo a usuário autorizado a executar a ação.
 - Há coleção completa por resource, sem ocultar paradas simultâneas.
 - Nenhuma decisão/ação é inferida no browser; toda ação visível vem de
   `allowed_actions` e todo botão revalida no servidor.
+- Associação surface→ação é inequívoca por `action_descriptor_id`; não há
+  lookup por code no renderer.
 - Recovery técnico e stages automáticos não são cliques ordinários.
+- REVIEW/`DECIDE_REVIEW` é operação técnica não-humana; o operador só observa
+  estado/progresso/recovery e decisões humanas continuam exclusivamente em gate
+  publicado.
 - Gates apresentam somente decisões catalogadas; delivery não oferece REJECT.
 - Project e module suportam suas superfícies de pause/resume/cancel distintas.
 - Inputs técnicos foram separados de input humano por binding explícito.
+- `CANCEL_ACCEPTANCE` só possui sua semântica limitada de Assurance e não é
+  confundido com cancelamento GAT-02; `AUTHORIZE_REWORK` legado falha fechado
+  quando não houver derivação única comprovável.
+- Workflow atual sem surface normativa permanece detectável como defeito
+  `UNMAPPED_STOP_SURFACE`, nunca é reclassificado como legacy.
 - UI-01 fencing/SSE, redaction, acessibilidade, responsividade e compatibilidade
   legacy foram cobertos pela matriz de testes.
 
