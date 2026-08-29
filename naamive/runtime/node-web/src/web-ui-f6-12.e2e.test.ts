@@ -60,10 +60,17 @@ test('F6 canonical UI operates a server-published governed action and refreshes 
     stop: { paused: null, cancelled: null, archived: false, reconciliation_required: false },
     cause: { code: null, resource_kind: null, resource_id: null }, next_action: cancelled ? null : { text: 'Cancelamento governado disponível.', descriptor_code: 'CANCEL_ACCEPTANCE' },
     allowed_actions: cancelled ? [] : [{
+      descriptor_id: `action:CANCEL_ACCEPTANCE:ACCEPTANCE:${acceptance}`,
       code: 'CANCEL_ACCEPTANCE', target: { resource_kind: 'ACCEPTANCE', resource_id: acceptance },
       command: { method: 'POST', href: `/api/projects/${project}/assurance/acceptances/${acceptance}/cancel`, idempotency_required: true },
       expected: { resource_version: 1, as_of_event_id: projectionRequests }, confirmation: { required: false },
-      input: { schema: { type: 'object', properties: { reason: { type: 'object', description: 'Cancellation reason.' } }, required: ['reason'] }, required_fields: ['reason'] }
+      input: { schema: { type: 'object', properties: { reason: { type: 'object', description: 'Cancellation reason.' } }, required: ['reason'] }, required_fields: ['reason'] },
+      presentation: { kind: 'HUMAN_OPERATION', label: 'Cancelar acceptance', description: 'Operação limitada à acceptance.' },
+      input_binding: { fields: [{ name: 'reason', source: 'HUMAN_INPUT', schema: { type: 'object', description: 'Motivo do cancelamento.' }, send: true, editable: true }], decision_options: null }
+    }],
+    stop_surfaces: cancelled ? [] : [{
+      schema_version: 'STOP_SURFACE_PROJECTION:v1', id: `acceptance:${acceptance}:1`, resource_kind: 'ACCEPTANCE', resource_id: acceptance, category: 'REVIEWER_RECOVERY', type: 'PENDING_REVIEW', resource_state: 'PENDING_REVIEW', lifecycle_state: null, canonical_state: null, subject: null,
+      cause: { code: 'PENDING_REVIEW', message: 'Acceptance pendente.', reason: null }, operational_message: 'Acceptance aguardando revisão.', waiting_for: 'Operação on-call autorizada.', continuation: { kind: 'HUMAN_ACTION', expected: 'Cancelar apenas a acceptance.', progress: null }, authority: { required_roles: ['ON_CALL_OWNER'], scope_kind: 'ACCEPTANCE', scope_id: acceptance }, decisions: [], evidence: [], action_descriptor_id: `action:CANCEL_ACCEPTANCE:ACCEPTANCE:${acceptance}`, terminal: false, redaction: { classification: 'PUBLIC', redacted: false }
     }]
   });
   const server = createServer((request, response) => {
@@ -115,15 +122,15 @@ test('F6 canonical UI operates a server-published governed action and refreshes 
   await devtools.call('Page.navigate', { url: `http://127.0.0.1:${address.port}/` });
   await eventually(async () => await evalJs(`document.querySelector('[data-project-id="${project}"]') !== null`), 'canonical project list');
   await evalJs(`document.querySelector('[data-project-id="${project}"]').click()`);
-  await eventually(async () => await evalJs(`[...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='CANCEL_ACCEPTANCE')`), 'server-published governed action');
+  await eventually(async () => await evalJs(`[...document.querySelectorAll('#stopSurfaces h3')].some(node=>node.textContent.includes('CANCEL_ACCEPTANCE')===false && node.textContent.includes('PENDING_REVIEW'))`), 'server-published governed action surface');
   await eventually(async () => eventConnections >= 2, 'SSE reconnect after a disconnected named frame');
   await eventually(async () => projectionRequests > reconnectProjectionRequests, 'canonical refresh after SSE reconnection');
   await eventually(async () => await evalJs(`document.querySelector('#notice').textContent.includes('será restabelecida automaticamente')`), 'SSE degraded state');
-  await evalJs(`const form=[...document.querySelectorAll('#actions form')].find(form=>form.querySelector('h3')?.textContent==='CANCEL_ACCEPTANCE');form.querySelector('textarea[name="reason"]').value='{"reason":"incident","evidence_ref":"evidence-ref"}';form.querySelector('button[type="submit"]').click()`);
+  await evalJs(`const form=document.querySelector('#stopSurfaces form');form.querySelector('textarea[name="reason"]').value='incident documented in OPS-42';form.querySelector('button[type="submit"]').click()`);
   await eventually(async () => commands.length === 1, 'descriptor command request');
   assert.equal(commands[0].path, `/api/projects/${project}/assurance/acceptances/${acceptance}/cancel`);
-  assert.deepEqual(commands[0].body, { reason: { reason: 'incident', evidence_ref: 'evidence-ref' } });
-  await eventually(async () => await evalJs(`document.querySelector('#actions').textContent.includes('Não há ações humanas permitidas')`), 'post-command canonical refresh');
+  assert.deepEqual(commands[0].body, { reason: { summary: 'incident documented in OPS-42' } });
+  await eventually(async () => await evalJs(`document.querySelector('#stopSurfaces').textContent.includes('Nenhuma parada operacional')`), 'post-command canonical refresh');
   assert.ok(eventConnections >= 2, 'reconnection is EventSource-driven');
   assert.equal(await evalJs(`performance.getEntriesByType('resource').some(entry=>new URL(entry.name).pathname.endsWith('/assurance'))`), false, 'the browser does not poll the legacy assurance projection endpoint');
   assert.equal(await evalJs(`document.querySelector('#detail').textContent.match(/prompt|stdout|stderr|api[_-]?key|password/i) === null`), true, 'sensitive raw fields are not rendered in the canonical detail');

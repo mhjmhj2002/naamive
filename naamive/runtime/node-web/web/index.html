@@ -74,7 +74,7 @@
                 <section class="col-md-6"><h2 class="h6">Atividade</h2><div id="activity"></div></section>
                 <section class="col-md-6"><h2 class="h6">Gates e paradas</h2><div id="gatesAndStops"></div></section>
               </div>
-              <section class="mt-4"><h2 class="h6">Ações permitidas</h2><div id="actions" class="vstack gap-3"></div></section>
+              <section class="mt-4"><h2 class="h6">Superfícies de parada</h2><div id="stopSurfaces" class="vstack gap-3" aria-live="polite"></div></section>
               <section class="mt-4"><h2 class="h6">Notificações recentes</h2><div id="events" class="timeline border rounded bg-light p-3 small" aria-live="polite"></div></section>
             </div>
           </div>
@@ -92,7 +92,7 @@
     const workItems = document.querySelector('#workItems');
     const activity = document.querySelector('#activity');
     const gatesAndStops = document.querySelector('#gatesAndStops');
-    const actions = document.querySelector('#actions');
+    const stopSurfaces = document.querySelector('#stopSurfaces');
     const events = document.querySelector('#events');
     const listFields = new Set(['success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions']);
     const projectionState = {
@@ -105,7 +105,8 @@
       inFlight: null,
       refreshPending: false,
       stream: null,
-      renderedEventIds: new Set()
+      renderedEventIds: new Set(),
+      pendingStopSurface: null
     };
     let csrfToken = '';
 
@@ -324,9 +325,9 @@
       gatesAndStops.replaceChildren(root);
     }
 
-    function actionInput(control, property, descriptor) {
-      const label = element('label', 'form-label small', property);
-      const schema = descriptor.input.schema.properties[property];
+    function actionInput(control, field) {
+      const schema = field.schema || { type: 'string' };
+      const label = element('label', 'form-label small', schema.description || field.name);
       const type = schema.type;
       let input;
       if (Array.isArray(schema.enum)) {
@@ -339,7 +340,7 @@
       } else if (type === 'object' || type === 'array') {
         input = element('textarea', 'form-control form-control-sm');
         input.rows = 2;
-        input.placeholder = type === 'object' ? '{ }' : '[ ]';
+        input.placeholder = type === 'array' ? 'Um item por linha' : 'Descreva a evidência ou justificativa permitida';
       } else if (type === 'integer') {
         input = element('input', 'form-control form-control-sm');
         input.type = 'number';
@@ -348,51 +349,70 @@
         input = element('input', 'form-control form-control-sm');
         input.type = 'text';
       }
-      input.name = property;
-      input.required = descriptor.input.required_fields.includes(property);
-      const expected = descriptor.expected;
-      if (property === 'version') input.value = String(expected.gate_version ?? expected.resource_version ?? '');
-      if (property === 'expected_pause_version') input.value = String(expected.pause_version ?? '');
-      if (property === 'fence') input.value = String(expected.fence ?? '');
+      input.name = field.name;
+      input.required = true;
       control.append(label, input);
     }
 
     function actionPayload(form, descriptor) {
       const payload = {};
-      const properties = descriptor.input.schema ? descriptor.input.schema.properties : {};
-      for (const [name, schema] of Object.entries(properties)) {
-        const raw = String(new FormData(form).get(name) || '').trim();
+      for (const field of descriptor.input_binding.fields || []) {
+        if (!field.send) continue;
+        if (field.source === 'SERVER_BOUND') { payload[field.name] = field.value; continue; }
+        if (field.source !== 'HUMAN_INPUT') continue;
+        const raw = String(new FormData(form).get(field.name) || '').trim();
         if (!raw) continue;
-        if (schema.type === 'integer') payload[name] = Number(raw);
-        else if (schema.type === 'object' || schema.type === 'array') payload[name] = JSON.parse(raw);
-        else payload[name] = raw;
+        const type = field.schema?.type;
+        if (type === 'integer') payload[field.name] = Number(raw);
+        else if (type === 'array') payload[field.name] = raw.split('\n').map(value => value.trim()).filter(Boolean);
+        // Existing command contracts carry evidence as objects.  The browser
+        // accepts only a human-readable summary and never asks for internal
+        // JSON, IDs, hashes, fences or recovery facts.
+        else if (type === 'object') payload[field.name] = { summary: raw };
+        else payload[field.name] = raw;
       }
       return payload;
     }
 
-    function renderActions(projection) {
-      if (!projection.allowed_actions.length) {
-        actions.replaceChildren(empty('Não há ações humanas permitidas para este principal neste snapshot.'));
+    function renderStopSurfaces(projection) {
+      const surfaces = Array.isArray(projection.stop_surfaces) ? projection.stop_surfaces : [];
+      if (!surfaces.length) {
+        stopSurfaces.replaceChildren(empty('Nenhuma parada operacional publicada neste snapshot.'));
         return;
       }
+      const descriptors = new Map((projection.allowed_actions || []).map(descriptor => [descriptor.descriptor_id, descriptor]));
       const fragment = document.createDocumentFragment();
-      for (const descriptor of projection.allowed_actions) {
-        const card = element('form', 'border rounded p-3');
-        card.append(element('h3', 'h6 mb-1', descriptor.code));
-        card.append(element('p', 'small text-muted mb-2', `${descriptor.target.resource_kind}: ${descriptor.target.resource_id}`));
-        if (descriptor.input.schema) {
-          for (const property of Object.keys(descriptor.input.schema.properties)) actionInput(card, property, descriptor);
+      for (const surface of surfaces) {
+        const card = element('article', 'border rounded p-3 bg-white');
+        card.id = `stop-surface-${surface.id}`;
+        card.tabIndex = -1;
+        card.append(element('h3', 'h6 mb-1', `${surface.resource_kind} · ${surface.type}`));
+        card.append(element('p', 'small text-muted mb-2', `${surface.operational_message} Estado publicado: ${surface.resource_state}.`));
+        card.append(element('p', 'small mb-2', `Aguarda: ${surface.waiting_for || 'nenhuma dependência adicional'} · Continuação: ${surface.continuation.expected}`));
+        if (surface.authority) card.append(element('p', 'small text-muted mb-2', `Autoridade: ${surface.authority.required_roles.join(', ') || 'não aplicável'} · escopo ${surface.authority.scope_kind}: ${surface.authority.scope_id}`));
+        if (Array.isArray(surface.decisions) && surface.decisions.length) {
+          const list = element('ul', 'small mb-2');
+          for (const decision of surface.decisions) list.append(element('li', '', `${decision.label}: ${decision.consequence}`));
+          card.append(list);
         }
-        const button = element('button', 'btn btn-primary btn-sm mt-2', 'Executar');
+        if (Array.isArray(surface.evidence) && surface.evidence.length) card.append(element('p', 'small text-muted mb-2', surface.redaction?.redacted ? 'Evidência restrita resumida/redatada.' : surface.evidence.map(item => item.summary).join(' ')));
+        const descriptor = surface.action_descriptor_id ? descriptors.get(surface.action_descriptor_id) : null;
+        if (!descriptor || !['HUMAN_DECISION', 'HUMAN_OPERATION'].includes(descriptor.presentation?.kind)) {
+          card.append(element('p', 'small text-muted mb-0', surface.continuation.kind === 'AUTOMATIC' || surface.continuation.kind === 'RECONCILIATION' ? 'Progresso técnico: nenhuma ação humana é necessária.' : 'Esta parada é explicável, mas não há ação autorizada para este principal.'));
+          fragment.append(card);
+          continue;
+        }
+        const form = element('form', 'mt-2');
+        form.append(element('p', 'small text-muted mb-2', descriptor.presentation.description));
+        for (const field of descriptor.input_binding.fields || []) if (field.source === 'HUMAN_INPUT' && field.editable) actionInput(form, field);
+        const button = element('button', 'btn btn-primary btn-sm', descriptor.presentation.kind === 'HUMAN_DECISION' ? 'Registrar decisão' : 'Executar operação');
         button.type = 'submit';
-        card.append(button);
-        card.addEventListener('submit', async (event) => {
+        form.append(button);
+        form.addEventListener('submit', async (event) => {
           event.preventDefault();
-          if (!card.checkValidity()) { card.reportValidity(); return; }
+          if (!form.checkValidity()) { form.reportValidity(); return; }
           if (descriptor.confirmation.required && !window.confirm(`Confirmar ${descriptor.code}?`)) return;
-          let payload;
-          try { payload = actionPayload(card, descriptor); }
-          catch { showMessage('Os campos JSON devem conter JSON válido.', 'warning'); return; }
+          const payload = actionPayload(form, descriptor);
           button.disabled = true;
           try {
             const response = await request(descriptor.command.href, {
@@ -401,13 +421,22 @@
               body: JSON.stringify(payload)
             });
             const body = await responseBody(response);
-            showMessage(response.ok ? `${descriptor.code} aceita.` : `${body.code || 'REQUEST_FAILED'}: ${body.message || 'Comando rejeitado.'}`, response.ok ? 'success' : 'danger');
-            if (response.ok) { refreshProjection(); void loadProjects(); }
+            showMessage(response.ok ? `${descriptor.presentation.label} aceita.` : `${body.code || 'REQUEST_FAILED'}: ${body.message || 'Comando rejeitado.'}`, response.ok ? 'success' : 'danger');
+            // A stale/forbidden response can be caused by an authority or
+            // fence change after this snapshot; refresh through UI-01's sole
+            // fenced path rather than patching the card locally.
+            if (response.ok || [403, 409].includes(response.status)) { projectionState.pendingStopSurface = surface.id; refreshProjection(); if (response.ok) void loadProjects(); }
           } finally { button.disabled = false; }
         });
+        card.append(form);
         fragment.append(card);
       }
-      actions.replaceChildren(fragment);
+      stopSurfaces.replaceChildren(fragment);
+      if (projectionState.pendingStopSurface) {
+        const updated = document.querySelector(`#stop-surface-${CSS.escape(projectionState.pendingStopSurface)}`);
+        if (updated) updated.focus();
+        projectionState.pendingStopSurface = null;
+      }
     }
 
     function renderProjection(projection) {
@@ -416,7 +445,7 @@
       renderResources(workItems, projection.resources.work_items, 'itens de trabalho');
       renderActivity(projection);
       renderGatesAndStops(projection);
-      renderActions(projection);
+      renderStopSurfaces(projection);
     }
 
     document.querySelector('#refreshProjects').addEventListener('click', () => void loadProjects());

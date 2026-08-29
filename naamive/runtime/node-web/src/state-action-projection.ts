@@ -28,6 +28,7 @@ import { publicValue } from './projection.js';
 import { materializationBaselineOptionsForClient, type MaterializationBaselineOptions } from './phase3.js';
 
 export const STATE_ACTION_PROJECTION_SCHEMA = 'STATE_ACTION_PROJECTION:v1';
+export const STOP_SURFACE_PROJECTION_SCHEMA = 'STOP_SURFACE_PROJECTION:v1';
 
 /* ------------------------------------------------------------------ *
  * Public DTO types (allowlist)
@@ -144,12 +145,43 @@ export type ActionInputSchema = {
 };
 
 export type ActionDescriptor = {
+  /** Stable only within one projection response.  UI-02 deliberately binds a
+   * stop to this id, never to an action code or a client-composed target. */
+  descriptor_id: string;
   code: string;
   target: { resource_kind: 'PROJECT' | 'MODULE' | 'WORK_ITEM' | 'GATE' | 'ACCEPTANCE' | 'BLOCK' | 'PAUSE'; resource_id: string };
   command: { method: 'POST'; href: string; idempotency_required: boolean };
   expected: { resource_version?: number; gate_version?: number; pause_version?: number; fence?: string; as_of_event_id: number };
   confirmation: { required: boolean };
   input: { schema: ActionInputSchema | null; required_fields: string[] };
+  presentation: { kind: 'HUMAN_DECISION' | 'HUMAN_OPERATION' | 'TECHNICAL_OPERATION' | 'ADMINISTRATIVE' | 'LEGACY'; label: string; description: string };
+  input_binding: {
+    fields: Array<{ name: string; source: 'HUMAN_INPUT' | 'SERVER_BOUND' | 'SERVER_DERIVED'; schema?: { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }; value?: unknown; send: boolean; editable: boolean }>;
+    decision_options: Array<{ code: string; label: string; consequence: string }> | null;
+  };
+};
+
+export type StopSurfaceProjection = {
+  schema_version: typeof STOP_SURFACE_PROJECTION_SCHEMA;
+  id: string;
+  resource_kind: Exclude<ResourceKind, null>;
+  resource_id: string;
+  category: 'RECOVERY' | 'REVIEWER_RECOVERY' | 'BLOCK' | 'ESCALATION' | 'GATE' | 'INTEGRATION' | 'PAUSE' | 'CANCELLATION' | 'DELIVERY' | 'LEGACY' | 'LIFECYCLE' | 'PROJECTION_DIAGNOSTIC';
+  type: string;
+  resource_state: string;
+  lifecycle_state: string | null;
+  canonical_state: string | null;
+  subject: { kind: string; id: string; generation?: string | number } | null;
+  cause: { code: string; message: string; reason: string | null };
+  operational_message: string;
+  waiting_for: string | null;
+  continuation: { kind: 'AUTOMATIC' | 'HUMAN_ACTION' | 'EXTERNAL_WAIT' | 'RECONCILIATION' | 'TERMINAL' | 'LEGACY_READ_ONLY' | 'UNMAPPED'; expected: string; progress: { stage?: string; attempt?: number; exhausted?: boolean } | null };
+  authority: { required_roles: string[]; scope_kind: string; scope_id: string } | null;
+  decisions: Array<{ code: string; label: string; consequence: string }>;
+  evidence: Array<{ reference: string; summary: string; classification: 'PUBLIC' | 'RESTRICTED' }>;
+  action_descriptor_id: string | null;
+  terminal: boolean;
+  redaction: { classification: 'PUBLIC' | 'RESTRICTED'; redacted: boolean };
 };
 
 export type StateActionProjection = {
@@ -192,6 +224,7 @@ export type StateActionProjection = {
   cause: { code: string | null; resource_kind: ResourceKind; resource_id: string | null };
   next_action: { text: string; descriptor_code?: string } | null;
   allowed_actions: ActionDescriptor[];
+  stop_surfaces: StopSurfaceProjection[];
 };
 
 /* ------------------------------------------------------------------ *
@@ -368,8 +401,8 @@ const readWorkItemFacts = async (client: pg.PoolClient, projectId: string) => {
 
 const readGateFacts = async (client: pg.PoolClient, projectId: string) => {
   const rows = (await client.query(
-    `SELECT id,gate_code,status,version,scope_type,scope_id,condition_code,authority_roles,allowed_decisions,
-       evidence,decision,decided_at,created_at
+    `SELECT id,gate_code,status,version,scope_type,scope_id,condition_code,authority_roles,allowed_decisions,decision_effects,
+       evidence,reason,decision,decided_at,created_at
      FROM gate_records WHERE project_id=$1 ORDER BY created_at DESC, id DESC`, [projectId])).rows;
   return rows.map((row) => ({
     id: String(row.id),
@@ -381,7 +414,9 @@ const readGateFacts = async (client: pg.PoolClient, projectId: string) => {
     condition_code: String(row.condition_code),
     authority_roles: Array.isArray(row.authority_roles) ? row.authority_roles.map(String) : [],
     allowed_decisions: Array.isArray(row.allowed_decisions) ? row.allowed_decisions.map(String) : [],
+    decision_effects: row.decision_effects ?? {},
     evidence: row.evidence ?? {},
+    reason: row.reason ? String(row.reason) : null,
     decision: row.decision ?? null,
     decided_at: row.decided_at ? new Date(row.decided_at).toISOString() : null,
     created_at: new Date(row.created_at).toISOString(),
@@ -402,7 +437,9 @@ const readLegacyGateFacts = async (client: pg.PoolClient, projectId: string) => 
     condition_code: 'LEGACY',
     authority_roles: [],
     allowed_decisions: [],
+    decision_effects: {},
     evidence: row.evidence ?? {},
+    reason: null,
     decision: null,
     decided_at: row.decided_at ? new Date(row.decided_at).toISOString() : null,
     created_at: new Date(row.opened_at).toISOString(),
@@ -444,7 +481,9 @@ const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
   const effects = await client.query(
       `SELECT resource_kind,resource_id,status FROM external_effect_records WHERE project_id=$1 AND status IN ('EFFECT_UNKNOWN','RECONCILE_REQUIRED') ORDER BY updated_at DESC`, [projectId]);
   const resumeReconciliations = await client.query(
-      `SELECT 1 FROM resume_records r JOIN pause_records p ON p.id=r.pause_id WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' LIMIT 1`, [projectId]);
+      `SELECT r.id AS resume_id,p.id,p.resource_kind,p.resource_id,p.reason,p.version,p.pause_fence,p.previous_active_state,p.created_at
+       FROM resume_records r JOIN pause_records p ON p.id=r.pause_id
+       WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' ORDER BY r.created_at DESC`, [projectId]);
   const recoveryReconciliations = await client.query(
       `SELECT 1 FROM recovery_decisions WHERE project_id=$1 AND execution_state='WAITING_RECONCILIATION' LIMIT 1`, [projectId]);
   const projectPause = pauses.rows.find((row) => row.resource_kind === 'PROJECT');
@@ -464,6 +503,8 @@ const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
     projectPause: projectPause ? toStopRecord(projectPause) : null,
     cancellations: cancellations.rows.map(toStopRecord),
     projectCancellation: projectCancellation ? toStopRecord(projectCancellation) : null,
+    external_effects: effects.rows.map((row) => ({ resource_kind: String(row.resource_kind), resource_id: String(row.resource_id), status: String(row.status) })),
+    resume_reconciliations: resumeReconciliations.rows.map((row) => ({ resume_id: String(row.resume_id), ...toStopRecord(row) })),
     reconciliation_required: effects.rows.length > 0 || (resumeReconciliations.rowCount ?? 0) > 0 || (recoveryReconciliations.rowCount ?? 0) > 0,
   };
 };
@@ -474,7 +515,7 @@ const readDeliverySummary = async (client: pg.PoolClient, projectId: string) => 
   const pkg = await client.query(
       `SELECT id,delivery_revision,content_hash,normative_generation,delivered_at FROM delivery_packages WHERE project_id=$1 ORDER BY delivery_revision DESC LIMIT 1`, [projectId]);
   const acceptance = await client.query(
-      `SELECT a.state,a.content_hash,a.delivery_revision FROM delivery_technical_acceptances a JOIN delivery_packages p ON p.id=a.package_id WHERE p.project_id=$1 ORDER BY a.created_at DESC LIMIT 1`, [projectId]);
+      `SELECT a.id,a.state,a.content_hash,a.delivery_revision FROM delivery_technical_acceptances a JOIN delivery_packages p ON p.id=a.package_id WHERE p.project_id=$1 ORDER BY a.created_at DESC LIMIT 1`, [projectId]);
   const deliveryGate = await client.query(
       `SELECT id,status,version,decision FROM gate_records WHERE project_id=$1 AND gate_code='DELIVERY_ACCEPTANCE' ORDER BY created_at DESC LIMIT 1`, [projectId]);
   if (!project.rowCount) return null;
@@ -491,6 +532,7 @@ const readDeliverySummary = async (client: pg.PoolClient, projectId: string) => 
       delivered_at: pkg.rows[0].delivered_at ? new Date(pkg.rows[0].delivered_at).toISOString() : null,
     } : null,
     technical_acceptance: acceptance.rows[0] ? {
+      id: String(acceptance.rows[0].id),
       state: String(acceptance.rows[0].state),
       content_hash: String(acceptance.rows[0].content_hash),
       delivery_revision: Number(acceptance.rows[0].delivery_revision),
@@ -536,6 +578,10 @@ const readAssuranceFacts = async (client: pg.PoolClient, projectId: string) => {
       `SELECT id,acceptance_id,block_code,category,severity,state,created_at FROM work_blocks WHERE project_id=$1 ORDER BY created_at DESC, id DESC LIMIT 50`, [projectId]);
   const reviews = await client.query(
       `SELECT r.id,r.acceptance_id,r.version,r.state,r.created_at FROM assurance_reviews r JOIN work_acceptances a ON a.id=r.acceptance_id WHERE a.project_id=$1 ORDER BY r.created_at DESC, r.id DESC LIMIT 50`, [projectId]);
+  const strategies = await client.query(
+      `SELECT s.acceptance_id,s.current_stage,s.exhausted_stages,s.stage_attempts,s.recovery_state,s.gate_reference,s.updated_at
+       FROM reviewer_recovery_strategies s JOIN work_acceptances a ON a.id=s.acceptance_id
+       WHERE a.project_id=$1 ORDER BY s.updated_at DESC LIMIT 50`, [projectId]);
   return {
     acceptances: acceptances.rows.map((row) => ({
       id: String(row.id),
@@ -561,6 +607,13 @@ const readAssuranceFacts = async (client: pg.PoolClient, projectId: string) => {
       version: Number(row.version),
       state: String(row.state),
       created_at: new Date(row.created_at).toISOString(),
+    })),
+    strategies: strategies.rows.map((row) => ({
+      acceptance_id: String(row.acceptance_id), current_stage: Number(row.current_stage),
+      exhausted_stages: Array.isArray(row.exhausted_stages) ? row.exhausted_stages.map(Number) : [],
+      stage_attempts: row.stage_attempts ?? {}, recovery_state: String(row.recovery_state),
+      gate_reference: row.gate_reference ? String(row.gate_reference) : null,
+      updated_at: new Date(row.updated_at).toISOString(),
     })),
   };
 };
@@ -749,6 +802,7 @@ type DescriptorContext = {
   legacyGates: Awaited<ReturnType<typeof readLegacyGateFacts>>;
   stop: Awaited<ReturnType<typeof readStopFacts>>;
   recovery: RecoverySummary[];
+  delivery: Awaited<ReturnType<typeof readDeliverySummary>>;
   assurance: Awaited<ReturnType<typeof readAssuranceFacts>>;
   technologyBaseline: TechnologyBaselineSummary | null;
   materializationBaseline: MaterializationBaselineOptions;
@@ -770,8 +824,23 @@ const descriptor = (
     fence?: string;
     confirmationRequired: boolean;
     schema: ActionInputSchema | null;
+    decisionOptions?: Array<{ code: string; label: string; consequence: string }>;
   }
-): ActionDescriptor => ({
+): ActionDescriptor => {
+  const presentation = presentationFor(input.code);
+  const boundValue = (name: string): unknown => name === 'version'
+    ? (input.gateVersion ?? input.resourceVersion)
+    : name === 'expected_pause_version' ? input.pauseVersion
+      : name === 'fence' ? input.fence
+        : name === 'gate_id' || name === 'block_id' ? input.resourceId : undefined;
+  const technical = new Set(['finding_ids', 'delivery_id', 'head_sha', 'worktree_id', 'recovery_classification', 'effect_certainty', 'dependency_id']);
+  const fields = input.schema ? Object.entries(input.schema.properties).map(([name, schema]) => {
+    const value = boundValue(name);
+    const source = value !== undefined ? 'SERVER_BOUND' as const : technical.has(name) ? 'SERVER_DERIVED' as const : 'HUMAN_INPUT' as const;
+    return { name, source, ...(source === 'HUMAN_INPUT' ? { schema } : {}), ...(value !== undefined ? { value } : {}), send: source === 'SERVER_BOUND' || source === 'HUMAN_INPUT', editable: source === 'HUMAN_INPUT' };
+  }) : [];
+  return {
+  descriptor_id: `action:${input.code}:${input.resourceKind}:${input.resourceId}:${input.href}`,
   code: input.code,
   target: { resource_kind: input.resourceKind, resource_id: input.resourceId },
   command: { method: 'POST', href: input.href, idempotency_required: input.idempotencyRequired },
@@ -784,7 +853,18 @@ const descriptor = (
   },
   confirmation: { required: input.confirmationRequired },
   input: { schema: input.schema, required_fields: input.schema ? input.schema.required : [] },
-});
+  presentation,
+  input_binding: { fields, decision_options: input.decisionOptions ?? null },
+};
+};
+
+const presentationFor = (code: string): ActionDescriptor['presentation'] => {
+  if (code === 'DECIDE_REVIEW' || code === 'RECONCILE_ACCEPTANCE') return { kind: 'TECHNICAL_OPERATION', label: 'Operação técnica', description: 'Executada pelo runtime governado; não requer uma decisão humana nesta tela.' };
+  if (code === 'TRANSITION_BLOCK' || code === 'RECORD_HUMAN_GATE') return { kind: 'ADMINISTRATIVE', label: 'Operação administrativa', description: 'Não é uma continuação humana ordinária publicada para esta superfície.' };
+  if (code === 'AUTHORIZE_REWORK' || code === 'PRODUCT_COMMITMENT_DECISION' || code === 'APPLY_REVIEW_ADJUSTMENTS' || code === 'RETRY_DISCOVERY' || code === 'MATERIALIZE_MODULE' || code === 'DECIDE_TECHNOLOGY_BASELINE') return { kind: 'LEGACY', label: 'Capacidade legada', description: 'Capacidade explícita de adapter legado; o servidor continua a revalidar todos os fatos.' };
+  if (code === 'DECIDE_GATE' || code === 'DECIDE_DELIVERY_ACCEPTANCE') return { kind: 'HUMAN_DECISION', label: 'Decisão governada', description: 'Decisão humana limitada às opções publicadas pelo catálogo.' };
+  return { kind: 'HUMAN_OPERATION', label: 'Operação humana', description: 'Operação autorizada e revalidada pelo servidor.' };
+};
 
 /** Async capability helper bound to the projection principal + snapshot now. */
 type Capability = { action: string; projectId?: string; resourceType?: string; resourceId?: string; roles?: string[] };
@@ -794,15 +874,22 @@ const capabilityResolver = (principal: AuthenticatedPrincipal, snapshotNow: Date
     return verdict.allowed;
   };
 
-const gateDecisionSchema = jsonSchema(
+const gateDecisionSchema = (gate: { allowed_decisions: string[] }) => jsonSchema(
   {
     version: { type: 'integer', description: 'Current gate version to decide against.' },
-    decision: { type: 'string', description: 'Published decision for the gate.' },
+    decision: { type: 'string', enum: gate.allowed_decisions, description: 'Published decision for the gate.' },
     reason: { type: 'string', description: 'Feedback/justification (required for non-approval decisions).' },
     evidence: { type: 'object', description: 'Published evidence for the decision.' },
   },
   ['version', 'decision', 'evidence']
 );
+const gateDecisionOptions = (gate: { allowed_decisions: string[]; decision_effects: unknown }) => {
+  const effects = gate.decision_effects && typeof gate.decision_effects === 'object' ? gate.decision_effects as Record<string, unknown> : {};
+  return gate.allowed_decisions.map((code) => {
+    const effect = effects[code] && typeof effects[code] === 'object' ? effects[code] as Record<string, unknown> : {};
+    return { code, label: code, consequence: typeof effect.consequence === 'string' ? effect.consequence : 'Consequência publicada pelo catálogo.' };
+  });
+};
 const technologyBaselineDecisionSchema = (gateId: string) => jsonSchema(
   {
     gate_id: { type: 'string', enum: [gateId], description: 'Open Technology Baseline gate being decided.' },
@@ -863,7 +950,7 @@ const buildCurrentProjectActions = async (ctx: DescriptorContext, can: ReturnTyp
       idempotencyRequired: true,
       gateVersion: gate.version,
       confirmationRequired: true,
-      schema: gateDecisionSchema,
+      schema: gateDecisionSchema(gate), decisionOptions: gateDecisionOptions(gate),
     }));
   }
 
@@ -984,7 +1071,7 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
       actions.push(descriptor(ctx, {
         code: 'PRODUCT_COMMITMENT_DECISION', resourceKind: 'GATE', resourceId: openGate.id,
         href: `/api/projects/${projectId}/decision`, idempotencyRequired: true,
-        gateVersion: openGate.version, confirmationRequired: true, schema: gateDecisionSchema,
+        gateVersion: openGate.version, confirmationRequired: true, schema: gateDecisionSchema(openGate), decisionOptions: gateDecisionOptions(openGate),
       }));
     } else if (code === 'APPLY_REVIEW_ADJUSTMENTS') {
       if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
@@ -1032,22 +1119,13 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
 
 const buildLegacyWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, item: Awaited<ReturnType<typeof readWorkItemFacts>>[number], adapter: LegacyAdapter) => {
   const actions: ActionDescriptor[] = [];
-  const { projectId } = ctx;
-  const declared = adapter.publishes[item.state] ?? [];
-  for (const code of declared) {
-    if (code === 'AUTHORIZE_REWORK') {
-      if (!(await can({ action: 'OPERATE_PROJECT', projectId, resourceType: 'WORK_ITEM', resourceId: item.id, roles: ['OPERATOR'] }))) continue;
-      actions.push(descriptor(ctx, {
-        code: 'AUTHORIZE_REWORK', resourceKind: 'WORK_ITEM', resourceId: item.id,
-        href: `/api/projects/${projectId}/work-items/${item.id}/rework`, idempotencyRequired: true,
-        resourceVersion: item.version, confirmationRequired: true,
-        schema: jsonSchema(
-          { finding_ids: { type: 'array', description: 'Finding ids being reworked.' }, delivery_id: { type: 'string' }, head_sha: { type: 'string' }, justification: { type: 'string' } },
-          ['finding_ids', 'delivery_id', 'head_sha', 'justification']
-        ),
-      }));
-    }
-  }
+  // The historical rework schema records a finding/delivery/SHA tuple, but
+  // has no immutable resource-version plus applicable fence to prove the
+  // single safe tuple required by UI-02.  Publishing AUTHORIZE_REWORK would
+  // ask the operator to resolve that ambiguity with technical IDs, so this
+  // adapter is deliberately read-only until a versioned legacy contract can
+  // prove all required facts in the same snapshot.
+  void ctx; void can; void item; void adapter;
   return actions;
 };
 
@@ -1123,6 +1201,177 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
 };
 
 /* ------------------------------------------------------------------ *
+ * STOP_SURFACE_PROJECTION:v1
+ *
+ * This is intentionally a pure, allowlisted adapter over the facts already
+ * read for STATE_ACTION_PROJECTION.  It never performs card-by-card I/O and
+ * it does not turn recovery mechanics into browser commands.
+ * ------------------------------------------------------------------ */
+
+const evidence = (reference: string, summary: string, classification: 'PUBLIC' | 'RESTRICTED' = 'PUBLIC') => [{ reference, summary, classification }];
+const actionFor = (actions: ActionDescriptor[], code: string, kind: string, id: string) =>
+  actions.find((action) => action.code === code && action.target.resource_kind === kind && action.target.resource_id === id && (action.presentation.kind === 'HUMAN_DECISION' || action.presentation.kind === 'HUMAN_OPERATION'))?.descriptor_id ?? null;
+
+const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]): StopSurfaceProjection[] => {
+  const surfaces: StopSurfaceProjection[] = [];
+  const resource = (kind: Exclude<ResourceKind, null>, id: string) => {
+    if (kind === 'PROJECT') return { state: ctx.project.state, canonical: ctx.project.canonical_state };
+    if (kind === 'MODULE') { const item = ctx.modules.find((value) => value.id === id); return { state: item?.state ?? 'UNKNOWN', canonical: item?.canonical_state ?? null }; }
+    if (kind === 'WORK_ITEM') { const item = ctx.workItems.find((value) => value.id === id); return { state: item?.state ?? 'UNKNOWN', canonical: item?.canonical_state ?? null }; }
+    return { state: 'OPEN', canonical: null };
+  };
+  const add = (input: Omit<StopSurfaceProjection, 'schema_version' | 'id' | 'redaction'> & { id: string; restricted?: boolean }) => {
+    surfaces.push({ schema_version: STOP_SURFACE_PROJECTION_SCHEMA, id: input.id, resource_kind: input.resource_kind, resource_id: input.resource_id,
+      category: input.category, type: input.type, resource_state: input.resource_state, lifecycle_state: input.lifecycle_state,
+      canonical_state: input.canonical_state, subject: input.subject, cause: input.cause, operational_message: input.operational_message,
+      waiting_for: input.waiting_for, continuation: input.continuation, authority: input.authority, decisions: input.decisions,
+      evidence: input.evidence, action_descriptor_id: input.action_descriptor_id, terminal: input.terminal,
+      redaction: { classification: input.restricted ? 'RESTRICTED' : 'PUBLIC', redacted: Boolean(input.restricted) } });
+  };
+  const stopped = new Set<string>();
+  const addPause = (record: StopRecordSummary, cancelled: boolean) => {
+    const r = resource(record.resource_kind, record.resource_id); const isProject = record.resource_kind === 'PROJECT';
+    const action = cancelled ? null : actionFor(actions, isProject ? 'RESUME_PROJECT' : 'RESUME_MODULE', 'PAUSE', record.id);
+    add({ id: `${cancelled ? 'cancellation' : 'pause'}:${record.id}:${record.version}`, resource_kind: record.resource_kind, resource_id: record.resource_id,
+      category: cancelled ? 'CANCELLATION' : 'PAUSE', type: cancelled ? 'CANCELLED' : 'PAUSED', resource_state: cancelled ? 'CANCELLED' : r.state,
+      lifecycle_state: r.state, canonical_state: r.canonical, subject: null,
+      cause: { code: cancelled ? 'CANCELLED' : 'PAUSED', message: cancelled ? 'Cancelamento terminal registrado.' : 'Pausa operacional registrada.', reason: record.reason },
+      operational_message: cancelled ? 'Este recurso foi cancelado e não possui continuação operacional.' : 'O recurso está pausado; trabalho em voo não deve avançar.',
+      waiting_for: cancelled ? null : 'Uma retomada autorizada ou a reconciliação exigida pelo servidor.',
+      continuation: cancelled ? { kind: 'TERMINAL', expected: 'Preservar os fatos e evidências do cancelamento.', progress: null } : { kind: action ? 'HUMAN_ACTION' : 'EXTERNAL_WAIT', expected: 'Retomada pode exigir RESUME_RECONCILIATION_REQUIRED; não restaura estado cegamente.', progress: null },
+      authority: cancelled ? { required_roles: ['BUSINESS_OWNER'], scope_kind: record.resource_kind, scope_id: record.resource_id } : { required_roles: ['ON_CALL_OWNER'], scope_kind: record.resource_kind, scope_id: record.resource_id },
+      decisions: [], evidence: evidence(`stop_record:${record.id}`, 'Registro de pausa/cancelamento.'), action_descriptor_id: action, terminal: cancelled });
+    stopped.add(`${record.resource_kind}:${record.resource_id}`);
+  };
+  ctx.stop.cancellations.forEach((record) => addPause(record, true));
+  ctx.stop.pauses.forEach((record) => addPause(record, false));
+  for (const record of ctx.stop.resume_reconciliations) {
+    const r = resource(record.resource_kind, record.resource_id);
+    add({ id: `resume-reconciliation:${record.resume_id}`, resource_kind: record.resource_kind, resource_id: record.resource_id, category: 'PAUSE', type: 'RESUME_RECONCILIATION_REQUIRED', resource_state: r.state,
+      lifecycle_state: r.state, canonical_state: r.canonical, subject: { kind: 'PAUSE_RECORD', id: record.id }, cause: { code: 'RESUME_RECONCILIATION_REQUIRED', message: 'A retomada não pode restaurar o estado cegamente.', reason: record.reason },
+      operational_message: 'O servidor detectou uma divergência durante a retomada.', waiting_for: 'Reconciliação técnica.', continuation: { kind: 'RECONCILIATION', expected: 'Reconciliação antes de qualquer nova continuação.', progress: null }, authority: null,
+      decisions: [], evidence: evidence(`resume_record:${record.resume_id}`, 'Resultado de retomada publicado.'), action_descriptor_id: null, terminal: false });
+    stopped.add(`${record.resource_kind}:${record.resource_id}`);
+  }
+  for (const effect of ctx.stop.external_effects.filter((value) => ['PROJECT', 'MODULE', 'WORK_ITEM', 'EXECUTION'].includes(value.resource_kind))) {
+    const kind = effect.resource_kind as Exclude<ResourceKind, null>; const r = resource(kind, effect.resource_id);
+    add({ id: `external-effect:${kind}:${effect.resource_id}:${effect.status}`, resource_kind: kind, resource_id: effect.resource_id, category: 'RECOVERY', type: effect.status, resource_state: effect.status,
+      lifecycle_state: ['PROJECT', 'MODULE', 'WORK_ITEM'].includes(kind) ? r.state : null, canonical_state: ['PROJECT', 'MODULE', 'WORK_ITEM'].includes(kind) ? r.canonical : null, subject: null,
+      cause: { code: effect.status, message: 'O efeito externo exige reconciliação.', reason: null }, operational_message: 'A certeza do efeito não permite repetição cega.', waiting_for: 'Reconciliação técnica da fonte externa.',
+      continuation: { kind: 'RECONCILIATION', expected: 'RECONCILE BEFORE RETRY', progress: null }, authority: null, decisions: [], evidence: evidence(`external_effect:${kind}:${effect.resource_id}`, 'Referência de efeito externo.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
+    stopped.add(`${kind}:${effect.resource_id}`);
+  }
+
+  for (const decision of ctx.recovery.filter((value) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(value.execution_state))) {
+    const r = resource(decision.resource_kind, decision.resource_id); const reconciling = decision.execution_state === 'WAITING_RECONCILIATION' || decision.effect_certainty === 'EFFECT_UNKNOWN';
+    add({ id: `recovery:${decision.id}`, resource_kind: decision.resource_kind, resource_id: decision.resource_id, category: decision.selected_action === 'INTEGRATION_RECOVERY' ? 'INTEGRATION' : 'RECOVERY', type: decision.cause,
+      resource_state: decision.execution_state, lifecycle_state: r.state === 'UNKNOWN' ? null : r.state, canonical_state: r.canonical,
+      subject: null, cause: { code: decision.cause, message: 'Recovery técnico classificado pelo servidor.', reason: decision.reason },
+      operational_message: reconciling ? 'O efeito anterior é incerto; o servidor reconcilia antes de qualquer repetição.' : 'A recuperação técnica está sob controle do runtime.',
+      waiting_for: reconciling ? 'Reconciliação técnica da fonte de efeito.' : 'Conclusão do recovery automático.',
+      continuation: { kind: reconciling ? 'RECONCILIATION' : 'AUTOMATIC', expected: reconciling ? 'RECONCILE BEFORE RETRY' : 'Ação técnica limitada pelo RECOVERY_POLICY:v1.', progress: { stage: decision.execution_state } },
+      authority: null, decisions: [], evidence: evidence(`recovery:${decision.id}`, 'Decisão de recovery e referências permitidas.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
+    stopped.add(`${decision.resource_kind}:${decision.resource_id}`);
+  }
+
+  for (const gate of ctx.gates.filter((value) => value.status === 'OPEN')) {
+    const delivery = gate.gate_code === 'DELIVERY_ACCEPTANCE'; const descriptor = actionFor(actions, delivery ? 'DECIDE_DELIVERY_ACCEPTANCE' : 'DECIDE_GATE', 'GATE', gate.id);
+    const effects = gateDecisionOptions(gate);
+    add({ id: `gate:${gate.id}:${gate.version}`, resource_kind: 'GATE', resource_id: gate.id, category: delivery ? 'DELIVERY' : 'GATE', type: gate.gate_code,
+      resource_state: gate.status, lifecycle_state: null, canonical_state: null,
+      subject: delivery && (ctx.delivery as any)?.delivery_package ? { kind: 'DELIVERY_PACKAGE', id: String((ctx.delivery as any).delivery_package.id), generation: (ctx.delivery as any).delivery_package.normative_generation } : null,
+      cause: { code: gate.condition_code, message: `Gate ${gate.gate_code} aberto.`, reason: gate.reason },
+      operational_message: delivery ? 'A aceitação de negócio é distinta do aceite técnico e da entrega concluída.' : 'Uma decisão catalogada é necessária para esta condição.',
+      waiting_for: descriptor ? 'Sua decisão governada.' : `Autoridade ${gate.authority_roles.join(', ') || 'catalogada'} no escopo publicado.`,
+      continuation: { kind: 'HUMAN_ACTION', expected: 'Decisão exata do catálogo GAT-01.', progress: null },
+      authority: { required_roles: gate.authority_roles, scope_kind: gate.scope_type, scope_id: gate.scope_id }, decisions: effects,
+      evidence: evidence(`gate:${gate.id}`, 'Evidência pública permitida do gate.', 'RESTRICTED'), action_descriptor_id: descriptor, terminal: false, restricted: true });
+    stopped.add(`GATE:${gate.id}`);
+  }
+  const delivery = ctx.delivery as any;
+  const pkg = delivery?.delivery_package;
+  if (pkg && !delivery?.technical_acceptance && !delivery?.delivery_gate) {
+    add({ id: `delivery-preparation:${pkg.id}:${pkg.normative_generation}`, resource_kind: 'PROJECT', resource_id: ctx.project.id, category: 'DELIVERY', type: 'DELIVERY_PREPARATION', resource_state: ctx.project.state,
+      lifecycle_state: ctx.project.state, canonical_state: ctx.project.canonical_state, subject: { kind: 'DELIVERY_PACKAGE', id: String(pkg.id), generation: pkg.normative_generation },
+      cause: { code: 'DELIVERY_PREPARATION', message: 'Pacote de delivery em preparação.', reason: null }, operational_message: 'A preparação de delivery é automática e não constitui aceite nem entrega.', waiting_for: 'Materialização e assurance técnica do pacote.',
+      continuation: { kind: 'AUTOMATIC', expected: 'Executar a preparação técnica governada.', progress: null }, authority: null, decisions: [], evidence: evidence(`delivery_package:${pkg.id}`, 'Referência pública do pacote.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
+  }
+  if (pkg && delivery?.technical_acceptance && !delivery?.delivery_gate) {
+    const technical = delivery.technical_acceptance;
+    add({ id: `delivery-assurance:${technical.id}:${technical.delivery_revision}`, resource_kind: 'ACCEPTANCE', resource_id: String(technical.id), category: 'DELIVERY', type: 'RELEASE_TECHNICAL_ACCEPTANCE', resource_state: String(technical.state),
+      lifecycle_state: null, canonical_state: null, subject: { kind: 'DELIVERY_PACKAGE', id: String(pkg.id), generation: pkg.normative_generation },
+      cause: { code: 'RELEASE_TECHNICAL_ACCEPTANCE', message: 'Assurance técnica de delivery publicada.', reason: null }, operational_message: 'Aceite técnico não equivale a DELIVERY_ACCEPTANCE nem a DELIVERED.', waiting_for: 'Conclusão técnica ou reconciliação do package.',
+      continuation: { kind: String(technical.state).includes('RECONCIL') ? 'RECONCILIATION' : 'AUTOMATIC', expected: 'A assurance técnica é processada pelo runtime.', progress: null }, authority: null, decisions: [], evidence: evidence(`delivery_package:${pkg.id}`, 'Referência pública do pacote.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
+  }
+  if (pkg?.delivered_at || ctx.project.state === 'DELIVERED') {
+    add({ id: `delivered:${ctx.project.id}:${pkg?.delivery_revision ?? 'lifecycle'}`, resource_kind: 'PROJECT', resource_id: ctx.project.id, category: 'DELIVERY', type: 'DELIVERED', resource_state: 'DELIVERED', lifecycle_state: ctx.project.state,
+      canonical_state: ctx.project.canonical_state, subject: pkg ? { kind: 'DELIVERY_PACKAGE', id: String(pkg.id), generation: pkg.normative_generation } : null, cause: { code: 'DELIVERED', message: 'Entrega autoritativa concluída.', reason: null },
+      operational_message: 'DELIVERED é terminal e não é inferido apenas por sucesso técnico ou aceite de negócio.', waiting_for: null, continuation: { kind: 'TERMINAL', expected: 'Preservar os fatos de entrega.', progress: null }, authority: null, decisions: [], evidence: pkg ? evidence(`delivery_package:${pkg.id}`, 'Referência pública da entrega.', 'RESTRICTED') : [], action_descriptor_id: null, terminal: true, restricted: Boolean(pkg) });
+    stopped.add(`PROJECT:${ctx.project.id}`);
+  }
+
+  for (const acceptance of ctx.assurance.acceptances.filter((value) => !['ACCEPTED', 'CANCELLED'].includes(value.state))) {
+    const strategy = ctx.assurance.strategies.find((value) => value.acceptance_id === acceptance.id); const stage = strategy?.current_stage;
+    const automatic = !stage || stage <= 6; const cancelled = actionFor(actions, 'CANCEL_ACCEPTANCE', 'ACCEPTANCE', acceptance.id);
+    add({ id: `acceptance:${acceptance.id}:${acceptance.version}`, resource_kind: 'ACCEPTANCE', resource_id: acceptance.id, category: 'REVIEWER_RECOVERY', type: acceptance.state,
+      resource_state: acceptance.state, lifecycle_state: null, canonical_state: null,
+      subject: acceptance.subject && typeof acceptance.subject === 'object' ? { kind: String((acceptance.subject as any).subject_kind), id: String((acceptance.subject as any).subject_id), generation: String((acceptance.subject as any).normative_generation) } : null,
+      cause: { code: acceptance.state, message: 'Assurance/review independente em andamento ou aguardando recuperação.', reason: null },
+      operational_message: automatic ? 'Os estágios 1–6 de recuperação de reviewer são automáticos.' : 'A recuperação chegou a gate ou escalada governada; consulte a superfície correspondente.',
+      waiting_for: automatic ? 'Seleção, retry, routing ou specialist técnico.' : 'Gate catalogado ou continuação de block publicada.',
+      continuation: { kind: automatic ? 'AUTOMATIC' : 'EXTERNAL_WAIT', expected: automatic ? 'REC-02 prossegue sem reexecutar o produtor.' : 'Apenas o gate/continuation publicado pode avançar.', progress: stage ? { stage: `REC-02 stage ${stage}`, attempt: Number((strategy?.stage_attempts as any)?.[stage] ?? 0), exhausted: strategy?.exhausted_stages.includes(stage) } : null },
+      authority: null, decisions: [], evidence: evidence(`acceptance:${acceptance.id}`, 'Estado sanitizado da acceptance.', 'RESTRICTED'), action_descriptor_id: cancelled, terminal: false, restricted: true });
+    stopped.add(`ACCEPTANCE:${acceptance.id}`);
+  }
+  for (const block of ctx.assurance.blocks.filter((value) => !['RESOLVED', 'CANCELLED'].includes(value.state))) {
+    add({ id: `block:${block.id}:${block.state}`, resource_kind: 'BLOCK', resource_id: block.id, category: block.state === 'ESCALATED' ? 'ESCALATION' : 'BLOCK', type: block.block_code,
+      resource_state: block.state, lifecycle_state: null, canonical_state: null, subject: block.acceptance_id ? { kind: 'ACCEPTANCE', id: block.acceptance_id } : null,
+      cause: { code: block.block_code, message: 'Block de Assurance aberto.', reason: block.category }, operational_message: 'O block preserva a causa e aguarda somente a continuação publicada por REC-02/GAT-01.',
+      waiting_for: block.state === 'ESCALATED' ? 'Gate catalogado ou autoridade de escalada.' : 'Continuação automática, externa ou gate correspondente.',
+      continuation: { kind: block.state === 'ESCALATED' ? 'EXTERNAL_WAIT' : 'AUTOMATIC', expected: 'Resolver o block não reexecuta o produtor automaticamente.', progress: null }, authority: null, decisions: [],
+      evidence: evidence(`block:${block.id}`, 'Block e categoria permitidos.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
+    stopped.add(`BLOCK:${block.id}`);
+  }
+
+  const lifecycleStops = new Map<string, { category: StopSurfaceProjection['category']; continuation: StopSurfaceProjection['continuation']['kind']; expected: string; code: string }>([
+    ['REWORK_ELIGIBLE', { category: 'RECOVERY', continuation: 'AUTOMATIC', expected: 'Rework/dispatch é escolhido pelo servidor.', code: 'REWORK_ELIGIBLE' }],
+    ['WAITING_FOR_EXTERNAL_INPUT', { category: 'LIFECYCLE', continuation: 'EXTERNAL_WAIT', expected: 'Aguardar a resolução externa autorizada.', code: 'WAITING_FOR_EXTERNAL_INPUT' }],
+    ['WAITING_FOR_DEPENDENCIES', { category: 'LIFECYCLE', continuation: 'AUTOMATIC', expected: 'Aguardar dependências técnicas.', code: 'WAITING_FOR_DEPENDENCIES' }],
+    ['WAITING_FOR_ESCALATION', { category: 'ESCALATION', continuation: 'EXTERNAL_WAIT', expected: 'Gate de escalada catalogado, quando publicado.', code: 'WAITING_FOR_ESCALATION' }],
+  ]);
+  for (const item of ctx.workItems) {
+    const mapped = lifecycleStops.get(item.state); if (!mapped || stopped.has(`WORK_ITEM:${item.id}`)) continue;
+    const descriptor = item.state === 'WAITING_FOR_EXTERNAL_INPUT' ? actionFor(actions, 'RESOLVE_EXTERNAL_BLOCKER', 'WORK_ITEM', item.id) : null;
+    add({ id: `lifecycle:WORK_ITEM:${item.id}:${item.version}:${mapped.code}`, resource_kind: 'WORK_ITEM', resource_id: item.id, category: mapped.category, type: mapped.code, resource_state: item.state,
+      lifecycle_state: item.state, canonical_state: item.canonical_state, subject: null, cause: { code: mapped.code, message: 'Estado de lifecycle publicado.', reason: null }, operational_message: mapped.expected,
+      waiting_for: descriptor ? 'Uma operação humana autorizada.' : mapped.expected, continuation: { kind: descriptor ? 'HUMAN_ACTION' : mapped.continuation, expected: mapped.expected, progress: null }, authority: descriptor ? { required_roles: ['OPERATOR'], scope_kind: 'WORK_ITEM', scope_id: item.id } : null,
+      decisions: [], evidence: [], action_descriptor_id: descriptor, terminal: false });
+    stopped.add(`WORK_ITEM:${item.id}`);
+  }
+
+  const legacyResources: Array<{ kind: 'PROJECT' | 'MODULE' | 'WORK_ITEM'; id: string; state: string; canonical: string; workflow: WorkflowKind }> = [
+    { kind: 'PROJECT', id: ctx.project.id, state: ctx.project.state, canonical: ctx.project.canonical_state, workflow: workflowKind(ctx.project.workflow_code, ctx.project.workflow_version, ctx.project.workflow_status) },
+    ...ctx.modules.map((value) => ({ kind: 'MODULE' as const, id: value.id, state: value.state, canonical: value.canonical_state, workflow: workflowKind(value.workflow_code, value.workflow_version, value.workflow_status) })),
+    ...ctx.workItems.map((value) => ({ kind: 'WORK_ITEM' as const, id: value.id, state: value.state, canonical: value.canonical_state, workflow: workflowKind(value.workflow_code, value.workflow_version, value.workflow_status) })),
+  ];
+  for (const item of legacyResources.filter((value) => value.workflow.legacy && !stopped.has(`${value.kind}:${value.id}`))) {
+    add({ id: `legacy:${item.kind}:${item.id}:${item.state}`, resource_kind: item.kind, resource_id: item.id, category: 'LEGACY', type: 'LEGACY_READ_ONLY', resource_state: item.state, lifecycle_state: item.state, canonical_state: item.canonical,
+      subject: null, cause: { code: 'LEGACY_READ_ONLY', message: 'Workflow legado ou desconhecido sem capability comprovável.', reason: null }, operational_message: 'Consulta somente leitura; nenhuma ação é inferida.', waiting_for: 'Orientação do adapter explícito ou consulta histórica.',
+      continuation: { kind: 'LEGACY_READ_ONLY', expected: 'Nenhuma capability é publicada sem adapter comprovado.', progress: null }, authority: null, decisions: [], evidence: [], action_descriptor_id: null, terminal: false });
+  }
+  // A current published workflow must never be silently downgraded to legacy
+  // merely because UI-02 lacks an adapter for a normative stop.
+  const normativeStops = new Set(['PAUSED', 'CANCELLED', 'ARCHIVED', 'RECOVERY_REQUIRED', 'WAITING_RECONCILIATION', 'BLOCKED', 'WAITING_FOR_INDEPENDENT_REVIEWER', 'REWORK_REQUIRED', 'WAITING_FOR_ESCALATION']);
+  for (const item of legacyResources.filter((value) => value.workflow.current && normativeStops.has(value.state) && !surfaces.some((surface) => surface.resource_kind === value.kind && surface.resource_id === value.id))) {
+    add({ id: `unmapped:${item.kind}:${item.id}:${item.state}`, resource_kind: item.kind, resource_id: item.id, category: 'PROJECTION_DIAGNOSTIC', type: 'UNMAPPED_STOP_SURFACE', resource_state: item.state,
+      lifecycle_state: item.state, canonical_state: item.canonical, subject: null, cause: { code: 'UNMAPPED_STOP_SURFACE', message: 'Parada normativa atual sem mapper de apresentação.', reason: null },
+      operational_message: 'A projeção preservou o estado real e bloqueou ações até que o mapper seja implementado.', waiting_for: 'Correção server-side da projeção.',
+      continuation: { kind: 'UNMAPPED', expected: 'Nenhuma ação é publicada para uma parada sem mapper.', progress: null }, authority: null, decisions: [], evidence: [], action_descriptor_id: null, terminal: false });
+  }
+  return surfaces.sort((a, b) => Number(b.terminal) - Number(a.terminal) || a.resource_kind.localeCompare(b.resource_kind) || a.resource_id.localeCompare(b.resource_id) || a.id.localeCompare(b.id));
+};
+
+/* ------------------------------------------------------------------ *
  * cause + next_action derivation (from persisted facts, never state-name
  * inference on unknown states)
  * ------------------------------------------------------------------ */
@@ -1188,7 +1437,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const asOfEventRow = await client.query(`SELECT COALESCE(MAX(id),0)::bigint AS as_of_event_id FROM events WHERE project_id=$1`, [projectId]);
     const asOfEventId = Number(asOfEventRow.rows[0].as_of_event_id ?? 0);
 
-    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, assurance, technologyBaseline, materializationBaseline };
+    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, delivery, assurance, technologyBaseline, materializationBaseline };
     const can = capabilityResolver(principal, snapshotNow, client);
 
     // ----- resource projections (state separation preserved) -----
@@ -1293,6 +1542,15 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     // Assurance actions are part of the current lifecycle contract only.
     if (projectKind.current) allowed.push(...await buildAssuranceActions(ctx, can));
 
+    // Descriptor ids are projection-local capabilities.  Collisions are made
+    // explicit instead of letting a renderer accidentally select by code.
+    const descriptorOccurrences = new Map<string, number>();
+    for (const action of allowed) {
+      const count = descriptorOccurrences.get(action.descriptor_id) ?? 0;
+      descriptorOccurrences.set(action.descriptor_id, count + 1);
+      if (count) action.descriptor_id = `${action.descriptor_id}:${count + 1}`;
+    }
+
     const cause = deriveCause(ctx);
     const nextAction = deriveNextAction(ctx, allowed);
 
@@ -1305,6 +1563,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
       updated_at: acceptance.updated_at,
       subject: acceptance.subject,
     }));
+    const stopSurfaces = buildStopSurfaces(ctx, allowed);
 
     return {
       schema_version: STATE_ACTION_PROJECTION_SCHEMA,
@@ -1339,6 +1598,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
       cause,
       next_action: nextAction,
       allowed_actions: allowed,
+      stop_surfaces: stopSurfaces,
     };
   });
 };

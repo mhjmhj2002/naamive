@@ -117,7 +117,7 @@ if (!process.env.DATABASE_URL) {
     await job('LEASED', f.moduleId); await job('LEASED', null); await job('PENDING', f.moduleId); await job('RETRYABLE', f.moduleId); await job('LEASED', f.moduleId, -60);
     const projection = await buildStateActionProjection(f.projectId, human);
     assert.equal(projection.schema_version, STATE_ACTION_PROJECTION_SCHEMA);
-    for (const key of ['project_id', 'as_of_event_id', 'project', 'resources', 'activity', 'stop', 'cause', 'next_action', 'allowed_actions']) assert.ok(key in projection);
+    for (const key of ['project_id', 'as_of_event_id', 'project', 'resources', 'activity', 'stop', 'cause', 'next_action', 'allowed_actions', 'stop_surfaces']) assert.ok(key in projection);
     assert.equal(projection.project.lifecycle_state, 'IMPLEMENTATION');
     assert.equal(projection.resources.modules[0].lifecycle_state, 'PLANNING_IN_PROGRESS');
     assert.equal(projection.resources.work_items[0].lifecycle_state, 'WAITING_FOR_EXTERNAL_INPUT');
@@ -129,10 +129,13 @@ if (!process.env.DATABASE_URL) {
     assert.equal(projection.activity.items.length, 5, 'concurrent facts remain individually represented');
     const gate = projection.allowed_actions.find(action => action.code === 'DECIDE_GATE');
     assert.ok(gate);
-    assert.deepEqual(Object.keys(gate).sort(), ['code', 'command', 'confirmation', 'expected', 'input', 'target']);
+    assert.deepEqual(Object.keys(gate).sort(), ['code', 'command', 'confirmation', 'descriptor_id', 'expected', 'input', 'input_binding', 'presentation', 'target']);
     assert.equal(gate.command.method, 'POST'); assert.ok(gate.command.href.includes('/catalog-gates/')); assert.equal(gate.command.idempotency_required, true);
     assert.equal(gate.expected.gate_version, 1); assert.equal(gate.expected.as_of_event_id, projection.as_of_event_id);
     assert.equal(gate.confirmation.required, true); assert.ok(gate.input.schema); assert.deepEqual(gate.input.required_fields, gate.input.schema!.required);
+    assert.equal(gate.presentation.kind, 'HUMAN_DECISION'); assert.ok(gate.descriptor_id); assert.ok(gate.input_binding.decision_options?.length);
+    const gateSurface = projection.stop_surfaces.find(surface => surface.action_descriptor_id === gate.descriptor_id);
+    assert.equal(gateSurface?.resource_kind, 'GATE'); assert.equal(gateSurface?.type, 'MATERIAL_ARCHITECTURE');
     const blocker = projection.allowed_actions.find(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER');
     assert.equal(blocker?.expected.resource_version, 1, 'a representative recovery descriptor includes the resource version');
     assert.ok(projection.allowed_actions.some(action => action.code === 'PAUSE_PROJECT'));
