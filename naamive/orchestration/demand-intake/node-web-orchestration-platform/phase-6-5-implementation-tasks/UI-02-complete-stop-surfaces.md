@@ -196,7 +196,10 @@ aceite aguardando reviewer, gate aberto e delivery bloqueada.
 selecionar seu resource, a UI dá foco/âncora à superfície correspondente; ela
 não filtra as demais. Não existe estado vazio silencioso: para todo estado de
 parada conhecido há mensagem + `waiting_for` + continuação, e para estado não
-adaptável há a superfície fail-closed `LEGACY_READ_ONLY`.
+adaptável legacy/unknown há a superfície fail-closed `LEGACY_READ_ONLY`;
+workflow atual publicado com parada normativa conhecida sem mapper recebe
+`UNMAPPED_STOP_SURFACE`, também sem ação e detectável, nunca classificação
+legacy.
 
 ## 7. Matriz normativa de paradas
 
@@ -387,8 +390,9 @@ payload interno, mesmo a usuário autorizado a executar a ação.
 
 ## 14. Critérios objetivos de aceite
 
-- Toda parada conhecida da matriz possui superfície completa; qualquer não
-  adaptável falha fechado em `LEGACY_READ_ONLY`.
+- Toda parada conhecida da matriz possui superfície completa; legacy/unknown
+  falha fechado em `LEGACY_READ_ONLY`, e workflow atual com parada normativa
+  conhecida sem mapper falha fechado em `UNMAPPED_STOP_SURFACE`.
 - Há coleção completa por resource, sem ocultar paradas simultâneas.
 - Nenhuma decisão/ação é inferida no browser; toda ação visível vem de
   `allowed_actions` e todo botão revalida no servidor.
