@@ -8,7 +8,7 @@ if (!process.env.DATABASE_URL) {
 } else {
   const { pool } = await import('./db.js');
   const { authorize, matchAuthorization, resolveCapability, createServicePrincipal } = await import('./auth.js');
-  const { buildStateActionProjection, STATE_ACTION_PROJECTION_SCHEMA, workflowKind } = await import('./state-action-projection.js');
+  const { buildStateActionProjection, STATE_ACTION_PROJECTION_SCHEMA } = await import('./state-action-projection.js');
   const { createApiServer } = await import('./server.js');
   after(async () => { await pool.end(); });
 
@@ -93,7 +93,15 @@ if (!process.env.DATABASE_URL) {
 
   test('UI-01 projection preserves resource truth, activity cardinality, legacy fail-closed behavior, descriptors, and snapshot time', async t => {
     const f = await fixture(); const human = principal();
-    t.after(async () => { await cleanupPrincipals([human.id]); await f.cleanup(); });
+    let unknownWorkflowId: string | null = null;
+    t.after(async () => {
+      if (unknownWorkflowId) {
+        await pool.query(`UPDATE workflow_definitions SET status='RETIRED' WHERE id=$1`, [unknownWorkflowId]);
+        await pool.query(`DELETE FROM workflow_states WHERE workflow_id=$1`, [unknownWorkflowId]);
+        await pool.query(`DELETE FROM workflow_definitions WHERE id=$1`, [unknownWorkflowId]);
+      }
+      await cleanupPrincipals([human.id]); await f.cleanup();
+    });
     await insertPrincipal(human);
     await grant(human, 'READ_PROJECT', 'OPERATOR', f.projectId);
     await grant(human, 'DECIDE_CATALOG_GATE', 'TECH_LEAD', f.projectId, 'MODULE', f.moduleId);
@@ -145,9 +153,13 @@ if (!process.env.DATABASE_URL) {
     const legacy = await buildStateActionProjection(f.projectId, human);
     assert.equal(legacy.project.legacy, true);
     assert.deepEqual(legacy.allowed_actions.map(action => action.code), [], 'known legacy publishes only explicitly declared, authorized adapter actions');
-    const unknown = workflowKind('UNKNOWN_UI01', 99, 'PUBLISHED');
-    assert.deepEqual(unknown, { current: false, legacy: true, unknown: true, journey_status: 'LEGACY_READ_ONLY' });
-    assert.deepEqual(legacy.allowed_actions, [], 'unknown workflow classification has no state-name action fallback');
+    unknownWorkflowId = randomUUID(); const unknownWorkflowCode = `UNKNOWN_UI01_${randomUUID().slice(0, 8)}`;
+    await pool.query(`INSERT INTO workflow_definitions(id,code,version,scope,status,published_at) VALUES($1,$2,99,'PROJECT','PUBLISHED',clock_timestamp())`, [unknownWorkflowId, unknownWorkflowCode]);
+    await pool.query(`INSERT INTO workflow_states(workflow_id,code,display_name,terminal,position) VALUES($1,'WAITING_FOR_PRODUCT_COMMITMENT','Unknown actionable-looking state',false,1)`, [unknownWorkflowId]);
+    await pool.query(`UPDATE projects SET workflow_code=$2,workflow_version=99,state='WAITING_FOR_PRODUCT_COMMITMENT' WHERE id=$1`, [f.projectId, unknownWorkflowCode]);
+    const unknown = await buildStateActionProjection(f.projectId, human);
+    assert.equal(unknown.project.legacy, true); assert.equal(unknown.project.journey_status, 'LEGACY_READ_ONLY');
+    assert.deepEqual(unknown.allowed_actions, [], 'an unknown workflow never derives an action from an actionable-looking state name');
   });
 
   test('UI-01 HTTP projection is actor-specific, audit-free on GET, rejects stale authority, and publishes generic SSE invalidation', async t => {
@@ -166,6 +178,9 @@ if (!process.env.DATABASE_URL) {
     t.after(() => { server.closeAllConnections(); server.close(); });
     const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
     const headers = { cookie: `naamive_session=${session}`, 'x-csrf-token': csrf, origin: 'http://127.0.0.1:3000' };
+    const helper = await fetch(`${base}/projection-refresh.js`);
+    assert.equal(helper.status, 200); assert.match(String(helper.headers.get('content-type')), /text\/javascript/); assert.equal(helper.headers.get('cache-control'), 'no-store');
+    assert.match(await helper.text(), /export const canApplyProjection/);
     const rejectedRequest = async (path: string, init?: RequestInit) => {
       const warn = console.warn; console.warn = () => {};
       try { return await fetch(`${base}${path}`, init); } finally { console.warn = warn; }
