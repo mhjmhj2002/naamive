@@ -50,6 +50,22 @@ else {
     await pool.query(`UPDATE projects SET state='READY_FOR_MODULE_MATERIALIZATION' WHERE id=$1`, [noBaseline.project]);
     assert.equal((await buildStateActionProjection(noBaseline.project, principal)).allowed_actions.some(action => action.code === 'MATERIALIZE_MODULE'), false, 'v3 fails closed before an approved baseline exists');
 
+    const pending = await setup();
+    await grant(pending.project);
+    const submitted: any = await submitTechnologyBaseline(pending.project, pending.first, `projection-pending:${pending.project}`);
+    const pendingProjection = await buildStateActionProjection(pending.project, principal);
+    assert.deepEqual(pendingProjection.resources.technology_baseline, {
+      revision_id: pending.first, revision_number: 1, revision_status: 'PENDING_APPROVAL', technology_catalog_revision_id: pending.catalog,
+      gate_id: submitted.gate_id, gate_status: 'OPEN', gate_version: 1, opened_at: pendingProjection.resources.technology_baseline?.opened_at,
+    }, 'the projection allowlists only the current v3 baseline decision facts');
+    const pendingDescriptor = pendingProjection.allowed_actions.find(action => action.code === 'DECIDE_TECHNOLOGY_BASELINE');
+    assert.ok(pendingDescriptor, 'the explicit v3 adapter publishes the baseline decision only for an open pending gate');
+    assert.deepEqual(pendingDescriptor.target, { resource_kind: 'GATE', resource_id: submitted.gate_id });
+    assert.deepEqual(pendingDescriptor.command, { method: 'POST', href: `/api/projects/${pending.project}/technology-baselines/${pending.first}/decision`, idempotency_required: true });
+    assert.equal(pendingDescriptor.expected.gate_version, 1); assert.equal(pendingDescriptor.expected.as_of_event_id, pendingProjection.as_of_event_id);
+    assert.deepEqual(pendingDescriptor.input.schema?.properties.decision.enum, ['APPROVED', 'REJECTED']);
+    assert.deepEqual(pendingDescriptor.input.required_fields, ['gate_id', 'version', 'decision']);
+
     const approved = await setup();
     await approve(approved.project, approved.first, `projection-approved:${approved.project}`);
     const first = (await pool.query(`SELECT * FROM technology_baseline_revisions WHERE id=$1`, [approved.first])).rows[0];

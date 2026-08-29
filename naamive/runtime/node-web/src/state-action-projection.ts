@@ -123,6 +123,20 @@ export type AssuranceSummary = {
   subject: unknown;
 };
 
+/** Safe, allowlisted facts for the currently applicable v3 Technology
+ * Baseline revision. This deliberately excludes the revision payload, catalog
+ * item details, feedback, and decision artifacts. */
+export type TechnologyBaselineSummary = {
+  revision_id: string;
+  revision_number: number;
+  revision_status: string;
+  technology_catalog_revision_id: string;
+  gate_id: string;
+  gate_status: string;
+  gate_version: number;
+  opened_at: string;
+};
+
 export type ActionInputSchema = {
   type: 'object';
   properties: Record<string, { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }>;
@@ -159,6 +173,7 @@ export type StateActionProjection = {
     delivery: unknown;
     recovery: RecoverySummary[];
     assurance: AssuranceSummary[];
+    technology_baseline: TechnologyBaselineSummary | null;
   };
   activity: {
     state: ActivityState;
@@ -198,7 +213,7 @@ const CURRENT_WORKFLOWS = new Set<string>([
 
 /** Explicitly declared legacy workflow/version adapters. Each may publish only
  * the actions it declares; anything else stays read-only fail-closed. */
-type LegacyActionCode = 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE';
+type LegacyActionCode = 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE' | 'DECIDE_TECHNOLOGY_BASELINE';
 
 type LegacyAdapter = {
   /** Human-readable journey summary for this historical workflow. */
@@ -234,6 +249,7 @@ const LEGACY_ADAPTERS: Record<string, LegacyAdapter> = {
       WAITING_FOR_PRODUCT_COMMITMENT: ['PRODUCT_COMMITMENT_DECISION'],
       WAITING_FOR_REVIEW_ADJUSTMENT: ['APPLY_REVIEW_ADJUSTMENTS'],
       DISCOVERY_FAILED: ['RETRY_DISCOVERY'],
+      WAITING_FOR_TECHNOLOGY_BASELINE: ['DECIDE_TECHNOLOGY_BASELINE'],
       READY_FOR_MODULE_MATERIALIZATION: ['MATERIALIZE_MODULE'],
     },
   },
@@ -391,6 +407,31 @@ const readLegacyGateFacts = async (client: pg.PoolClient, projectId: string) => 
     decided_at: row.decided_at ? new Date(row.decided_at).toISOString() : null,
     created_at: new Date(row.opened_at).toISOString(),
   }));
+};
+
+/** The v3 baseline gate predates gate_records and therefore has its own
+ * persisted authority. Read only the decision facts the canonical UI needs,
+ * through the same snapshot client as every other projection fact. */
+const readTechnologyBaselineFacts = async (client: pg.PoolClient, projectId: string): Promise<TechnologyBaselineSummary | null> => {
+  const row = (await client.query(
+    `SELECT r.id AS revision_id,r.revision_number,r.status AS revision_status,r.technology_catalog_revision_id,
+       g.id AS gate_id,g.status AS gate_status,g.version AS gate_version,g.opened_at
+     FROM technology_baseline_gates g
+     JOIN technology_baseline_revisions r ON r.id=g.baseline_revision_id
+     WHERE g.project_key=$1 AND r.project_key=$1
+     ORDER BY g.opened_at DESC,g.id DESC
+     LIMIT 1`, [projectId])).rows[0];
+  if (!row) return null;
+  return {
+    revision_id: String(row.revision_id),
+    revision_number: Number(row.revision_number),
+    revision_status: String(row.revision_status),
+    technology_catalog_revision_id: String(row.technology_catalog_revision_id),
+    gate_id: String(row.gate_id),
+    gate_status: String(row.gate_status),
+    gate_version: Number(row.gate_version),
+    opened_at: new Date(row.opened_at).toISOString(),
+  };
 };
 
 const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
@@ -709,6 +750,7 @@ type DescriptorContext = {
   stop: Awaited<ReturnType<typeof readStopFacts>>;
   recovery: RecoverySummary[];
   assurance: Awaited<ReturnType<typeof readAssuranceFacts>>;
+  technologyBaseline: TechnologyBaselineSummary | null;
   materializationBaseline: MaterializationBaselineOptions;
 };
 
@@ -760,6 +802,15 @@ const gateDecisionSchema = jsonSchema(
     evidence: { type: 'object', description: 'Published evidence for the decision.' },
   },
   ['version', 'decision', 'evidence']
+);
+const technologyBaselineDecisionSchema = (gateId: string) => jsonSchema(
+  {
+    gate_id: { type: 'string', enum: [gateId], description: 'Open Technology Baseline gate being decided.' },
+    version: { type: 'integer', description: 'Current Technology Baseline gate version.' },
+    decision: { type: 'string', enum: ['APPROVED', 'REJECTED'], enum_labels: { APPROVED: 'Aprovar', REJECTED: 'Solicitar ajustes' }, description: 'Technology Baseline decision.' },
+    feedback: { type: 'string', description: 'Required when requesting adjustments.' },
+  },
+  ['gate_id', 'version', 'decision']
 );
 const stopInputSchema = (withEvidence: boolean) => jsonSchema(
   {
@@ -962,6 +1013,18 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
         href: `/api/projects/${projectId}/modules`, idempotencyRequired: true,
         confirmationRequired: false, schema: materializationInputSchema(ctx.materializationBaseline),
       }));
+    } else if (code === 'DECIDE_TECHNOLOGY_BASELINE') {
+      const baseline = ctx.technologyBaseline;
+      // This historical command is valid only for the exact persisted v3
+      // state and its matching open pending gate; no state-name fallback.
+      if (!baseline || project.archived || project.workflow_code !== 'PROJECT_DISCOVERY' || project.workflow_version !== 3 || project.state !== 'WAITING_FOR_TECHNOLOGY_BASELINE') continue;
+      if (baseline.revision_status !== 'PENDING_APPROVAL' || baseline.gate_status !== 'OPEN') continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'DECIDE_TECHNOLOGY_BASELINE', resourceKind: 'GATE', resourceId: baseline.gate_id,
+        href: `/api/projects/${projectId}/technology-baselines/${baseline.revision_id}/decision`, idempotencyRequired: true,
+        gateVersion: baseline.gate_version, confirmationRequired: true, schema: technologyBaselineDecisionSchema(baseline.gate_id),
+      }));
     }
   }
   return actions;
@@ -1065,20 +1128,21 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
  * ------------------------------------------------------------------ */
 
 const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_kind: ResourceKind; resource_id: string | null } => {
-  const { project, stop, gates, recovery } = ctx;
+  const { project, stop, gates, recovery, technologyBaseline } = ctx;
   if (stop.projectCancellation) return { code: 'CANCELLED', resource_kind: 'PROJECT', resource_id: project.id };
   if (stop.projectPause) return { code: 'PAUSED', resource_kind: 'PROJECT', resource_id: project.id };
   const activeRecovery = recovery.find((r) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(r.execution_state));
   if (activeRecovery) return { code: activeRecovery.cause, resource_kind: activeRecovery.resource_kind === 'EXECUTION' ? 'EXECUTION' : 'WORK_ITEM', resource_id: activeRecovery.resource_id };
   const openGate = gates.find((gate) => gate.status === 'OPEN');
   if (openGate) return { code: openGate.gate_code, resource_kind: 'GATE', resource_id: openGate.id };
+  if (technologyBaseline?.gate_status === 'OPEN') return { code: 'TECHNOLOGY_BASELINE', resource_kind: 'GATE', resource_id: technologyBaseline.gate_id };
   if (project.archived) return { code: 'ARCHIVED', resource_kind: 'PROJECT', resource_id: project.id };
   if (project.failure_code) return { code: project.failure_code, resource_kind: 'PROJECT', resource_id: project.id };
   return { code: null, resource_kind: null, resource_id: null };
 };
 
 const deriveNextAction = (ctx: DescriptorContext, allowed: ActionDescriptor[]): { text: string; descriptor_code?: string } | null => {
-  const { stop, gates, recovery } = ctx;
+  const { stop, gates, recovery, technologyBaseline } = ctx;
   if (stop.projectCancellation) return { text: 'Projeto cancelado; nenhuma continuação pendente.' };
   if (stop.projectPause) {
     const resume = allowed.find((action) => action.code === 'RESUME_PROJECT');
@@ -1088,6 +1152,10 @@ const deriveNextAction = (ctx: DescriptorContext, allowed: ActionDescriptor[]): 
   if (openGate) {
     const decide = allowed.find((action) => action.code === 'DECIDE_GATE' || action.code === 'DECIDE_DELIVERY_ACCEPTANCE');
     return { text: `Decisão pendente no gate ${openGate.gate_code}.`, ...(decide ? { descriptor_code: decide.code } : {}) };
+  }
+  if (technologyBaseline?.gate_status === 'OPEN') {
+    const decide = allowed.find((action) => action.code === 'DECIDE_TECHNOLOGY_BASELINE');
+    return { text: 'Decisão pendente na Technology Baseline.', ...(decide ? { descriptor_code: decide.code } : {}) };
   }
   const activeRecovery = recovery.find((r) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(r.execution_state));
   if (activeRecovery) return { text: `Recovery em andamento: ${activeRecovery.selected_action} (${activeRecovery.cause}).` };
@@ -1110,6 +1178,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const workItems = await readWorkItemFacts(client, projectId);
     const gates = await readGateFacts(client, projectId);
     const legacyGates = await readLegacyGateFacts(client, projectId);
+    const technologyBaseline = await readTechnologyBaselineFacts(client, projectId);
     const stop = await readStopFacts(client, projectId);
     const delivery = await readDeliverySummary(client, projectId);
     const recovery = await readRecoveryFacts(client, projectId);
@@ -1119,7 +1188,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const asOfEventRow = await client.query(`SELECT COALESCE(MAX(id),0)::bigint AS as_of_event_id FROM events WHERE project_id=$1`, [projectId]);
     const asOfEventId = Number(asOfEventRow.rows[0].as_of_event_id ?? 0);
 
-    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, assurance, materializationBaseline };
+    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, assurance, technologyBaseline, materializationBaseline };
     const can = capabilityResolver(principal, snapshotNow, client);
 
     // ----- resource projections (state separation preserved) -----
@@ -1258,6 +1327,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
         delivery,
         recovery,
         assurance: assuranceSummaries,
+        technology_baseline: technologyBaseline,
       },
       activity,
       stop: {

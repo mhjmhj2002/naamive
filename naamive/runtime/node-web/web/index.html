@@ -181,6 +181,13 @@
         refreshProjection();
       };
       stream.onmessage = invalidate;
+      // A named frame can advance Last-Event-ID immediately before a network
+      // loss prevents its matching default frame reaching onmessage.  Opening
+      // (including EventSource reconnect) therefore invalidates through the
+      // existing fenced/coalesced canonical refresh path.
+      stream.addEventListener('open', () => {
+        if (selectionGeneration === projectionState.selectionGeneration && projectId === projectionState.selectedProject) refreshProjection();
+      });
       stream.addEventListener('error', () => {
         if (selectionGeneration === projectionState.selectionGeneration) showMessage('A conexão de notificações será restabelecida automaticamente.', 'warning');
       });
@@ -303,6 +310,13 @@
         const row = element('div', 'border rounded p-2 mb-2');
         row.append(element('strong', '', `${gate.gate_code} · ${gate.status}`));
         row.append(element('span', 'd-block text-muted', `${gate.scope_type}: ${gate.scope_id} · versão ${gate.version}`));
+        root.append(row);
+      }
+      const baseline = projection.resources.technology_baseline;
+      if (baseline) {
+        const row = element('div', 'border rounded p-2 mb-2');
+        row.append(element('strong', '', `Technology Baseline · ${baseline.revision_status}`));
+        row.append(element('span', 'd-block text-muted', `Revisão ${baseline.revision_number} · gate ${baseline.gate_status} · versão ${baseline.gate_version}`));
         root.append(row);
       }
       if (projection.resources.delivery) root.append(element('p', 'mb-2', `Delivery: ${projection.resources.delivery.lifecycle_state || 'disponível'}.`));
