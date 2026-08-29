@@ -23,6 +23,7 @@ import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
 import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
 import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from './gate-catalog.js';
 import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
+import { buildStateActionProjection } from './state-action-projection.js';
 import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
 import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
 import { activateV4DiscoveryAfterRegistration, reconcileMacroLifecycle } from './macro-lifecycle.js';
@@ -113,6 +114,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const catalogGateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/catalog-gates$/);
   const catalogGateDecisionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/catalog-gates\/([^/]+)\/decision$/);
   const productCommitmentMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/product-commitments$/);
+  const stateActionProjectionMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/projection$/);
   const authAdminPrincipalMatch=url.pathname.match(/^\/api\/admin\/auth\/principals\/([0-9a-f-]{36})\/revoke$/);
   const authAdminServiceMatch=url.pathname.match(/^\/api\/admin\/auth\/service-principals\/([0-9a-f-]{36})\/rotate$/);
   if (request.method==='POST' && url.pathname==='/api/auth/logout') { await logout(principal!,response); return respond(response,204,{}); }
@@ -124,7 +126,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method==='POST' && url.pathname==='/api/internal/worker/authorize') { const body=await json(request); await authorize(principal!,{action:'WORKER_EXECUTE',projectId:typeof body.project_id==='string'?body.project_id:undefined,resourceType:typeof body.resource_type==='string'?body.resource_type:undefined,resourceId:typeof body.resource_id==='string'?body.resource_id:undefined,roles:['WORKER_SERVICE']}); return respond(response,204,{}); }
   if (!publicRoute && url.pathname==='/api/projects') await authorize(principal!,{action:request.method==='GET'?'LIST_PROJECTS':'CREATE_PROJECT',roles:['OPERATOR']});
   const scopedProject=/^\/api\/projects\/([^/]+)/.exec(url.pathname)?.[1];
-  if(scopedProject && !catalogGateDecisionMatch && !deliveryMatch && !moduleLifecycleMatch) {
+  if(scopedProject && !catalogGateDecisionMatch && !deliveryMatch && !moduleLifecycleMatch && !stateActionProjectionMatch) {
     const assurancePath=url.pathname.includes('/assurance/');
     if(assurancePath && request.method==='POST') {
       const action=url.pathname.includes('/reviews/')&&url.pathname.endsWith('/decision')?'ASSURANCE_REVIEW':url.pathname.endsWith('/gates')?'ASSURANCE_GATE':'ASSURANCE_ON_CALL';
@@ -212,6 +214,14 @@ export const createApiServer = () => createServer(async (request, response) => {
       }
       return respond(response, 200, await checkAgentReadiness(true));
     } catch(error) { const code=error instanceof AgentReadinessError||error instanceof AgentConfigurationError?error.code:'CODEX_PROCESS_FAILED'; return respond(response,503,{code,message:'O agente não está pronto. Corrija a configuração e teste novamente.'}); }
+  }
+  if (stateActionProjectionMatch && request.method === 'GET') {
+    // STATE_ACTION_PROJECTION:v1 — canonical read-only projection for one
+    // principal. Uses resolveCapability (never authorize) because this is a GET:
+    // it must not write auth_audit_records nor probe capabilities via enforcement.
+    // The READ_PROJECT capability check runs inside the same read-only snapshot
+    // as the projection so both share a single snapshotNow.
+    return respond(response,200,await buildStateActionProjection(stateActionProjectionMatch[1],principal!));
   }
   if (match && request.method === 'GET' && url.searchParams.get('phase3') === 'true') return respond(response, 200, await phase3Detail(match[1]));
   if (match && request.method === 'GET' && match[2] === undefined) return respond(response, 200, await projectDetail(match[1]));

@@ -173,10 +173,13 @@ export const projectDetail = async (projectId: string) => {
   const artifacts=await pool.query(`SELECT artifact_type,sha256,created_at FROM artifacts WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]);
   const review=await pool.query(`SELECT metadata FROM artifacts WHERE project_id=$1 AND artifact_type='product-commitment-review' ORDER BY created_at DESC LIMIT 1`,[projectId]);
   const activeJob=await pool.query(`SELECT kind,heartbeat_at,lease_expires_at,available_at FROM jobs WHERE project_id=$1 AND status='LEASED' ORDER BY available_at DESC LIMIT 1`,[projectId]);
-  const currentModule=await pool.query(`SELECT state FROM modules WHERE project_id=$1 ORDER BY version DESC LIMIT 1`,[projectId]);
   const reviewData=(review.rows[0]?.metadata??null) as Record<string,unknown>|null;
   const runtimeData = config().runtimeProjectionEnabled ? await listProjectExecutionData(projectId) : { executions: [], attempts: [] };
   const macroLifecycle=await macroLifecycleProjection(projectId);
-  const effectiveState=currentModule.rows[0]?.state??project.rows[0].state;
+  // STATE_ACTION_PROJECTION:v1 forbids merging resource states into the project
+  // presentation. projectDetail keeps its legacy output shape for compatible
+  // consumers but derives display_status/status_reason from the project's own
+  // persisted state only — never from the latest module's state.
+  const effectiveState=project.rows[0].state;
   return { ...project.rows[0], ...display(effectiveState,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts, macro_lifecycle:macroLifecycle };
 };

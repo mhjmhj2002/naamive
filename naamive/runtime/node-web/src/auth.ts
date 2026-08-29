@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import type { IncomingMessage, ServerResponse } from 'node:http';
+import type pg from 'pg';
 import { pool, withTransaction } from './db.js';
 import { config } from './config.js';
 import { ApiError } from './service.js';
@@ -68,12 +69,50 @@ export const enforceCsrf=async(request:IncomingMessage,principal:AuthenticatedPr
   const row=(await pool.query(`SELECT csrf_hash FROM auth_sessions WHERE id=$1 AND revoked_at IS NULL AND expires_at>clock_timestamp()`,[principal.sessionId])).rows[0];if(!row||!same(hash(token),row.csrf_hash))throw new ApiError(403,'AUTH_CSRF_TOKEN_INVALID');
 };
 export const logout=async(principal:AuthenticatedPrincipal,response:ServerResponse)=>{if(principal.sessionId)await pool.query(`UPDATE auth_sessions SET revoked_at=clock_timestamp() WHERE id=$1 AND revoked_at IS NULL`,[principal.sessionId]);clearSessionCookie(response);await audit({principal,action:'AUTH_LOGOUT',outcome:'LOGOUT',reason:'SESSION_REVOKED'});};
-export const authorize=async(principal:AuthenticatedPrincipal,input:{action:string;projectId?:string;resourceType?:string;resourceId?:string;roles?:string[]})=>{
-  if(!allowedActions.has(input.action))return deny(principal,input.action,input.projectId,'AUTH_ACTION_NOT_PUBLISHED');
-  if(principal.type!=='SERVICE'&&['WORKER_EXECUTE','AGENT_EXECUTE','DELIVERY_EXECUTE'].includes(input.action))return deny(principal,input.action,input.projectId,'AUTH_HUMAN_SERVICE_ACTION_FORBIDDEN');
-  if(principal.type==='SERVICE'&&['DECIDE_CATALOG_GATE','ASSURANCE_ON_CALL','ASSURANCE_REVIEW','ASSURANCE_GATE','DELIVERY_PAUSE_RESUME','DELIVERY_CANCEL','ADMIN_CONFIG'].includes(input.action))return deny(principal,input.action,input.projectId,'AUTH_SERVICE_HUMAN_ACTION_FORBIDDEN');
-  const roles=input.roles??[];const result=await pool.query(`SELECT g.id,g.role_code FROM auth_role_grants g JOIN auth_principals p ON p.id=g.principal_id WHERE g.principal_id=$1 AND p.status='ACTIVE' AND g.status='ACTIVE' AND (g.expires_at IS NULL OR g.expires_at>clock_timestamp()) AND g.action_code=$2 AND (($3::text IS NULL AND g.project_id IS NULL) OR ($3::text IS NOT NULL AND g.project_id=$3)) AND (g.resource_type IS NULL OR (g.resource_type=$4 AND g.resource_id=$5)) ${roles.length?'AND g.role_code=ANY($6::text[])':''} ORDER BY g.created_at LIMIT 1`,roles.length?[principal.id,input.action,input.projectId??null,input.resourceType??null,input.resourceId??null,roles]:[principal.id,input.action,input.projectId??null,input.resourceType??null,input.resourceId??null]);
-  if(!result.rowCount)return deny(principal,input.action,input.projectId,'AUTH_GRANT_DENIED');const value={principal,role:result.rows[0].role_code,grantId:result.rows[0].id};await audit({principal,action:input.action,projectId:input.projectId,resourceType:input.resourceType,resourceId:input.resourceId,role:value.role,grantId:value.grantId,outcome:'ALLOWED',reason:'GRANT_MATCHED'});return value;
+export type AuthorizationRequirement={action:string;projectId?:string;resourceType?:string;resourceId?:string;roles?:string[]};
+export type AuthorizationContext={lifecycle?:string|null;gate?:string|null;recovery?:string|null;stop?:boolean;fence?:boolean};
+export type AuthorizationDenyReason='AUTH_ACTION_NOT_PUBLISHED'|'AUTH_HUMAN_SERVICE_ACTION_FORBIDDEN'|'AUTH_SERVICE_HUMAN_ACTION_FORBIDDEN'|'AUTH_GRANT_DENIED';
+export type AuthorizationVerdict={allowed:true;role:string;grantId:string}|{allowed:false;reason:AuthorizationDenyReason};
+export type CapabilityVerdict={allowed:boolean;reason?:AuthorizationDenyReason;role?:string;grantId?:string};
+// Service-only action codes (HUMAN principals can never hold or execute these).
+const serviceActions=new Set([...allowedActions].filter(action=>action.endsWith('_EXECUTE')));
+// Human decision/administrative action codes (SERVICE principals can never hold or execute these).
+const humanOnlyActions=new Set(['DECIDE_CATALOG_GATE','ASSURANCE_ON_CALL','ASSURANCE_REVIEW','ASSURANCE_GATE','DELIVERY_PAUSE_RESUME','DELIVERY_CANCEL','ADMIN_CONFIG']);
+/**
+ * Single shared grant-matching rule used by both command enforcement (authorize) and read-only
+ * capability discovery (resolveCapability). Evaluates action publication, HUMAN-vs-SERVICE action
+ * gating, and the active grant against the principal, roles, project/resource scope and expiration,
+ * all against one caller-supplied snapshot instant. `context` is an optional extension point for
+ * caller-supplied lifecycle/gate/recovery/stop/fence applicability; current command enforcement
+ * passes none, so existing behavior is unchanged.
+ */
+export const matchAuthorization=async(principal:AuthenticatedPrincipal,requirement:AuthorizationRequirement,snapshotNow:Date,_context?:AuthorizationContext,queryable:Pick<pg.PoolClient,'query'>=pool):Promise<AuthorizationVerdict>=>{
+  if(!allowedActions.has(requirement.action))return {allowed:false,reason:'AUTH_ACTION_NOT_PUBLISHED'};
+  if(principal.type!=='SERVICE'&&serviceActions.has(requirement.action))return {allowed:false,reason:'AUTH_HUMAN_SERVICE_ACTION_FORBIDDEN'};
+  if(principal.type==='SERVICE'&&humanOnlyActions.has(requirement.action))return {allowed:false,reason:'AUTH_SERVICE_HUMAN_ACTION_FORBIDDEN'};
+  const roles=requirement.roles??[];
+  const params:unknown[]=[principal.id,requirement.action,requirement.projectId??null,requirement.resourceType??null,requirement.resourceId??null,snapshotNow.toISOString()];
+  if(roles.length)params.push(roles);
+  const result=await queryable.query(`SELECT g.id,g.role_code FROM auth_role_grants g JOIN auth_principals p ON p.id=g.principal_id WHERE g.principal_id=$1 AND p.status='ACTIVE' AND g.status='ACTIVE' AND (g.expires_at IS NULL OR g.expires_at>$6) AND g.action_code=$2 AND (($3::text IS NULL AND g.project_id IS NULL) OR ($3::text IS NOT NULL AND g.project_id=$3)) AND (g.resource_type IS NULL OR (g.resource_type=$4 AND g.resource_id=$5)) ${roles.length?'AND g.role_code=ANY($7::text[])':''} ORDER BY g.created_at LIMIT 1`,params);
+  if(!result.rowCount)return {allowed:false,reason:'AUTH_GRANT_DENIED'};
+  return {allowed:true,role:result.rows[0].role_code,grantId:result.rows[0].id};
+};
+/**
+ * READ-ONLY capability discovery. Never writes auth_audit_records and never enforces via authorize();
+ * it resolves the exact same grant-matching rule as command enforcement (matchAuthorization) against a
+ * caller-supplied snapshot instant so expiration is evaluated against one consistent time.
+ */
+export const resolveCapability=async(principal:AuthenticatedPrincipal,requirement:AuthorizationRequirement,snapshotNow:Date,queryable:Pick<pg.PoolClient,'query'>=pool):Promise<CapabilityVerdict>=>{
+  const verdict=await matchAuthorization(principal,requirement,snapshotNow,undefined,queryable);
+  if(!verdict.allowed)return {allowed:false,reason:verdict.reason};
+  return {allowed:true,role:verdict.role,grantId:verdict.grantId};
+};
+export const authorize=async(principal:AuthenticatedPrincipal,input:AuthorizationRequirement):Promise<Authorization>=>{
+  const verdict=await matchAuthorization(principal,input,new Date());
+  if(!verdict.allowed)return deny(principal,input.action,input.projectId,verdict.reason);
+  const value={principal,role:verdict.role,grantId:verdict.grantId};
+  await audit({principal,action:input.action,projectId:input.projectId,resourceType:input.resourceType,resourceId:input.resourceId,role:value.role,grantId:value.grantId,outcome:'ALLOWED',reason:'GRANT_MATCHED'});
+  return value;
 };
 export const authorizeCatalogGate=async(principal:AuthenticatedPrincipal,projectId:string,gateId:string)=>{const gate=(await pool.query(`SELECT scope_type,scope_id,authority_roles FROM gate_records WHERE id=$1 AND project_id=$2`,[gateId,projectId])).rows[0];if(!gate)throw new ApiError(404,'GATE_NOT_FOUND');return authorize(principal,{action:'DECIDE_CATALOG_GATE',projectId,resourceType:String(gate.scope_type),resourceId:String(gate.scope_id),roles:Array.isArray(gate.authority_roles)?gate.authority_roles.map(String):[]});};
 const validateGrant=(value:unknown):GrantInput=>{if(!value||typeof value!=='object'||Array.isArray(value))throw new ApiError(422,'AUTH_GRANT_INVALID');const item=value as Record<string,unknown>;if(typeof item.role_code!=='string'||!allowedRoles.has(item.role_code)||typeof item.action_code!=='string'||!allowedActions.has(item.action_code))throw new ApiError(422,'AUTH_GRANT_INVALID');if((item.resource_type===undefined)!==(item.resource_id===undefined))throw new ApiError(422,'AUTH_GRANT_SCOPE_INVALID');return {role_code:item.role_code,action_code:item.action_code,project_id:typeof item.project_id==='string'?item.project_id:null,resource_type:typeof item.resource_type==='string'?item.resource_type:null,resource_id:typeof item.resource_id==='string'?item.resource_id:null,expires_at:typeof item.expires_at==='string'?item.expires_at:null};};
