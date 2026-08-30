@@ -12,27 +12,19 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 ## Evidência de implementação local — 2026-08-30
 
-Implementados o contrato estático versionado
-`LIFECYCLE_CONFORMANCE:v1`, com 20 critérios fechados e negativos obrigatórios,
-e o verificador fail-closed em
-`runtime/node-web/src/lifecycle-conformance.test.ts`. Ele valida cardinalidade,
-IDs, provas, negativos, paths e a coerência documental/workflow do critério 20
-contra Compass, Protocol, Gate Policy, plano F6.5, auditoria e migration 048.
+O baseline técnico contém o manifesto, o teste estático e a fixture inicial
+`lifecycle-conformance-audit-scenario.e2e.test.ts` de TST-01. Eles ainda não
+certificam a jornada PostgreSQL/Git do critério 18. A execução PostgreSQL segue
+sem certificação; ausência de `DATABASE_URL` é
+`MANUAL_OPERATOR_VALIDATION_REQUIRED`, nunca PASS.
 
-Foi adicionada a fixture PostgreSQL/Git descartável
-`lifecycle-conformance-audit-scenario.e2e.test.ts`. Ela materializa somente as
-pré-condições legítimas e, após o primeiro dispatch, usa
-`prepareDevelopmentJob`/`finalizeDevelopmentJob`, o reconciliador AUT-02,
-`decideReview`, integração Git, scheduler e `resolveExternalBlocker` reais.
-Ela usa o autor canônico `naamive-bot <naamive-bot@localhost>` e a policy de
-paths mínima `allowlist: ['persistence.txt']`, `denylist: ['.env']`.
-
-Validações locais reais: `npm run build` e
-`node --test dist/lifecycle-conformance.test.js` passaram. O cenário E2E não
-foi executado porque `DATABASE_URL` não estava configurada; isso é
-`MANUAL_OPERATOR_VALIDATION_REQUIRED`, não PASS. A implementação da cadeia
-completa existe, mas a certificação runtime PostgreSQL permanece pendente de
-execução pelo operador; esta task não pode ser marcada como concluída ainda.
+Durante implementação/auditoria, foram encontrados defeitos na fixture sob o
+contrato AUT-02 v1. As correções experimentais de runtime/teste foram
+deliberadamente restauradas ao baseline `2016bee...` para isolar esta decisão
+arquitetural. Portanto, o HEAD atual não afirma plano único, remoção de dispatch
+manual, autor Git, allowlist/denylist específicos, nem a cadeia incremental v2.
+O critério 18 permanece bloqueado até a implementação de AUT-02 v2 e a fixture
+TST-01 corrigida e certificada em PostgreSQL/Git.
 
 ## Resolução arquitetural corretiva — required-set AUT-02
 
@@ -47,8 +39,9 @@ históricos e fail-closed; novas execuções selecionam explicitamente
 `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`.
 
 O critério 18 continua bloqueado até a implementação e certificação
-PostgreSQL/Git do contrato v2. A fixture atual preserva o plano único e observa
-o bloqueio v1, sem inventar estado ou dispatch manual.
+PostgreSQL/Git do contrato v2. A fixture atual é somente a base inicial e deve
+ser corrigida para certificar o cenário v2, sem inventar estado ou dispatch
+manual.
 
 ## Decisão de pré-validação
 
@@ -57,9 +50,11 @@ suíte. Há cobertura funcional PostgreSQL, HTTP, SSE, browser, Git descartável
 recovery e concorrência a reutilizar, mas não uma certificação transversal dos
 vinte critérios. Teste estreito ou mockado é somente `PARTIALLY_COVERED`.
 
-Não existe `DECISÃO ARQUITETURAL NECESSÁRIA`: os contratos publicados já definem
-workflow, política, autoridade e fonte de verdade. A implementação deve compor
-os contratos reais em fixture isolada, sem criar runtime ou banco paralelo.
+A pré-validação original não conhecia conflito arquitetural. Durante a
+implementação/auditoria, TST-01 revelou o conflito AUT-02 v1 × lifecycle DAG;
+ele foi resolvido normativamente por AUT-02 v2. Não existe decisão arquitetural
+pendente agora, mas a implementação do contrato v2 e sua certificação em fixture
+isolada continuam pendentes.
 
 ## Autoridade normativa e inventário atual
 
@@ -128,7 +123,7 @@ em `mkdtempSync(join(tmpdir(), 'naamive-tst01-'))`, nunca usando o projeto real
 | Projeto | `PROJECT_DISCOVERY:v4`, `IMPLEMENTATION`, repositório base local. |
 | Módulo | `MODULE_DELIVERY:v2`, revisão/round/plano aprovados, `IMPLEMENTING`; `MODULE_PLAN_APPROVAL` foi a única precondição humana. |
 | WIs | `WORK_ITEM_DELIVERY:v2`: Persistência elegível; Métrica depende de Persistência; Interface depende de Persistência e tem blocker ACTIVE `priority-group`. |
-| Assurance | `ORCHESTRATION_EXECUTION:v1`; `ASSURANCE_EXPANSION_TO_REAL_WORK:v1`; `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`/`AUT-02:v1`; policy record `assurance_policies.version=1` e hash persistidos; producer e reviewer independentes. |
+| Assurance | `ORCHESTRATION_EXECUTION:v1`; `ASSURANCE_EXPANSION_TO_REAL_WORK:v1`; `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2` com `IntegrationCohort:v1`; policy v2 e hash persistidos; producer e reviewer independentes. `AUT-02:v1` só entra em prova histórica/legacy fail-closed. |
 | Auth | Principais GAT-03 e grants mínimos próprios da fixture. |
 
 SQL é permitido apenas para necessidade/projeto/módulo/plano/política/principais
