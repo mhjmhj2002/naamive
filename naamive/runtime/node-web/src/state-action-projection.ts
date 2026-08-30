@@ -384,7 +384,8 @@ const readWorkItemFacts = async (client: pg.PoolClient, projectId: string) => {
     `SELECT w.id,w.module_id,w.title,w.workflow_code,w.workflow_version,w.state,w.version,
        wd.status AS workflow_status,
        coalesce(ws.metadata->>'canonical_state', w.state) AS canonical_state,
-       (SELECT count(*)::int FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE') AS active_external_blocker_count
+       (SELECT count(*)::int FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE') AS active_external_blocker_count,
+       coalesce((SELECT array_agg(b.dependency_id ORDER BY b.created_at,b.id) FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE'), ARRAY[]::text[]) AS active_external_blocker_dependency_ids
      FROM work_items w
      LEFT JOIN workflow_definitions wd ON wd.code=w.workflow_code AND wd.version=w.workflow_version
      LEFT JOIN workflow_states ws ON ws.workflow_id=wd.id AND ws.code=w.state
@@ -400,6 +401,7 @@ const readWorkItemFacts = async (client: pg.PoolClient, projectId: string) => {
     canonical_state: String(row.canonical_state ?? row.state),
     version: Number(row.version),
     active_external_blocker_count: Number(row.active_external_blocker_count ?? 0),
+    active_external_blocker_dependency_ids: Array.isArray(row.active_external_blocker_dependency_ids) ? row.active_external_blocker_dependency_ids.map(String) : [],
   }));
 };
 
@@ -836,13 +838,14 @@ const descriptor = (
     confirmationRequired: boolean;
     schema: ActionInputSchema | null;
     bindings: BindingField[];
+    descriptorVariant?: string;
     decisionOptions?: Array<{ code: string; label: string; consequence: string }>;
   }
 ): ActionDescriptor => {
   const presentation = presentationFor(input.code);
   const fields = input.bindings.map((binding) => ({ ...binding, send: binding.send ?? false, editable: binding.editable ?? false, ...(binding.source === 'HUMAN_INPUT' ? { schema: binding.schema ?? input.schema?.properties[binding.name] } : {}) }));
   return {
-  descriptor_id: `action:${input.code}:${input.resourceKind}:${input.resourceId}:${input.href}`,
+  descriptor_id: `action:${input.code}:${input.resourceKind}:${input.resourceId}:${input.href}${input.descriptorVariant ? `:${encodeURIComponent(input.descriptorVariant)}` : ''}`,
   code: input.code,
   target: { resource_kind: input.resourceKind, resource_id: input.resourceId },
   command: { method: 'POST', href: input.href, idempotency_required: input.idempotencyRequired },
@@ -1026,7 +1029,7 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
         resourceVersion: module.version,
         confirmationRequired: true,
         schema: jsonSchema(
-          { reason: { type: 'string' }, evidence: { type: 'object' } },
+          { reason: { type: 'string' }, evidence: { type: 'object' }, obligation_resolution: { type: 'object', description: 'Required when the module has a committed obligation.' } },
           ['reason', 'evidence']
         ),
         bindings: [
@@ -1063,18 +1066,21 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
 const buildWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, item: Awaited<ReturnType<typeof readWorkItemFacts>>[number]) => {
   const actions: ActionDescriptor[] = [];
   const { projectId, asOfEventId } = ctx;
-  if (item.active_external_blocker_count > 0 && item.state === 'WAITING_FOR_EXTERNAL_INPUT') {
+  if (item.active_external_blocker_dependency_ids.length > 0 && item.state === 'WAITING_FOR_EXTERNAL_INPUT') {
     if (await can({ action: 'OPERATE_PROJECT', projectId, resourceType: 'WORK_ITEM', resourceId: item.id, roles: ['OPERATOR'] })) {
-      actions.push(descriptor(ctx, {
-        code: 'RESOLVE_EXTERNAL_BLOCKER', resourceKind: 'WORK_ITEM', resourceId: item.id,
-        href: `/api/projects/${projectId}/work-items/${item.id}/resolve-external-blocker`, idempotencyRequired: true,
-        resourceVersion: item.version, confirmationRequired: true,
-        schema: jsonSchema(
-          { justification: { type: 'string', description: 'Justification of the external blocker resolution.' }, dependency_id: { type: 'string', description: 'Optional dependency id when multiple blockers are active.' } },
-          ['justification']
-        ),
-        bindings: [human('justification', true), derived('dependency_id')],
-      }));
+      for (const dependencyId of item.active_external_blocker_dependency_ids) {
+        actions.push(descriptor(ctx, {
+          code: 'RESOLVE_EXTERNAL_BLOCKER', resourceKind: 'WORK_ITEM', resourceId: item.id,
+          href: `/api/projects/${projectId}/work-items/${item.id}/resolve-external-blocker`, idempotencyRequired: true,
+          resourceVersion: item.version, confirmationRequired: true,
+          schema: jsonSchema(
+            { justification: { type: 'string', description: 'Justification of the external blocker resolution.' }, dependency_id: { type: 'string', description: 'Server-bound active dependency selected by this capability.' } },
+            ['justification']
+          ),
+          bindings: [human('justification', true), bound('dependency_id', dependencyId)],
+          descriptorVariant: `external-blocker:${dependencyId}`,
+        }));
+      }
     }
   }
   void asOfEventId;
@@ -1241,6 +1247,10 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
 const evidence = (reference: string, summary: string, classification: 'PUBLIC' | 'RESTRICTED' = 'PUBLIC') => [{ reference, summary, classification }];
 const actionFor = (actions: ActionDescriptor[], code: string, kind: string, id: string) =>
   actions.find((action) => action.code === code && action.target.resource_kind === kind && action.target.resource_id === id && (action.presentation.kind === 'HUMAN_DECISION' || action.presentation.kind === 'HUMAN_OPERATION'))?.descriptor_id ?? null;
+const externalBlockerDescriptorId = (projectId: string, workItemId: string, dependencyId: string) =>
+  `action:RESOLVE_EXTERNAL_BLOCKER:WORK_ITEM:${workItemId}:/api/projects/${projectId}/work-items/${workItemId}/resolve-external-blocker:${encodeURIComponent(`external-blocker:${dependencyId}`)}`;
+const legacyAdapterFor = (workflowCode: string | null, workflowVersion: number | null) =>
+  workflowCode && workflowVersion != null ? LEGACY_ADAPTERS[`${workflowCode}:${workflowVersion}`] ?? null : null;
 
 const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]): StopSurfaceProjection[] => {
   const surfaces: StopSurfaceProjection[] = [];
@@ -1398,6 +1408,18 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
   ]);
   for (const item of ctx.workItems) {
     const mapped = lifecycleStops.get(item.state); if (!mapped || stopped.has(`WORK_ITEM:${item.id}`)) continue;
+    if (item.state === 'WAITING_FOR_EXTERNAL_INPUT' && item.active_external_blocker_dependency_ids.length) {
+      item.active_external_blocker_dependency_ids.forEach((dependencyId: string, index: number) => {
+        const expectedDescriptorId = externalBlockerDescriptorId(ctx.projectId, item.id, dependencyId);
+        const descriptor = actions.some((action) => action.descriptor_id === expectedDescriptorId) ? expectedDescriptorId : null;
+        add({ id: `lifecycle:WORK_ITEM:${item.id}:${item.version}:${mapped.code}:blocker:${index + 1}`, resource_kind: 'WORK_ITEM', resource_id: item.id, category: mapped.category, type: mapped.code, resource_state: item.state,
+          lifecycle_state: item.state, canonical_state: item.canonical_state, subject: null, cause: { code: mapped.code, message: 'Blocker externo ativo aguardando resolução.', reason: null }, operational_message: mapped.expected,
+          waiting_for: descriptor ? 'Uma operação humana autorizada.' : mapped.expected, continuation: { kind: descriptor ? 'HUMAN_ACTION' : mapped.continuation, expected: mapped.expected, progress: null }, authority: { required_roles: ['OPERATOR'], scope_kind: 'WORK_ITEM', scope_id: item.id },
+          decisions: [], evidence: [], action_descriptor_id: descriptor, terminal: false });
+      });
+      stopped.add(`WORK_ITEM:${item.id}`);
+      continue;
+    }
     const descriptor = item.state === 'WAITING_FOR_EXTERNAL_INPUT' ? actionFor(actions, 'RESOLVE_EXTERNAL_BLOCKER', 'WORK_ITEM', item.id) : null;
     add({ id: `lifecycle:WORK_ITEM:${item.id}:${item.version}:${mapped.code}`, resource_kind: 'WORK_ITEM', resource_id: item.id, category: mapped.category, type: mapped.code, resource_state: item.state,
       lifecycle_state: item.state, canonical_state: item.canonical_state, subject: null, cause: { code: mapped.code, message: 'Estado de lifecycle publicado.', reason: null }, operational_message: mapped.expected,
@@ -1412,6 +1434,25 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
     ...ctx.workItems.map((value) => ({ kind: 'WORK_ITEM' as const, id: value.id, state: value.state, canonical: value.canonical_state, workflow: workflowKind(value.workflow_code, value.workflow_version, value.workflow_status) })),
   ];
   for (const item of legacyResources.filter((value) => value.workflow.legacy && !stopped.has(`${value.kind}:${value.id}`))) {
+    const facts = item.kind === 'PROJECT' ? ctx.project : item.kind === 'MODULE' ? ctx.modules.find((module) => module.id === item.id)! : ctx.workItems.find((workItem) => workItem.id === item.id)!;
+    const adapter = legacyAdapterFor(facts.workflow_code, facts.workflow_version);
+    const declared = adapter?.publishes[item.state] ?? [];
+    // The adapter and its exact state declaration decide which actions are
+    // applicable.  We only associate descriptors from this same snapshot;
+    // neither a state name nor a generic legacy classification grants one.
+    const descriptors = declared.flatMap((code) => actions.filter((action) => action.code === code && action.presentation.kind === 'LEGACY' && (
+      item.kind === 'PROJECT'
+        ? action.command.href.startsWith(`/api/projects/${ctx.projectId}/`)
+        : action.target.resource_kind === item.kind && action.target.resource_id === item.id
+    )));
+    if (descriptors.length) {
+      for (const descriptor of descriptors) {
+        add({ id: `legacy-capability:${item.kind}:${item.id}:${item.state}:${descriptor.descriptor_id}`, resource_kind: item.kind, resource_id: item.id, category: 'LEGACY', type: descriptor.code, resource_state: item.state, lifecycle_state: item.state, canonical_state: item.canonical,
+          subject: null, cause: { code: descriptor.code, message: 'Capability publicada pelo adapter legado explícito.', reason: null }, operational_message: descriptor.presentation.description, waiting_for: 'A capacidade legada publicada para este estado.',
+          continuation: { kind: 'HUMAN_ACTION', expected: 'Executar somente a capacidade declarada pelo adapter legado.', progress: null }, authority: null, decisions: [], evidence: [], action_descriptor_id: descriptor.descriptor_id, terminal: false });
+      }
+      continue;
+    }
     add({ id: `legacy:${item.kind}:${item.id}:${item.state}`, resource_kind: item.kind, resource_id: item.id, category: 'LEGACY', type: 'LEGACY_READ_ONLY', resource_state: item.state, lifecycle_state: item.state, canonical_state: item.canonical,
       subject: null, cause: { code: 'LEGACY_READ_ONLY', message: 'Workflow legado ou desconhecido sem capability comprovável.', reason: null }, operational_message: 'Consulta somente leitura; nenhuma ação é inferida.', waiting_for: 'Orientação do adapter explícito ou consulta histórica.',
       continuation: { kind: 'LEGACY_READ_ONLY', expected: 'Nenhuma capability é publicada sem adapter comprovado.', progress: null }, authority: null, decisions: [], evidence: [], action_descriptor_id: null, terminal: false });

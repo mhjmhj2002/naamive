@@ -10,6 +10,7 @@ if (!process.env.DATABASE_URL) {
   const { authorize, matchAuthorization, resolveCapability, createServicePrincipal } = await import('./auth.js');
   const { buildStateActionProjection, STATE_ACTION_PROJECTION_SCHEMA } = await import('./state-action-projection.js');
   const { createApiServer } = await import('./server.js');
+  const { buildActionPayload } = await import('../web/action-payload.js');
   after(async () => { await pool.end(); });
 
   const principal = (id = randomUUID(), type: 'HUMAN' | 'SERVICE' = 'HUMAN'): AuthenticatedPrincipal => ({ id, type, username: `ui01-${id.slice(0, 12)}` });
@@ -77,6 +78,7 @@ if (!process.env.DATABASE_URL) {
         await pool.query(`DELETE FROM operations WHERE project_id=$1`, [projectId]);
         await pool.query(`DELETE FROM gate_decisions WHERE gate_id IN (SELECT id FROM gate_records WHERE project_id=$1)`, [projectId]);
         await pool.query(`DELETE FROM gate_records WHERE project_id=$1`, [projectId]);
+        await pool.query(`DELETE FROM gates WHERE project_id=$1`, [projectId]);
         await pool.query(`DELETE FROM resume_records WHERE pause_id IN (SELECT id FROM pause_records WHERE project_id=$1)`, [projectId]);
         await pool.query(`DELETE FROM pause_records WHERE project_id=$1`, [projectId]);
         await pool.query(`DELETE FROM cancellation_records WHERE project_id=$1`, [projectId]);
@@ -142,6 +144,26 @@ if (!process.env.DATABASE_URL) {
     assert.equal(gateSurface?.resource_kind, 'GATE'); assert.equal(gateSurface?.type, 'MATERIAL_ARCHITECTURE');
     const blocker = projection.allowed_actions.find(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER');
     assert.equal(blocker?.expected.resource_version, 1, 'a representative recovery descriptor includes the resource version');
+    assert.equal(blocker?.input_binding.fields.find(field => field.name === 'dependency_id')?.source, 'SERVER_BOUND');
+    assert.equal(blocker?.input_binding.fields.some(field => field.name === 'dependency_id' && field.editable), false, 'the operator never types a technical dependency id');
+    assert.deepEqual(buildActionPayload(new Map([['justification', 'External fact is now available']]), blocker?.input_binding.fields), { justification: 'External fact is now available', dependency_id: 'dependency-ui01' });
+    await pool.query(`DELETE FROM work_item_external_blockers WHERE work_item_id=$1`, [f.workItemId]);
+    const zeroBlockers = await buildStateActionProjection(f.projectId, human);
+    assert.equal(zeroBlockers.allowed_actions.some(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER'), false, 'zero active blockers publishes no resolution capability');
+    await pool.query(`INSERT INTO work_item_external_blockers(id,work_item_id,dependency_id,justification) VALUES($1,$2,'dependency-ui01-a','first active blocker'),($3,$2,'dependency-ui01-b','second active blocker')`, [randomUUID(), f.workItemId, randomUUID()]);
+    const twoBlockers = await buildStateActionProjection(f.projectId, human);
+    const blockerDescriptors = twoBlockers.allowed_actions.filter(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER');
+    assert.equal(blockerDescriptors.length, 2, 'each active blocker receives its own executable capability');
+    assert.equal(new Set(blockerDescriptors.map(action => action.descriptor_id)).size, 2, 'descriptor ids are deterministic and unique before projection collision handling');
+    assert.deepEqual(blockerDescriptors.map(action => action.input_binding.fields.find(field => field.name === 'dependency_id')?.value).sort(), ['dependency-ui01-a', 'dependency-ui01-b']);
+    for (const action of blockerDescriptors) {
+      const dependencyId = action.input_binding.fields.find(field => field.name === 'dependency_id')?.value;
+      assert.deepEqual(action.input_binding.fields.filter(field => field.source === 'SERVER_BOUND').map(field => [field.name, field.value]), [['dependency_id', dependencyId]]);
+      assert.deepEqual(buildActionPayload(new Map([['justification', 'External fact is now available']]), action.input_binding.fields), { justification: 'External fact is now available', dependency_id: dependencyId });
+    }
+    const observerBlockers = await buildStateActionProjection(f.projectId, observer);
+    assert.equal(observerBlockers.allowed_actions.some(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER'), false, 'a principal without the grant receives no blocker button');
+    assert.ok(observerBlockers.stop_surfaces.some(surface => surface.resource_kind === 'WORK_ITEM' && surface.resource_id === f.workItemId && surface.type === 'WAITING_FOR_EXTERNAL_INPUT' && surface.action_descriptor_id === null), 'a principal without the grant still sees the external wait');
     for (const code of ['PAUSE_PROJECT', 'CANCEL_PROJECT', 'PAUSE_MODULE', 'CANCEL_MODULE']) {
       const descriptor = projection.allowed_actions.find(action => action.code === code);
       assert.ok(descriptor, `${code} is published when the resource is active`);
@@ -174,10 +196,23 @@ if (!process.env.DATABASE_URL) {
     assert.equal(cancelled.activity.state, 'CANCELLED'); assert.ok(cancelled.activity.items.some(item => item.state === 'RUNNING'));
 
     await pool.query(`UPDATE auth_role_grants SET status='REVOKED',revoked_at=clock_timestamp() WHERE principal_id=$1 AND action_code='OPERATE_PROJECT'`, [human.id]);
+    await pool.query(`DELETE FROM cancellation_records WHERE project_id=$1`, [f.projectId]);
+    await pool.query(`DELETE FROM pause_records WHERE project_id=$1`, [f.projectId]);
     await pool.query(`UPDATE projects SET workflow_code='PROJECT_INTAKE',workflow_version=1,state='DRAFT' WHERE id=$1`, [f.projectId]);
     const legacy = await buildStateActionProjection(f.projectId, human);
     assert.equal(legacy.project.legacy, true);
     assert.deepEqual(legacy.allowed_actions.map(action => action.code), [], 'known legacy publishes only explicitly declared, authorized adapter actions');
+    assert.equal(legacy.stop_surfaces.find(surface => surface.resource_kind === 'PROJECT')?.type, 'LEGACY_READ_ONLY', 'known legacy without a declared capability is read-only');
+    await grant(human, 'OPERATE_PROJECT', 'OPERATOR', f.projectId);
+    const legacyGateId = randomUUID();
+    await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id,evidence) VALUES($1,$2,'PRODUCT_COMMITMENT',$3,'{}')`, [legacyGateId, f.projectId, f.intakeRevisionId]);
+    await pool.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=1,state='WAITING_FOR_PRODUCT_COMMITMENT' WHERE id=$1`, [f.projectId]);
+    const legacyCapability = await buildStateActionProjection(f.projectId, human);
+    const legacyDescriptor = legacyCapability.allowed_actions.find(action => action.code === 'PRODUCT_COMMITMENT_DECISION');
+    assert.equal(legacyDescriptor?.presentation.kind, 'LEGACY', 'the adapter presentation remains legacy instead of being reclassified as a generic operation');
+    const legacySurface = legacyCapability.stop_surfaces.find(surface => surface.action_descriptor_id === legacyDescriptor?.descriptor_id);
+    assert.ok(legacySurface); assert.notEqual(legacySurface.type, 'LEGACY_READ_ONLY'); assert.equal(legacySurface.action_descriptor_id, legacyDescriptor?.descriptor_id, 'the legacy stop links to the exact published adapter descriptor');
+    await pool.query(`UPDATE auth_role_grants SET status='REVOKED',revoked_at=clock_timestamp() WHERE principal_id=$1 AND action_code='OPERATE_PROJECT'`, [human.id]);
     unknownWorkflowId = randomUUID(); const unknownWorkflowCode = `UNKNOWN_UI01_${randomUUID().slice(0, 8)}`;
     await pool.query(`INSERT INTO workflow_definitions(id,code,version,scope,status,published_at) VALUES($1,$2,99,'PROJECT','PUBLISHED',clock_timestamp())`, [unknownWorkflowId, unknownWorkflowCode]);
     await pool.query(`INSERT INTO workflow_states(workflow_id,code,display_name,terminal,position) VALUES($1,'WAITING_FOR_PRODUCT_COMMITMENT','Unknown actionable-looking state',false,1)`, [unknownWorkflowId]);

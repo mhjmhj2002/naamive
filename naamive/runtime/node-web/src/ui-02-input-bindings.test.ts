@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { buildActionPayload } from '../web/action-payload.js';
 import { recoveryAnchor } from './recovery-anchor.js';
@@ -34,6 +35,18 @@ test('bindings preserve server-published requiredness instead of forcing all hum
   const required = { name: 'obligation_resolution_reason', source: 'HUMAN_INPUT', required: true, send: true, editable: true };
   assert.equal(optional.required, false);
   assert.equal(required.required, true);
+});
+
+test('CANCEL_MODULE keeps its additive schema object while bindings remain the only UI renderer contract', async () => {
+  const root = new URL('../', import.meta.url);
+  const projection = await readFile(new URL('src/state-action-projection.ts', root), 'utf8');
+  const page = await readFile(new URL('web/index.html', root), 'utf8');
+  assert.match(projection, /obligation_resolution:\s*\{ type: 'object', description: 'Required when the module has a committed obligation\.' \}/);
+  assert.match(projection, /bound\('obligation_resolution_required', false, true, \{ payload_path: \['obligation_resolution', 'required'\] \}\)/);
+  assert.match(projection, /human\('obligation_resolution_reason', true, \{ schema: \{ type: 'string'/);
+  assert.match(projection, /human\('obligation_resolution_evidence', true, \{ schema: \{ type: 'string'/);
+  assert.match(page, /field\.source === 'HUMAN_INPUT' && field\.editable/);
+  assert.doesNotMatch(page, /JSON\.stringify\(.*obligation_resolution/);
 });
 
 test('integration recovery never turns a candidate id into a fabricated execution resource', () => {
