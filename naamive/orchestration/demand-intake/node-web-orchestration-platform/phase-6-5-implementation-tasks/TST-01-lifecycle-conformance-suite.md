@@ -1,6 +1,6 @@
 ---
 task: TST-01
-status: READY_FOR_IMPLEMENTATION
+status: TO DO
 prevalidation_status: READY_FOR_IMPLEMENTATION
 implementation_status: NOT_IMPLEMENTED
 title: Suíte de conformidade do lifecycle
