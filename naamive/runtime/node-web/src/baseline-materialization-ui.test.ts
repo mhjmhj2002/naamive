@@ -6,9 +6,13 @@ const page = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8')
 
 test('UI-01 renders materialization only from the canonical action descriptor', () => {
   assert.match(page, /renderProjection\(projection\)/);
-  assert.match(page, /renderActions\(projection\)/);
+  assert.match(page, /renderStopSurfaces\(projection\)/);
+  assert.match(page, /surface\.action_descriptor_id/);
+  assert.match(page, /descriptors\.get\(surface\.action_descriptor_id\)/);
   assert.match(page, /descriptor\.command\.href/);
-  assert.match(page, /descriptor\.input\.schema\.properties/);
+  assert.match(page, /descriptor\.input_binding\.fields/);
+  assert.match(page, /buildActionPayload\(new FormData\(form\), descriptor\.input_binding\.fields \|\| \[\]\)/);
+  assert.doesNotMatch(page, /descriptor\.input\.schema\.properties/);
   assert.doesNotMatch(page, /technology-baseline\/materialization-options/);
   assert.doesNotMatch(page, /\?phase3=true/);
   assert.doesNotMatch(page, /baseline_required/);
