@@ -385,24 +385,25 @@ const readWorkItemFacts = async (client: pg.PoolClient, projectId: string) => {
        wd.status AS workflow_status,
        coalesce(ws.metadata->>'canonical_state', w.state) AS canonical_state,
        (SELECT count(*)::int FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE') AS active_external_blocker_count,
-       coalesce((SELECT array_agg(b.dependency_id ORDER BY b.created_at,b.id) FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE'), ARRAY[]::text[]) AS active_external_blocker_dependency_ids
+       coalesce((SELECT jsonb_agg(jsonb_build_object('id',b.id::text,'dependency_id',b.dependency_id,'summary',left(b.justification,500)) ORDER BY b.created_at,b.id) FROM work_item_external_blockers b WHERE b.work_item_id=w.id AND b.state='ACTIVE'),'[]'::jsonb) AS active_external_blockers
      FROM work_items w
      LEFT JOIN workflow_definitions wd ON wd.code=w.workflow_code AND wd.version=w.workflow_version
      LEFT JOIN workflow_states ws ON ws.workflow_id=wd.id AND ws.code=w.state
      WHERE w.project_id=$1 ORDER BY w.created_at, w.id`, [projectId])).rows;
-  return rows.map((row) => ({
-    id: String(row.id),
-    module_id: String(row.module_id),
-    title: String(row.title),
-    workflow_code: String(row.workflow_code),
-    workflow_version: Number(row.workflow_version),
-    state: String(row.state),
-    workflow_status: row.workflow_status ?? null,
-    canonical_state: String(row.canonical_state ?? row.state),
-    version: Number(row.version),
-    active_external_blocker_count: Number(row.active_external_blocker_count ?? 0),
-    active_external_blocker_dependency_ids: Array.isArray(row.active_external_blocker_dependency_ids) ? row.active_external_blocker_dependency_ids.map(String) : [],
-  }));
+  return rows.map((row) => {
+    const active_external_blockers = Array.isArray(row.active_external_blockers) ? row.active_external_blockers.flatMap((value: unknown) => {
+      const blocker = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+      const id = typeof blocker.id === 'string' ? blocker.id : '';
+      const dependency_id = typeof blocker.dependency_id === 'string' ? blocker.dependency_id : '';
+      const summary = typeof blocker.summary === 'string' ? blocker.summary.trim() : '';
+      return id && dependency_id ? [{ id, dependency_id, summary: summary || 'Impedimento externo ativo.' }] : [];
+    }) : [];
+    return {
+      id: String(row.id), module_id: String(row.module_id), title: String(row.title), workflow_code: String(row.workflow_code), workflow_version: Number(row.workflow_version),
+      state: String(row.state), workflow_status: row.workflow_status ?? null, canonical_state: String(row.canonical_state ?? row.state), version: Number(row.version),
+      active_external_blocker_count: Number(row.active_external_blocker_count ?? 0), active_external_blockers,
+    };
+  });
 };
 
 const readGateFacts = async (client: pg.PoolClient, projectId: string) => {
@@ -1066,9 +1067,9 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
 const buildWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, item: Awaited<ReturnType<typeof readWorkItemFacts>>[number]) => {
   const actions: ActionDescriptor[] = [];
   const { projectId, asOfEventId } = ctx;
-  if (item.active_external_blocker_dependency_ids.length > 0 && item.state === 'WAITING_FOR_EXTERNAL_INPUT') {
+  if (item.active_external_blockers.length > 0 && item.state === 'WAITING_FOR_EXTERNAL_INPUT') {
     if (await can({ action: 'OPERATE_PROJECT', projectId, resourceType: 'WORK_ITEM', resourceId: item.id, roles: ['OPERATOR'] })) {
-      for (const dependencyId of item.active_external_blocker_dependency_ids) {
+      for (const blocker of item.active_external_blockers) {
         actions.push(descriptor(ctx, {
           code: 'RESOLVE_EXTERNAL_BLOCKER', resourceKind: 'WORK_ITEM', resourceId: item.id,
           href: `/api/projects/${projectId}/work-items/${item.id}/resolve-external-blocker`, idempotencyRequired: true,
@@ -1077,8 +1078,8 @@ const buildWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<type
             { justification: { type: 'string', description: 'Justification of the external blocker resolution.' }, dependency_id: { type: 'string', description: 'Server-bound active dependency selected by this capability.' } },
             ['justification']
           ),
-          bindings: [human('justification', true), bound('dependency_id', dependencyId)],
-          descriptorVariant: `external-blocker:${dependencyId}`,
+          bindings: [human('justification', true), bound('dependency_id', blocker.dependency_id)],
+          descriptorVariant: `external-blocker:${blocker.dependency_id}`,
         }));
       }
     }
@@ -1408,14 +1409,14 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
   ]);
   for (const item of ctx.workItems) {
     const mapped = lifecycleStops.get(item.state); if (!mapped || stopped.has(`WORK_ITEM:${item.id}`)) continue;
-    if (item.state === 'WAITING_FOR_EXTERNAL_INPUT' && item.active_external_blocker_dependency_ids.length) {
-      item.active_external_blocker_dependency_ids.forEach((dependencyId: string, index: number) => {
-        const expectedDescriptorId = externalBlockerDescriptorId(ctx.projectId, item.id, dependencyId);
+    if (item.state === 'WAITING_FOR_EXTERNAL_INPUT' && item.active_external_blockers.length) {
+      item.active_external_blockers.forEach((blocker: { id: string; dependency_id: string; summary: string }) => {
+        const expectedDescriptorId = externalBlockerDescriptorId(ctx.projectId, item.id, blocker.dependency_id);
         const descriptor = actions.some((action) => action.descriptor_id === expectedDescriptorId) ? expectedDescriptorId : null;
-        add({ id: `lifecycle:WORK_ITEM:${item.id}:${item.version}:${mapped.code}:blocker:${index + 1}`, resource_kind: 'WORK_ITEM', resource_id: item.id, category: mapped.category, type: mapped.code, resource_state: item.state,
-          lifecycle_state: item.state, canonical_state: item.canonical_state, subject: null, cause: { code: mapped.code, message: 'Blocker externo ativo aguardando resolução.', reason: null }, operational_message: mapped.expected,
+        add({ id: `lifecycle:WORK_ITEM:${item.id}:${mapped.code}:blocker:${blocker.id}`, resource_kind: 'WORK_ITEM', resource_id: item.id, category: mapped.category, type: mapped.code, resource_state: item.state,
+          lifecycle_state: item.state, canonical_state: item.canonical_state, subject: null, cause: { code: mapped.code, message: 'Blocker externo ativo aguardando resolução.', reason: blocker.summary }, operational_message: `${mapped.expected} Impedimento: ${blocker.summary}`,
           waiting_for: descriptor ? 'Uma operação humana autorizada.' : mapped.expected, continuation: { kind: descriptor ? 'HUMAN_ACTION' : mapped.continuation, expected: mapped.expected, progress: null }, authority: { required_roles: ['OPERATOR'], scope_kind: 'WORK_ITEM', scope_id: item.id },
-          decisions: [], evidence: [], action_descriptor_id: descriptor, terminal: false });
+          decisions: [], evidence: evidence(`external_blocker:${blocker.id}`, blocker.summary), action_descriptor_id: descriptor, terminal: false });
       });
       stopped.add(`WORK_ITEM:${item.id}`);
       continue;

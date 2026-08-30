@@ -150,20 +150,33 @@ if (!process.env.DATABASE_URL) {
     await pool.query(`DELETE FROM work_item_external_blockers WHERE work_item_id=$1`, [f.workItemId]);
     const zeroBlockers = await buildStateActionProjection(f.projectId, human);
     assert.equal(zeroBlockers.allowed_actions.some(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER'), false, 'zero active blockers publishes no resolution capability');
-    await pool.query(`INSERT INTO work_item_external_blockers(id,work_item_id,dependency_id,justification) VALUES($1,$2,'dependency-ui01-a','first active blocker'),($3,$2,'dependency-ui01-b','second active blocker')`, [randomUUID(), f.workItemId, randomUUID()]);
+    const blockerAId = randomUUID(), blockerBId = randomUUID();
+    await pool.query(`INSERT INTO work_item_external_blockers(id,work_item_id,dependency_id,justification) VALUES($1,$2,'dependency-ui01-a','first active blocker'),($3,$2,'dependency-ui01-b','second active blocker')`, [blockerAId, f.workItemId, blockerBId]);
     const twoBlockers = await buildStateActionProjection(f.projectId, human);
     const blockerDescriptors = twoBlockers.allowed_actions.filter(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER');
+    const blockerSurfaces = twoBlockers.stop_surfaces.filter(surface => surface.resource_kind === 'WORK_ITEM' && surface.resource_id === f.workItemId && surface.type === 'WAITING_FOR_EXTERNAL_INPUT');
     assert.equal(blockerDescriptors.length, 2, 'each active blocker receives its own executable capability');
+    assert.equal(blockerSurfaces.length, 2, 'each active blocker has a distinct stop surface');
     assert.equal(new Set(blockerDescriptors.map(action => action.descriptor_id)).size, 2, 'descriptor ids are deterministic and unique before projection collision handling');
     assert.deepEqual(blockerDescriptors.map(action => action.input_binding.fields.find(field => field.name === 'dependency_id')?.value).sort(), ['dependency-ui01-a', 'dependency-ui01-b']);
     for (const action of blockerDescriptors) {
       const dependencyId = action.input_binding.fields.find(field => field.name === 'dependency_id')?.value;
       assert.deepEqual(action.input_binding.fields.filter(field => field.source === 'SERVER_BOUND').map(field => [field.name, field.value]), [['dependency_id', dependencyId]]);
       assert.deepEqual(buildActionPayload(new Map([['justification', 'External fact is now available']]), action.input_binding.fields), { justification: 'External fact is now available', dependency_id: dependencyId });
+      assert.equal(blockerSurfaces.filter(surface => surface.action_descriptor_id === action.descriptor_id).length, 1, 'each blocker surface links to its exact descriptor');
     }
+    const surfaceA = blockerSurfaces.find(surface => surface.id.endsWith(`blocker:${blockerAId}`));
+    const surfaceB = blockerSurfaces.find(surface => surface.id.endsWith(`blocker:${blockerBId}`));
+    assert.ok(surfaceA?.operational_message.includes('first active blocker')); assert.ok(surfaceB?.operational_message.includes('second active blocker'), 'cards carry allowlisted human context instead of a technical dependency id');
     const observerBlockers = await buildStateActionProjection(f.projectId, observer);
     assert.equal(observerBlockers.allowed_actions.some(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER'), false, 'a principal without the grant receives no blocker button');
     assert.ok(observerBlockers.stop_surfaces.some(surface => surface.resource_kind === 'WORK_ITEM' && surface.resource_id === f.workItemId && surface.type === 'WAITING_FOR_EXTERNAL_INPUT' && surface.action_descriptor_id === null), 'a principal without the grant still sees the external wait');
+    await pool.query(`UPDATE work_item_external_blockers SET state='RESOLVED',resolved_at=clock_timestamp() WHERE id=$1`, [blockerAId]);
+    await pool.query(`UPDATE work_items SET version=version+1 WHERE id=$1`, [f.workItemId]);
+    const oneRemainingBlocker = await buildStateActionProjection(f.projectId, human);
+    const remainingDescriptor = oneRemainingBlocker.allowed_actions.find(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER');
+    const remainingSurface = oneRemainingBlocker.stop_surfaces.find(surface => surface.action_descriptor_id === remainingDescriptor?.descriptor_id);
+    assert.equal(remainingSurface?.id, surfaceB?.id, 'resolving another blocker does not renumber or change this blocker surface identity');
     for (const code of ['PAUSE_PROJECT', 'CANCEL_PROJECT', 'PAUSE_MODULE', 'CANCEL_MODULE']) {
       const descriptor = projection.allowed_actions.find(action => action.code === code);
       assert.ok(descriptor, `${code} is published when the resource is active`);

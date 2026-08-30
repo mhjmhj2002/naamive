@@ -17,7 +17,9 @@ test('UI-02 keeps stop surfaces in the canonical projection and binds controls b
   assert.match(source, /AUTHORIZE_REWORK would/);
   assert.match(page, /function renderStopSurfaces\(projection\)/);
   assert.match(page, /descriptors\.get\(surface\.action_descriptor_id\)/);
-  assert.match(page, /\['HUMAN_DECISION', 'HUMAN_OPERATION', 'LEGACY'\]/);
+  assert.match(page, /\['HUMAN_DECISION', 'HUMAN_OPERATION'\]/);
+  assert.doesNotMatch(page, /\['HUMAN_DECISION', 'HUMAN_OPERATION', 'LEGACY'\]/);
+  assert.match(source, /presentation\.kind === 'LEGACY'/);
   assert.doesNotMatch(page, /innerHTML/);
   assert.doesNotMatch(page, /property === 'version'/);
   assert.doesNotMatch(page, /property === 'expected_pause_version'/);

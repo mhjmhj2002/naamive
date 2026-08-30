@@ -378,7 +378,7 @@
         }
         if (Array.isArray(surface.evidence) && surface.evidence.length) card.append(element('p', 'small text-muted mb-2', surface.redaction?.redacted ? 'Evidência restrita resumida/redatada.' : surface.evidence.map(item => item.summary).join(' ')));
         const descriptor = surface.action_descriptor_id ? descriptors.get(surface.action_descriptor_id) : null;
-        if (!descriptor || !['HUMAN_DECISION', 'HUMAN_OPERATION', 'LEGACY'].includes(descriptor.presentation?.kind)) {
+        if (!descriptor || !['HUMAN_DECISION', 'HUMAN_OPERATION'].includes(descriptor.presentation?.kind)) {
           card.append(element('p', 'small text-muted mb-0', surface.continuation.kind === 'AUTOMATIC' || surface.continuation.kind === 'RECONCILIATION' ? 'Progresso técnico: nenhuma ação humana é necessária.' : 'Esta parada é explicável, mas não há ação autorizada para este principal.'));
           fragment.append(card);
           continue;
