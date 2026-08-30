@@ -2,13 +2,38 @@
 task: TST-01
 status: TO DO
 prevalidation_status: READY_FOR_IMPLEMENTATION
-implementation_status: NOT_IMPLEMENTED
+implementation_status: PARTIALLY_IMPLEMENTED
 title: Suíte de conformidade do lifecycle
 depends_on: [LR-01, LR-02, LR-02A, AUT-01, AUT-02, AUT-03, REC-01, REC-02, GAT-01, GAT-02, GAT-03, UI-01, UI-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # TST-01 — Suíte de conformidade do lifecycle
+
+## Evidência de implementação local — 2026-08-30
+
+Implementados o contrato estático versionado
+`LIFECYCLE_CONFORMANCE:v1`, com 20 critérios fechados e negativos obrigatórios,
+e o verificador fail-closed em
+`runtime/node-web/src/lifecycle-conformance.test.ts`. Ele valida cardinalidade,
+IDs, provas, negativos, paths e a coerência documental/workflow do critério 20
+contra Compass, Protocol, Gate Policy, plano F6.5, auditoria e migration 048.
+
+Foi adicionada a fixture PostgreSQL/Git descartável
+`lifecycle-conformance-audit-scenario.e2e.test.ts`. Ela materializa somente as
+pré-condições legítimas e, após o primeiro dispatch, usa
+`prepareDevelopmentJob`/`finalizeDevelopmentJob`, o reconciliador AUT-02,
+`decideReview`, integração Git, scheduler e `resolveExternalBlocker` reais.
+Ela codifica Persistência → QA → review independente → ACCEPT → candidate →
+merge → validation → integração → Métrica e preserva Interface parada somente
+por `priority-group` até a resolução server-bound autorizada.
+
+Validações locais reais: `npm run build` e
+`node --test dist/lifecycle-conformance.test.js` passaram. O cenário E2E não
+foi executado porque `DATABASE_URL` não estava configurada; isso é
+`MANUAL_OPERATOR_VALIDATION_REQUIRED`, não PASS. A implementação da cadeia
+completa existe, mas a certificação runtime PostgreSQL permanece pendente de
+execução pelo operador; esta task não pode ser marcada como concluída ainda.
 
 ## Decisão de pré-validação
 
