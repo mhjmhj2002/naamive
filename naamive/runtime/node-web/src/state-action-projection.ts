@@ -26,6 +26,7 @@ import { resolveCapability, type AuthenticatedPrincipal } from './auth.js';
 import { ApiError } from './service.js';
 import { publicValue } from './projection.js';
 import { materializationBaselineOptionsForClient, type MaterializationBaselineOptions } from './phase3.js';
+import { recoveryAnchor } from './recovery-anchor.js';
 
 export const STATE_ACTION_PROJECTION_SCHEMA = 'STATE_ACTION_PROJECTION:v1';
 export const STOP_SURFACE_PROJECTION_SCHEMA = 'STOP_SURFACE_PROJECTION:v1';
@@ -105,8 +106,9 @@ export type RecoverySummary = {
   effect_certainty: string;
   selected_action: string;
   reason: string;
-  resource_kind: 'WORK_ITEM' | 'EXECUTION';
-  resource_id: string;
+  resource_kind: 'WORK_ITEM' | 'EXECUTION' | null;
+  resource_id: string | null;
+  subject: { kind: 'INTEGRATION_CANDIDATE'; id: string } | null;
   execution_state: string;
   evidence_refs: unknown;
   finding_refs: unknown;
@@ -156,7 +158,7 @@ export type ActionDescriptor = {
   input: { schema: ActionInputSchema | null; required_fields: string[] };
   presentation: { kind: 'HUMAN_DECISION' | 'HUMAN_OPERATION' | 'TECHNICAL_OPERATION' | 'ADMINISTRATIVE' | 'LEGACY'; label: string; description: string };
   input_binding: {
-    fields: Array<{ name: string; source: 'HUMAN_INPUT' | 'SERVER_BOUND' | 'SERVER_DERIVED'; schema?: { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }; value?: unknown; send: boolean; editable: boolean }>;
+    fields: Array<{ name: string; source: 'HUMAN_INPUT' | 'SERVER_BOUND' | 'SERVER_DERIVED'; schema?: { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }; value?: unknown; send: boolean; editable: boolean; required: boolean; payload_path?: string[]; serialize_as?: 'VALUE' | 'EVIDENCE' | 'LINES' }>;
     decision_options: Array<{ code: string; label: string; consequence: string }> | null;
   };
 };
@@ -359,6 +361,7 @@ const readModuleFacts = async (client: pg.PoolClient, projectId: string) => {
     `SELECT m.id,m.module_key,m.workflow_code,m.workflow_version,m.state,m.version,
        wd.status AS workflow_status,
        coalesce(ws.metadata->>'canonical_state', m.state) AS canonical_state
+       ,EXISTS(SELECT 1 FROM committed_module_obligations o WHERE o.project_id=m.project_id AND o.materialized_module_id=m.id AND o.required) AS required_obligation
      FROM modules m
      LEFT JOIN workflow_definitions wd ON wd.code=m.workflow_code AND wd.version=m.workflow_version
      LEFT JOIN workflow_states ws ON ws.workflow_id=wd.id AND ws.code=m.state
@@ -372,6 +375,7 @@ const readModuleFacts = async (client: pg.PoolClient, projectId: string) => {
     workflow_status: row.workflow_status ?? null,
     canonical_state: String(row.canonical_state ?? row.state),
     version: Number(row.version),
+    required_obligation: Boolean(row.required_obligation),
   }));
 };
 
@@ -549,22 +553,20 @@ const readDeliverySummary = async (client: pg.PoolClient, projectId: string) => 
 const readRecoveryFacts = async (client: pg.PoolClient, projectId: string) => {
   const rows = (await client.query(
     `SELECT id,cause,effect_certainty,selected_action,reason,work_item_id,integration_candidate_id,execution_state,
-       evidence_refs,finding_refs,created_at,executed_at
+       evidence_refs,finding_refs,created_at,executed_at,
+       (SELECT min(m.work_item_id::text) FROM integration_candidate_members m WHERE m.candidate_id=recovery_decisions.integration_candidate_id HAVING count(*)=1) AS candidate_work_item_id,
+       (SELECT e.id::text FROM agent_execution e WHERE e.operation_id=recovery_decisions.operation_id ORDER BY e.created_at DESC,e.id DESC LIMIT 1) AS execution_id
      FROM recovery_decisions WHERE project_id=$1 ORDER BY created_at DESC, id DESC LIMIT 50`, [projectId])).rows;
-  return rows.map((row) => ({
-    id: String(row.id),
-    cause: String(row.cause),
-    effect_certainty: String(row.effect_certainty),
-    selected_action: String(row.selected_action),
-    reason: String(row.reason),
-    resource_kind: row.work_item_id ? ('WORK_ITEM' as const) : ('EXECUTION' as const),
-    resource_id: row.work_item_id ? String(row.work_item_id) : String(row.integration_candidate_id),
-    execution_state: String(row.execution_state),
-    evidence_refs: publicValue(row.evidence_refs),
-    finding_refs: publicValue(row.finding_refs),
-    created_at: new Date(row.created_at).toISOString(),
-    executed_at: row.executed_at ? new Date(row.executed_at).toISOString() : null,
-  }));
+  return rows.map((row) => {
+    const anchor = recoveryAnchor(row);
+    return {
+      id: String(row.id), cause: String(row.cause), effect_certainty: String(row.effect_certainty),
+      selected_action: String(row.selected_action), reason: String(row.reason), ...anchor,
+      subject: row.integration_candidate_id ? { kind: 'INTEGRATION_CANDIDATE' as const, id: String(row.integration_candidate_id) } : null,
+      execution_state: String(row.execution_state), evidence_refs: publicValue(row.evidence_refs), finding_refs: publicValue(row.finding_refs),
+      created_at: new Date(row.created_at).toISOString(), executed_at: row.executed_at ? new Date(row.executed_at).toISOString() : null,
+    };
+  });
 };
 
 const readAssuranceFacts = async (client: pg.PoolClient, projectId: string) => {
@@ -645,7 +647,8 @@ const readActivityFacts = async (client: pg.PoolClient, projectId: string, snaps
      FROM macro_lifecycle_intents WHERE project_id=$1 AND status IN ('PENDING','LEASED','FAILED')`, [projectId])).rows;
 
   const recovery = (await client.query(
-    `SELECT id,cause,selected_action,execution_state,execution_lease_expires_at,work_item_id,integration_candidate_id
+    `SELECT id,cause,selected_action,execution_state,execution_lease_expires_at,work_item_id,integration_candidate_id,
+       (SELECT min(m.work_item_id::text) FROM integration_candidate_members m WHERE m.candidate_id=recovery_decisions.integration_candidate_id HAVING count(*)=1) AS candidate_work_item_id
      FROM recovery_decisions WHERE project_id=$1 AND execution_state IN ('PENDING','EXECUTING','WAITING_RECONCILIATION')`, [projectId])).rows;
 
   const integrationAttempts = (await client.query(
@@ -705,9 +708,13 @@ const readActivityFacts = async (client: pg.PoolClient, projectId: string, snaps
   for (const row of recovery) {
     const executing = row.execution_state === 'EXECUTING';
     const validLease = executing && row.execution_lease_expires_at && new Date(row.execution_lease_expires_at) > snapshotNow;
-    const workItemId = row.work_item_id ? String(row.work_item_id) : null;
-    const resourceKind: ActivityFact['resource_kind'] = workItemId ? 'WORK_ITEM' : 'EXECUTION';
-    const resourceId = workItemId ?? String(row.integration_candidate_id);
+    const workItemId = row.work_item_id ? String(row.work_item_id) : row.candidate_work_item_id ? String(row.candidate_work_item_id) : null;
+    // A candidate is a subject, never an EXECUTION resource.  Without one
+    // canonical member we keep activity out of this resource list; the stop
+    // projection publishes a detectable diagnostic instead.
+    if (!workItemId) continue;
+    const resourceKind: ActivityFact['resource_kind'] = 'WORK_ITEM';
+    const resourceId = workItemId;
     let state: ActivityItemState;
     if (validLease) state = 'RUNNING';
     else if (executing) state = 'UNKNOWN';
@@ -809,6 +816,10 @@ type DescriptorContext = {
 };
 
 const jsonSchema = (properties: Record<string, { type: string; enum?: string[]; enum_labels?: Record<string, string>; description?: string }>, required: string[]): ActionInputSchema => ({ type: 'object', properties, required });
+type BindingField = { name: string; source: 'HUMAN_INPUT' | 'SERVER_BOUND' | 'SERVER_DERIVED'; required: boolean; value?: unknown; schema?: ActionInputSchema['properties'][string]; send?: boolean; editable?: boolean; payload_path?: string[]; serialize_as?: 'VALUE' | 'EVIDENCE' | 'LINES' };
+const human = (name: string, required: boolean, options: Omit<BindingField, 'name' | 'source' | 'required'> = {}): BindingField => ({ name, source: 'HUMAN_INPUT', required, send: true, editable: true, ...options });
+const bound = (name: string, value: unknown, required = true, options: Omit<BindingField, 'name' | 'source' | 'required' | 'value'> = {}): BindingField => ({ name, source: 'SERVER_BOUND', required, value, send: true, editable: false, ...options });
+const derived = (name: string): BindingField => ({ name, source: 'SERVER_DERIVED', required: false, send: false, editable: false });
 
 const descriptor = (
   ctx: DescriptorContext,
@@ -824,21 +835,12 @@ const descriptor = (
     fence?: string;
     confirmationRequired: boolean;
     schema: ActionInputSchema | null;
+    bindings: BindingField[];
     decisionOptions?: Array<{ code: string; label: string; consequence: string }>;
   }
 ): ActionDescriptor => {
   const presentation = presentationFor(input.code);
-  const boundValue = (name: string): unknown => name === 'version'
-    ? (input.gateVersion ?? input.resourceVersion)
-    : name === 'expected_pause_version' ? input.pauseVersion
-      : name === 'fence' ? input.fence
-        : name === 'gate_id' || name === 'block_id' ? input.resourceId : undefined;
-  const technical = new Set(['finding_ids', 'delivery_id', 'head_sha', 'worktree_id', 'recovery_classification', 'effect_certainty', 'dependency_id']);
-  const fields = input.schema ? Object.entries(input.schema.properties).map(([name, schema]) => {
-    const value = boundValue(name);
-    const source = value !== undefined ? 'SERVER_BOUND' as const : technical.has(name) ? 'SERVER_DERIVED' as const : 'HUMAN_INPUT' as const;
-    return { name, source, ...(source === 'HUMAN_INPUT' ? { schema } : {}), ...(value !== undefined ? { value } : {}), send: source === 'SERVER_BOUND' || source === 'HUMAN_INPUT', editable: source === 'HUMAN_INPUT' };
-  }) : [];
+  const fields = input.bindings.map((binding) => ({ ...binding, send: binding.send ?? false, editable: binding.editable ?? false, ...(binding.source === 'HUMAN_INPUT' ? { schema: binding.schema ?? input.schema?.properties[binding.name] } : {}) }));
   return {
   descriptor_id: `action:${input.code}:${input.resourceKind}:${input.resourceId}:${input.href}`,
   code: input.code,
@@ -950,7 +952,9 @@ const buildCurrentProjectActions = async (ctx: DescriptorContext, can: ReturnTyp
       idempotencyRequired: true,
       gateVersion: gate.version,
       confirmationRequired: true,
-      schema: gateDecisionSchema(gate), decisionOptions: gateDecisionOptions(gate),
+      schema: gateDecisionSchema(gate),
+      bindings: [bound('version', gate.version), human('decision', true), human('reason', false), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública permitida.' }, serialize_as: 'EVIDENCE' })],
+      decisionOptions: gateDecisionOptions(gate),
     }));
   }
 
@@ -963,14 +967,18 @@ const buildCurrentProjectActions = async (ctx: DescriptorContext, can: ReturnTyp
         href: `/api/projects/${projectId}/delivery/pause`, idempotencyRequired: true,
         fence: stop.cancellations.find((c) => c.resource_kind === 'PROJECT')?.fence,
         confirmationRequired: true, schema: stopInputSchema(true),
+        bindings: [human('reason', true), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública da pausa.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
+  }
+  if (!projectTerminal && !stop.projectCancellation) {
     if (await can({ action: 'DELIVERY_CANCEL', projectId, resourceType: 'PROJECT', resourceId: projectId, roles: ['BUSINESS_OWNER'] })) {
       actions.push(descriptor(ctx, {
         code: 'CANCEL_PROJECT', resourceKind: 'PROJECT', resourceId: projectId,
         href: `/api/projects/${projectId}/delivery/cancel`, idempotencyRequired: true,
         fence: stop.cancellations.find((c) => c.resource_kind === 'PROJECT')?.fence,
         confirmationRequired: true, schema: stopInputSchema(true),
+        bindings: [human('reason', true), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública do cancelamento.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
   }
@@ -985,6 +993,7 @@ const buildCurrentProjectActions = async (ctx: DescriptorContext, can: ReturnTyp
           { expected_pause_version: { type: 'integer', description: 'Version of the pause record being resumed.' }, evidence: { type: 'object', description: 'Evidence that the impediment was removed.' } },
           ['expected_pause_version', 'evidence']
         ),
+        bindings: [bound('expected_pause_version', stop.projectPause.version), human('evidence', true, { schema: { type: 'string', description: 'Evidência de impedimento removido.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
   }
@@ -1005,8 +1014,11 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
         href: `/api/projects/${projectId}/modules/${module.id}/lifecycle/pause`, idempotencyRequired: true,
         resourceVersion: module.version,
         confirmationRequired: true, schema: stopInputSchema(true),
+        bindings: [human('reason', true), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública da pausa.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
+  }
+  if (!moduleTerminal && !moduleCancellation && !stop.projectCancellation) {
     if (await can({ action: 'DELIVERY_CANCEL', projectId, resourceType: 'MODULE', resourceId: module.id, roles: ['BUSINESS_OWNER'] })) {
       actions.push(descriptor(ctx, {
         code: 'CANCEL_MODULE', resourceKind: 'MODULE', resourceId: module.id,
@@ -1014,9 +1026,18 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
         resourceVersion: module.version,
         confirmationRequired: true,
         schema: jsonSchema(
-          { reason: { type: 'string' }, evidence: { type: 'object' }, obligation_resolution: { type: 'object', description: 'Required when the module has a committed obligation.' } },
+          { reason: { type: 'string' }, evidence: { type: 'object' } },
           ['reason', 'evidence']
         ),
+        bindings: [
+          human('reason', true),
+          human('evidence', true, { schema: { type: 'string', description: 'Evidência pública do cancelamento.' }, serialize_as: 'EVIDENCE' }),
+          ...(module.required_obligation ? [
+            bound('obligation_resolution_required', false, true, { payload_path: ['obligation_resolution', 'required'] }),
+            human('obligation_resolution_reason', true, { schema: { type: 'string', description: 'Motivo da resolução da obrigação comprometida.' }, payload_path: ['obligation_resolution', 'reason'] }),
+            human('obligation_resolution_evidence', true, { schema: { type: 'string', description: 'Evidência pública da resolução da obrigação.' }, payload_path: ['obligation_resolution', 'evidence'], serialize_as: 'EVIDENCE' }),
+          ] : []),
+        ],
       }));
     }
   }
@@ -1031,6 +1052,7 @@ const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof
           { expected_pause_version: { type: 'integer' }, evidence: { type: 'object' } },
           ['expected_pause_version', 'evidence']
         ),
+        bindings: [bound('expected_pause_version', modulePause.version), human('evidence', true, { schema: { type: 'string', description: 'Evidência de impedimento removido.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
   }
@@ -1051,6 +1073,7 @@ const buildWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<type
           { justification: { type: 'string', description: 'Justification of the external blocker resolution.' }, dependency_id: { type: 'string', description: 'Optional dependency id when multiple blockers are active.' } },
           ['justification']
         ),
+        bindings: [human('justification', true), derived('dependency_id')],
       }));
     }
   }
@@ -1071,7 +1094,8 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
       actions.push(descriptor(ctx, {
         code: 'PRODUCT_COMMITMENT_DECISION', resourceKind: 'GATE', resourceId: openGate.id,
         href: `/api/projects/${projectId}/decision`, idempotencyRequired: true,
-        gateVersion: openGate.version, confirmationRequired: true, schema: gateDecisionSchema(openGate), decisionOptions: gateDecisionOptions(openGate),
+        gateVersion: openGate.version, confirmationRequired: true, schema: gateDecisionSchema(openGate),
+        bindings: [bound('version', openGate.version), human('decision', true), human('reason', false), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública permitida.' }, serialize_as: 'EVIDENCE' })], decisionOptions: gateDecisionOptions(openGate),
       }));
     } else if (code === 'APPLY_REVIEW_ADJUSTMENTS') {
       if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
@@ -1079,14 +1103,14 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
         code: 'APPLY_REVIEW_ADJUSTMENTS', resourceKind: 'PROJECT', resourceId: projectId,
         href: `/api/projects/${projectId}/apply-review-adjustments`, idempotencyRequired: true,
         confirmationRequired: true,
-        schema: jsonSchema({ feedback: { type: 'string', description: 'Required feedback/notes for the review adjustments.' } }, ['feedback']),
+        schema: jsonSchema({ feedback: { type: 'string', description: 'Required feedback/notes for the review adjustments.' } }, ['feedback']), bindings: [human('feedback', true)],
       }));
     } else if (code === 'RETRY_DISCOVERY') {
       if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
       actions.push(descriptor(ctx, {
         code: 'RETRY_DISCOVERY', resourceKind: 'PROJECT', resourceId: projectId,
         href: `/api/projects/${projectId}/retry-discovery`, idempotencyRequired: true,
-        confirmationRequired: true, schema: null,
+        confirmationRequired: true, schema: null, bindings: [],
       }));
     } else if (code === 'MATERIALIZE_MODULE') {
       // This action is intentionally published only by declared legacy
@@ -1099,6 +1123,7 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
         code: 'MATERIALIZE_MODULE', resourceKind: 'PROJECT', resourceId: projectId,
         href: `/api/projects/${projectId}/modules`, idempotencyRequired: true,
         confirmationRequired: false, schema: materializationInputSchema(ctx.materializationBaseline),
+        bindings: [human('module_key', true), human('name', false), human('objective', false), human('scope', false, { serialize_as: 'LINES' }), human('out_of_scope', false, { serialize_as: 'LINES' }), human('dependencies', false, { serialize_as: 'LINES' }), human('acceptance_criteria', false, { serialize_as: 'LINES' }), human('source_gate', false), ...(ctx.materializationBaseline.baseline_required ? [human('technology_baseline_revision_id', false)] : [])],
       }));
     } else if (code === 'DECIDE_TECHNOLOGY_BASELINE') {
       const baseline = ctx.technologyBaseline;
@@ -1111,6 +1136,7 @@ const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType
         code: 'DECIDE_TECHNOLOGY_BASELINE', resourceKind: 'GATE', resourceId: baseline.gate_id,
         href: `/api/projects/${projectId}/technology-baselines/${baseline.revision_id}/decision`, idempotencyRequired: true,
         gateVersion: baseline.gate_version, confirmationRequired: true, schema: technologyBaselineDecisionSchema(baseline.gate_id),
+        bindings: [bound('gate_id', baseline.gate_id), bound('version', baseline.gate_version), human('decision', true), human('feedback', false)],
       }));
     }
   }
@@ -1143,6 +1169,7 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
           { state: { type: 'string', description: 'Target block state transition.' }, resolution: { type: 'object', description: 'Optional resolution evidence.' } },
           ['state']
         ),
+        bindings: [human('state', true), human('resolution', false, { schema: { type: 'string', description: 'Evidência pública de resolução.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
   }
@@ -1162,6 +1189,7 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
           { block_id: { type: 'string' }, gate_type: { type: 'string' }, decision: { type: 'string' }, reason: { type: 'string' }, evidence: { type: 'object' } },
           ['block_id', 'gate_type', 'decision', 'reason']
         ),
+        bindings: [bound('block_id', block.id), derived('gate_type'), derived('decision'), human('reason', true), human('evidence', false, { schema: { type: 'string', description: 'Evidência pública.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
   }
@@ -1176,6 +1204,7 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
           { decision: { type: 'string', enum: ['ACCEPT', 'REWORK', 'BLOCK', 'ESCALATE'] }, evidence: { type: 'object' } },
           ['decision', 'evidence']
         ),
+        bindings: [human('decision', true), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública.' }, serialize_as: 'EVIDENCE' })],
       }));
     }
   }
@@ -1187,12 +1216,13 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
         href: `/api/projects/${projectId}/assurance/acceptances/${acceptance.id}/cancel`, idempotencyRequired: true,
         resourceVersion: acceptance.version, confirmationRequired: true,
         schema: jsonSchema({ reason: { type: 'object', description: 'Cancellation reason.' } }, ['reason']),
+        bindings: [human('reason', true, { schema: { type: 'string', description: 'Motivo do cancelamento.' }, serialize_as: 'EVIDENCE' })],
       }));
       actions.push(descriptor(ctx, {
         code: 'RECONCILE_ACCEPTANCE', resourceKind: 'ACCEPTANCE', resourceId: acceptance.id,
         href: `/api/projects/${projectId}/assurance/acceptances/${acceptance.id}/reconcile`, idempotencyRequired: true,
         resourceVersion: acceptance.version, confirmationRequired: true,
-        schema: null,
+        schema: null, bindings: [],
       }));
     }
   }
@@ -1245,6 +1275,26 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
   };
   ctx.stop.cancellations.forEach((record) => addPause(record, true));
   ctx.stop.pauses.forEach((record) => addPause(record, false));
+  // Pause and cancellation are independent human capabilities.  They receive
+  // distinct surfaces because one surface may bind exactly one descriptor.
+  const addLifecycleOperation = (kind: 'PROJECT' | 'MODULE', id: string, pause: StopRecordSummary | undefined, cancelled: StopRecordSummary | undefined) => {
+    if (cancelled) return;
+    const r = resource(kind, id); const suffix = kind === 'PROJECT' ? 'PROJECT' : 'MODULE';
+    if (['CANCELLED', 'DELIVERED', 'ARCHIVED'].includes(r.state)) return;
+    if (!pause) {
+      const descriptor = actionFor(actions, `PAUSE_${suffix}`, kind, id);
+      add({ id: `pause-operation:${kind}:${id}`, resource_kind: kind, resource_id: id, category: 'PAUSE', type: `PAUSE_${suffix}`, resource_state: r.state, lifecycle_state: r.state, canonical_state: r.canonical,
+        subject: null, cause: { code: `PAUSE_${suffix}`, message: 'Pausa operacional disponível.', reason: null }, operational_message: 'A pausa impede o avanço do recurso sem cancelar seus fatos.', waiting_for: descriptor ? 'Sua operação de pausa autorizada.' : 'Autoridade ON_CALL_OWNER no escopo publicado.',
+        continuation: { kind: 'HUMAN_ACTION', expected: 'Registrar pausa com motivo e evidência pública.', progress: null }, authority: { required_roles: ['ON_CALL_OWNER'], scope_kind: kind, scope_id: id }, decisions: [], evidence: [], action_descriptor_id: descriptor, terminal: false });
+    }
+    const descriptor = actionFor(actions, `CANCEL_${suffix}`, kind, id);
+    add({ id: `cancel-operation:${kind}:${id}`, resource_kind: kind, resource_id: id, category: 'CANCELLATION', type: `CANCEL_${suffix}`, resource_state: r.state, lifecycle_state: r.state, canonical_state: r.canonical,
+      subject: null, cause: { code: `CANCEL_${suffix}`, message: 'Cancelamento terminal disponível.', reason: null }, operational_message: pause ? 'O recurso está pausado; o cancelamento continua disponível e vence a continuação em voo.' : 'O cancelamento é terminal e vence a continuação em voo.',
+      waiting_for: descriptor ? 'Sua decisão de cancelamento autorizada.' : 'Autoridade BUSINESS_OWNER no escopo publicado.', continuation: { kind: 'HUMAN_ACTION', expected: 'Registrar cancelamento terminal com motivo e evidência pública.', progress: null },
+      authority: { required_roles: ['BUSINESS_OWNER'], scope_kind: kind, scope_id: id }, decisions: [], evidence: [], action_descriptor_id: descriptor, terminal: false });
+  };
+  addLifecycleOperation('PROJECT', ctx.project.id, ctx.stop.projectPause ?? undefined, ctx.stop.projectCancellation ?? undefined);
+  for (const module of ctx.modules) addLifecycleOperation('MODULE', module.id, ctx.stop.pauses.find((record) => record.resource_kind === 'MODULE' && record.resource_id === module.id), ctx.stop.cancellations.find((record) => record.resource_kind === 'MODULE' && record.resource_id === module.id));
   for (const record of ctx.stop.resume_reconciliations) {
     const r = resource(record.resource_kind, record.resource_id);
     add({ id: `resume-reconciliation:${record.resume_id}`, resource_kind: record.resource_kind, resource_id: record.resource_id, category: 'PAUSE', type: 'RESUME_RECONCILIATION_REQUIRED', resource_state: r.state,
@@ -1263,10 +1313,17 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
   }
 
   for (const decision of ctx.recovery.filter((value) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(value.execution_state))) {
+    if (!decision.resource_kind || !decision.resource_id) {
+      add({ id: `unmapped-recovery:${decision.id}`, resource_kind: 'PROJECT', resource_id: ctx.project.id, category: 'PROJECTION_DIAGNOSTIC', type: 'UNMAPPED_STOP_SURFACE', resource_state: decision.execution_state,
+        lifecycle_state: ctx.project.state, canonical_state: ctx.project.canonical_state, subject: decision.subject, cause: { code: 'UNMAPPED_STOP_SURFACE', message: 'Recovery de integração sem âncora canônica comprovável.', reason: decision.reason },
+        operational_message: 'O candidate permanece somente como subject; a projeção não fabrica um EXECUTION resource.', waiting_for: 'Correção server-side da âncora de recovery.', continuation: { kind: 'UNMAPPED', expected: 'Nenhuma ação é publicada até haver recurso canônico comprovado.', progress: { stage: decision.execution_state } },
+        authority: null, decisions: [], evidence: evidence(`recovery:${decision.id}`, 'Decisão de recovery sem âncora canônica.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
+      continue;
+    }
     const r = resource(decision.resource_kind, decision.resource_id); const reconciling = decision.execution_state === 'WAITING_RECONCILIATION' || decision.effect_certainty === 'EFFECT_UNKNOWN';
     add({ id: `recovery:${decision.id}`, resource_kind: decision.resource_kind, resource_id: decision.resource_id, category: decision.selected_action === 'INTEGRATION_RECOVERY' ? 'INTEGRATION' : 'RECOVERY', type: decision.cause,
       resource_state: decision.execution_state, lifecycle_state: r.state === 'UNKNOWN' ? null : r.state, canonical_state: r.canonical,
-      subject: null, cause: { code: decision.cause, message: 'Recovery técnico classificado pelo servidor.', reason: decision.reason },
+      subject: decision.subject, cause: { code: decision.cause, message: 'Recovery técnico classificado pelo servidor.', reason: decision.reason },
       operational_message: reconciling ? 'O efeito anterior é incerto; o servidor reconcilia antes de qualquer repetição.' : 'A recuperação técnica está sob controle do runtime.',
       waiting_for: reconciling ? 'Reconciliação técnica da fonte de efeito.' : 'Conclusão do recovery automático.',
       continuation: { kind: reconciling ? 'RECONCILIATION' : 'AUTOMATIC', expected: reconciling ? 'RECONCILE BEFORE RETRY' : 'Ação técnica limitada pelo RECOVERY_POLICY:v1.', progress: { stage: decision.execution_state } },
@@ -1381,7 +1438,8 @@ const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_ki
   if (stop.projectCancellation) return { code: 'CANCELLED', resource_kind: 'PROJECT', resource_id: project.id };
   if (stop.projectPause) return { code: 'PAUSED', resource_kind: 'PROJECT', resource_id: project.id };
   const activeRecovery = recovery.find((r) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(r.execution_state));
-  if (activeRecovery) return { code: activeRecovery.cause, resource_kind: activeRecovery.resource_kind === 'EXECUTION' ? 'EXECUTION' : 'WORK_ITEM', resource_id: activeRecovery.resource_id };
+  if (activeRecovery?.resource_kind && activeRecovery.resource_id) return { code: activeRecovery.cause, resource_kind: activeRecovery.resource_kind, resource_id: activeRecovery.resource_id };
+  if (activeRecovery) return { code: 'UNMAPPED_STOP_SURFACE', resource_kind: 'PROJECT', resource_id: project.id };
   const openGate = gates.find((gate) => gate.status === 'OPEN');
   if (openGate) return { code: openGate.gate_code, resource_kind: 'GATE', resource_id: openGate.id };
   if (technologyBaseline?.gate_status === 'OPEN') return { code: 'TECHNOLOGY_BASELINE', resource_kind: 'GATE', resource_id: technologyBaseline.gate_id };
@@ -1496,7 +1554,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const focusGate = gates.find((gate) => gate.status === 'OPEN');
     let focusResourceKind: ResourceKind = 'PROJECT';
     let focusResourceId: string | null = project.id;
-    if (focusRecovery) { focusResourceKind = focusRecovery.resource_kind === 'EXECUTION' ? 'EXECUTION' : 'WORK_ITEM'; focusResourceId = focusRecovery.resource_id; }
+    if (focusRecovery?.resource_kind && focusRecovery.resource_id) { focusResourceKind = focusRecovery.resource_kind; focusResourceId = focusRecovery.resource_id; }
     else if (focusGate) { focusResourceKind = 'GATE'; focusResourceId = focusGate.id; }
     else if (focusWorkItem) { focusResourceKind = 'WORK_ITEM'; focusResourceId = focusWorkItem.id; }
     else if (focusModule) { focusResourceKind = 'MODULE'; focusResourceId = focusModule.id; }

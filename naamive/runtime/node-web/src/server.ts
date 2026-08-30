@@ -32,6 +32,7 @@ import { cancelResource, decideDeliveryAcceptance, deliveryLifecycleProjection, 
 const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.meta.url)), '..', 'web');
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const projectionRefreshScript = join(staticRoot, 'projection-refresh.js');
+const actionPayloadScript = join(staticRoot, 'action-payload.js');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
 const respond = (response: ServerResponse, status: number, body: object) => { response.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': settings.webOrigin }); response.end(JSON.stringify(body)); };
 const uuidParameter=(value:string|null,code:string)=>{if(value!==null&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))throw new ApiError(422,code);return value;};
@@ -77,7 +78,7 @@ export const createApiServer = () => createServer(async (request, response) => {
     if(String(request.headers.origin??'')!==settings.webOrigin) throw new ApiError(403,'AUTH_CSRF_ORIGIN_INVALID');
     return respond(response,200,await login(await json(request),response));
   }
-  const publicRoute=request.method==='GET'&&['/','/projection-refresh.js','/assets/bootstrap.min.css','/health/runtime'].includes(url.pathname);
+  const publicRoute=request.method==='GET'&&['/','/projection-refresh.js','/action-payload.js','/assets/bootstrap.min.css','/health/runtime'].includes(url.pathname);
   let principal:AuthenticatedPrincipal|undefined;
   if(!publicRoute) {
     principal=await authenticate(request);
@@ -280,6 +281,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (match && request.method === 'GET' && match[2] === 'events') { response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache, no-transform', connection: 'keep-alive', 'access-control-allow-origin': settings.webOrigin }); const requested=Number(url.searchParams.get('after') ?? request.headers['last-event-id'] ?? 0); let after=Number.isSafeInteger(requested)&&requested>0?requested:0,closed=false,polling=false; const publish=async()=>{if(polling||closed)return;polling=true;try{for(const item of await projectTimeline(match[1],after)){if(closed)return;after=Number(item.id);const data=JSON.stringify(item);/* Keep named lifecycle events for existing consumers and emit the same durable timeline item as a standard SSE message for generic projection invalidation. The standard message inherits the preceding durable event id. */response.write(`id: ${item.id}\nevent: ${item.event_type}\ndata: ${data}\n\ndata: ${data}\n\n`);}}finally{polling=false;}}; await publish(); const timer=setInterval(()=>void publish(),750),heartbeat=setInterval(()=>{if(!closed)response.write(': heartbeat\n\n');},15000); request.on('close', ()=>{closed=true;clearInterval(timer);clearInterval(heartbeat);}); return; }
   if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
   if (request.method === 'GET' && url.pathname === '/projection-refresh.js') { response.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' }); return response.end(await readFile(projectionRefreshScript)); }
+  if (request.method === 'GET' && url.pathname === '/action-payload.js') { response.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' }); return response.end(await readFile(actionPayloadScript)); }
   if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html','cache-control':'no-store'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
 } catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : error instanceof AgentRuntimeAdminError ? new ApiError(error.status, error.code, error.message) : error instanceof AssuranceError ? new ApiError(error.status,error.code) : new ApiError(500, 'INTERNAL_ERROR');

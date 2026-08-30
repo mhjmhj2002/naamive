@@ -52,6 +52,7 @@ test('F6 canonical UI operates a server-published governed action and refreshes 
   let projectionRequests = 0, eventConnections = 0, reconnectProjectionRequests = -1, cancelled = false;
   const html = await readFile(new URL('../web/index.html', import.meta.url));
   const refreshHelper = await readFile(new URL('../web/projection-refresh.js', import.meta.url));
+  const actionPayload = await readFile(new URL('../web/action-payload.js', import.meta.url));
   const projection = () => ({
     schema_version: 'STATE_ACTION_PROJECTION:v1', project_id: project, as_of_event_id: projectionRequests,
     project: { lifecycle_state: cancelled ? 'CANCELLED' : 'IMPLEMENTATION', canonical_state: cancelled ? 'CANCELLED' : 'IMPLEMENTATION', workflow_code: 'PROJECT_DISCOVERY', workflow_version: 4, legacy: false, journey_status: cancelled ? 'CANCELLED' : 'IMPLEMENTATION', focus_resource_kind: 'ACCEPTANCE', focus_resource_id: acceptance },
@@ -66,7 +67,7 @@ test('F6 canonical UI operates a server-published governed action and refreshes 
       expected: { resource_version: 1, as_of_event_id: projectionRequests }, confirmation: { required: false },
       input: { schema: { type: 'object', properties: { reason: { type: 'object', description: 'Cancellation reason.' } }, required: ['reason'] }, required_fields: ['reason'] },
       presentation: { kind: 'HUMAN_OPERATION', label: 'Cancelar acceptance', description: 'Operação limitada à acceptance.' },
-      input_binding: { fields: [{ name: 'reason', source: 'HUMAN_INPUT', schema: { type: 'object', description: 'Motivo do cancelamento.' }, send: true, editable: true }], decision_options: null }
+      input_binding: { fields: [{ name: 'reason', source: 'HUMAN_INPUT', schema: { type: 'object', description: 'Motivo do cancelamento.' }, send: true, editable: true, required: true, serialize_as: 'EVIDENCE' }], decision_options: null }
     }],
     stop_surfaces: cancelled ? [] : [{
       schema_version: 'STOP_SURFACE_PROJECTION:v1', id: `acceptance:${acceptance}:1`, resource_kind: 'ACCEPTANCE', resource_id: acceptance, category: 'REVIEWER_RECOVERY', type: 'PENDING_REVIEW', resource_state: 'PENDING_REVIEW', lifecycle_state: null, canonical_state: null, subject: null,
@@ -77,6 +78,7 @@ test('F6 canonical UI operates a server-published governed action and refreshes 
     const url = new URL(request.url ?? '/', 'http://local');
     if (url.pathname === '/') { response.writeHead(200, { 'content-type': 'text/html' }); response.end(html); return; }
     if (url.pathname === '/projection-refresh.js') { response.writeHead(200, { 'content-type': 'text/javascript' }); response.end(refreshHelper); return; }
+    if (url.pathname === '/action-payload.js') { response.writeHead(200, { 'content-type': 'text/javascript' }); response.end(actionPayload); return; }
     if (url.pathname === '/api/projects') { response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ items: [{ id: project, title: 'Governed assurance fixture', state: 'IMPLEMENTATION' }] })); return; }
     if (url.pathname === `/api/projects/${project}/projection`) { projectionRequests += 1; response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify(projection())); return; }
     if (url.pathname === `/api/projects/${project}/events`) {

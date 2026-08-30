@@ -92,7 +92,7 @@ if (!process.env.DATABASE_URL) {
   };
 
   test('UI-01 projection preserves resource truth, activity cardinality, legacy fail-closed behavior, descriptors, and snapshot time', async t => {
-    const f = await fixture(); const human = principal();
+    const f = await fixture(); const human = principal(); const observer = principal();
     let unknownWorkflowId: string | null = null;
     t.after(async () => {
       if (unknownWorkflowId) {
@@ -100,12 +100,16 @@ if (!process.env.DATABASE_URL) {
         await pool.query(`DELETE FROM workflow_states WHERE workflow_id=$1`, [unknownWorkflowId]);
         await pool.query(`DELETE FROM workflow_definitions WHERE id=$1`, [unknownWorkflowId]);
       }
-      await cleanupPrincipals([human.id]); await f.cleanup();
+      await cleanupPrincipals([human.id, observer.id]); await f.cleanup();
     });
-    await insertPrincipal(human);
+    await insertPrincipal(human); await insertPrincipal(observer);
     await grant(human, 'READ_PROJECT', 'OPERATOR', f.projectId);
+    await grant(observer, 'READ_PROJECT', 'OPERATOR', f.projectId);
     await grant(human, 'DECIDE_CATALOG_GATE', 'TECH_LEAD', f.projectId, 'MODULE', f.moduleId);
     await grant(human, 'DELIVERY_PAUSE_RESUME', 'ON_CALL_OWNER', f.projectId, 'PROJECT', f.projectId);
+    await grant(human, 'DELIVERY_CANCEL', 'BUSINESS_OWNER', f.projectId, 'PROJECT', f.projectId);
+    await grant(human, 'DELIVERY_PAUSE_RESUME', 'ON_CALL_OWNER', f.projectId, 'MODULE', f.moduleId);
+    await grant(human, 'DELIVERY_CANCEL', 'BUSINESS_OWNER', f.projectId, 'MODULE', f.moduleId);
     await grant(human, 'OPERATE_PROJECT', 'OPERATOR', f.projectId, 'WORK_ITEM', f.workItemId);
     const gateId = randomUUID();
     await pool.query(`INSERT INTO gate_records(id,project_id,gate_code,catalog_version,scope_type,scope_id,condition_code,evidence,reason,authority_roles,allowed_decisions,decision_effects,correlation_id,idempotency_key) VALUES($1,$2,'MATERIAL_ARCHITECTURE',1,'MODULE',$3,'MATERIALITY_POLICY_MATCHED','{}','UI-01 descriptor proof',$4,$5,'{}',$6,$7)`, [gateId, f.projectId, f.moduleId, JSON.stringify(['TECH_LEAD']), JSON.stringify(['APPROVE', 'REWORK']), randomUUID(), `ui01-gate:${gateId}`]);
@@ -138,7 +142,14 @@ if (!process.env.DATABASE_URL) {
     assert.equal(gateSurface?.resource_kind, 'GATE'); assert.equal(gateSurface?.type, 'MATERIAL_ARCHITECTURE');
     const blocker = projection.allowed_actions.find(action => action.code === 'RESOLVE_EXTERNAL_BLOCKER');
     assert.equal(blocker?.expected.resource_version, 1, 'a representative recovery descriptor includes the resource version');
-    assert.ok(projection.allowed_actions.some(action => action.code === 'PAUSE_PROJECT'));
+    for (const code of ['PAUSE_PROJECT', 'CANCEL_PROJECT', 'PAUSE_MODULE', 'CANCEL_MODULE']) {
+      const descriptor = projection.allowed_actions.find(action => action.code === code);
+      assert.ok(descriptor, `${code} is published when the resource is active`);
+      assert.ok(projection.stop_surfaces.some(surface => surface.action_descriptor_id === descriptor.descriptor_id), `${code} has its own actionable surface`);
+    }
+    const observerProjection = await buildStateActionProjection(f.projectId, observer);
+    assert.equal(observerProjection.allowed_actions.some(action => ['PAUSE_PROJECT', 'CANCEL_PROJECT', 'PAUSE_MODULE', 'CANCEL_MODULE'].includes(action.code)), false);
+    assert.ok(observerProjection.stop_surfaces.some(surface => surface.type === 'CANCEL_PROJECT' && surface.action_descriptor_id === null), 'an ungranted principal still receives an explanatory cancellation surface');
     await pool.query(`UPDATE auth_role_grants SET status='REVOKED',revoked_at=clock_timestamp() WHERE principal_id=$1 AND action_code='DECIDE_CATALOG_GATE'`, [human.id]);
     assert.equal((await buildStateActionProjection(f.projectId, human)).allowed_actions.some(action => action.code === 'DECIDE_GATE'), false, 'descriptors disappear as soon as the capability is absent');
     const pauseId = randomUUID();
@@ -147,6 +158,17 @@ if (!process.env.DATABASE_URL) {
     assert.equal(paused.activity.state, 'PAUSED'); assert.ok(paused.activity.items.some(item => item.state === 'RUNNING'));
     const resume = paused.allowed_actions.find(action => action.code === 'RESUME_PROJECT');
     assert.equal(resume?.expected.pause_version, 1); assert.equal(resume?.expected.fence, '1');
+    assert.ok(paused.allowed_actions.some(action => action.code === 'CANCEL_PROJECT'), 'project cancellation remains available while paused');
+    assert.ok(paused.stop_surfaces.some(surface => surface.resource_kind === 'PROJECT' && surface.type === 'PAUSED' && surface.action_descriptor_id === resume?.descriptor_id));
+    assert.ok(paused.stop_surfaces.some(surface => surface.type === 'CANCEL_PROJECT' && surface.action_descriptor_id === paused.allowed_actions.find(action => action.code === 'CANCEL_PROJECT')?.descriptor_id));
+    const modulePauseId = randomUUID();
+    await pool.query(`INSERT INTO pause_records(id,resource_kind,resource_id,project_id,previous_active_state,workflow_code,workflow_version,normative_generation,reason,evidence,actor_id,authority_role,idempotency_key,pause_fence) VALUES($1,'MODULE',$2,$3,'PLANNING_IN_PROGRESS','MODULE_DELIVERY',2,'ui01','UI-01 module pause','{}',$4,'ON_CALL_OWNER',$5,1)`, [modulePauseId, f.moduleId, f.projectId, human.id, `ui01-module-pause:${modulePauseId}`]);
+    const modulePaused = await buildStateActionProjection(f.projectId, human);
+    const moduleResume = modulePaused.allowed_actions.find(action => action.code === 'RESUME_MODULE');
+    const moduleCancel = modulePaused.allowed_actions.find(action => action.code === 'CANCEL_MODULE');
+    assert.ok(moduleResume); assert.ok(moduleCancel, 'module cancellation remains available while paused');
+    assert.ok(modulePaused.stop_surfaces.some(surface => surface.resource_kind === 'MODULE' && surface.type === 'PAUSED' && surface.action_descriptor_id === moduleResume.descriptor_id));
+    assert.ok(modulePaused.stop_surfaces.some(surface => surface.type === 'CANCEL_MODULE' && surface.action_descriptor_id === moduleCancel.descriptor_id));
     await pool.query(`INSERT INTO cancellation_records(id,resource_kind,resource_id,project_id,reason,evidence,actor_id,authority_role,idempotency_key,cancellation_fence) VALUES($1,'PROJECT',$2,$2,'UI-01 cancellation precedence','{}',$3,'BUSINESS_OWNER',$4,1)`, [randomUUID(), f.projectId, human.id, `ui01-cancel:${f.projectId}`]);
     const cancelled = await buildStateActionProjection(f.projectId, human);
     assert.equal(cancelled.activity.state, 'CANCELLED'); assert.ok(cancelled.activity.items.some(item => item.state === 'RUNNING'));

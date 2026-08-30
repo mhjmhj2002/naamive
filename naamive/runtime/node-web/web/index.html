@@ -84,6 +84,7 @@
   </main>
   <script type="module">
     import { canApplyProjection } from './projection-refresh.js';
+    import { buildActionPayload } from './action-payload.js';
     const notice = document.querySelector('#notice');
     const projectList = document.querySelector('#projects');
     const detail = document.querySelector('#detail');
@@ -350,28 +351,8 @@
         input.type = 'text';
       }
       input.name = field.name;
-      input.required = true;
+      input.required = Boolean(field.required);
       control.append(label, input);
-    }
-
-    function actionPayload(form, descriptor) {
-      const payload = {};
-      for (const field of descriptor.input_binding.fields || []) {
-        if (!field.send) continue;
-        if (field.source === 'SERVER_BOUND') { payload[field.name] = field.value; continue; }
-        if (field.source !== 'HUMAN_INPUT') continue;
-        const raw = String(new FormData(form).get(field.name) || '').trim();
-        if (!raw) continue;
-        const type = field.schema?.type;
-        if (type === 'integer') payload[field.name] = Number(raw);
-        else if (type === 'array') payload[field.name] = raw.split('\n').map(value => value.trim()).filter(Boolean);
-        // Existing command contracts carry evidence as objects.  The browser
-        // accepts only a human-readable summary and never asks for internal
-        // JSON, IDs, hashes, fences or recovery facts.
-        else if (type === 'object') payload[field.name] = { summary: raw };
-        else payload[field.name] = raw;
-      }
-      return payload;
     }
 
     function renderStopSurfaces(projection) {
@@ -412,7 +393,7 @@
           event.preventDefault();
           if (!form.checkValidity()) { form.reportValidity(); return; }
           if (descriptor.confirmation.required && !window.confirm(`Confirmar ${descriptor.code}?`)) return;
-          const payload = actionPayload(form, descriptor);
+          const payload = buildActionPayload(new FormData(form), descriptor.input_binding.fields || []);
           button.disabled = true;
           try {
             const response = await request(descriptor.command.href, {
