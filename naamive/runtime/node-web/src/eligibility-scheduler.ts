@@ -75,6 +75,20 @@ export const scheduleEligibleWorkItems=async(trigger='RECONCILE',limit=100)=>{
   return Promise.all(candidates.map((row:any)=>scheduleWorkItem(row.project_id,row.id,trigger)));
 };
 
+/** A persisted integration or blocker-resolution event is authoritative new
+ * information for a dependency wait. Re-run the same transactional predicate;
+ * it alone may promote an item and reserve its delivery/job. */
+export const reconcileWaitingDependencies=async(trigger='DEPENDENCY_REEVALUATION',projectId?:string,limit=100)=>{
+  const candidates=(await pool.query(`SELECT id,project_id FROM work_items
+    WHERE workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2 AND state='WAITING_FOR_DEPENDENCIES'
+      AND ($1::text IS NULL OR project_id=$1)
+    ORDER BY created_at,id LIMIT $2`,[projectId??null,limit])).rows;
+  return Promise.all(candidates.map((row:any)=>scheduleWorkItem(row.project_id,row.id,trigger)));
+};
+
 /** Safety net only: events call scheduleWorkItem; recovery merely rediscovers
  * eligible rows left behind by a process crash or a lost event. */
-export const reconcileEligibilityScheduler=()=>scheduleEligibleWorkItems('RECONCILE');
+export const reconcileEligibilityScheduler=async()=>[
+  ...await reconcileWaitingDependencies('RECONCILE'),
+  ...await scheduleEligibleWorkItems('RECONCILE')
+];

@@ -386,7 +386,7 @@ export const resolveExternalBlocker=async(projectId:string,workItemId:string,bod
   await event(c,projectId,'WORK_ITEM_EXTERNAL_BLOCKER_RESOLVED',correlation,{work_item_id:workItemId,resolution,evidence_hash:artifact.json.hash});
     return{operation_id:op,status:'ACCEPTED'};
   });
-  if(result.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.workflow_version)===2&&result.state==='ELIGIBLE_FOR_DISPATCH') await scheduleWorkItem(projectId,workItemId,'EXTERNAL_BLOCKER_RESOLVED');
+  if(result.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.workflow_version)===2) await scheduleWorkItem(projectId,workItemId,'EXTERNAL_BLOCKER_RESOLVED');
   return result;
 };
 

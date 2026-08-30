@@ -24,9 +24,8 @@ Foi adicionada a fixture PostgreSQL/Git descartável
 pré-condições legítimas e, após o primeiro dispatch, usa
 `prepareDevelopmentJob`/`finalizeDevelopmentJob`, o reconciliador AUT-02,
 `decideReview`, integração Git, scheduler e `resolveExternalBlocker` reais.
-Ela codifica Persistência → QA → review independente → ACCEPT → candidate →
-merge → validation → integração → Métrica e preserva Interface parada somente
-por `priority-group` até a resolução server-bound autorizada.
+Ela usa o autor canônico `naamive-bot <naamive-bot@localhost>` e a policy de
+paths mínima `allowlist: ['persistence.txt']`, `denylist: ['.env']`.
 
 Validações locais reais: `npm run build` e
 `node --test dist/lifecycle-conformance.test.js` passaram. O cenário E2E não
@@ -34,6 +33,22 @@ foi executado porque `DATABASE_URL` não estava configurada; isso é
 `MANUAL_OPERATOR_VALIDATION_REQUIRED`, não PASS. A implementação da cadeia
 completa existe, mas a certificação runtime PostgreSQL permanece pendente de
 execução pelo operador; esta task não pode ser marcada como concluída ainda.
+
+## Resolução arquitetural corretiva — required-set AUT-02
+
+TST-01 demonstrou o conflito real entre AUT-02 v1 e o lifecycle DAG; ele foi
+resolvido normativamente pela pré-validação
+[`AUT-02 v2 — IntegrationCohort`](AUT-02-v2-integration-cohort-prevalidation.md).
+`RequiredWorkItemSet:v1` continua sendo a obrigação completa do plano/módulo;
+`IntegrationCohort:v1` é a fronteira incremental de cada candidate v2. Assim,
+Persistência pode integrar e reavaliar Métrica sem antecipar Interface, que
+permanece bloqueada pelo seu blocker legítimo. AUT-02 v1 e seus registros ficam
+históricos e fail-closed; novas execuções selecionam explicitamente
+`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`.
+
+O critério 18 continua bloqueado até a implementação e certificação
+PostgreSQL/Git do contrato v2. A fixture atual preserva o plano único e observa
+o bloqueio v1, sem inventar estado ou dispatch manual.
 
 ## Decisão de pré-validação
 
