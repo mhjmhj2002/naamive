@@ -96,11 +96,17 @@ if (!process.env.DATABASE_URL) {
   test('UI-01 projection preserves resource truth, activity cardinality, legacy fail-closed behavior, descriptors, and snapshot time', async t => {
     const f = await fixture(); const human = principal(); const observer = principal();
     let unknownWorkflowId: string | null = null;
+    let legacyCapabilityFixture: { projectId: string; intakeRevisionId: string } | null = null;
     t.after(async () => {
       if (unknownWorkflowId) {
         await pool.query(`UPDATE workflow_definitions SET status='RETIRED' WHERE id=$1`, [unknownWorkflowId]);
         await pool.query(`DELETE FROM workflow_states WHERE workflow_id=$1`, [unknownWorkflowId]);
         await pool.query(`DELETE FROM workflow_definitions WHERE id=$1`, [unknownWorkflowId]);
+      }
+      if (legacyCapabilityFixture) {
+        await pool.query(`DELETE FROM gates WHERE project_id=$1`, [legacyCapabilityFixture.projectId]);
+        await pool.query(`DELETE FROM intake_revisions WHERE id=$1`, [legacyCapabilityFixture.intakeRevisionId]);
+        await pool.query(`DELETE FROM projects WHERE id=$1`, [legacyCapabilityFixture.projectId]);
       }
       await cleanupPrincipals([human.id, observer.id]); await f.cleanup();
     });
@@ -214,13 +220,21 @@ if (!process.env.DATABASE_URL) {
     await pool.query(`UPDATE projects SET workflow_code='PROJECT_INTAKE',workflow_version=1,state='DRAFT' WHERE id=$1`, [f.projectId]);
     const legacy = await buildStateActionProjection(f.projectId, human);
     assert.equal(legacy.project.legacy, true);
-    assert.deepEqual(legacy.allowed_actions.map(action => action.code), [], 'known legacy publishes only explicitly declared, authorized adapter actions');
-    assert.equal(legacy.stop_surfaces.find(surface => surface.resource_kind === 'PROJECT')?.type, 'LEGACY_READ_ONLY', 'known legacy without a declared capability is read-only');
-    await grant(human, 'OPERATE_PROJECT', 'OPERATOR', f.projectId);
+    assert.deepEqual(legacy.allowed_actions.filter(action => action.presentation.kind === 'LEGACY').map(action => action.code), [], 'known legacy project publishes no capability absent an explicit adapter declaration');
+    assert.ok(legacy.allowed_actions.some(action => action.code === 'PAUSE_MODULE'), 'a current module preserves its independent pause capability');
+    assert.ok(legacy.allowed_actions.some(action => action.code === 'CANCEL_MODULE'), 'a current module preserves its independent cancellation capability');
+    const legacyProjectSurface = legacy.stop_surfaces.find(surface => surface.resource_kind === 'PROJECT' && surface.resource_id === f.projectId && surface.category === 'LEGACY');
+    assert.equal(legacyProjectSurface?.type, 'LEGACY_READ_ONLY', 'known legacy without a declared capability is read-only');
+    assert.equal(legacyProjectSurface?.action_descriptor_id, null, 'legacy read-only surface publishes no capability');
+    const legacyCapabilityProjectId = `ui01-legacy-${randomUUID().slice(0, 8)}`, legacyCapabilityIntakeRevisionId = randomUUID();
+    legacyCapabilityFixture = { projectId: legacyCapabilityProjectId, intakeRevisionId: legacyCapabilityIntakeRevisionId };
+    await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft) VALUES($1,'UI-01 legacy capability','owner','test','/tmp','local','main','000','PROJECT_DISCOVERY',1,'WAITING_FOR_PRODUCT_COMMITMENT','{}')`, [legacyCapabilityProjectId]);
+    await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,'{}','ui01-legacy-structured','ui01-legacy-markdown','memory://ui01-legacy','test')`, [legacyCapabilityIntakeRevisionId, legacyCapabilityProjectId]);
+    await grant(human, 'READ_PROJECT', 'OPERATOR', legacyCapabilityProjectId);
+    await grant(human, 'OPERATE_PROJECT', 'OPERATOR', legacyCapabilityProjectId);
     const legacyGateId = randomUUID();
-    await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id,evidence) VALUES($1,$2,'PRODUCT_COMMITMENT',$3,'{}')`, [legacyGateId, f.projectId, f.intakeRevisionId]);
-    await pool.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=1,state='WAITING_FOR_PRODUCT_COMMITMENT' WHERE id=$1`, [f.projectId]);
-    const legacyCapability = await buildStateActionProjection(f.projectId, human);
+    await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id,evidence) VALUES($1,$2,'PRODUCT_COMMITMENT',$3,'{}')`, [legacyGateId, legacyCapabilityProjectId, legacyCapabilityIntakeRevisionId]);
+    const legacyCapability = await buildStateActionProjection(legacyCapabilityProjectId, human);
     const legacyDescriptor = legacyCapability.allowed_actions.find(action => action.code === 'PRODUCT_COMMITMENT_DECISION');
     assert.equal(legacyDescriptor?.presentation.kind, 'LEGACY', 'the adapter presentation remains legacy instead of being reclassified as a generic operation');
     const legacySurface = legacyCapability.stop_surfaces.find(surface => surface.action_descriptor_id === legacyDescriptor?.descriptor_id);
@@ -232,7 +246,7 @@ if (!process.env.DATABASE_URL) {
     await pool.query(`UPDATE projects SET workflow_code=$2,workflow_version=99,state='WAITING_FOR_PRODUCT_COMMITMENT' WHERE id=$1`, [f.projectId, unknownWorkflowCode]);
     const unknown = await buildStateActionProjection(f.projectId, human);
     assert.equal(unknown.project.legacy, true); assert.equal(unknown.project.journey_status, 'LEGACY_READ_ONLY');
-    assert.deepEqual(unknown.allowed_actions, [], 'an unknown workflow never derives an action from an actionable-looking state name');
+    assert.deepEqual(unknown.allowed_actions.filter(action => action.target.resource_kind === 'PROJECT' && action.target.resource_id === f.projectId), [], 'an unknown project workflow never derives a project action from an actionable-looking state name');
   });
 
   test('UI-01 HTTP projection is actor-specific, audit-free on GET, rejects stale authority, and publishes generic SSE invalidation', async t => {

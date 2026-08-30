@@ -490,7 +490,7 @@ const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
   const resumeReconciliations = await client.query(
       `SELECT r.id AS resume_id,p.id,p.resource_kind,p.resource_id,p.reason,p.version,p.pause_fence,p.previous_active_state,p.created_at
        FROM resume_records r JOIN pause_records p ON p.id=r.pause_id
-       WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' ORDER BY r.created_at DESC`, [projectId]);
+       WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' ORDER BY r.resolved_at DESC, r.id DESC`, [projectId]);
   const recoveryReconciliations = await client.query(
       `SELECT 1 FROM recovery_decisions WHERE project_id=$1 AND execution_state='WAITING_RECONCILIATION' LIMIT 1`, [projectId]);
   const projectPause = pauses.rows.find((row) => row.resource_kind === 'PROJECT');
