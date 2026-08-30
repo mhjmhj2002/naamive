@@ -1,7 +1,8 @@
 ---
 task: AUT-02
 document_type: corrective-architecture-prevalidation
-status: READY_FOR_IMPLEMENTATION
+status: PREVALIDATION_READY_FOR_IMPLEMENTATION
+implementation_status: NOT_IMPLEMENTED
 contract: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2
 supersedes_for_new_executions: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1
 preserves: [AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1, RequiredWorkItemSet:v1]
@@ -39,7 +40,7 @@ candidate:v2:<module_revision_id>:<module_round_id>:<cohort_hash>
 
 O cálculo serializa projeto, módulo, plano, round e WIs. A migration deve impor reservation ativa única por WI: duas reconciliações não podem criar candidates ativas sobre o mesmo membro. Merges concorrentes formam uma cohort se estiverem visíveis no mesmo snapshot bloqueado ou cohorts sequenciais válidas. Reinício e replay reutilizam a mesma chave, manifesto e fencing, sem recompor cohort materializada.
 
-Stale, blocker, finding, rework, recovery ou cancelamento antes do efeito torna a candidate `SUPERSEDED`/`NO_OP` ou aciona REC-01. A reavaliação sempre vem de fatos canônicos e não reavalia WIs já materializados.
+Stale, blocker, finding, rework, recovery ou cancelamento antes do efeito torna a candidate `SUPERSEDED`/`NO_OP` ou aciona REC-01. A reavaliação sempre deriva de fatos canônicos. Ela nunca remonta, amplia ou altera uma cohort/candidate já materializada; work items dependentes já materializados pelo plano continuam sendo reavaliados quando integração, resolução de blocker ou outro fato autorizado altera sua elegibilidade.
 
 | Corrida | Resultado v2 fail-closed |
 | --- | --- |

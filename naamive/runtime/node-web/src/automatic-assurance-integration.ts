@@ -10,7 +10,7 @@ import { putArtifact } from './artifacts.js';
 import { ApiError } from './service.js';
 import { assertAuditableCommits, gitValue, mergeAndPushDetached, mergeWorkItem, reconcileIntegration } from './git-delivery.js';
 import { createAcceptance, openBlock, submitOutputForReview } from './assurance.js';
-import { reconcileWaitingDependencies, scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
+import { scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
 import { requestAut02MergeRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
 import { AUT02_PIPELINE_VERSION, AUT02_POLICY_VERSION, enqueueAut02Intent, type Aut02IntentKind } from './aut02-ledger.js';
 import { reserveAssuranceDispatch } from './assurance-expansion.js';
@@ -460,7 +460,6 @@ const executeIntegration=async(intent:any)=>{
     if(reconcileIntegration(initial.repository_path,'integration',before,prepared.candidate.phase_sha)!=='APPLIED_UNRECORDED')throw new ApiError(409,'AUT02_INTEGRATION_NOT_CONFIRMED');
     await finalizeAut02IntegratedCandidate(prepared.candidate.id,prepared.attemptId,result.mergeSha);
     await withTransaction(async client=>{await lockIntent(client,intent);await completeIntent(client,intent,'COMPLETED',prepared.op);});
-    await reconcileWaitingDependencies('AUT02_INTEGRATION_COMPLETED', initial.project_id);
     await scheduleEligibleWorkItems('AUT02_INTEGRATION_COMPLETED');
   }catch(error){
     await withTransaction(async client=>{const owned=await client.query(`SELECT 1 FROM assurance_integration_intents WHERE id=$1 AND lease_token=$2 AND execution_generation=$3 FOR UPDATE`,[intent.id,intent.lease_token,intent.execution_generation]);if(!owned.rowCount)return;await client.query(`UPDATE integration_attempts SET state='EFFECT_UNKNOWN' WHERE id=$1`,[prepared.attemptId]);await client.query(`UPDATE integration_candidates SET state='INTEGRATION_BLOCKED',blocked_kind='GIT_RECOVERABLE',version=version+1 WHERE id=$1 AND state='INTEGRATION_IN_PROGRESS'`,[prepared.candidate.id]);await client.query(`UPDATE assurance_integration_intents SET status='FAILED',effect_state='EFFECT_UNKNOWN',last_error=$4,available_at=clock_timestamp()+interval '1 second',lease_owner=NULL,lease_token=NULL,lease_expires_at=NULL,updated_at=clock_timestamp() WHERE id=$1 AND lease_token=$2 AND execution_generation=$3`,[intent.id,intent.lease_token,intent.execution_generation,String((error as any)?.code??'PUSH_TIMEOUT')]);});
