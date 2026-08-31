@@ -114,7 +114,8 @@ if (!databaseUrl) {
     });
     assert.ok(proposal.gates.some(gate => gate.kind === 'MODULE_APPROVAL' && gate.status === 'OPEN' && gate.module_id === moduleId));
     const page = await (await fetch(base)).text();
-    for (const copy of ['Revise a proposta antes de aprovar', 'O que faz parte', 'O que não faz parte', 'Dependências', 'Como saberemos que deu certo?', 'não aprova uma entrega de software, não faz deploy']) assert.match(page, new RegExp(copy));
+    for (const copy of ['A visualização de detalhe é uma única projeção autorizada do servidor.', 'Superfícies de parada', 'Ações permitidas']) assert.match(page, new RegExp(copy));
+    assert.doesNotMatch(page, /\?phase3=true/, 'the browser does not revive the retired phase-specific projection');
     const approval = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0];
     await post(`/api/projects/${projectId}/modules/${moduleId}/decision`, { decision: 'APPROVED', version: approval.version });
     await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
@@ -244,7 +245,8 @@ if (!databaseUrl) {
     const read=async(after:number)=>{const response=await fetch(`${base}/api/projects/${projectId}/events?after=${after}`,{headers:session.headers});const reader=response.body!.getReader(),chunk=await reader.read();await reader.cancel();return new TextDecoder().decode(chunk.value);};
     const replay=await read(0), ids=[...replay.matchAll(/^id: (\d+)$/gm)].map(match=>Number(match[1]));
     assert.deepEqual(ids,[...new Set(ids)]); assert.equal(ids.length,4); assert.match(replay,/approved-sha/); assert.doesNotMatch(replay,/host\/private|raw|private/);
-    const resumed=await read(Number(first)); assert.doesNotMatch(resumed,/event: QA_APPROVED/); assert.match(resumed,/event: QA_REJECTED/); assert.match(await (await fetch(base)).text(),/INTEGRATION_ARCHIVED/);
+    const resumed=await read(Number(first)); assert.doesNotMatch(resumed,/event: QA_APPROVED/); assert.match(resumed,/event: QA_REJECTED/);
+    const page=await (await fetch(base)).text(); assert.match(page,/stream\.onmessage = invalidate/); assert.match(page,/appendEvent\(event\.data\)/);
   });
   after(() => assert.deepEqual(readdirSync(process.cwd()).filter(name => name.startsWith('.phase3-http-')), [], 'HTTP acceptance left temporary repositories behind'));
 }

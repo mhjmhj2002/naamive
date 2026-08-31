@@ -8,7 +8,7 @@ if (!process.env.DATABASE_URL) {
   process.env.NAAMIVE_ARTIFACT_STORE_URI ??= 'file:///tmp/naamive-aut01-artifacts';
   process.env.NAAMIVE_OPERATOR_ID ??= 'aut01-test-operator';
   const { pool } = await import('./db.js');
-  const { scheduleWorkItem, reconcileEligibilityScheduler, ELIGIBILITY_PREDICATE_VERSION } = await import('./eligibility-scheduler.js');
+  const { scheduleWorkItem, reconcileEligibilityScheduler, reconcileWaitingDependencies, ELIGIBILITY_PREDICATE_VERSION } = await import('./eligibility-scheduler.js');
   const { resolveExternalBlocker } = await import('./phase3.js');
   const { controlledPlanFixture, validatePlan } = await import('./module-planning.js');
   const activeCount=async()=>Number((await pool.query(`SELECT count(*)::int n FROM deliveries WHERE state IN ('RESERVED','PREPARING','DISPATCHED','RUNNING','DEVELOPMENT_IN_PROGRESS')`)).rows[0].n);
@@ -107,6 +107,17 @@ if (!process.env.DATABASE_URL) {
     for(const state of ['PRODUCING','QA_IN_PROGRESS','ACCEPTED']){await pool.query(`UPDATE work_items SET state=$2 WHERE id=$1`,[predecessor,state]);assert.equal((await scheduleWorkItem(s.project,dependent,`PREDECESSOR_${state}`)).reason,'WAITING_DEPENDENCIES');}
     await pool.query(`UPDATE work_items SET state='INTEGRATED' WHERE id=$1`,[predecessor]);
     assert.equal((await scheduleWorkItem(s.project,dependent,'INTEGRATION_COMPLETED')).reason,'DISPATCHED');
+  });
+
+  test('AUT-01 re-evaluates WAITING_FOR_DEPENDENCIES after the AUT-02 integration fact', async t=>{
+    const old=process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY;process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY=String(await activeCount()+10);t.after(()=>{if(old===undefined)delete process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY;else process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY=old;});
+    const s=await setup();t.after(s.cleanup);
+    const predecessor=await s.work('ACCEPTED'),dependent=await s.work('WAITING_FOR_DEPENDENCIES',[predecessor]);
+    assert.equal((await reconcileWaitingDependencies('AUT02_INTEGRATION_COMPLETED',s.project)).find((result:any)=>result.reason==='DISPATCHED'),undefined);
+    await pool.query(`UPDATE work_items SET state='INTEGRATED' WHERE id=$1`,[predecessor]);
+    const results=await reconcileWaitingDependencies('AUT02_INTEGRATION_COMPLETED',s.project);
+    assert.equal(results.filter((result:any)=>result.reason==='DISPATCHED').length,1);
+    assert.equal((await pool.query(`SELECT state FROM work_items WHERE id=$1`,[dependent])).rows[0].state,'DISPATCHED');
   });
 
   test('AUT-01 rejects a cyclic plan deterministically before any work item is materialized or dispatched', async t=>{

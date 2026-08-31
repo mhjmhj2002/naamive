@@ -206,6 +206,7 @@ if (!databaseUrl) {
     assert.equal(projected.workflow_version,2);
     assert.ok(!projected.allowed_actions.includes('START_DEVELOPMENT'));
     assert.deepEqual(approved.work_item_workflow,{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:2});
+    assert.deepEqual(replayed.work_item_workflow,{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:2},'idempotent replay retains the frozen work-item workflow binding');
     const transitionEvent=(await pool.query(`SELECT workflow_code,workflow_version,payload FROM events WHERE project_id=$1 AND event_type='MODULE_PLAN_APPROVED' ORDER BY id DESC LIMIT 1`,[id])).rows[0];
     assert.deepEqual({workflow_code:transitionEvent.workflow_code,workflow_version:transitionEvent.workflow_version},{workflow_code:'PROJECT_DISCOVERY',workflow_version:2});
     assert.deepEqual(transitionEvent.payload.work_item_workflow,{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:2});

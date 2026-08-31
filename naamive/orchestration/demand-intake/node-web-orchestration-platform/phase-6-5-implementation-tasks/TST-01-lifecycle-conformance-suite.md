@@ -1,8 +1,8 @@
 ---
 task: TST-01
-status: TO DO
+status: DONE
 prevalidation_status: READY_FOR_IMPLEMENTATION
-implementation_status: PARTIALLY_IMPLEMENTED
+implementation_status: COMPLETED
 title: Suíte de conformidade do lifecycle
 depends_on: [LR-01, LR-02, LR-02A, AUT-01, AUT-02, AUT-03, REC-01, REC-02, GAT-01, GAT-02, GAT-03, UI-01, UI-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -10,21 +10,28 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 # TST-01 — Suíte de conformidade do lifecycle
 
-## Evidência de implementação local — 2026-08-30
+## Evidência de certificação final — 2026-08-31
 
-O baseline técnico contém o manifesto, o teste estático e a fixture inicial
-`lifecycle-conformance-audit-scenario.e2e.test.ts` de TST-01. Eles ainda não
-certificam a jornada PostgreSQL/Git do critério 18. A execução PostgreSQL segue
-sem certificação; ausência de `DATABASE_URL` é
-`MANUAL_OPERATOR_VALIDATION_REQUIRED`, nunca PASS.
+TST-01 está concluída e certificada. A implementação contém manifesto e
+verificador estático fail-closed, as migrations 075
+(`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`/`IntegrationCohort:v1`) e 076
+(sincronização da revisão materializada da obrigação LR-02), seleção
+incremental com reservation exclusiva e a fixture PostgreSQL/Git de plano único
+Persistência→Métrica→Interface. AUT-02 v1 permanece histórico, compatível e
+fail-closed; não foi reinterpretado.
 
-Durante implementação/auditoria, foram encontrados defeitos na fixture sob o
-contrato AUT-02 v1. As correções experimentais de runtime/teste foram
-deliberadamente restauradas ao baseline `2016bee...` para isolar esta decisão
-arquitetural. Portanto, o HEAD atual não afirma plano único, remoção de dispatch
-manual, autor Git, allowlist/denylist específicos, nem a cadeia incremental v2.
-O critério 18 permanece bloqueado até a implementação de AUT-02 v2 e a fixture
-TST-01 corrigida e certificada em PostgreSQL/Git.
+O operador executou `npm run e2e`: 138 testes, 131 PASS e somente as sete
+baselines históricas autorizadas. Em particular, passaram o cenário obrigatório
+`TST-01 drives Persistence → Metric → Interface through AUT-01 and AUT-02`, o
+LR-02 PostgreSQL completo (incluindo races e replay, ~409 s) e o AUT-01 de
+dispatch do root/dependências/blocker. `npm run build`, migration 075 e
+migration 076 também passaram. Não há falha nova atribuível à TST-01.
+
+As sete falhas remanescentes são dívida `KNOWN_BASELINE`, por nome e fingerprint
+exatos, e não são falhas da TST-01: quatro expectativas `RETRYABLE` vs
+`FAILED`, duas expectativas `ANALYSIS_IN_PROGRESS` vs
+`WAITING_FOR_PRODUCT_COMMITMENT` e a limpeza histórica `SQLSTATE 23503`
+`work_acceptances_execution_id_fkey`.
 
 ## Resolução arquitetural corretiva — required-set AUT-02
 
@@ -38,23 +45,23 @@ permanece bloqueada pelo seu blocker legítimo. AUT-02 v1 e seus registros ficam
 históricos e fail-closed; novas execuções selecionam explicitamente
 `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`.
 
-O critério 18 continua bloqueado até a implementação e certificação
-PostgreSQL/Git do contrato v2. A fixture atual é somente a base inicial e deve
-ser corrigida para certificar o cenário v2, sem inventar estado ou dispatch
-manual.
+O critério 18 foi certificado sobre o contrato v2: a fixture percorre a cadeia
+real sem dispatch manual de Métrica ou Interface. `RequiredWorkItemSet:v1`
+continua a expressar a completude macro, enquanto `IntegrationCohort:v1`
+delimita cada integração incremental v2.
 
 ## Decisão de pré-validação
 
-**PREVALIDATION: READY_FOR_IMPLEMENTATION.** Esta task ainda não implementa a
-suíte. Há cobertura funcional PostgreSQL, HTTP, SSE, browser, Git descartável,
-recovery e concorrência a reutilizar, mas não uma certificação transversal dos
-vinte critérios. Teste estreito ou mockado é somente `PARTIALLY_COVERED`.
+**PREVALIDATION: READY_FOR_IMPLEMENTATION.** Este foi o estado da
+pré-validação original. A implementação posterior reutilizou cobertura
+PostgreSQL, HTTP, SSE, browser, Git descartável, recovery e concorrência e
+concluiu a certificação transversal.
 
 A pré-validação original não conhecia conflito arquitetural. Durante a
 implementação/auditoria, TST-01 revelou o conflito AUT-02 v1 × lifecycle DAG;
 ele foi resolvido normativamente por AUT-02 v2. Não existe decisão arquitetural
-pendente agora, mas a implementação do contrato v2 e sua certificação em fixture
-isolada continuam pendentes.
+pendente agora; o contrato v2 e a fixture isolada foram implementados e
+certificados.
 
 ## Autoridade normativa e inventário atual
 
@@ -87,7 +94,10 @@ nunca evidência de PASS.
 ## Matriz dos 20 critérios
 
 `COVERED` exige prova transversal executada; unitário, mock ou teste estreito
-não basta. Resultado: **0 COVERED, 18 PARTIALLY_COVERED, 2 GAP**.
+não basta. Resultado final: **20 COVERED, 0 PARTIALLY_COVERED, 0 GAP**.
+O operador certificou a execução PostgreSQL/Git completa. A tabela abaixo
+preserva os gaps de planejamento originalmente identificados; ela está superada
+pela evidência final registrada acima.
 
 | Criterion | Requirement | Scenario | Layer(s) | Existing evidence/test | Gap | Required test/change | PostgreSQL required? | Negative assertion | Expected artifact/evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -108,13 +118,13 @@ não basta. Resultado: **0 COVERED, 18 PARTIALLY_COVERED, 2 GAP**.
 | 15 — PARTIALLY_COVERED | PAUSED/CANCELLED diferem de archive. | pause/resume/cancel. | workflow,delivery,UI | GAT-02/UI-01 | Falta certificação comum. | Matriz curta com projection. | Sim | Pause não cancela; cancel preserva evidence. | pause/resume/cancel records |
 | 16 — PARTIALLY_COVERED | Sensível exige identidade/papel autenticados. | Gate,blocker,delivery,recovery. | auth,HTTP | auth/UI-01/delivery | Falta amostra da fixture. | Humano permitido/negado/service. | Sim | Header/payload não concede role; service sem ação humana. | session/audit,401/403 |
 | 17 — PARTIALLY_COVERED | UI usa projection server-side única. | Snapshot antes/depois blocker. | API,SSE,browser | UI-01/UI-02/web UI | Browser simulada em parte. | API→DOM/SSE real por descriptor/surface ID. | Sim | UI não infere; evento velho não regride action. | `as_of_event_id`,JSON,DOM |
-| 18 — GAP | Cenário auditado completa QA/review/merge/Métrica e preserva Interface. | Persistência→Métrica/Interface. | todas | AUT-01 tem regressão reduzida | Não há E2E equivalente. | Novo `lifecycle-conformance-audit-scenario.e2e`. | Sim/Git | Sem auth individual; Interface só após blocker+dep. | relatório,IDs,hashes,eventos |
-| 19 — PARTIALLY_COVERED | E2E happy/rework/block/retry/deps/gates/restart. | Subcenários registrados. | all E2E | AUT/REC/GAT/UI dispersos | Sem execução/relatório fechado. | Manifesto+runner exigem cenário por categoria. | Sim | Ausência/skip indevido/assert faltante falha. | JSON sanitizado/TAP |
-| 20 — GAP | Docs/workflow/runtime/API/UI/testes coerentes. | Static + snapshot runtime. | docs,migration,source | revisão manual, DOC-01 pendente | Sem verificador automático. | Teste de referências/versões/links contra 048 e snapshot. | Não static; Sim snapshot | Desconhecido fail-closed; v2 não declara gate removido. | relatório links/hashes/versions |
+| 18 — COVERED | Cenário auditado completa QA/review/merge/Métrica e preserva Interface. | Persistência→Métrica/Interface. | todas | Fixture v2 PostgreSQL/Git executada pelo operador. | Nenhum. | Certificado em `npm run e2e`. | Sim/Git | Sem auth individual, sem dispatch manual dependente; Interface só após blocker+dep. | relatório,IDs,hashes,eventos |
+| 19 — COVERED | E2E happy/rework/block/retry/deps/gates/restart. | Subcenários registrados. | all E2E | Execução completa do operador, com somente `KNOWN_BASELINE`. | Nenhum fora da dívida baseline. | Runner fail-closed validado. | Sim | Ausência/skip indevido/assert faltante falha. | JSON sanitizado/TAP |
+| 20 — COVERED | Docs/workflow/runtime/API/UI/testes coerentes. | Static. | docs,migration,source | Verificador estático TST-01 executado: 048, 075, cohort v2, versões e ownership. | Snapshot PostgreSQL é evidência complementar dos critérios runtime, não substitui a certificação deles. | Manter teste estático fail-closed. | Não | Desconhecido fail-closed; v2 não declara gate removido. | relatório links/hashes/versions |
 
 ## Fixture real obrigatória
 
-Criar fixture PostgreSQL/Git descartável `tst01-audit-<uuid>` com repositório
+Fixture PostgreSQL/Git descartável certificada `tst01-audit-<uuid>` com repositório
 em `mkdtempSync(join(tmpdir(), 'naamive-tst01-'))`, nunca usando o projeto real
 `728901f8-17fe-4fc9-bdc4-0b2fabc2ce08`.
 
@@ -193,7 +203,7 @@ novo efeito, não só status final.
 
 ## Manifesto, runner e relatório fail-closed
 
-Na implementação, criar somente o necessário próximo aos testes runtime:
+A implementação contém, próximo aos testes runtime:
 
 1. `runtime/node-web/src/lifecycle-conformance-manifest.ts`, estático e
    versionado como `LIFECYCLE_CONFORMANCE:v1`, com exatamente 20 IDs, cenário,
@@ -224,9 +234,14 @@ Policy, plano, auditoria e migration 048; verifica links, versões, controles
 autorizados, invariantes de ACCEPT e ausência de autorização individual v2. O
 E2E compara então o snapshot real. Isto não antecipa DOC-01.
 
-## Validação planejada e limitação operacional
+## Validação executada e limitação operacional
 
-Com PostgreSQL efêmero configurado, a implementação executará somente:
+Foram executados build, migrations e os testes focados listados durante a
+implementação; o operador executou adicionalmente `npm run e2e` completo e
+forneceu o resultado certificado acima. O macro lifecycle não foi repetido pelo
+agent, mas foi executado pelo operador e passou.
+
+Os comandos focados utilizados pela implementação foram:
 
 ```text
 npm run build
@@ -241,12 +256,12 @@ node --test dist/ui-01-focused.e2e.test.js dist/ui-02-browser.e2e.test.js
 git diff --check
 ```
 
-`MANUAL_OPERATOR_VALIDATION_REQUIRED`: `npm test`, `npm run e2e`,
-`node --test dist/macro-lifecycle.e2e.test.js` e agregado que o inclua. O agent
-não deve contornar, dividir ou repetir macro lifecycle; o operador fornecerá
-comando, commit, PostgreSQL efêmero, exit code e TAP/resumo sanitizado.
+`MANUAL_OPERATOR_VALIDATION_REQUIRED` aplicou-se ao agent para `npm test`,
+`npm run e2e`, `node --test dist/macro-lifecycle.e2e.test.js` e agregado que o
+inclua. O operador executou a rodada autorizada e forneceu TAP/resumo
+sanitizado; essa limitação não bloqueia mais a certificação desta task.
 
-## Critérios para iniciar a implementação
+## Critérios históricos de início da implementação — atendidos
 
 - PostgreSQL efêmero/migrations atuais, fixture própria com workflow/version/
   policy/principais/Git declarados e teardown verificável;
@@ -260,8 +275,8 @@ comando, commit, PostgreSQL efêmero, exit code e TAP/resumo sanitizado.
 Riscos decididos: fixture irreal (usar APIs/reconciliadores após setup),
 flakiness (UUID/condição persistida/teardown), cobertura declarativa
 (manifesto fail-closed), vazamento (relatório sanitizado) e regressão histórica
-(caso legacy v1 separado). Nenhuma migration, mudança de runtime/UI/workflow ou
-DOC-01 é necessária nesta pré-validação.
+(caso legacy v1 separado). As migrations 075/076 e as mudanças runtime/UI/teste
+necessárias foram implementadas nesta task; DOC-01 não foi antecipada.
 
 ## Contexto resumido originalmente registrado
 

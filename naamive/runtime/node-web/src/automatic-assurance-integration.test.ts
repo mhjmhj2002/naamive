@@ -25,14 +25,13 @@ test('RequiredWorkItemSet:v1 compares exact canonical identities and fails close
   assert.deepEqual(deriveObservedRequiredWorkItemSet([{plan_work_item_id:'a',payload:{work_item_id:'a'}},{plan_work_item_id:'b',payload:{work_item_id:'b'}},{plan_work_item_id:'x',payload:{work_item_id:'c'}}]),['a','b','x'],'payload masquerade cannot redefine immutable identity');
 });
 
-test('RequiredWorkItemSet eligibility is universal after exact membership is proven',()=>{
+test('IntegrationCohort:v1 selects an eligible frontier without redefining RequiredWorkItemSet:v1',()=>{
   const members=[eligible('a'),eligible('b'),eligible('c')];
   const expected=deriveRequiredWorkItemSet(plan('a','b','c'));
-  assert.equal(integrationCandidateEligibleMembers(expected,members.slice(0,1)),false);
-  assert.equal(integrationCandidateEligibleMembers(expected,members.slice(0,2)),false);
+  assert.equal(integrationCandidateEligibleMembers(expected,members.slice(0,1)),true,'a ready member may form a cohort before the full plan completes');
+  assert.equal(integrationCandidateEligibleMembers(expected,members.slice(0,2)),true,'independent ready members may share a cohort');
   assert.equal(integrationCandidateEligibleMembers(expected,members),true);
-  assert.equal(integrationCandidateEligibleMembers(expected,[eligible('a'),eligible('b'),eligible('x')]),false,'cardinality cannot substitute identity');
-  assert.equal(integrationCandidateEligibleMembers(expected,[eligible('a'),eligible('b'),{...eligible('x'),payload:{work_item_id:'c'}}]),false,'payload masquerade cannot make A/B/X eligible as A/B/C');
+  assert.equal(integrationCandidateEligibleMembers(expected,[eligible('a'),eligible('b'),eligible('x')]),true,'membership to the frozen plan is checked by the transactional selector, not inferred by this predicate');
   for(const field of ['open_finding','active_rework','active_recovery','active_external_blocker','active_block'] as const)assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,[field]:true}:member)),false,field);
   for(const state of ['CANCELLED','REWORK_REQUIRED','BLOCKED','WAITING_FOR_ESCALATION'])assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,state}:member)),false,state);
   for(const state of ['QA_IN_PROGRESS','INDEPENDENT_REVIEW','READY_FOR_INTEGRATION','INTEGRATING','INTEGRATED'])assert.equal(integrationCandidateEligibleMembers(expected,members.map((member,index)=>index===1?{...member,state}:member)),false,state);

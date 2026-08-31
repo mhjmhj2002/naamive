@@ -75,6 +75,7 @@
                 <section class="col-md-6"><h2 class="h6">Gates e paradas</h2><div id="gatesAndStops"></div></section>
               </div>
               <section class="mt-4"><h2 class="h6">Superfícies de parada</h2><div id="stopSurfaces" class="vstack gap-3" aria-live="polite"></div></section>
+              <section class="mt-4"><h2 class="h6">Ações permitidas</h2><div id="actions" class="vstack gap-3" aria-live="polite"></div></section>
               <section class="mt-4"><h2 class="h6">Notificações recentes</h2><div id="events" class="timeline border rounded bg-light p-3 small" aria-live="polite"></div></section>
             </div>
           </div>
@@ -94,6 +95,7 @@
     const activity = document.querySelector('#activity');
     const gatesAndStops = document.querySelector('#gatesAndStops');
     const stopSurfaces = document.querySelector('#stopSurfaces');
+    const actions = document.querySelector('#actions');
     const events = document.querySelector('#events');
     const listFields = new Set(['success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions']);
     const projectionState = {
@@ -420,6 +422,52 @@
       }
     }
 
+    // A stop surface owns its action when the server publishes that explicit
+    // relationship.  Canonical actions that do not describe a stop remain
+    // available here; this keeps governed decisions such as the technology
+    // baseline actionable without creating a client-side special case.
+    function renderActions(projection) {
+      const surfaceActionIds = new Set((projection.stop_surfaces || []).map(surface => surface.action_descriptor_id).filter(Boolean));
+      const descriptors = (projection.allowed_actions || []).filter(descriptor => descriptor.presentation?.kind === 'LEGACY' || !surfaceActionIds.has(descriptor.descriptor_id));
+      if (!descriptors.length) {
+        actions.replaceChildren(empty('Não há ações humanas permitidas para este principal neste snapshot.'));
+        return;
+      }
+      const fragment = document.createDocumentFragment();
+      for (const descriptor of descriptors) {
+        // Legacy adapters are deliberately fail-closed in the projection. If
+        // one nevertheless publishes an explicit descriptor, render that
+        // governed capability here rather than making the UI infer it.
+        const kind = descriptor.presentation?.kind;
+        if (kind !== 'HUMAN_DECISION' && kind !== 'HUMAN_OPERATION' && kind !== 'LEGACY') continue;
+        const form = element('form', 'border rounded p-3 bg-white');
+        form.append(element('h3', 'h6 mb-1', descriptor.code));
+        form.append(element('p', 'small text-muted mb-2', descriptor.presentation?.description || `${descriptor.target.resource_kind}: ${descriptor.target.resource_id}`));
+        for (const field of descriptor.input_binding?.fields || []) if (field.source === 'HUMAN_INPUT' && field.editable) actionInput(form, field);
+        const button = element('button', 'btn btn-primary btn-sm', descriptor.presentation?.label || 'Executar');
+        button.type = 'submit';
+        form.append(button);
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault();
+          if (!form.checkValidity()) { form.reportValidity(); return; }
+          if (descriptor.confirmation?.required && !window.confirm(`Confirmar ${descriptor.code}?`)) return;
+          button.disabled = true;
+          try {
+            const response = await request(descriptor.command.href, {
+              method: descriptor.command.method,
+              headers: { 'content-type': 'application/json', ...(descriptor.command.idempotency_required ? { 'idempotency-key': crypto.randomUUID() } : {}) },
+              body: JSON.stringify(buildActionPayload(new FormData(form), descriptor.input_binding.fields || []))
+            });
+            const body = await responseBody(response);
+            showMessage(response.ok ? `${descriptor.presentation.label} aceita.` : `${body.code || 'REQUEST_FAILED'}: ${body.message || 'Comando rejeitado.'}`, response.ok ? 'success' : 'danger');
+            if (response.ok || [403, 409].includes(response.status)) { refreshProjection(); if (response.ok) void loadProjects(); }
+          } finally { button.disabled = false; }
+        });
+        fragment.append(form);
+      }
+      actions.replaceChildren(fragment.childNodes.length ? fragment : empty('Não há ações humanas permitidas para este principal neste snapshot.'));
+    }
+
     function renderProjection(projection) {
       renderProjectSummary(projection);
       renderResources(modules, projection.resources.modules, 'módulos');
@@ -427,6 +475,7 @@
       renderActivity(projection);
       renderGatesAndStops(projection);
       renderStopSurfaces(projection);
+      renderActions(projection);
     }
 
     document.querySelector('#refreshProjects').addEventListener('click', () => void loadProjects());

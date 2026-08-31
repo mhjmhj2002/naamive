@@ -32,6 +32,7 @@ test('criterion 20 rejects documentary and workflow drift fail-closed', () => {
     'naamive/orchestration/demand-intake/node-web-orchestration-platform/16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md',
     'naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md',
     'naamive/runtime/node-web/migrations/048_phase_6_5_conformant_workflows.sql',
+    'naamive/runtime/node-web/migrations/075_phase_6_5_tst01_integration_cohort_v2.sql',
   ];
   for (const path of required) assert.ok(existsSync(resolve(repositoryRoot, path)), `normative reference is required: ${path}`);
   const migration = read('naamive/runtime/node-web/migrations/048_phase_6_5_conformant_workflows.sql');
@@ -48,4 +49,18 @@ test('criterion 20 rejects documentary and workflow drift fail-closed', () => {
   const scheduler = read('naamive/runtime/node-web/src/eligibility-scheduler.ts');
   assert.match(scheduler, /workflow_version\)!==2/);
   assert.match(scheduler, /rows\.every\(\(row:any\)=>row\.state==='INTEGRATED'\)/);
+  assert.match(scheduler, /reconcileWaitingDependencies/, 'integration and blocker facts re-evaluate waiting dependencies with the scheduler predicate');
+  const aut02 = read('naamive/runtime/node-web/src/automatic-assurance-integration.ts');
+  assert.match(aut02, /IntegrationCohort:v1/);
+  assert.match(aut02, /candidate:\$\{pipelineKey\(pipeline\)\}:/, 'candidate identity is versioned from the explicitly selected pipeline');
+  assert.match(aut02, /candidate-reassess:\$\{pipelineKey\(row\.pipeline_version\)\}:/, 'merge reassessment preserves the selected v1 or v2 lineage');
+  assert.match(aut02, /integration_candidate_member_reservations/);
+  const migration75 = read('naamive/runtime/node-web/migrations/075_phase_6_5_tst01_integration_cohort_v2.sql');
+  assert.match(migration75, /integration_pipeline_version/);
+  assert.match(migration75, /integration_candidate_member_active_reservation/);
+  const tst = read('naamive/orchestration/demand-intake/node-web-orchestration-platform/phase-6-5-implementation-tasks/TST-01-lifecycle-conformance-suite.md');
+  const cohort = read('naamive/orchestration/demand-intake/node-web-orchestration-platform/phase-6-5-implementation-tasks/AUT-02-v2-integration-cohort-prevalidation.md');
+  assert.match(tst, /AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2/);
+  assert.match(cohort, /ownership: TST-01/);
+  assert.doesNotMatch(cohort, /task: AUT-02/);
 });

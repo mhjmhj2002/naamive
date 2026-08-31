@@ -1,5 +1,7 @@
 ---
-task: AUT-02
+task: TST-01
+subwork: AUT-02-v2-integration-cohort
+ownership: TST-01
 document_type: corrective-architecture-prevalidation
 status: PREVALIDATION_READY_FOR_IMPLEMENTATION
 implementation_status: NOT_IMPLEMENTED
@@ -7,13 +9,14 @@ contract: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2
 supersedes_for_new_executions: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1
 preserves: [AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1, RequiredWorkItemSet:v1]
 discovered_by: TST-01
+corrects_historical_contract: AUT-02:v1
 ---
 
 # AUT-02 v2 — pré-validação corretiva de IntegrationCohort
 
 ## Decisão e conflito resolvido
 
-**PREVALIDATION: READY_FOR_IMPLEMENTATION.** Esta é uma correção aditiva de AUT-02 descoberta por TST-01; não é uma nova task e não altera registros nem a semântica histórica de `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`.
+**PREVALIDATION: READY_FOR_IMPLEMENTATION.** Este documento é subtrabalho corretivo de **TST-01**, sua task dona; não cria uma task AUT-02 independente. Ele corrige aditivamente o contrato histórico AUT-02 v1 para que TST-01 possa certificar o critério 18, sem alterar registros nem a semântica histórica de `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`. TST-01 só pode encerrar depois da certificação completa.
 
 V1 exige um único plano aprovado e igualdade completa com `RequiredWorkItemSet:v1` antes de formar uma candidate. Isso impede que Persistência integre e libere Métrica enquanto Interface aguarda prioridade; dois planos `APPROVED` tampouco são válidos. Para novas execuções, v2 introduz `IntegrationCohort:v1`: depois de `ACCEPT`, um WI aceito e merged integra em uma fronteira determinística e seus dependentes são reavaliados automaticamente. A aprovação continua cobrindo o plano inteiro e não cria gates adicionais.
 

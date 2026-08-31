@@ -12,7 +12,7 @@ import { enqueuePlan, MODULE_PLAN_VALIDATOR_VERSION, validatePlan, canonicalHash
 import { derivePlanStatus } from './plan-telemetry.js';
 import { developmentHealth } from './development-telemetry.js';
 import { modulePlanReview } from './module-plan-review.js';
-import { scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
+import { reconcileWaitingDependencies, scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
 import { requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
 import { macroLifecycleProjection } from './macro-lifecycle.js';
 import { automaticAssuranceIntegrationProjection, freezeWorkItemDeliveryCandidate, reassessProjectAutomaticCandidates, reemitCandidateAutomaticIntent, reemitWorkItemAutomaticIntent } from './automatic-assurance-integration.js';
@@ -42,10 +42,21 @@ export const completeDefinition=async(projectId:string,moduleId:string,body:Reco
 export const decideArchitecture=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};const m=(await c.query(`SELECT * FROM modules WHERE id=$1 AND project_id=$2 FOR UPDATE`,[moduleId,projectId])).rows[0];if(!m)throw new ApiError(404,'MODULE_NOT_FOUND');const gate=(await c.query(`SELECT * FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION' AND status='OPEN' FOR UPDATE`,[moduleId])).rows[0];if(!gate||Number(body.version)!==gate.version)throw new ApiError(409,'GATE_VERSION_CONFLICT');const approved=body.decision==='APPROVED',feedback=typeof body.feedback==='string'?body.feedback.trim():'';if(!approved&&!feedback)throw new ApiError(422,'GATE_FEEDBACK_REQUIRED');const correlation=randomUUID(),op=await operation(c,projectId,'DECIDE_ARCHITECTURE',idempotencyKey,correlation);let planned:any; if(approved){const target=await moduleTarget(c,m.state,'DECIDE_ARCHITECTURE');const artifacts=await evidence(c,projectId,'module-architecture',{module_id:moduleId,revision_id:m.current_revision_id,round_id:gate.round_id,decision:body.decision,alternatives:body.alternatives??[],consequences:body.consequences??[],risks:body.risks??[],correlation_id:correlation},op);await c.query(`UPDATE modules SET state=$2,version=version+1 WHERE id=$1`,[moduleId,target]);await c.query(`UPDATE module_rounds SET state=$2 WHERE id=$1`,[gate.round_id,target]);await c.query(`UPDATE module_gates SET status='APPROVED',decision=$2,feedback=$3,decided_at=clock_timestamp(),evidence=evidence||$4 WHERE id=$1`,[gate.id,body.decision,feedback,{architecture_hash:artifacts.json.hash}]);planned=await enqueuePlan(c,projectId,m,`plan-module:${moduleId}:initial`);}else await c.query(`UPDATE module_gates SET status='REJECTED',decision=$2,feedback=$3,decided_at=clock_timestamp() WHERE id=$1`,[gate.id,body.decision,feedback]);await event(c,projectId,approved?'ARCHITECTURE_APPROVED':'ARCHITECTURE_REJECTED',correlation,{module_id:moduleId,gate_id:gate.id,plan_operation_id:planned?.op,plan_job_id:planned?.job});return{operation_id:op,status:'ACCEPTED',plan_operation_id:planned?.op};});
 const legacyApproveModulePlan=async(..._args:any[])=>{throw new ApiError(410,'PHASE3_LEGACY_COMMAND_DISABLED');};
 export const approveModulePlan=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>{
-  const result=await withTransaction(async c=>{
+  const {schedule_eligible,...result}=await withTransaction(async c=>{
   await c.query(`SELECT pg_advisory_xact_lock(hashtextextended($1,0))`,[idempotencyKey]);
   const prior=await idem(c,idempotencyKey);
-  if(prior)return{operation_id:prior,status:'ACCEPTED',evidence_hash:null};
+  if(prior){
+    // Replays expose the immutable workflow selected by the original approval.
+    // They must neither infer it from replay input nor omit it.
+    const approved=(await c.query(`SELECT event.payload FROM operations
+      JOIN events AS event ON event.project_id=operations.project_id AND event.correlation_id=operations.correlation_id
+      WHERE operations.id=$2 AND operations.project_id=$1 AND event.event_type='MODULE_PLAN_APPROVED'
+      ORDER BY event.id DESC LIMIT 1 FOR SHARE`,[projectId,prior])).rows[0];
+    const workflow=approved?.payload?.work_item_workflow;
+    if(!workflow||workflow.workflow_code!=='WORK_ITEM_DELIVERY'||!Number.isInteger(Number(workflow.workflow_version)))
+      throw new ApiError(409,'MODULE_PLAN_APPROVAL_REPLAY_EVIDENCE_MISSING');
+    return{operation_id:prior,status:'ACCEPTED',evidence_hash:null,work_item_workflow:{workflow_code:workflow.workflow_code,workflow_version:Number(workflow.workflow_version)},schedule_eligible:false};
+  }
   const m=(await c.query(`SELECT m.*,r.payload revision_payload,r.criteria revision_criteria FROM modules m JOIN module_revisions r ON r.id=m.current_revision_id WHERE m.id=$1 AND m.project_id=$2 FOR UPDATE`,[moduleId,projectId])).rows[0];
   const p=(await c.query(`SELECT * FROM module_plan_revisions WHERE id=$1 AND module_id=$2 FOR UPDATE`,[body.plan_revision_id,moduleId])).rows[0];
   const g=(await c.query(`SELECT * FROM module_gates WHERE module_id=$1 AND plan_revision_id=$2 AND kind='MODULE_PLAN_APPROVAL' AND status='OPEN' FOR UPDATE`,[moduleId,body.plan_revision_id])).rows[0];
@@ -90,7 +101,7 @@ export const approveModulePlan=async(projectId:string,moduleId:string,body:Recor
     }
     const immutablePlanRevisionId=workflow.workflow_version===2?p.id:null;
     const immutablePlanWorkItemId=workflow.workflow_version===2?item.work_item_id:null;
-    await c.query(`INSERT INTO work_items(id,project_id,module_id,revision_id,round_id,title,state,payload,technology_baseline_revision_id,workflow_code,workflow_version,module_plan_revision_id,plan_work_item_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)`,[id,projectId,moduleId,m.current_revision_id,round.id,item.title,state,payload,m.technology_baseline_revision_id,workflow.workflow_code,workflow.workflow_version,immutablePlanRevisionId,immutablePlanWorkItemId]);
+    await c.query(`INSERT INTO work_items(id,project_id,module_id,revision_id,round_id,title,state,payload,technology_baseline_revision_id,workflow_code,workflow_version,module_plan_revision_id,plan_work_item_id,integration_pipeline_version) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,[id,projectId,moduleId,m.current_revision_id,round.id,item.title,state,payload,m.technology_baseline_revision_id,workflow.workflow_code,workflow.workflow_version,immutablePlanRevisionId,immutablePlanWorkItemId,p.integration_pipeline_version]);
     materialized.push({work_item_id:id,logical_id:item.work_item_id,state});
     for(const blocker of itemBlockers)await c.query(`INSERT INTO work_item_external_blockers(id,work_item_id,dependency_id,justification) VALUES($1,$2,$3,$4)`,[randomUUID(),id,blocker.dependency_id,blocker.justification]);
   }
@@ -104,9 +115,9 @@ export const approveModulePlan=async(projectId:string,moduleId:string,body:Recor
     await event(c,projectId,'MODULE_PLAN_EXTERNAL_BLOCKED',correlation,{module_id:moduleId,plan_revision_id:p.id,blocked_work_item_ids:blockedIds,work_item_workflow:workflow});
   }
   await event(c,projectId,'MODULE_PLAN_APPROVED',correlation,{module_id:moduleId,plan_revision_id:p.id,work_item_ids:ids,work_items:materialized,blocked_work_item_ids:blockedIds,work_item_workflow:workflow,dispatch_created:false});
-    return{operation_id:op,status:'ACCEPTED',work_item_ids:ids,blocked_work_item_ids:blockedIds,evidence_hash:p.json_artifact_hash,work_item_workflow:workflow};
+    return{operation_id:op,status:'ACCEPTED',work_item_ids:ids,blocked_work_item_ids:blockedIds,evidence_hash:p.json_artifact_hash,work_item_workflow:workflow,schedule_eligible:true};
   });
-  if(result.work_item_workflow?.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.work_item_workflow.workflow_version)===2) await scheduleEligibleWorkItems('MODULE_PLAN_APPROVED');
+  if(schedule_eligible&&result.work_item_workflow?.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.work_item_workflow.workflow_version)===2) await scheduleEligibleWorkItems('MODULE_PLAN_APPROVED');
   return result;
 };
 export const startModuleRevision=async(projectId:string,moduleId:string,body:Record<string,unknown>,idempotencyKey:string)=>withTransaction(async c=>{const prior=await idem(c,idempotencyKey);if(prior)return{operation_id:prior,status:'ACCEPTED'};const m=(await c.query(`SELECT * FROM modules WHERE id=$1 AND project_id=$2 FOR UPDATE`,[moduleId,projectId])).rows[0];if(!m)throw new ApiError(404,'MODULE_NOT_FOUND');const previous=m.current_revision_id,old=(await c.query(`SELECT * FROM module_revisions WHERE id=$1 FOR UPDATE`,[previous])).rows[0],rejectedGate=Boolean((await c.query(`SELECT 1 FROM module_gates WHERE module_id=$1 AND revision_id=$2 AND kind='MODULE_APPROVAL' AND status='REJECTED' FOR SHARE`,[moduleId,previous])).rowCount);if((old.status!=='REJECTED'&&!rejectedGate)||m.state!=='WAITING_FOR_MODULE_APPROVAL')throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');const payload={...old.payload,...body,module_key:m.module_key,schema_version:1,supersedes_revision_id:previous},baselineRevisionId=baselineReference(old.technology_baseline_revision_id),revision=randomUUID(),round=randomUUID(),correlation=randomUUID(),op=await operation(c,projectId,'RESUBMIT_MODULE_REVISION',idempotencyKey,correlation);await c.query(`UPDATE module_revisions SET status='SUPERSEDED' WHERE id=$1`,[previous]);await c.query(`INSERT INTO module_revisions(id,project_id,module_key,revision,payload,status,technology_baseline_revision_id,criteria) VALUES($1,$2,$3,$4,$5,'PENDING_APPROVAL',$6,$7::jsonb)`,[revision,projectId,m.module_key,Number(old.revision)+1,payload,baselineRevisionId,JSON.stringify(versionedCriteria(payload.acceptance_criteria))]);await c.query(`INSERT INTO module_rounds(id,module_id,revision_id,round_number,state) SELECT $1,$2,$3,coalesce(max(round_number),0)+1,'WAITING_FOR_MODULE_APPROVAL' FROM module_rounds WHERE module_id=$2`,[round,moduleId,revision]);await c.query(`UPDATE modules SET current_revision_id=$2,state='WAITING_FOR_MODULE_APPROVAL',version=version+1 WHERE id=$1`,[moduleId,revision]);const artifacts=await evidence(c,projectId,'module-definition',{...payload,module_id:moduleId,revision_id:revision,technology_baseline_revision_id:baselineRevisionId,round_id:round,correlation_id:correlation},op),gateId=randomUUID();await c.query(`INSERT INTO module_gates(id,project_id,module_id,revision_id,round_id,kind,evidence,technology_baseline_revision_id) VALUES($1,$2,$3,$4,$5,'MODULE_APPROVAL',$6,$7)`,[gateId,projectId,moduleId,revision,round,{definition_hash:artifacts.json.hash},baselineRevisionId]);await event(c,projectId,'MODULE_REVISION_STARTED',correlation,{module_id:moduleId,revision_id:revision,supersedes_revision_id:previous,technology_baseline_revision_id:baselineRevisionId});await event(c,projectId,'MODULE_RESUBMITTED',correlation,{module_id:moduleId,revision_id:revision,gate_id:gateId,technology_baseline_revision_id:baselineRevisionId});return{operation_id:op,status:'ACCEPTED',revision_id:revision,gate_id:gateId};});
@@ -386,7 +397,10 @@ export const resolveExternalBlocker=async(projectId:string,workItemId:string,bod
   await event(c,projectId,'WORK_ITEM_EXTERNAL_BLOCKER_RESOLVED',correlation,{work_item_id:workItemId,resolution,evidence_hash:artifact.json.hash});
     return{operation_id:op,status:'ACCEPTED'};
   });
-  if(result.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.workflow_version)===2&&result.state==='ELIGIBLE_FOR_DISPATCH') await scheduleWorkItem(projectId,workItemId,'EXTERNAL_BLOCKER_RESOLVED');
+  if(result.workflow_code==='WORK_ITEM_DELIVERY'&&Number(result.workflow_version)===2){
+    await scheduleWorkItem(projectId,workItemId,'EXTERNAL_BLOCKER_RESOLVED');
+    await reconcileWaitingDependencies('EXTERNAL_BLOCKER_RESOLVED',projectId);
+  }
   return result;
 };
 

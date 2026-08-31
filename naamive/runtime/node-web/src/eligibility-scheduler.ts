@@ -75,6 +75,21 @@ export const scheduleEligibleWorkItems=async(trigger='RECONCILE',limit=100)=>{
   return Promise.all(candidates.map((row:any)=>scheduleWorkItem(row.project_id,row.id,trigger)));
 };
 
+/** AUT-02 v2 integration and a resolved external blocker change facts used by
+ * the same scheduler predicate.  Reassess waiting rows through scheduleWorkItem
+ * rather than fabricating a state transition or dispatch in the caller. */
+export const reconcileWaitingDependencies=async(trigger='DEPENDENCY_REEVALUATION',projectId?:string,limit=100)=>{
+  const candidates=(await pool.query(`SELECT id,project_id FROM work_items
+    WHERE workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2
+      AND state='WAITING_FOR_DEPENDENCIES' AND ($1::text IS NULL OR project_id=$1)
+    ORDER BY created_at,id LIMIT $2`,[projectId??null,limit])).rows;
+  return Promise.all(candidates.map((row:any)=>scheduleWorkItem(row.project_id,row.id,trigger)));
+};
+
 /** Safety net only: events call scheduleWorkItem; recovery merely rediscovers
  * eligible rows left behind by a process crash or a lost event. */
-export const reconcileEligibilityScheduler=()=>scheduleEligibleWorkItems('RECONCILE');
+export const reconcileEligibilityScheduler=async()=>{
+  const waiting=await reconcileWaitingDependencies('RECONCILE');
+  const eligible=await scheduleEligibleWorkItems('RECONCILE');
+  return [...waiting,...eligible];
+};

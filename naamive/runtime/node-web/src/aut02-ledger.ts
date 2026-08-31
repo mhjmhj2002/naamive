@@ -2,8 +2,12 @@ import { randomUUID } from 'node:crypto';
 import { createHash } from 'node:crypto';
 import type { PoolClient } from 'pg';
 
-export const AUT02_PIPELINE_VERSION='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1';
-export const AUT02_POLICY_VERSION='AUT-02:v1';
+/** TST-01 selects v2 only for newly published plan revisions.  V1 rows remain
+ * historical data and are never upgraded or resumed as a v2 execution. */
+export const AUT02_PIPELINE_VERSION='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2';
+export const AUT02_POLICY_VERSION='AUT-02:v2';
+export const AUT02_V1_PIPELINE_VERSION='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1';
+export const AUT02_V1_POLICY_VERSION='AUT-02:v1';
 
 const canonicalJson=(value:unknown):string=>{
   const normalize=(item:any):any=>Array.isArray(item)?item.map(normalize):item&&typeof item==='object'?Object.fromEntries(Object.keys(item).sort().map(key=>[key,normalize(item[key])])):item;
@@ -69,10 +73,11 @@ export const recordAut02ReviewDecision=async(client:PoolClient,input:{
       return {stale:true};
     }
   }
+  const pipelineKey=row.pipeline_version===AUT02_V1_PIPELINE_VERSION?'v1':'v2';
   if(input.decision==='ACCEPT'){
     if(row.qa_result!=='PASS')throw new Error('AUT02_ACCEPT_WITHOUT_QA_PASS');
     await client.query(`UPDATE work_items SET state='ACCEPTED',version=version+1 WHERE id=$1 AND workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2 AND state IN ('INDEPENDENT_REVIEW','WAITING_FOR_INDEPENDENT_REVIEWER')`,[row.work_item_id]);
-    await enqueueAut02Intent(client,{projectId:row.project_id,kind:'MERGE_WORK_ITEM',idempotencyKey:`merge:v1:${row.id}`,correlationId:input.correlationId,deliveryCandidateId:row.id,workItemId:row.work_item_id,moduleId:row.module_id,moduleRevisionId:row.module_revision_id,moduleRoundId:row.module_round_id,evidenceRefs:[`qa_report:${row.id}`,`work_acceptance:${input.acceptanceId}`,`assurance_review:${input.reviewId}`,`review_decision:${input.reviewDecisionId}`]});
+    await enqueueAut02Intent(client,{projectId:row.project_id,kind:'MERGE_WORK_ITEM',idempotencyKey:`merge:${pipelineKey}:${row.id}`,correlationId:input.correlationId,deliveryCandidateId:row.id,workItemId:row.work_item_id,moduleId:row.module_id,moduleRevisionId:row.module_revision_id,moduleRoundId:row.module_round_id,evidenceRefs:[`qa_report:${row.id}`,`work_acceptance:${input.acceptanceId}`,`assurance_review:${input.reviewId}`,`review_decision:${input.reviewDecisionId}`]});
   }else if(input.decision==='REWORK'){
     await client.query(`UPDATE work_items SET state='REWORK_REQUIRED',version=version+1 WHERE id=$1 AND workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2 AND state NOT IN ('CANCELLED','INTEGRATED')`,[row.work_item_id]);
     await enqueueAut02Intent(client,{projectId:row.project_id,kind:'SCHEDULE_REWORK',idempotencyKey:`schedule-rework:v1:${row.id}:${input.reviewDecisionId}`,correlationId:input.correlationId,deliveryCandidateId:row.id,workItemId:row.work_item_id,moduleId:row.module_id,moduleRevisionId:row.module_revision_id,moduleRoundId:row.module_round_id,evidenceRefs:[`review_decision:${input.reviewDecisionId}`]});

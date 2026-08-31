@@ -19,7 +19,13 @@ export const commitMessage = (type:string, workItem:string, summary:string, meta
   if (!safe(type)||!safe(workItem)||!safe(meta.project)||!safe(meta.phase)||!safe(meta.execution)) throw new GitDeliveryError('GIT_DIVERGED','invalid Git delivery identifier');
   return `${type}(${workItem}): ${summary}\n\nNaamive-Project: ${meta.project}\nNaamive-Phase: ${meta.phase}\nNaamive-Execution: ${meta.execution}\nNaamive-Work-Item: ${workItem}`;
 };
-export const assertClean = (repository:string) => { if(git(repository,['status','--porcelain'])) throw new GitDeliveryError('GIT_TREE_DIRTY'); };
+export const assertClean = (repository:string) => {
+  // Active delivery worktrees are deliberately rooted here. They are managed
+  // through Git's worktree metadata and must not make the primary checkout
+  // look dirty to a subsequent AUT-02 phase merge.
+  const dirty=git(repository,['status','--porcelain','--untracked-files=all','--','.',':(exclude).naamive-worktrees/**']);
+  if(dirty) throw new GitDeliveryError('GIT_TREE_DIRTY');
+};
 export const createWorktree = (repository:string, worktree:string, branch:string, baseSha:string) => {
   assertClean(repository); if(!safe(branch)||!existsSync(repository)||existsSync(worktree)) throw new GitDeliveryError('GIT_DIVERGED');
   // Independent work items may execute in parallel.  Database delivery leases,
