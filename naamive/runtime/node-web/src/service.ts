@@ -3,10 +3,11 @@ import { execFileSync } from 'node:child_process';
 import { pool, withTransaction } from './db.js';
 import { config, containedPath } from './config.js';
 import { putArtifact, putArchiveRecord } from './artifacts.js';
-import { transitionTarget } from './workflow.js';
+import { selectedWorkflow, transitionTarget } from './workflow.js';
 import type pg from 'pg';
 import { publicEvent } from './projection.js';
 import { listProjectExecutionData } from './agent-execution-admin.js';
+import { macroLifecycleProjection } from './macro-lifecycle.js';
 
 type Intake = Record<string, unknown>;
 const fields = ['title', 'business_owner', 'business_problem', 'desired_outcome', 'success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions'];
@@ -59,10 +60,11 @@ export const createProject = async (body: Intake) => {
   const id = String(body.project_id ?? ''); if (!slug.test(id)) throw new ApiError(422, 'INTAKE_PROJECT_ID_INVALID');
   const binding = gitBinding(String(body.repository_path ?? ''), body.base_branch, body.dirty_tree_confirmation); const correlation = randomUUID();
   return withTransaction(async (client) => {
-    try { await client.query(`INSERT INTO projects(id,title,business_owner,submitted_by,created_by,updated_by,repository_path,repository_origin,repository_origin_normalized,base_branch,branch_base_source,initial_sha,dirty_tree_confirmed,dirty_tree_reason,dirty_tree_confirmed_by,draft)
-      VALUES($1,$2,$3,$4,$4,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`, [id, String(body.title ?? ''), String(body.business_owner ?? ''), config().operatorId, binding.repositoryPath, binding.origin, binding.normalizedOrigin, binding.base, binding.baseSource, binding.sha, binding.dirty, binding.dirtyReason, binding.dirty ? config().operatorId : null, body]); }
+    const discoveryWorkflow=await selectedWorkflow(client,'PROJECT_DISCOVERY','NEW_PROJECTS')??{workflow_code:'PROJECT_DISCOVERY',workflow_version:3};
+    try { await client.query(`INSERT INTO projects(id,title,business_owner,submitted_by,created_by,updated_by,repository_path,repository_origin,repository_origin_normalized,base_branch,branch_base_source,initial_sha,dirty_tree_confirmed,dirty_tree_reason,dirty_tree_confirmed_by,draft,selected_discovery_workflow_code,selected_discovery_workflow_version)
+      VALUES($1,$2,$3,$4,$4,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`, [id, String(body.title ?? ''), String(body.business_owner ?? ''), config().operatorId, binding.repositoryPath, binding.origin, binding.normalizedOrigin, binding.base, binding.baseSource, binding.sha, binding.dirty, binding.dirtyReason, binding.dirty ? config().operatorId : null, body,discoveryWorkflow.workflow_code,discoveryWorkflow.workflow_version]); }
     catch { throw new ApiError(409, 'INTAKE_PROJECT_ID_EXISTS'); }
-    await event(client, id, 'PROJECT_CREATED', correlation, { repository_origin: binding.origin, base_branch: binding.base, base_branch_source: binding.baseSource, initial_sha: binding.sha, dirty_tree_confirmed: binding.dirty }); return { project_id: id };
+    await event(client, id, 'PROJECT_CREATED', correlation, { repository_origin: binding.origin, base_branch: binding.base, base_branch_source: binding.baseSource, initial_sha: binding.sha, dirty_tree_confirmed: binding.dirty,selected_discovery_workflow:discoveryWorkflow }); return { project_id: id,selected_discovery_workflow:discoveryWorkflow };
   });
 };
 
@@ -99,8 +101,9 @@ export const startProductDiscovery = async (projectId: string, key: string) => {
   const existing = await client.query('SELECT id FROM operations WHERE idempotency_key=$1', [key]); if (existing.rowCount) return { operation_id: existing.rows[0].id, status: 'ACCEPTED' };
   if (row.state !== 'REGISTERED' || row.archived_at) throw new ApiError(409, 'WORKFLOW_TRANSITION_NOT_ALLOWED');
   const operationId=randomUUID(), jobId=randomUUID(), correlation=randomUUID();
-  const workflowVersion=3;
-  await client.query(`UPDATE projects SET workflow_code='PROJECT_DISCOVERY',workflow_version=$2,state='ANALYSIS_IN_PROGRESS',updated_at=now() WHERE id=$1`, [projectId,workflowVersion]);
+  if(row.selected_discovery_workflow_code!=='PROJECT_DISCOVERY'||Number(row.selected_discovery_workflow_version)!==3) throw new ApiError(409,'WORKFLOW_TRANSITION_NOT_ALLOWED');
+  const workflowVersion=Number(row.selected_discovery_workflow_version);
+  await client.query(`UPDATE projects SET workflow_code=selected_discovery_workflow_code,workflow_version=selected_discovery_workflow_version,state='ANALYSIS_IN_PROGRESS',updated_at=now() WHERE id=$1`, [projectId]);
   await client.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id,workflow_code,workflow_version) VALUES($1,$2,'PRODUCT_DISCOVERY','QUEUED',$3,$4,$5,'PROJECT_DISCOVERY',$6)`, [operationId,projectId,key,correlation,row.id ? (await client.query('SELECT id FROM intake_revisions WHERE project_id=$1 ORDER BY submitted_at DESC LIMIT 1',[projectId])).rows[0]?.id ?? null : null,workflowVersion]);
   const revisionId=(await client.query('SELECT revision_id FROM operations WHERE id=$1',[operationId])).rows[0].revision_id;
   await client.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,idempotency_key) VALUES($1,$2,$3,$4,'ANALYZE_PRODUCT_NEED',$5)`,[jobId,operationId,projectId,revisionId,`analysis:${projectId}:${operationId}`]);
@@ -150,11 +153,12 @@ export const archiveProject = async (projectId: string, body: Record<string, unk
   await event(client,projectId,'PROJECT_ARCHIVED',correlation,{...record,artifact_hash:artifact.hash}); return {project_id:projectId,state:target};
 });
 
-export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
-const projectedProjects = `SELECT p.id,p.title,p.state,p.updated_at,p.draft,sd.label AS status,sd.next_action,
+export const projectTimeline = async (projectId: string, after = 0) => (await pool.query('SELECT id,event_type,created_at AS occurred_at,workflow_code,workflow_version,payload FROM events WHERE project_id=$1 AND id > $2 ORDER BY id', [projectId, after])).rows.map(publicEvent);
+const projectedProjects = `SELECT p.id,p.title,p.workflow_code,p.workflow_version,p.selected_discovery_workflow_code,p.selected_discovery_workflow_version,p.state,coalesce(ws.metadata->>'canonical_state',p.state) AS canonical_state,p.updated_at,p.draft,sd.label AS status,sd.next_action,
   (SELECT event_type FROM events e WHERE e.project_id=p.id ORDER BY id DESC LIMIT 1) AS last_event
  FROM projects p
  LEFT JOIN workflow_definitions wd ON wd.code=p.workflow_code AND wd.version=p.workflow_version
+ LEFT JOIN workflow_states ws ON ws.workflow_id=wd.id AND ws.code=p.state
  LEFT JOIN state_status_mappings sm ON sm.workflow_id=wd.id AND sm.state_code=p.state AND sm.event_code IS NULL AND sm.status_type_code='JOURNEY' AND sm.audience_code='OPERATOR'
  LEFT JOIN status_definitions sd ON sd.code=sm.status_code AND sd.version=sm.status_definition_version`;
 export const listProjects = async (archived=false) => (await pool.query(`${projectedProjects} ${archived ? 'WHERE p.archived_at IS NOT NULL' : 'WHERE p.archived_at IS NULL'} ORDER BY p.updated_at DESC`)).rows;
@@ -169,9 +173,13 @@ export const projectDetail = async (projectId: string) => {
   const artifacts=await pool.query(`SELECT artifact_type,sha256,created_at FROM artifacts WHERE project_id=$1 ORDER BY created_at DESC`,[projectId]);
   const review=await pool.query(`SELECT metadata FROM artifacts WHERE project_id=$1 AND artifact_type='product-commitment-review' ORDER BY created_at DESC LIMIT 1`,[projectId]);
   const activeJob=await pool.query(`SELECT kind,heartbeat_at,lease_expires_at,available_at FROM jobs WHERE project_id=$1 AND status='LEASED' ORDER BY available_at DESC LIMIT 1`,[projectId]);
-  const currentModule=await pool.query(`SELECT state FROM modules WHERE project_id=$1 ORDER BY version DESC LIMIT 1`,[projectId]);
   const reviewData=(review.rows[0]?.metadata??null) as Record<string,unknown>|null;
   const runtimeData = config().runtimeProjectionEnabled ? await listProjectExecutionData(projectId) : { executions: [], attempts: [] };
-  const effectiveState=currentModule.rows[0]?.state??project.rows[0].state;
-  return { ...project.rows[0], ...display(effectiveState,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts };
+  const macroLifecycle=await macroLifecycleProjection(projectId);
+  // STATE_ACTION_PROJECTION:v1 forbids merging resource states into the project
+  // presentation. projectDetail keeps its legacy output shape for compatible
+  // consumers but derives display_status/status_reason from the project's own
+  // persisted state only — never from the latest module's state.
+  const effectiveState=project.rows[0].state;
+  return { ...project.rows[0], ...display(effectiveState,reviewData), gate: gate.rows[0] ?? null, operations: operations.rows, artifacts:artifacts.rows, review:reviewData, active_job:activeJob.rows[0] ?? null, agent_executions: runtimeData.executions, agent_attempts: runtimeData.attempts, macro_lifecycle:macroLifecycle };
 };

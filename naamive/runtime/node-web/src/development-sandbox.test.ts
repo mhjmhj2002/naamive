@@ -8,7 +8,7 @@ import { join } from 'node:path';
 process.env.NAAMIVE_ARTIFACT_STORE_URI ??= `file://${process.cwd()}/.development-sandbox-artifacts`;
 process.env.NAAMIVE_REPOSITORY_ROOTS ??= process.cwd();
 process.env.NAAMIVE_OPERATOR_ID ??= 'development-sandbox-tester';
-const { developmentSandboxArgs } = await import('./agent.js');
+const { developmentSandboxArgs, applyDeepseekDevelopmentFiles } = await import('./agent.js');
 
 const command = (file:string, args:string[], cwd:string) => new Promise<string>((resolve,reject) =>
   execFile(file,args,{cwd,encoding:'utf8'},(error,stdout) => error ? reject(error) : resolve(String(stdout)))
@@ -32,5 +32,17 @@ test('development sandbox permits allowlisted writes and an auditable Git commit
     assert.equal(await readFile(join(workspace,'src','allowed.ts'),'utf8'),'changed');
     await assert.rejects(readFile(join(workspace,'forbidden','file')));
     assert.match(await command('git',['log','-1','--format=%B'],workspace),/Naamive-Work-Item: sandbox-test/);
+  } finally { await rm(workspace,{recursive:true,force:true}); }
+});
+
+test('DeepSeek development output can replace only explicitly allowlisted files', async () => {
+  const workspace=await mkdtemp(join(tmpdir(),'naamive-deepseek-patch-'));
+  try {
+    await mkdir(join(workspace,'src'),{recursive:true});
+    await writeFile(join(workspace,'src','allowed.ts'),'before');
+    await applyDeepseekDevelopmentFiles(workspace,['src/allowed.ts'],{files:[{path:'src/allowed.ts',content:'after'}]});
+    assert.equal(await readFile(join(workspace,'src','allowed.ts'),'utf8'),'after');
+    await assert.rejects(applyDeepseekDevelopmentFiles(workspace,['src/allowed.ts'],{files:[{path:'outside.ts',content:'blocked'}]}),/DEEPSEEK_INVALID_PATCH/);
+    await assert.rejects(readFile(join(workspace,'outside.ts')));
   } finally { await rm(workspace,{recursive:true,force:true}); }
 });

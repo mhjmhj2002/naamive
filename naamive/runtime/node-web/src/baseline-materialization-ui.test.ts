@@ -4,16 +4,23 @@ import test from 'node:test';
 
 const page = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
 
-test('F5-14 UI blocks v3 materialization before baseline approval and exposes only approved choices', () => {
-  assert.match(page, /technology-baseline\/materialization-options/);
-  assert.match(page, /options\.baseline_required&&!approved\.length/);
-  assert.match(page, /Technology Baseline precisa ser aprovada antes da materialização/);
-  assert.match(page, /approved\.length>1/);
-  assert.match(page, /technology_baseline_revision_id:select\.value/);
-  assert.match(page, /module_key:key\.value\.trim/);
+test('UI-01 renders materialization only from the canonical action descriptor', () => {
+  assert.match(page, /renderProjection\(projection\)/);
+  assert.match(page, /renderStopSurfaces\(projection\)/);
+  assert.match(page, /surface\.action_descriptor_id/);
+  assert.match(page, /descriptors\.get\(surface\.action_descriptor_id\)/);
+  assert.match(page, /descriptor\.command\.href/);
+  assert.match(page, /descriptor\.input_binding\.fields/);
+  assert.match(page, /buildActionPayload\(new FormData\(form\), descriptor\.input_binding\.fields \|\| \[\]\)/);
+  assert.doesNotMatch(page, /descriptor\.input\.schema\.properties/);
+  assert.doesNotMatch(page, /technology-baseline\/materialization-options/);
+  assert.doesNotMatch(page, /\?phase3=true/);
+  assert.doesNotMatch(page, /baseline_required/);
 });
 
-test('F5-14 UI preserves materialization for legacy projects', () => {
-  assert.match(page, /if\(options\.baseline_required&&!approved\.length\)/);
-  assert.match(page, /section\.append\(form\);box\.append\(section\)/);
+test('UI-01 generic action renderer supports server-published enum choices without legacy baseline logic', () => {
+  assert.match(page, /Array\.isArray\(schema\.enum\)/);
+  assert.match(page, /element\('select', 'form-select form-select-sm'\)/);
+  assert.match(page, /schema\.enum_labels\?\.\[value\] \|\| value/);
+  assert.doesNotMatch(page, /renderProject\s*=/);
 });

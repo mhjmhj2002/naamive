@@ -5,6 +5,7 @@ import { MODULE_PLAN_SCHEMA_VERSION, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_
 
 export type SeededPlanQa = { command: string; cwd: string; timeout_seconds: number; kind?: string };
 export type SeededPlanWorkItem = {
+  logical_id?: string;
   title: string;
   allowlist: string[];
   denylist: string[];
@@ -12,6 +13,7 @@ export type SeededPlanWorkItem = {
   acceptance_criteria?: string[];
   inputs?: string[];
   qa_matrix: SeededPlanQa[];
+  depends_on_ids?: string[];
 };
 
 export type SeededPlan = { plan_revision_id: string; gate_id: string; version: number };
@@ -27,7 +29,7 @@ export type SeededPlan = { plan_revision_id: string; gate_id: string; version: n
  * deterministic controlled fixture cannot express. No agent or worker call
  * happens here, so no real Codex invocation can ever occur.
  */
-export const seedPlanRevision = async (projectId: string, moduleId: string, items: SeededPlanWorkItem[]): Promise<SeededPlan> =>
+export const seedPlanRevision = async (projectId: string, moduleId: string, items: SeededPlanWorkItem[], workItemWorkflowVersion = 2): Promise<SeededPlan> =>
   withTransaction(async (c) => {
     const m = (await c.query(`SELECT m.*, r.payload revision_payload, r.criteria revision_criteria FROM modules m JOIN module_revisions r ON r.id=m.current_revision_id WHERE m.id=$1 AND m.project_id=$2 FOR UPDATE`, [moduleId, projectId])).rows[0];
     if (!m) throw new Error('MODULE_NOT_FOUND');
@@ -72,7 +74,7 @@ export const seedPlanRevision = async (projectId: string, moduleId: string, item
         kind: q.kind ?? kind
       }));
       return {
-        work_item_id: `wi-${randomUUID().slice(0, 8)}`,
+        work_item_id: item.logical_id ?? `wi-${randomUUID().slice(0, 8)}`,
         title: item.title,
         objective,
         inputs: item.inputs ?? ['approved module definition'],
@@ -80,7 +82,7 @@ export const seedPlanRevision = async (projectId: string, moduleId: string, item
         acceptance_criteria: item.acceptance_criteria ?? criterionIds.map((criterion_id: string) => `Criterion ${criterion_id} is demonstrably satisfied`),
         allowlist: item.allowlist,
         denylist: item.denylist,
-        depends_on_ids: [],
+        depends_on_ids: item.depends_on_ids ?? [],
         criterion_ids: criterionIds,
         qa_matrix,
         risks: ['Validate integration'],
@@ -114,9 +116,9 @@ export const seedPlanRevision = async (projectId: string, moduleId: string, item
     if (!round) throw new Error('MODULE_ROUND_NOT_FOUND');
     const gateId = randomUUID();
     const jsonHash = canonicalHash(payload);
-    await c.query(`INSERT INTO module_plan_revisions(id,project_id,module_id,revision_number,module_revision_id,technology_baseline_revision_id,payload,payload_hash,json_artifact_hash,markdown_artifact_hash,author_id,context_schema_version,context_hash,validator_version,validation_hash,status,context_payload)
-      VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$9,'test-operator',$10,$11,$12,$13,'PLAN_PROPOSED',$14)`,
-      [id, projectId, moduleId, m.current_revision_id, m.technology_baseline_revision_id, payload, jsonHash, jsonHash, `md-${jsonHash}`, contextSchema, contextHash, MODULE_PLAN_VALIDATOR_VERSION, payload.validation_hash, context]);
+    await c.query(`INSERT INTO module_plan_revisions(id,project_id,module_id,revision_number,module_revision_id,technology_baseline_revision_id,payload,payload_hash,json_artifact_hash,markdown_artifact_hash,author_id,context_schema_version,context_hash,validator_version,validation_hash,status,context_payload,work_item_workflow_code,work_item_workflow_version)
+      VALUES($1,$2,$3,1,$4,$5,$6,$7,$8,$9,'test-operator',$10,$11,$12,$13,'PLAN_PROPOSED',$14,'WORK_ITEM_DELIVERY',$15)`,
+      [id, projectId, moduleId, m.current_revision_id, m.technology_baseline_revision_id, payload, jsonHash, jsonHash, `md-${jsonHash}`, contextSchema, contextHash, MODULE_PLAN_VALIDATOR_VERSION, payload.validation_hash, context, workItemWorkflowVersion]);
     await c.query(`INSERT INTO module_gates(id,project_id,module_id,revision_id,round_id,kind,plan_revision_id,evidence,technology_baseline_revision_id)
       VALUES($1,$2,$3,$4,$5,'MODULE_PLAN_APPROVAL',$6,$7,$8)`,
       [gateId, projectId, moduleId, m.current_revision_id, round.id, id, { json_hash: jsonHash }, m.technology_baseline_revision_id]);
@@ -129,7 +131,7 @@ export const seedPlanRevision = async (projectId: string, moduleId: string, item
   });
 
 /** Convenience: seed a plan revision and immediately approve it, returning the approveModulePlan result. */
-export const seedAndApprovePlan = async (projectId: string, moduleId: string, items: SeededPlanWorkItem[], approveModulePlan: (projectId: string, moduleId: string, body: Record<string, unknown>, idempotencyKey: string) => Promise<any>, idempotencyKey: string) => {
-  const seeded = await seedPlanRevision(projectId, moduleId, items);
+export const seedAndApprovePlan = async (projectId: string, moduleId: string, items: SeededPlanWorkItem[], approveModulePlan: (projectId: string, moduleId: string, body: Record<string, unknown>, idempotencyKey: string) => Promise<any>, idempotencyKey: string, workItemWorkflowVersion = 2) => {
+  const seeded = await seedPlanRevision(projectId, moduleId, items, workItemWorkflowVersion);
   return approveModulePlan(projectId, moduleId, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }, idempotencyKey);
 };

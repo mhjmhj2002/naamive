@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/common",
+  "$defs": {
+    "uuid": { "type": "string", "format": "uuid" },
+    "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "classification": { "enum": ["PUBLIC", "INTERNAL", "CONFIDENTIAL", "RESTRICTED"] },
+    "mode": { "enum": ["PRODUCE", "REVIEW"] },
+    "acceptanceState": { "enum": ["PENDING_PRODUCE", "PENDING_REVIEW", "WAITING_FOR_INDEPENDENT_REVIEWER", "ACCEPTED", "REWORK_REQUIRED", "BLOCKED", "ESCALATED", "CANCELLED"] },
+    "reviewDecision": { "enum": ["ACCEPT", "REWORK", "BLOCK", "ESCALATE"] },
+    "blockCategory": { "enum": ["TECHNICAL", "REQUIREMENT_AMBIGUITY", "ARCHITECTURE_CONFLICT", "DEPENDENCY", "ENVIRONMENT", "EXTERNAL_SERVICE", "TEST_FAILURE", "SECURITY", "POLICY", "MISSING_INFORMATION"] },
+    "blockSeverity": { "enum": ["CRITICAL", "HIGH", "MEDIUM", "LOW"] },
+    "blockState": { "enum": ["OPEN", "DIAGNOSING", "SOLUTION_PROPOSED", "RESOLUTION_SELECTED", "RESOLVING", "RESOLVED", "ESCALATED", "PAUSED", "CANCELLED"] },
+    "artifactReference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactId", "sha256", "schemaVersion"],
+      "properties": {
+        "artifactId": { "$ref": "#/$defs/uuid" },
+        "sha256": { "$ref": "#/$defs/sha256" },
+        "schemaVersion": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "sanitizedValue": {
+      "anyOf": [
+        { "type": ["string", "number", "integer", "boolean", "null"] },
+        { "type": "array", "maxItems": 200, "items": { "$ref": "#/$defs/sanitizedValue" } },
+        { "$ref": "#/$defs/sanitizedObject" }
+      ]
+    },
+    "sanitizedObject": {
+      "type": "object",
+      "propertyNames": { "not": { "pattern": "(?:prompt|payload|stdout|stderr|secret|token|password|api[_-]?key|working[_-]?directory|repository[_-]?path|path)$" } },
+      "additionalProperties": { "$ref": "#/$defs/sanitizedValue" }
+    }
+  }
+}

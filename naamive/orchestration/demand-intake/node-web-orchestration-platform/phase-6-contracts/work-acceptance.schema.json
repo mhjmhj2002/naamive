@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/work-acceptance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "acceptanceId", "executionId", "projectId", "correlationId", "policyId", "policyVersion", "version", "classification", "state", "mode", "idempotencyKey"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "acceptanceId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "executionId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "projectId": { "type": "string", "minLength": 1, "maxLength": 255 },
+    "correlationId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "policyId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "policyVersion": { "type": "integer", "minimum": 1 },
+    "version": { "type": "integer", "minimum": 1 },
+    "classification": { "$ref": "naamive://assurance/v1/common#/$defs/classification" },
+    "state": { "$ref": "naamive://assurance/v1/common#/$defs/acceptanceState" },
+    "mode": { "$ref": "naamive://assurance/v1/common#/$defs/mode" },
+    "outputReference": { "$ref": "naamive://assurance/v1/common#/$defs/artifactReference" },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 255 }
+  }
+}

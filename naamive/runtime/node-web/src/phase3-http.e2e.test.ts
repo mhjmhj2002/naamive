@@ -16,12 +16,14 @@ if (!databaseUrl) {
   // requires a plan_revision_id produced by the agent. The controlled adapter
   // is the deterministic non-production fixture, so no real Codex call occurs.
   process.env.NAAMIVE_AGENT_ADAPTER = 'controlled';
+  process.env.NAAMIVE_DEVELOPMENT_EXECUTOR = 'controlled';
   process.env.NAAMIVE_RUNTIME_ENVIRONMENT = 'test';
 
   const { pool } = await import('./db.js');
   const { createApiServer } = await import('./server.js');
   const { runOnce } = await import('./worker.js');
   const { seedPlanRevision } = await import('./test-plan-helper.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
 
   type DisposableRepo = { root: string; path: string; sha: string };
   const git = (cwd: string, ...args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
@@ -53,8 +55,10 @@ if (!databaseUrl) {
     for (const sql of [
       'DELETE FROM events WHERE project_id=$1', 'DELETE FROM artifacts WHERE project_id=$1',
       'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM integration_attempts WHERE project_id=$1',
+      'DELETE FROM recovery_decisions WHERE project_id=$1', 'DELETE FROM work_item_scheduling_decisions WHERE project_id=$1',
       'DELETE FROM rework_gates WHERE project_id=$1', 'DELETE FROM rework_decisions WHERE project_id=$1',
       'DELETE FROM finding_work_items WHERE finding_id IN (SELECT id FROM findings WHERE project_id=$1)',
+      'DELETE FROM runtime_diagnostics WHERE work_item_id IN (SELECT id FROM work_items WHERE project_id=$1)',
       'DELETE FROM findings WHERE project_id=$1', 'DELETE FROM integration_candidates WHERE project_id=$1', 'DELETE FROM jobs WHERE project_id=$1',
       'DELETE FROM deliveries WHERE project_id=$1', 'DELETE FROM worktrees WHERE project_id=$1',
       'DELETE FROM work_items WHERE project_id=$1', 'DELETE FROM module_gates WHERE project_id=$1',
@@ -82,12 +86,13 @@ if (!databaseUrl) {
     });
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state)
       VALUES($1,'HTTP','Ops','test',$2,'test://origin','integration',$3,'{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`, [projectId, repo.path, repo.sha]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);t.after(session.cleanup);
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
     serverListening = true;
     const address = server.address() as { port: number };
     const base = `http://127.0.0.1:${address.port}`;
     const post = async (path: string, body: Record<string, unknown> = {}, expected = 202) => {
-      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
+      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { ...session.headers,'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
       const responseBody = await response.text();
       assert.equal(response.status, expected, responseBody);
       return JSON.parse(responseBody) as Record<string, any>;
@@ -98,7 +103,7 @@ if (!databaseUrl) {
     // The initial module gate must give the web client the complete business
     // proposal.  This is deliberately checked before the approval changes the
     // module state, because this is the operator's informed-decision screen.
-    const proposal = await (await fetch(`${base}/api/projects/${projectId}?phase3=true`)).json() as { modules: Array<Record<string, unknown>>; gates: Array<Record<string, unknown>> };
+    const proposal = await (await fetch(`${base}/api/projects/${projectId}?phase3=true`,{headers:session.headers})).json() as { modules: Array<Record<string, unknown>>; gates: Array<Record<string, unknown>> };
     assert.deepEqual(proposal.modules[0] && {
       module_key: proposal.modules[0].module_key, name: proposal.modules[0].name, objective: proposal.modules[0].objective,
       scope: proposal.modules[0].scope, out_of_scope: proposal.modules[0].out_of_scope,
@@ -109,7 +114,8 @@ if (!databaseUrl) {
     });
     assert.ok(proposal.gates.some(gate => gate.kind === 'MODULE_APPROVAL' && gate.status === 'OPEN' && gate.module_id === moduleId));
     const page = await (await fetch(base)).text();
-    for (const copy of ['Revise a proposta antes de aprovar', 'O que faz parte', 'O que não faz parte', 'Dependências', 'Como saberemos que deu certo?', 'não aprova uma entrega de software, não faz deploy']) assert.match(page, new RegExp(copy));
+    for (const copy of ['A visualização de detalhe é uma única projeção autorizada do servidor.', 'Superfícies de parada', 'Ações permitidas']) assert.match(page, new RegExp(copy));
+    assert.doesNotMatch(page, /\?phase3=true/, 'the browser does not revive the retired phase-specific projection');
     const approval = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0];
     await post(`/api/projects/${projectId}/modules/${moduleId}/decision`, { decision: 'APPROVED', version: approval.version });
     await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
@@ -122,8 +128,8 @@ if (!databaseUrl) {
     const seeded = await seedPlanRevision(projectId, moduleId, [
       { title: 'Approved HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] },
       { title: 'Reworked but pending HTTP item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'grep -q reworked README.md', cwd: '.', timeout_seconds: 10 }] }
-    ]);
-    const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`);
+    ], 1);
+    const reviewResponse = await fetch(`${base}/api/projects/${projectId}?phase3=true`,{headers:session.headers});
     assert.equal(reviewResponse.status, 200);
     const reviewProjection: any = await reviewResponse.json();
     assert.equal('plans' in reviewProjection, false);
@@ -146,7 +152,10 @@ if (!databaseUrl) {
     writeFileSync(join(firstTree.path, 'outside.txt'), 'forbidden\n');
     const rejectedQa = await post(`/api/projects/${projectId}/work-items/${item}/qa`, { sha: 'untrusted', worktree_path: '/untrusted', results: ['untrusted'], commits: ['untrusted'] }, 409);
     assert.equal(rejectedQa.code, 'GIT_DIVERGED');
-    assert.equal((await pool.query('SELECT state FROM work_items WHERE id=$1', [item])).rows[0].state, 'DEVELOPMENT_IN_PROGRESS');
+    // The development worker already published evidence and moved the item to
+    // QA. A rejected, untrusted QA request must leave that canonical state
+    // untouched so a later governed QA submission can proceed.
+    assert.equal((await pool.query('SELECT state FROM work_items WHERE id=$1', [item])).rows[0].state, 'QA_IN_PROGRESS');
     rmSync(join(firstTree.path, 'outside.txt'));
 
     const firstCommit = commit(firstTree.path, item, 'execution-one', 'first delivery\n');
@@ -196,9 +205,10 @@ if (!databaseUrl) {
     const repo = createRepository(); const projectId = `phase3-reconcile-${randomUUID().slice(0, 8)}`; const server = createApiServer(); let serverListening = false;
     t.after(async () => { try { if (serverListening) await new Promise<void>((resolve) => server.close(() => resolve())); await cleanupProject(projectId); } finally { rmSync(repo.root, { recursive: true, force: true }); } });
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state) VALUES($1,'Reconcile','Ops','test',$2,'test://origin','integration',$3,'{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`, [projectId, repo.path, repo.sha]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);t.after(session.cleanup);
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve)); serverListening = true; const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
     const post = async (path: string, body: Record<string, unknown> = {}) => {
-      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
+      const response = await fetch(`${base}${path}`, { method: 'POST', headers: { ...session.headers,'content-type': 'application/json', 'idempotency-key': randomUUID() }, body: JSON.stringify(body) });
       const responseBody = await response.text();
       assert.equal(response.status, 202, responseBody);
       return JSON.parse(responseBody) as Record<string, any>;
@@ -206,7 +216,7 @@ if (!databaseUrl) {
     const module = await post(`/api/projects/${projectId}/modules`, { module_key: `reconcile-${expected.toLowerCase()}`, name: 'Reconcile', objective: 'prove', scope: ['runtime'], out_of_scope: [], dependencies: [], acceptance_criteria: ['passes'] }); const moduleId = module.module_id;
     const gate = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0]; await post(`/api/projects/${projectId}/modules/${moduleId}/decision`, { decision: 'APPROVED', version: gate.version }); await post(`/api/projects/${projectId}/modules/${moduleId}/definition`);
     const architecture = (await pool.query("SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'", [moduleId])).rows[0]; await post(`/api/projects/${projectId}/modules/${moduleId}/architecture`, { decision: 'APPROVED', version: architecture.version });
-    const seeded = await seedPlanRevision(projectId, moduleId, [{ title: 'Reconcile item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] }]); const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }); const item = plan.work_item_ids[0]; await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
+    const seeded = await seedPlanRevision(projectId, moduleId, [{ title: 'Reconcile item', inputs: ['contract'], allowlist: ['README.md'], denylist: ['.env'], output: 'evidence', acceptance_criteria: ['passes'], qa_matrix: [{ command: 'true', cwd: '.', timeout_seconds: 10 }] }], 1); const plan = await post(`/api/projects/${projectId}/modules/${moduleId}/plan`, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }); const item = plan.work_item_ids[0]; await post(`/api/projects/${projectId}/work-items/${item}/development`); await runOnce(projectId);
     const tree = (await pool.query("SELECT path,branch FROM worktrees WHERE work_item_id=$1 AND state='ACTIVE'", [item])).rows[0];
     if (expected === 'DIRTY') writeFileSync(join(tree.path, 'README.md'), 'dirty\n', { flag: 'a' });
     if (expected === 'DIVERGED') {
@@ -226,15 +236,17 @@ if (!databaseUrl) {
     const projectId=`phase3-sse-${randomUUID().slice(0,8)}`, approved=randomUUID(), rejected=randomUUID(), server=createApiServer();
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state)
       VALUES($1,'SSE','Ops','test','/not-exposed','test://origin','integration','safe-sha','{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`,[projectId]);
+    const session=await testAuthenticatedHeaders(projectId,[{role_code:'OPERATOR',action_code:'READ_PROJECT'}]);t.after(session.cleanup);
     const correlation=randomUUID();
     const first=(await pool.query(`INSERT INTO events(project_id,event_type,correlation_id,payload) VALUES($1,'QA_APPROVED',$2,$3) RETURNING id`,[projectId,correlation,{work_item_id:approved,head_sha:'approved-sha',worktree_path:'/host/private',stdout:'raw'}])).rows[0].id;
     await pool.query(`INSERT INTO events(project_id,event_type,correlation_id,payload) VALUES($1,'QA_REJECTED',$2,$3),($1,'REWORK_ESCALATED',$2,$4),($1,'INTEGRATION_ARCHIVED',$2,$5)`,[projectId,correlation,{work_item_id:rejected,head_sha:'rejected-sha',command:'private'},{work_item_id:rejected,prompt:'private',reason:'timeout'},{candidate_id:randomUUID(),path:'/host/private'}]);
     await new Promise<void>(resolve=>server.listen(0,'127.0.0.1',resolve)); const base=`http://127.0.0.1:${(server.address() as {port:number}).port}`;
     t.after(async()=>{await new Promise<void>(resolve=>server.close(()=>resolve()));await cleanupProject(projectId);});
-    const read=async(after:number)=>{const response=await fetch(`${base}/api/projects/${projectId}/events?after=${after}`);const reader=response.body!.getReader(),chunk=await reader.read();await reader.cancel();return new TextDecoder().decode(chunk.value);};
+    const read=async(after:number)=>{const response=await fetch(`${base}/api/projects/${projectId}/events?after=${after}`,{headers:session.headers});const reader=response.body!.getReader(),chunk=await reader.read();await reader.cancel();return new TextDecoder().decode(chunk.value);};
     const replay=await read(0), ids=[...replay.matchAll(/^id: (\d+)$/gm)].map(match=>Number(match[1]));
     assert.deepEqual(ids,[...new Set(ids)]); assert.equal(ids.length,4); assert.match(replay,/approved-sha/); assert.doesNotMatch(replay,/host\/private|raw|private/);
-    const resumed=await read(Number(first)); assert.doesNotMatch(resumed,/event: QA_APPROVED/); assert.match(resumed,/event: QA_REJECTED/); assert.match(await (await fetch(base)).text(),/INTEGRATION_ARCHIVED/);
+    const resumed=await read(Number(first)); assert.doesNotMatch(resumed,/event: QA_APPROVED/); assert.match(resumed,/event: QA_REJECTED/);
+    const page=await (await fetch(base)).text(); assert.match(page,/stream\.onmessage = invalidate/); assert.match(page,/appendEvent\(event\.data\)/);
   });
   after(() => assert.deepEqual(readdirSync(process.cwd()).filter(name => name.startsWith('.phase3-http-')), [], 'HTTP acceptance left temporary repositories behind'));
 }

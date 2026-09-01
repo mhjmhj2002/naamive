@@ -5,6 +5,16 @@ status: DONE
 
 # F5-23 — Decomposição autônoma e auditável do plano de módulo
 
+## Nota aditiva de reconciliação F6.5 — 2026-09-01
+
+F5-23 entregou a decomposição validada, snapshots e o gate único do plano como
+evolução de F5-22. Sua entrega histórica não incluiu, por si só, a conformidade
+transversal posterior de lifecycle, assurance, recovery, UI e integração. A
+Fase 6.5 conectou novos work items ao `WORK_ITEM_DELIVERY:v2`, ao scheduler e
+aos handoffs de assurance versionados; a certificação dessa expansão está em
+TST-01. Esta nota preserva a autoria e a evidência de F5-23 sem reescrever seu
+escopo histórico.
+
 ## Contexto
 
 F5-22 criou o ciclo de proposta, revisão e aprovação única, mas o fallback

@@ -19,6 +19,7 @@ else {
   const { runOnce } = await import('./worker.js');
   const { materializeModule } = await import('./phase3.js');
   const { putArtifact } = await import('./artifacts.js');
+  const { buildStateActionProjection } = await import('./state-action-projection.js');
 
   const publish = async (n = Date.now() * 100 + Math.floor(Math.random() * 99)) => { const seed: any = structuredClone(await loadCatalogSeedPackage()); for (const key of ['categories', 'catalogItems', 'profiles', 'profileItems', 'compatibilityRules', 'catalogRevision']) seed[key].catalog_revision = n; seed.catalogRevision.records[0].catalog_revision = n; seed.catalogRevision.records[0].content_hash = catalogPackageHash(await validateTechnologyCatalogSeedPackage(seed)); return publishTechnologyCatalog(seed, 'baseline-revision-tester', randomUUID()); };
   const inventory = async (project: string, catalogRevisionId: string) => { const intake = (await pool.query(`SELECT id FROM intake_revisions WHERE project_id=$1 LIMIT 1`, [project])).rows[0].id, operation = randomUUID(), job = randomUUID(); await pool.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id) VALUES($1,$2,'TECHNOLOGY_INVENTORY','SUCCEEDED',$3,$4,$5)`, [operation, project, `revision-inventory:${operation}`, randomUUID(), intake]); await pool.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,status,idempotency_key,completed_at) VALUES($1,$2,$3,$4,'START_TECHNOLOGY_INVENTORY','COMPLETED',$5,clock_timestamp())`, [job, operation, project, intake, `revision-inventory-job:${job}`]); await pool.query(`INSERT INTO technology_inventory(id,project_id,project_key,repository_sha,job_id,technology_catalog_revision_id,source_path,detector_code,confidence,value,resolution_result) VALUES($1,$2::uuid,$2,'000',$3,$4,'package.json','TEST',1,'TEST','UNKNOWN_CATALOG_ITEM')`, [randomUUID(), project, job, catalogRevisionId]); await putArtifact(pool as any, project, 'technology-inventory', JSON.stringify({ technology_catalog_revision_id: catalogRevisionId, evidence_hash: 'a'.repeat(64) }), job); };
@@ -27,6 +28,93 @@ else {
   const createSuccessor = async (project: string, predecessor: string, key: string) => { const started: any = await startTechnologyBaselineRevision(project, predecessor, key); await runOnce(project); const context: any = (await pool.query(`SELECT * FROM technology_selection_contexts WHERE project_key=$1 ORDER BY created_at DESC LIMIT 1`, [project])).rows[0]; await inventory(project, context.technology_catalog_revision_id); const draft: any = await withTransaction(client => createTechnologyBaselineDraft(client, project)); return { started, context, draft }; };
 
   test.after(() => pool.end());
+  test('UI-01 publishes materialization from the canonical projection only for eligible v3 and explicit legacy workflows', async t => {
+    const principalId = randomUUID(), principal = { id: principalId, type: 'HUMAN' as const, username: `materialization-projection-${principalId.slice(0, 8)}` };
+    const grants: string[] = [];
+    const grant = async (projectId: string) => {
+      const id = randomUUID(); grants.push(id);
+      await pool.query(`INSERT INTO auth_role_grants(id,principal_id,role_code,action_code,project_id) VALUES($1,$2,'OPERATOR',$3,$4)`, [id, principalId, 'READ_PROJECT', projectId]);
+      const operate = randomUUID(); grants.push(operate);
+      await pool.query(`INSERT INTO auth_role_grants(id,principal_id,role_code,action_code,project_id) VALUES($1,$2,'OPERATOR',$3,$4)`, [operate, principalId, 'OPERATE_PROJECT', projectId]);
+    };
+    const transientProjects: string[] = [];
+    t.after(async () => {
+      for (const projectId of transientProjects) await pool.query(`DELETE FROM projects WHERE id=$1`, [projectId]);
+      await pool.query(`DELETE FROM auth_role_grants WHERE id = ANY($1::uuid[])`, [grants]);
+      await pool.query(`DELETE FROM auth_principals WHERE id=$1`, [principalId]);
+    });
+    await pool.query(`INSERT INTO auth_principals(id,principal_type,username) VALUES($1,'HUMAN',$2)`, [principalId, principal.username]);
+
+    const noBaseline = await setup();
+    await grant(noBaseline.project);
+    await pool.query(`UPDATE projects SET state='READY_FOR_MODULE_MATERIALIZATION' WHERE id=$1`, [noBaseline.project]);
+    assert.equal((await buildStateActionProjection(noBaseline.project, principal)).allowed_actions.some(action => action.code === 'MATERIALIZE_MODULE'), false, 'v3 fails closed before an approved baseline exists');
+
+    const pending = await setup();
+    await grant(pending.project);
+    const submitted: any = await submitTechnologyBaseline(pending.project, pending.first, `projection-pending:${pending.project}`);
+    const pendingProjection = await buildStateActionProjection(pending.project, principal);
+    assert.deepEqual(pendingProjection.resources.technology_baseline, {
+      revision_id: pending.first, revision_number: 1, revision_status: 'PENDING_APPROVAL', technology_catalog_revision_id: pending.catalog,
+      gate_id: submitted.gate_id, gate_status: 'OPEN', gate_version: 1, opened_at: pendingProjection.resources.technology_baseline?.opened_at,
+    }, 'the projection allowlists only the current v3 baseline decision facts');
+    const pendingDescriptor = pendingProjection.allowed_actions.find(action => action.code === 'DECIDE_TECHNOLOGY_BASELINE');
+    assert.ok(pendingDescriptor, 'the explicit v3 adapter publishes the baseline decision only for an open pending gate');
+    assert.deepEqual(pendingDescriptor.target, { resource_kind: 'GATE', resource_id: submitted.gate_id });
+    assert.deepEqual(pendingDescriptor.command, { method: 'POST', href: `/api/projects/${pending.project}/technology-baselines/${pending.first}/decision`, idempotency_required: true });
+    assert.equal(pendingDescriptor.expected.gate_version, 1); assert.equal(pendingDescriptor.expected.as_of_event_id, pendingProjection.as_of_event_id);
+    assert.deepEqual(pendingDescriptor.input.schema?.properties.decision.enum, ['APPROVED', 'REJECTED']);
+    assert.deepEqual(pendingDescriptor.input.required_fields, ['gate_id', 'version', 'decision']);
+
+    const approved = await setup();
+    await approve(approved.project, approved.first, `projection-approved:${approved.project}`);
+    const first = (await pool.query(`SELECT * FROM technology_baseline_revisions WHERE id=$1`, [approved.first])).rows[0];
+    const second = randomUUID(), rejected = randomUUID();
+    await pool.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,revision_number,status,payload,schema_version) VALUES($1,$2,$3::uuid,$3,$4,$5,2,'APPROVED',$6,'technology-baseline/v1')`, [second, approved.baseline, approved.project, first.technology_catalog_revision_id, first.selection_context_id, first.payload]);
+    await pool.query(`INSERT INTO technology_baseline_revisions(id,baseline_id,project_id,project_key,technology_catalog_revision_id,selection_context_id,revision_number,status,payload,schema_version) VALUES($1,$2,$3::uuid,$3,$4,$5,3,'REJECTED',$6,'technology-baseline/v1')`, [rejected, approved.baseline, approved.project, first.technology_catalog_revision_id, first.selection_context_id, first.payload]);
+    await grant(approved.project);
+    const descriptor = (await buildStateActionProjection(approved.project, principal)).allowed_actions.find(action => action.code === 'MATERIALIZE_MODULE');
+    assert.ok(descriptor, 'approved v3 baseline publishes materialization');
+    assert.deepEqual(descriptor.target, { resource_kind: 'PROJECT', resource_id: approved.project });
+    assert.deepEqual(descriptor.command, { method: 'POST', href: `/api/projects/${approved.project}/modules`, idempotency_required: true });
+    assert.deepEqual(descriptor.input.schema?.required, ['module_key']);
+    assert.deepEqual(Object.keys(descriptor.input.schema?.properties ?? {}).sort(), ['acceptance_criteria', 'dependencies', 'module_key', 'name', 'objective', 'out_of_scope', 'scope', 'source_gate', 'technology_baseline_revision_id']);
+    assert.deepEqual(descriptor.input.schema?.properties.technology_baseline_revision_id?.enum, [second, approved.first], 'only approved baseline revisions are selectable');
+    assert.ok(!descriptor.input.schema?.properties.technology_baseline_revision_id?.enum?.includes(rejected));
+
+    const legacy = randomUUID(); transientProjects.push(legacy);
+    await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft) VALUES($1,'legacy materialization','owner','tester','/tmp','local','main','000','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT','{}')`, [legacy]);
+    await grant(legacy);
+    const legacyDescriptor = (await buildStateActionProjection(legacy, principal)).allowed_actions.find(action => action.code === 'MATERIALIZE_MODULE');
+    assert.ok(legacyDescriptor, 'the explicitly supported legacy v2 state remains materializable');
+    assert.equal('technology_baseline_revision_id' in (legacyDescriptor.input.schema?.properties ?? {}), false);
+
+    const unknown = randomUUID(); transientProjects.push(unknown);
+    const unknownWorkflowId = randomUUID(), unknownWorkflowCode = `UNKNOWN_MATERIALIZATION_${unknown.slice(0, 8)}`;
+    t.after(async () => {
+      await pool.query(`DELETE FROM projects WHERE id=$1`, [unknown]);
+      await pool.query(`UPDATE workflow_definitions SET status='RETIRED' WHERE id=$1`, [unknownWorkflowId]);
+      await pool.query(`DELETE FROM workflow_states WHERE workflow_id=$1`, [unknownWorkflowId]);
+      await pool.query(`DELETE FROM workflow_definitions WHERE id=$1`, [unknownWorkflowId]);
+    });
+    await pool.query(`INSERT INTO workflow_definitions(id,code,version,scope,status,published_at) VALUES($1,$2,99,'PROJECT','PUBLISHED',clock_timestamp())`, [unknownWorkflowId, unknownWorkflowCode]);
+    await pool.query(`INSERT INTO workflow_states(workflow_id,code,display_name,terminal,position) VALUES($1,'PRODUCT_COMMITMENT','Unknown materialization state',false,1)`, [unknownWorkflowId]);
+    await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft) VALUES($1,'unknown materialization','owner','tester','/tmp','local','main','000',$2,99,'PRODUCT_COMMITMENT','{}')`, [unknown, unknownWorkflowCode]);
+    await grant(unknown);
+    const unknownProjection = await buildStateActionProjection(unknown, principal);
+    assert.equal(unknownProjection.project.legacy, true); assert.equal(unknownProjection.project.journey_status, 'LEGACY_READ_ONLY');
+    assert.deepEqual(unknownProjection.allowed_actions, []);
+
+    const unauthorizedId = randomUUID(), unauthorized = { id: unauthorizedId, type: 'HUMAN' as const, username: `materialization-denied-${unauthorizedId.slice(0, 8)}` };
+    t.after(async () => {
+      await pool.query(`DELETE FROM auth_role_grants WHERE principal_id=$1`, [unauthorizedId]);
+      await pool.query(`DELETE FROM auth_principals WHERE id=$1`, [unauthorizedId]);
+    });
+    await pool.query(`INSERT INTO auth_principals(id,principal_type,username) VALUES($1,'HUMAN',$2)`, [unauthorizedId, unauthorized.username]);
+    const readGrant = randomUUID();
+    await pool.query(`INSERT INTO auth_role_grants(id,principal_id,role_code,action_code,project_id) VALUES($1,$2,'OPERATOR','READ_PROJECT',$3)`, [readGrant, unauthorizedId, approved.project]);
+    assert.equal((await buildStateActionProjection(approved.project, unauthorized)).allowed_actions.some(action => action.code === 'MATERIALIZE_MODULE'), false, 'a missing OPERATE_PROJECT grant suppresses materialization');
+  });
   test('F5-13 preserves terminal lineage, monotonic numbering, evidence, and approved-module coexistence', async () => {
     const f = await setup(); await approve(f.project, f.first, f.project);
     const first: any = (await pool.query(`SELECT * FROM technology_baseline_revisions WHERE id=$1`, [f.first])).rows[0], second = randomUUID();

@@ -15,8 +15,14 @@ import { prepareTechnologySelectionContext } from './selection-context.js';
 import { controlledPlanFixture, persistPlan, buildPlanContext, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_SANITIZER_VERSION, canonicalHash, sanitizePlan, validatePlan } from './module-planning.js';
 import { recordPlanRunBoundaries, createPlanTelemetrySink, terminatePlanTelemetry, completePlanTelemetry } from './plan-telemetry.js';
 import { createDevelopmentTelemetrySink, persistDevelopmentFailureEvidence } from './development-telemetry.js';
-import { detectDevelopmentRuntimeInconsistencies } from './development-runtime.js';
+import { detectDevelopmentRuntimeInconsistencies, reconcileDevelopmentRuntime } from './development-runtime.js';
 import { startRuntimeProcess } from './runtime-process.js';
+import { reconcileMacroLifecycle } from './macro-lifecycle.js';
+import { completeRecoverySpecialist, executeIndependentReview, recordRetryableReviewerFailure, recoverTerminalReviewerFailure } from './assurance.js';
+import { configuredWorkerService } from './auth.js';
+import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
+import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
+import { deliveryPreparationExecutionContext, persistDeliveryPreparationOutputs, reconcileDeliveryLifecycle } from './delivery-lifecycle.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -28,13 +34,17 @@ const leaseJob = (projectId?: string) => withTransaction(async (client) => {
   const leased = await client.query(`WITH candidate AS (
       SELECT id FROM jobs
       WHERE ($2::text IS NULL OR project_id=$2)
+        AND NOT EXISTS (SELECT 1 FROM pause_records p WHERE p.resource_kind='PROJECT' AND p.resource_id=jobs.project_id AND p.status='ACTIVE')
+        AND NOT EXISTS (SELECT 1 FROM cancellation_records c WHERE c.resource_kind='PROJECT' AND c.resource_id=jobs.project_id)
+        AND NOT EXISTS (SELECT 1 FROM pause_records p WHERE p.resource_kind='MODULE' AND p.resource_id=jobs.module_id::text AND p.status='ACTIVE')
+        AND NOT EXISTS (SELECT 1 FROM cancellation_records c WHERE c.resource_kind='MODULE' AND c.resource_id=jobs.module_id::text)
         AND (((status IN ('PENDING','RETRYABLE')) AND available_at<=clock_timestamp()) OR (status='LEASED' AND lease_expires_at<clock_timestamp()))
       ORDER BY available_at
       FOR UPDATE SKIP LOCKED
       LIMIT 1
     )
     UPDATE jobs
-    SET status='LEASED',attempts=attempts+1,lease_expires_at=clock_timestamp()+($1||' seconds')::interval,heartbeat_at=clock_timestamp(),started_at=coalesce(started_at,clock_timestamp()),last_signal_at=clock_timestamp(),metadata=CASE WHEN kind='DEVELOP_WORK_ITEM' THEN jsonb_set(metadata,'{build_id}',to_jsonb($3::text),true) ELSE metadata END
+    SET status='LEASED',attempts=attempts+1,lease_expires_at=clock_timestamp()+($1||' seconds')::interval,heartbeat_at=clock_timestamp(),started_at=coalesce(started_at,clock_timestamp()),last_signal_at=clock_timestamp(),metadata=CASE WHEN kind='DEVELOP_WORK_ITEM' THEN jsonb_set(coalesce(metadata,'{}'::jsonb),'{build_id}',to_jsonb(coalesce($3::text,'unknown')),true) ELSE coalesce(metadata,'{}'::jsonb) END
     WHERE id IN (SELECT id FROM candidate)
     RETURNING *`, [String(leaseSeconds()), projectId ?? null, config().buildId]);
   if (!leased.rowCount) return null;
@@ -43,7 +53,7 @@ const leaseJob = (projectId?: string) => withTransaction(async (client) => {
   return job;
 });
 
-const completeJob = async (job: any, result?: any) => withTransaction(async (client) => {
+const completeJob = async (job: any, result?: any, actorId='system:worker') => withTransaction(async (client) => {
   const owned = await client.query(`SELECT 1 FROM jobs WHERE id=$1 AND status='LEASED' AND lease_expires_at>=clock_timestamp() FOR UPDATE`, [job.id]);
   if (!owned.rowCount) throw new Error('JOB_LEASE_LOST');
   const revision = job.revision_id ? (await client.query('SELECT payload FROM intake_revisions WHERE id=$1', [job.revision_id])).rows[0] : undefined;
@@ -64,7 +74,7 @@ const completeJob = async (job: any, result?: any) => withTransaction(async (cli
       await event(client, job.project_id, 'GATE_OPENED', job.operation_id, job.id, job.revision_id, { gate_id: gateId, kind: 'REGISTER_PROJECT' });
     }
   } else if (result) {
-    await persistDiscoveryAgentOutcome(client, job, result);
+    await persistDiscoveryAgentOutcome(client, job, result, undefined, actorId);
   }
   if (job.kind === 'PLAN_MODULE_WORK_ITEMS') await completePlanTelemetry(client, job);
   await client.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp() WHERE id=$1`, [job.id]);
@@ -72,20 +82,31 @@ const completeJob = async (job: any, result?: any) => withTransaction(async (cli
   if (!pending.rowCount) await client.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id]);
 });
 
-const failJob = async (job: any, error: unknown) => withTransaction(async (client) => {
+const failLegacyJob = async (job: any, error: unknown) => withTransaction(async (client) => {
   const code = error instanceof AgentConfigurationError || error instanceof AgentExecutionError || error instanceof AgentReadinessError || error instanceof ArtifactStorageError || error instanceof ApiError ? error.code : 'AGENT_EXECUTION_FAILED';
   const current = (await client.query(`SELECT attempts FROM jobs WHERE id=$1 AND status='LEASED' FOR UPDATE`, [job.id])).rows[0];
   if (!current) return;
   const permanent = Number(current.attempts) > config().agentMaxRetries;
   const delay = delays[Math.min(Number(current.attempts) - 1, 2)];
   await client.query(`UPDATE jobs SET status=$2,last_error=$3,available_at=clock_timestamp()+($4||' seconds')::interval,completed_at=CASE WHEN $2='FAILED' THEN clock_timestamp() END WHERE id=$1`, [job.id, permanent ? 'FAILED' : 'RETRYABLE', code, String(delay)]);
+  if (job.kind === 'REVIEW') {
+    // REVIEW has a durable execution of its own.  Return that dispatch to a
+    // recoverable state on retry; a terminal reviewer failure is visible and
+    // never turns the producer output into an implicit acceptance.
+    await client.query(`UPDATE agent_execution SET state=$2,completed_at=CASE WHEN $2='FAILED' THEN clock_timestamp() ELSE NULL END,next_action=$3
+      WHERE job_id=$1 AND job_kind='REVIEW' AND state NOT IN ('SUCCEEDED','CANCELLED')`, [job.id, permanent ? 'FAILED' : 'SELECTED', permanent ? 'Reviewer indisponível; intervenção necessária.' : 'Reviewer será reexecutado pelo worker.']);
+    if (permanent) await client.query(`UPDATE work_acceptances SET state='WAITING_FOR_INDEPENDENT_REVIEWER',updated_at=clock_timestamp()
+      WHERE id=(SELECT acceptance_id FROM assurance_reviews WHERE dispatch_execution_id=(SELECT id FROM agent_execution WHERE job_id=$1 AND job_kind='REVIEW')) AND state NOT IN ('ACCEPTED','CANCELLED')`, [job.id]);
+    if (!permanent) await recordRetryableReviewerFailure(client,job.id,code,Number(current.attempts));
+    if (permanent) await recoverTerminalReviewerFailure(client,job.id,code,Number(current.attempts));
+  }
   if (job.kind === 'DEVELOP_WORK_ITEM') {
     // A failed executor never leaves a work item claiming active development
     // without a leased attempt.  The same reserved worktree is reconciled on
     // retry; terminal failure releases it for governed rework.
     await client.query(`UPDATE deliveries SET state=$2 WHERE id=$1`, [job.delivery_id, permanent ? 'FAILED' : 'RESERVED']);
     await client.query(`UPDATE worktrees SET state=$2 WHERE id=(SELECT worktree_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent ? 'RELEASED' : 'PREPARED']);
-    await client.query(`UPDATE work_items SET state=$2,version=version+1 WHERE id=(SELECT work_item_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent ? 'REWORK_ELIGIBLE' : 'WAITING_FOR_WORK_ITEM_AUTHORIZATION']);
+    await client.query(`UPDATE work_items SET state=CASE WHEN workflow_code='WORK_ITEM_DELIVERY' AND workflow_version=2 THEN CASE WHEN $2 THEN 'RECOVERY_REQUIRED' ELSE 'DISPATCHED' END ELSE CASE WHEN $2 THEN 'REWORK_ELIGIBLE' ELSE 'WAITING_FOR_WORK_ITEM_AUTHORIZATION' END END,version=version+1 WHERE id=(SELECT work_item_id FROM deliveries WHERE id=$1)`, [job.delivery_id, permanent]);
     if (permanent) await persistDevelopmentFailureEvidence(client, job, code);
   }
   if (permanent) {
@@ -128,7 +149,7 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
         await putArtifact(client, job.project_id, 'module-plan-rejection-report-markdown', `# module-plan-rejection-report\n\n\`\`\`json\n${JSON.stringify(report, null, 2)}\n\`\`\`\n`, job.operation_id);
         await event(client, job.project_id, 'MODULE_PLAN_FAILED', job.operation_id, job.id, job.revision_id, { module_id: job.module_id, code, errors, next_action: 'RETRY_MODULE_PLAN', evidence_hash: evidence.hash });
       }
-    } else if (job.kind !== 'DEVELOP_WORK_ITEM' && job.kind !== 'VALIDATE_INTAKE' && job.kind !== 'RECONCILE_AGENT_EXECUTION' && job.kind !== 'START_TECHNOLOGY_INVENTORY' && job.kind !== 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
+  } else if (job.kind !== 'REVIEW' && job.kind !== 'DEVELOP_WORK_ITEM' && job.kind !== 'VALIDATE_INTAKE' && job.kind !== 'RECONCILE_AGENT_EXECUTION' && job.kind !== 'START_TECHNOLOGY_INVENTORY' && job.kind !== 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
       const target = await transitionTarget(client, job.project_id, 'AGENT_EXECUTION_FAILED');
       await client.query(`UPDATE projects SET state=$2,failure_stage=$3,failure_code=$4,updated_at=clock_timestamp() WHERE id=$1`, [job.project_id, target, job.kind, code]);
     }
@@ -139,6 +160,10 @@ const failJob = async (job: any, error: unknown) => withTransaction(async (clien
   }
 });
 
+const failJob=async(job:any,error:unknown,step:string)=>job.kind==='DEVELOP_WORK_ITEM'
+  ? recoverDevelopmentFailure(job,error,step)
+  : failLegacyJob(job,error);
+
 const heartbeat = (job: any) => setInterval(() => {
   void pool.query(`UPDATE jobs SET heartbeat_at=clock_timestamp(),last_signal_at=clock_timestamp(),lease_expires_at=clock_timestamp()+($2||' seconds')::interval WHERE id=$1 AND status='LEASED'`, [job.id, String(leaseSeconds())]);
   // F5-23 pendency 20/22: a periodic heartbeat records that the process is
@@ -148,8 +173,13 @@ const heartbeat = (job: any) => setInterval(() => {
   if (job.kind === 'DEVELOP_WORK_ITEM') void createDevelopmentTelemetrySink(job).heartbeat();
 }, (job.kind === 'DEVELOP_WORK_ITEM' ? config().developmentHeartbeatSeconds : config().planHeartbeatSeconds) * 1000);
 
-export const runOnce = async (projectId?: string): Promise<boolean> => {
+export const runOnce = async (projectId?: string, actorId='system:worker'): Promise<boolean> => {
   await detectDevelopmentRuntimeInconsistencies();
+  await reconcileDevelopmentRuntime();
+  await reconcileCauseAwareRecovery();
+  const { reconcileReviewerRecovery } = await import('./assurance.js');
+  await reconcileReviewerRecovery();
+  await reconcileAutomaticAssuranceIntegration();
   const lock = await pool.connect();
   try {
     const lockKey=projectId??randomUUID();
@@ -161,15 +191,36 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
     const timer = heartbeat(job);
     let step = 'prepare_job';
     try {
-      if (job.kind === 'DEVELOP_WORK_ITEM') {
+      if (job.kind === 'REVIEW') {
+        step = 'independent_review';
+        await executeIndependentReview(job);
+        step = 'persist_result';
+        await completeJob(job,undefined,actorId);
+      } else if (job.kind === 'ASSURANCE_RECOVERY_SPECIALIST') {
+        step = 'recovery_specialist';
+        await completeRecoverySpecialist(job);
+      } else if (job.kind === 'DEVELOP_WORK_ITEM') {
         step = 'prepare_isolated_worktree';
         const delivery=await prepareDevelopmentJob(job);
-        step = 'dispatch_development_agent';
-        if (delivery) await executeDevelopmentAgent({project_id:job.project_id,work_item_id:delivery.work_item_id,objective:delivery.payload?.objective,inputs:delivery.payload?.inputs,output:delivery.payload?.output,acceptance_criteria:delivery.payload?.acceptance_criteria,allowlist:delivery.payload?.allowlist,denylist:delivery.payload?.denylist,qa_matrix:delivery.qa_matrix,branch:delivery.branch,base_sha:delivery.base_sha},delivery.path,job);
+        // Real execution-start evidence: the orchestration layer marks the
+        // attempt RUNNING and emits a durable DEVELOPMENT_STARTED event only
+        // when it is about to genuinely invoke the agent.  A reserved or
+        // dispatched environment is NOT a running execution.
+        if (delivery) {
+          step = 'mark_agent_started';
+          await withTransaction(async (client) => {
+            const owned = await client.query(`SELECT 1 FROM jobs WHERE id=$1 AND status='LEASED' AND lease_expires_at>=clock_timestamp() FOR UPDATE`, [job.id]);
+            if (!owned.rowCount) throw new Error('JOB_LEASE_LOST');
+            await client.query(`UPDATE deliveries SET state='RUNNING' WHERE id=$1`, [delivery.id]);
+            await event(client, job.project_id, 'DEVELOPMENT_STARTED', job.operation_id, job.id, null, { work_item_id: delivery.work_item_id, delivery_id: delivery.id, job_id: job.id, branch: delivery.branch, base_sha: delivery.base_sha });
+          });
+          step = 'dispatch_development_agent';
+          await executeDevelopmentAgent({project_id:job.project_id,work_item_id:delivery.work_item_id,objective:delivery.payload?.objective,inputs:delivery.payload?.inputs,output:delivery.payload?.output,acceptance_criteria:delivery.payload?.acceptance_criteria,allowlist:delivery.payload?.allowlist,denylist:delivery.payload?.denylist,qa_matrix:delivery.qa_matrix,branch:delivery.branch,base_sha:delivery.base_sha},delivery.path,job);
+        }
         await finalizeDevelopmentJob(job);
         await pool.query(`UPDATE jobs SET last_operational_event_at=clock_timestamp(),operational_event_count=operational_event_count+1,last_signal_at=clock_timestamp() WHERE id=$1 AND status='LEASED'`, [job.id]);
         step = 'persist_result';
-        await completeJob(job);
+        await completeJob(job,undefined,actorId);
       } else if (job.kind === 'PLAN_MODULE_WORK_ITEMS') {
         step = 'module_plan';
         // F5-23 pendency 20: durable start evidence for the planning job/operation.
@@ -193,17 +244,31 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
         if(config().agentAdapter !== 'controlled')try{validatePlan(sanitizePlan(plan),context);}catch(error){if(!(error instanceof ApiError))throw error;plan=await executeModulePlanAgent(context,job,{errors:String(error.code).split(',').filter(Boolean),candidate:plan});validatePlan(sanitizePlan(plan),context);}
         await persistPlan(job,plan);
         step = 'persist_result';
-        await completeJob(job);
+        await completeJob(job,undefined,actorId);
       } else if (job.kind === 'START_TECHNOLOGY_INVENTORY') {
         step = 'technology_inventory';
         await withTransaction((client) => executeTechnologyInventory(client, job));
         step = 'persist_result';
-        await completeJob(job);
+        await completeJob(job,undefined,actorId);
       } else if (job.kind === 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') {
         step = 'technology_selection_context';
         await withTransaction((client) => prepareTechnologySelectionContext(client, job));
         step = 'persist_result';
-        await completeJob(job);
+        await completeJob(job,undefined,actorId);
+      } else if (job.kind === 'PREPARE_DELIVERY_PACKAGE') {
+        step = 'load_frozen_delivery_preparation';
+        const snapshot=(await pool.query(`SELECT * FROM delivery_preparation_snapshots WHERE source_operation_id=$1`,[job.operation_id])).rows[0];
+        if(!snapshot) throw new ApiError(409,'DELIVERY_PREPARATION_SNAPSHOT_MISSING');
+        // This path intentionally does not read intake or any generic discovery
+        // context. Every retry starts a fresh ephemeral provider invocation from
+        // the same durable snapshot identity.
+        step = 'dispatch_frozen_delivery_preparation';
+        const result=await executeAgent('PREPARE_DELIVERY_PACKAGE',deliveryPreparationExecutionContext(snapshot));
+        if(result.result!=='READY_FOR_GATE') throw new ApiError(422,'DELIVERY_PREPARATION_OUTPUT_NOT_READY');
+        step = 'persist_closed_delivery_outputs';
+        await persistDeliveryPreparationOutputs(snapshot.id,result.evidence);
+        step = 'persist_result';
+        await completeJob(job,undefined,actorId);
       } else if (agentExecutionService.isEnabled() && agentExecutionService.handlesJob(job.kind)) {
         step = 'agent_execution_service';
         await agentExecutionService.executeLeasedJob(job);
@@ -219,11 +284,11 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
           return executeAgent(job.kind, { intake, project_id: job.project_id, review_adjustment_feedback: adjustment });
         })();
         step = 'persist_result';
-        await completeJob(job, result);
+        await completeJob(job,result,actorId);
       }
       log('worker', 'info', 'job_completed', { job_id: job.id, operation_id: job.operation_id, project_id: job.project_id, kind: job.kind, attempt: Number(job.attempts) });
     } catch (error) {
-      const cause = error as { code?: unknown; constraint?: unknown };
+      const cause = error as { code?: unknown; constraint?: unknown; exitCode?: unknown; signal?: unknown };
       log('worker', 'error', 'job_execution_failed', {
         job_id: job.id,
         operation_id: job.operation_id,
@@ -233,9 +298,11 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
         step,
         error_kind: error instanceof Error ? error.constructor.name : 'UnknownError',
         cause_code: typeof cause.code === 'string' ? cause.code : undefined,
+        exit_code: typeof cause.exitCode === 'number' ? cause.exitCode : undefined,
+        signal: typeof cause.signal === 'string' ? cause.signal : undefined,
         cause_constraint: typeof cause.constraint === 'string' ? cause.constraint : undefined
       });
-      await failJob(job, error);
+      await failJob(job, error,step);
     } finally {
       clearInterval(timer);
     }
@@ -246,11 +313,15 @@ export const runOnce = async (projectId?: string): Promise<boolean> => {
 };
 
 if (process.argv[1]?.endsWith('worker.ts') || process.argv[1]?.endsWith('worker.js')) {
+  // A credencial é criada/rotacionada pelo administrador e nunca é uma sessão
+  // humana ou o NAAMIVE_OPERATOR_ID legado. Sem ela o worker falha fechado.
+  const workerPrincipal=await configuredWorkerService();
   const stopRuntime=await startRuntimeProcess('WORKER');
   log('worker', 'info', 'worker_started', { poll_interval_seconds: 1 });
-  process.on('SIGTERM', async () => { log('worker', 'info', 'worker_stopped'); await stopRuntime(); await pool.end(); process.exit(0); });
+  let stopping=false; const stop=async()=>{if(stopping)return;stopping=true;log('worker','info','worker_stopped');await stopRuntime();await pool.end();process.exit(0);};
+  process.once('SIGTERM',()=>void stop()); process.once('SIGINT',()=>void stop());
   while (true) {
-    try { await runOnce(); }
+    try { await reconcileMacroLifecycle(10,`macro-worker:${workerPrincipal.id}`); await reconcileDeliveryLifecycle(10); await runOnce(undefined,workerPrincipal.id); }
     catch (error) { log('worker', 'error', 'worker_cycle_failed', { error_kind: error instanceof Error ? error.constructor.name : 'UnknownError' }); }
     await new Promise((resolve) => setTimeout(resolve, 1000));
   }

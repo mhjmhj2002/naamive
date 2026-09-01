@@ -6,8 +6,8 @@ import test from 'node:test';
 
 const { parseCodexJsonlLine, CodexJsonlLineBuffer, CODEX_OPERATIONAL_EVENT_CONTRACT } = await import('./codex-events.js');
 
-test('closed contract accepts only the three operational event types', () => {
-  assert.deepEqual([...CODEX_OPERATIONAL_EVENT_CONTRACT], ['thread.started', 'turn.started', 'turn.completed']);
+test('closed contract accepts only safe operational event types', () => {
+  assert.deepEqual([...CODEX_OPERATIONAL_EVENT_CONTRACT], ['thread.started', 'turn.started', 'turn.completed', 'item.started', 'item.completed']);
 });
 
 test('parseCodexJsonlLine accepts thread.started and keeps only a sanitized thread_id', () => {
@@ -56,14 +56,19 @@ test('turn.completed with a malformed usage is dropped to undefined (never raw)'
   assert.equal(result.event.usage, undefined);
 });
 
+test('item events retain only their type and discard all unsafe payload', () => {
+  for (const type of ['item.started','item.completed'] as const) {
+    const result = parseCodexJsonlLine(JSON.stringify({ type, content: 'raw assistant plan', arguments: '{"secret":true}' }));
+    assert.equal(result.kind, 'operational');
+    if (result.kind === 'operational') assert.deepEqual(result.event, { type });
+  }
+});
+
 test('unknown or unsafe event types are discarded fail-closed, never exposed', () => {
-  // item.completed is deliberately excluded (carries assistant text / tool args).
   const cases = [
-    { type: 'item.completed', content: 'raw assistant plan' },
     { type: 'agent_message', text: 'reasoning' },
     { type: 'function_call', arguments: '{"secret":true}' },
-    { type: 'secret_event', token: 'abc' },
-    { type: 'item.started' }
+    { type: 'secret_event', token: 'abc' }
   ];
   for (const line of cases) {
     const result = parseCodexJsonlLine(JSON.stringify(line));
@@ -81,7 +86,7 @@ test('malformed lines are discarded fail-closed (empty, invalid JSON, non-object
 });
 
 test('discard records carry only a sanitized reason, never the raw line', () => {
-  const raw = JSON.stringify({ type: 'item.completed', content: 'SECRET_RAW_OUTPUT' });
+  const raw = JSON.stringify({ type: 'agent_message', content: 'SECRET_RAW_OUTPUT' });
   const result = parseCodexJsonlLine(raw);
   assert.equal(result.kind, 'discarded');
   if (result.kind !== 'discarded') return;

@@ -59,22 +59,37 @@ Somente um gate `REGISTER_PROJECT` aprovado materializa o projeto. O detalhe da 
 | `PAUSED` | Execução interrompida por decisão registrada. | `VALIDATING`, `CANCELLED` |
 | `CANCELLED` | Execução encerrada por decisão registrada. | nenhum |
 
-## Evolução planejada para a Fase 6 — supervision & assurance
+## Supervision & assurance: fundação F6 e expansão Fase 6.5
 
-O protocolo atual permanece em vigor até a implementação autorizada da Fase 6.
-O estágio atual `EVIDENCE_REVIEW` valida vinculação e suficiência de evidências;
-ele não deve ser lido como aceite automático de completude. A evolução será
-aditiva e distinguirá `OUTPUT_SUBMITTED`, review independente de completude,
-review especializado, `WORK_ACCEPTANCE` e gate decision. O invariante é que uma
-execução bem-sucedida nunca implica automaticamente aceite do trabalho.
+No rollout histórico e opt-in da Fase 6, `EVIDENCE_REVIEW` valida vinculação e
+suficiência de evidências; ele não deve ser lido como aceite automático de
+completude. A fundação F6 distingue `OUTPUT_SUBMITTED`, review independente de
+completude, review especializado, `WORK_ACCEPTANCE` e gate decision. O
+invariante é que uma execução bem-sucedida nunca implica automaticamente aceite
+do trabalho.
 
-Cada dispatch deverá passar por produção e review independente, com findings
-rastreáveis, rework delimitado e re-review. Block deixará de ser somente falha
-ou texto livre para ter diagnóstico, assistência, roteamento especializado,
+Essa coexistência histórica não é uma proibição permanente de evolução. A Fase
+6.5 publicou novos workflows e contratos e aplica supervision/assurance aos
+jobs e handoffs reais selecionados. O rollout corretivo substitui o
+comportamento operacional legado em novas versões, preservando a semântica,
+consulta e rastreabilidade das execuções históricas já concluídas.
+
+Cada dispatch coberto pela política passa por produção e review independente,
+com findings rastreáveis, rework delimitado e re-review. Block não é somente
+falha ou texto livre: possui diagnóstico, assistência, roteamento especializado,
 limites configuráveis de tentativa/progresso e escalonamento. O orquestrador
-controlará lifecycle e routing; governance verificará processo e autoridade;
-especialistas avaliarão sua área; advisory recomendará alternativas; e gates
-humanos continuarão soberanos. Ver o planejamento da Fase 6 no roadmap.
+controla lifecycle e routing; governance verifica processo e autoridade;
+especialistas avaliam sua área; advisory recomenda alternativas; e gates humanos
+continuam soberanos nos pontos previstos pela política. Ver o planejamento da Fase 6 no roadmap.
+
+Para instâncias F6.5, as versões operacionais são
+`PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`, `WORK_ITEM_DELIVERY:v2` e
+`ORCHESTRATION_EXECUTION:v1`. `WORK_ITEM_DELIVERY:v2` agenda automaticamente
+um item elegível e não abre autorização humana individual. `ACCEPT`, sob o
+pipeline selecionado (`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2` para novas
+coortes), encadeia os handoffs técnicos e a reavaliação de dependentes. A
+projeção pública é exclusivamente `STATE_ACTION_PROJECTION:v1`; o cliente não
+infere uma ação e todo comando revalida estado, catálogo, versão e autoridade.
 
 ## Elegibilidade de papéis
 

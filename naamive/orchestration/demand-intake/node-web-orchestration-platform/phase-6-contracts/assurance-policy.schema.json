@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/assurance-policy",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "policyId", "name", "version", "enabled", "selectors", "configuration", "idempotencyKey"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "policyId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "name": { "type": "string", "minLength": 1, "maxLength": 128 },
+    "version": { "type": "integer", "minimum": 1 },
+    "enabled": { "type": "boolean" },
+    "selectors": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "agentPolicyNames": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "taskTypes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+        "classifications": { "type": "array", "uniqueItems": true, "items": { "$ref": "naamive://assurance/v1/common#/$defs/classification" } }
+      }
+    },
+    "configuration": {
+      "type": "object", "additionalProperties": false, "required": ["schema_version"],
+      "properties": {
+        "schema_version": { "const": 1 },
+        "max_rework_rounds": { "type": "integer", "minimum": 0, "maximum": 2 },
+        "minimum_progress_delta": { "type": "number", "minimum": 0, "maximum": 1 },
+        "reviewer_runtime_ids": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" } },
+        "runtime_exception_classifications": { "type": "array", "uniqueItems": true, "items": { "$ref": "naamive://assurance/v1/common#/$defs/classification" } },
+        "blockable_failure_codes": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1, "maxLength": 128 } }
+      }
+    },
+    "idempotencyKey": { "type": "string", "minLength": 16, "maxLength": 255 }
+  }
+}

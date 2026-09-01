@@ -13,10 +13,11 @@ if (!databaseUrl) {
   process.env.NAAMIVE_ARTIFACT_STORE_URI = 'file:///tmp/naamive-module-planning-e2e-artifacts';
 
   const { pool } = await import('./db.js');
-  const { materializeModule, decideModule, completeDefinition, decideArchitecture, approveModulePlan, startDevelopment, phase3Detail } = await import('./phase3.js');
+  const { materializeModule, decideModule, completeDefinition, decideArchitecture, approveModulePlan, startDevelopment, phase3Detail, resolveExternalBlocker } = await import('./phase3.js');
   const { runOnce } = await import('./worker.js');
   const { seedPlanRevision } = await import('./test-plan-helper.js');
   const { createApiServer } = await import('./server.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
   const { retryModulePlan, buildPlanContext, controlledPlanFixture, persistPlan, MODULE_PLAN_VALIDATOR_VERSION, MODULE_PLAN_SANITIZER_VERSION, MODULE_PLAN_SCHEMA_VERSION } = await import('./module-planning.js');
   const { canonicalHash } = await import('./module-planning.js');
 
@@ -27,7 +28,8 @@ if (!databaseUrl) {
     const cleanup = async () => {
       for (const sql of [
         'DELETE FROM events WHERE project_id=$1', 'DELETE FROM artifacts WHERE project_id=$1',
-        'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM jobs WHERE project_id=$1',
+        'DELETE FROM artifact_intents WHERE project_id=$1', 'DELETE FROM work_item_scheduling_decisions WHERE project_id=$1',
+        'DELETE FROM jobs WHERE project_id=$1', 'DELETE FROM deliveries WHERE project_id=$1', 'DELETE FROM worktrees WHERE project_id=$1',
         'DELETE FROM work_items WHERE project_id=$1', 'DELETE FROM module_gates WHERE project_id=$1',
         'DELETE FROM module_plan_job_context WHERE project_id=$1', 'DELETE FROM module_plan_revisions WHERE project_id=$1',
         'DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)',
@@ -142,14 +144,74 @@ if (!databaseUrl) {
     const approved = await approveModulePlan(id, module, { plan_revision_id: seeded.plan_revision_id, version: seeded.version }, `mp-blocked-${randomUUID()}`);
     assert.equal(approved.status, 'ACCEPTED');
     assert.equal(approved.blocked_work_item_ids?.length, 1);
-    const wi = (await pool.query(`SELECT id,payload,state FROM work_items WHERE project_id=$1`, [id])).rows[0];
+    const wi = (await pool.query(`SELECT id,payload,state,workflow_code,workflow_version FROM work_items WHERE project_id=$1`, [id])).rows[0];
+    assert.equal(wi.workflow_code, 'WORK_ITEM_DELIVERY');
+    assert.equal(wi.workflow_version, 2);
+    assert.equal(wi.state, 'WAITING_FOR_EXTERNAL_INPUT');
     assert.equal(wi.payload.external_blocked, true);
     assert.equal(wi.payload.blocked_state, 'EXTERNAL_BLOCKED');
     assert.equal(wi.payload.external_blocked_dependency_id, 'dependency-1');
+    assert.equal((await pool.query(`SELECT count(*)::int n FROM work_item_external_blockers WHERE work_item_id=$1 AND state='ACTIVE'`, [wi.id])).rows[0].n, 1);
     assert.equal((await pool.query(`SELECT count(*)::int n FROM events WHERE project_id=$1 AND event_type='MODULE_PLAN_EXTERNAL_BLOCKED'`, [id])).rows[0].n, 1);
     assert.equal((await pool.query(`SELECT count(*)::int n FROM artifacts WHERE project_id=$1 AND artifact_type='module-plan-external-blocker'`, [id])).rows[0].n, 1);
     // START_DEVELOPMENT rejects the blocked work item until the dependency resolves.
-    await assert.rejects(() => startDevelopment(id, wi.id, {}, `mp-dev-${randomUUID()}`), /EXTERNAL_DEPENDENCY_BLOCKED/);
+    await assert.rejects(() => startDevelopment(id, wi.id, {}, `mp-dev-${randomUUID()}`), /WORKFLOW_COMMAND_OBSOLETE_FOR_VERSION/);
+  });
+
+  test('AUT-01 dispatches the eligible root while preserving dependency and external-blocker waits', async (t) => {
+    const { id, cleanup } = await setupProject(); t.after(cleanup);
+    // LR-01 publishes ELIGIBLE_FOR_DISPATCH as the scheduler waiting state;
+    // AUT-01 must atomically create the root attempt and move it to DISPATCHED.
+    // Give this isolated scenario a deterministic global capacity slot rather
+    // than making the asserted lifecycle depend on unrelated E2E deliveries.
+    const previousConcurrency=process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY;
+    const active=Number((await pool.query(`SELECT count(*)::int n FROM deliveries WHERE state IN ('RESERVED','PREPARING','DISPATCHED','RUNNING','DEVELOPMENT_IN_PROGRESS')`)).rows[0].n);
+    process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY=String(active+1);
+    t.after(()=>{if(previousConcurrency===undefined)delete process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY;else process.env.NAAMIVE_DEVELOPMENT_MAX_CONCURRENCY=previousConcurrency;});
+    const { module } = await toPlanning(id, 'Persist and expose requests', ['A request can be tracked'], ['Identity provider', 'Operations priority group']);
+    const item=(logical_id:string,title:string,depends_on_ids:string[]=[])=>({logical_id,title,depends_on_ids,inputs:['input'],allowlist:[`src/${logical_id}.ts`],denylist:['.env'],output:`${title} output`,acceptance_criteria:['A request can be tracked'],qa_matrix:[{command:'true',cwd:'.',timeout_seconds:10}]});
+    const seeded=await seedPlanRevision(id,module,[item('root-store','Store'),item('dependent-metric','Metric',['root-store']),item('external-ui','UI',['root-store'])]);
+    const current=(await pool.query(`SELECT payload,context_hash FROM module_plan_revisions WHERE id=$1`,[seeded.plan_revision_id])).rows[0];
+    const payload={...current.payload,business_dependency_coverage:[
+      {dependency_id:'dependency-1',classification:'EXTERNAL_BLOCKER',work_item_ids:[],blocked_work_item_ids:['external-ui'],justification:'Identity decision'},
+      {dependency_id:'dependency-2',classification:'EXTERNAL_BLOCKER',work_item_ids:[],blocked_work_item_ids:['external-ui'],justification:'Priority group decision'}
+    ]};
+    const planPart={schema_version:payload.schema_version,work_items:payload.work_items,criterion_coverage:payload.criterion_coverage,business_dependency_coverage:payload.business_dependency_coverage,risks:payload.risks,gaps:payload.gaps};
+    const validationHash=canonicalHash({plan:planPart,context_hash:current.context_hash,validator:MODULE_PLAN_VALIDATOR_VERSION});
+    await pool.query(`UPDATE module_plan_revisions SET payload=$2,payload_hash=$3,validation_hash=$4 WHERE id=$1`,[seeded.plan_revision_id,payload,canonicalHash(payload),validationHash]);
+    const jobsBefore=Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n);
+    const approvalKey=`lr01-approve-${randomUUID()}`;
+    const [approved,replayed]=await Promise.all([
+      approveModulePlan(id,module,{plan_revision_id:seeded.plan_revision_id,version:seeded.version},approvalKey),
+      approveModulePlan(id,module,{plan_revision_id:seeded.plan_revision_id,version:seeded.version},approvalKey)
+    ]);
+    assert.equal(replayed.operation_id,approved.operation_id);
+    const rows=(await pool.query(`SELECT id,payload->>'work_item_id' logical_id,plan_work_item_id,module_plan_revision_id,state,workflow_version FROM work_items WHERE project_id=$1 ORDER BY plan_work_item_id`,[id])).rows;
+    assert.deepEqual(Object.fromEntries(rows.map((row:any)=>[row.logical_id,row.state])),{ 'dependent-metric':'WAITING_FOR_DEPENDENCIES','external-ui':'WAITING_FOR_EXTERNAL_INPUT','root-store':'DISPATCHED' });
+    assert.ok(rows.every((row:any)=>row.workflow_version===2));
+    assert.ok(rows.every((row:any)=>row.plan_work_item_id===row.logical_id&&row.module_plan_revision_id===seeded.plan_revision_id));
+    assert.equal(new Set(rows.map((row:any)=>row.plan_work_item_id)).size,3,'concurrent replay materializes one row per logical identity');
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore+1);
+    const root=rows.find((row:any)=>row.logical_id==='root-store');
+    assert.equal((await pool.query(`SELECT count(*)::int n FROM deliveries WHERE work_item_id=$1 AND state='RESERVED'`,[root.id])).rows[0].n,1);
+    assert.equal((await pool.query(`SELECT decision_code FROM work_item_scheduling_decisions WHERE work_item_id=$1 ORDER BY created_at DESC LIMIT 1`,[root.id])).rows[0].decision_code,'DISPATCHED');
+    const external=rows.find((row:any)=>row.logical_id==='external-ui');
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM work_item_external_blockers WHERE work_item_id=$1 AND state='ACTIVE'`,[external.id])).rows[0].n),2);
+    const first=await resolveExternalBlocker(id,external.id,{dependency_id:'dependency-1',justification:'Identity resolved'},`lr01-resolve-1-${randomUUID()}`);
+    assert.deepEqual({state:first.state,remaining:first.remaining_active_blockers},{state:'WAITING_FOR_EXTERNAL_INPUT',remaining:1});
+    const second=await resolveExternalBlocker(id,external.id,{dependency_id:'dependency-2',justification:'Priority resolved'},`lr01-resolve-2-${randomUUID()}`);
+    assert.deepEqual({state:second.state,remaining:second.remaining_active_blockers},{state:'WAITING_FOR_DEPENDENCIES',remaining:0});
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM jobs WHERE project_id=$1`,[id])).rows[0].n),jobsBefore+1);
+    const detail=await phase3Detail(id),projected:any=detail.work_items.find((row:any)=>(row as any).id===external.id);
+    assert.equal(projected.workflow_version,2);
+    assert.ok(!projected.allowed_actions.includes('START_DEVELOPMENT'));
+    assert.deepEqual(approved.work_item_workflow,{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:2});
+    assert.deepEqual(replayed.work_item_workflow,{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:2},'idempotent replay retains the frozen work-item workflow binding');
+    const transitionEvent=(await pool.query(`SELECT workflow_code,workflow_version,payload FROM events WHERE project_id=$1 AND event_type='MODULE_PLAN_APPROVED' ORDER BY id DESC LIMIT 1`,[id])).rows[0];
+    assert.deepEqual({workflow_code:transitionEvent.workflow_code,workflow_version:transitionEvent.workflow_version},{workflow_code:'PROJECT_DISCOVERY',workflow_version:2});
+    assert.deepEqual(transitionEvent.payload.work_item_workflow,{workflow_code:'WORK_ITEM_DELIVERY',workflow_version:2});
+    assert.equal(transitionEvent.payload.dispatch_created,false);
+    assert.equal(new Set(transitionEvent.payload.work_items.map((workItem:any)=>workItem.work_item_id)).size,3);
   });
 
   test('persistPlan persists durable sanitized JSON+Markdown failure evidence in its own transaction before rethrowing (pendency 10)', async (t) => {
@@ -332,32 +394,32 @@ if (!databaseUrl) {
     assert.equal(replay.operation_id, recoveredOp.id);
   });
 
-  test('retryModulePlan requires operator authorization and the retry endpoint requires Idempotency-Key (pendency 12)', async (t) => {
+  test('retryModulePlan requires authenticated RBAC authorization and the retry endpoint requires Idempotency-Key (pendency 12)', async (t) => {
     const { id, cleanup } = await setupProject(); t.after(cleanup);
     const { module } = await toPlanning(id, 'Persist requests', ['A request can be tracked']);
     const job = (await pool.query(`SELECT j.* FROM jobs j WHERE j.module_id=$1 AND j.kind='PLAN_MODULE_WORK_ITEMS' AND j.status IN ('PENDING','RETRYABLE')`, [module])).rows[0];
     const operation = (await pool.query(`SELECT * FROM operations WHERE id=$1`, [job.operation_id])).rows[0];
     await pool.query(`UPDATE jobs SET status='FAILED',completed_at=clock_timestamp() WHERE operation_id=$1`, [operation.id]);
     await pool.query(`UPDATE operations SET status='FAILED',failure_code='MODULE_PLAN_VALIDATION_FAILED',completed_at=clock_timestamp() WHERE id=$1`, [operation.id]);
-    // Unauthorized operator is rejected before any work happens.
-    await assert.rejects(() => retryModulePlan(id, module, { failed_operation_id: operation.id }, `mp-unauth-${randomUUID()}`, 'someone-else'), /OPERATOR_NOT_AUTHORIZED/);
-    // No retry operation was created by the unauthorized attempt.
-    assert.equal((await pool.query(`SELECT count(*)::int n FROM operations WHERE retry_of_operation_id=$1`, [operation.id])).rows[0].n, 0);
-    // HTTP: missing Idempotency-Key is rejected (422), no random-key fallback.
+    const auth=await testAuthenticatedHeaders(id,[{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);
+    t.after(auth.cleanup);
+    // HTTP: an authenticated caller without Idempotency-Key is rejected (422), no random-key fallback.
     const server = createApiServer();
     let listening = false;
     t.after(async () => { if (listening) await new Promise<void>((resolve) => server.close(() => resolve())); });
     await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve)); listening = true;
     const base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
-    const missingKey = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ failed_operation_id: operation.id }) });
+    const missingKey = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json',...auth.headers }, body: JSON.stringify({ failed_operation_id: operation.id }) });
     assert.equal(missingKey.status, 422);
     const missingKeyBody = await missingKey.json();
     assert.equal(missingKeyBody.code, 'IDEMPOTENCY_KEY_REQUIRED');
-    // HTTP: wrong operator header is rejected (403).
+    // Caller-controlled legacy headers cannot establish a principal or role.
     const wrongOperator = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `mp-http-${randomUUID()}`, 'x-naamive-operator': 'not-the-operator' }, body: JSON.stringify({ failed_operation_id: operation.id }) });
-    assert.equal(wrongOperator.status, 403);
-    // HTTP: valid operator + key succeeds.
-    const ok = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `mp-http-ok-${randomUUID()}`, 'x-naamive-operator': 'module-planning-e2e-operator' }, body: JSON.stringify({ failed_operation_id: operation.id }) });
+    assert.equal(wrongOperator.status, 401);
+    assert.equal((await pool.query(`SELECT count(*)::int n FROM operations WHERE retry_of_operation_id=$1`, [operation.id])).rows[0].n, 0);
+    // A persisted session and scoped grant, rather than any header-declared
+    // identity, authorizes the retry.
+    const ok = await fetch(`${base}/api/projects/${id}/modules/${module}/retry-plan`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': `mp-http-ok-${randomUUID()}`,...auth.headers }, body: JSON.stringify({ failed_operation_id: operation.id }) });
     assert.equal(ok.status, 202);
   });
 

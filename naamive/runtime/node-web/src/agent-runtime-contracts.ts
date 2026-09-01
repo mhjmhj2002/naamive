@@ -7,7 +7,7 @@ import { sanitizeStructured } from './agent-runtime-redaction.js';
 export type AdapterType = 'CODEX_CLI' | 'OPENAI_COMPATIBLE_HTTP';
 export type Classification = 'PUBLIC' | 'INTERNAL' | 'CONFIDENTIAL' | 'RESTRICTED';
 export type AttemptState = 'PLANNED' | 'DISPATCHED' | 'SUCCEEDED' | 'FAILED' | 'TIMED_OUT' | 'RATE_LIMITED' | 'QUOTA_EXHAUSTED' | 'AUTHENTICATION_FAILED' | 'INVALID_OUTPUT' | 'POLICY_BLOCKED' | 'CANCELLED' | 'RECONCILIATION_REQUIRED';
-export type ExecutionState = 'PENDING' | 'SELECTED' | 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED_NO_EXECUTOR_AVAILABLE' | 'CANCELLED' | 'RECONCILIATION_REQUIRED';
+export type ExecutionState = 'PENDING' | 'SELECTED' | 'RUNNING' | 'OUTPUT_SUBMITTED' | 'SUCCEEDED' | 'FAILED' | 'BLOCKED_NO_EXECUTOR_AVAILABLE' | 'CANCELLED' | 'RECONCILIATION_REQUIRED';
 export type AttemptKind = 'PRIMARY' | 'RETRY' | 'FALLBACK';
 export type RuntimeValidationState = 'READY' | 'DISABLED' | 'MISCONFIGURED' | 'AUTHENTICATION_REQUIRED' | 'UNAVAILABLE' | 'QUOTA_EXHAUSTED' | 'UNKNOWN';
 export type QualityTier = 'LOW' | 'MEDIUM' | 'HIGH';

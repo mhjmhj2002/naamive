@@ -35,6 +35,7 @@ else {
   const { validateTechnologyCatalogSeedPackage } = await import('./technology-contracts.js');
   const { createTechnologyBaselineDraft } = await import('./baseline-draft.js');
   const { submitTechnologyBaseline } = await import('./baseline-gate.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
 
   test('F5-17 renders the v3 baseline gate, approves it through the UI, and leaves v2 unblocked', async t => {
     const seed: any = structuredClone(await loadCatalogSeedPackage()), revisionNumber = Date.now() * 100 + Math.floor(Math.random() * 99);
@@ -42,7 +43,6 @@ else {
     seed.catalogRevision.records[0].catalog_revision = revisionNumber; seed.catalogRevision.records[0].content_hash = catalogPackageHash(await validateTechnologyCatalogSeedPackage(seed));
     const catalog: any = await publishTechnologyCatalog(seed, 'f5-17-ui-tester', randomUUID()), project = randomUUID(), legacy = randomUUID(), context = randomUUID(), intake = randomUUID(), operation = randomUUID(), job = randomUUID();
     const profile = (await pool.query(`SELECT profile_id FROM technology_catalog_revision_profiles WHERE revision_id=$1 AND is_active LIMIT 1`, [catalog.revisionId])).rows[0].profile_id;
-    const renderedCatalog = (await pool.query(`SELECT p.name AS profile_name,c.name AS category_name,c.selection_mode,c.min_selections,i.name AS item_name,pi.classification,pi.version_constraint FROM technology_profiles p JOIN technology_profile_items pi ON pi.profile_id=p.id JOIN technology_catalog_items i ON i.id=pi.catalog_item_id JOIN technology_categories c ON c.id=i.category_id WHERE p.id=$1 ORDER BY pi.display_order LIMIT 1`, [profile])).rows[0];
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft) VALUES($1,'F5-17 v3','owner','tester','/tmp','local','main','000','PROJECT_DISCOVERY',3,'TECHNOLOGY_BASELINE_IN_REVIEW','{}'),($2,'F5-17 legado','owner','tester','/tmp','local','main','000','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT','{}')`, [project, legacy]);
     await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,'{}',$3,$4,'file:///tmp/f5-17-intake','tester')`, [intake, project, 'a'.repeat(64), 'b'.repeat(64)]);
     await pool.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,technology_profile_id,hash,status) VALUES($1,$2::uuid,$2,$3,$4,$5,'READY')`, [context, project, catalog.revisionId, profile, 'c'.repeat(64)]);
@@ -50,30 +50,29 @@ else {
     await pool.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,status,idempotency_key,completed_at) VALUES($1,$2,$3,$4,'START_TECHNOLOGY_INVENTORY','COMPLETED',$5,clock_timestamp())`, [job, operation, project, intake, `f5-17-job:${project}`]);
     await pool.query(`INSERT INTO technology_inventory(id,project_id,project_key,repository_sha,job_id,technology_catalog_revision_id,source_path,detector_code,confidence,value,resolution_result) VALUES($1,$2::uuid,$2,'000',$3,$4,'package.json','TEST',0.8,'TEST','UNKNOWN_CATALOG_ITEM')`, [randomUUID(), project, job, catalog.revisionId]);
     const draft: any = await withTransaction(client => createTechnologyBaselineDraft(client, project)); await submitTechnologyBaseline(project, draft.revisionId, `f5-17-submit:${project}`);
-    const server = createApiServer(); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); const address = server.address() as import('node:net').AddressInfo, profileDirectory = await mkdtemp(join(tmpdir(), 'naamive-f5-17-chrome-'));
+    const session=await testAuthenticatedHeaders(project,[{role_code:'OPERATOR',action_code:'LIST_PROJECTS',project_id:null},{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'},{role_code:'OPERATOR',action_code:'READ_PROJECT',project_id:legacy},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT',project_id:legacy}]);
+    const configuredOrigin=new URL(process.env.NAAMIVE_WEB_ORIGIN??'http://127.0.0.1:3000'),server = createApiServer(); await new Promise<void>(resolve => server.listen(Number(configuredOrigin.port||80), configuredOrigin.hostname, resolve)); const address = server.address() as import('node:net').AddressInfo, profileDirectory = await mkdtemp(join(tmpdir(), 'naamive-f5-17-chrome-'));
     const chrome = spawn('google-chrome', [`--headless=new`, `--remote-debugging-port=9227`, `--user-data-dir=${profileDirectory}`, '--no-first-run', '--no-default-browser-check', 'about:blank'], { stdio: 'ignore' });
     let devtools: DevTools | undefined;
-    t.after(async () => { devtools?.close(); chrome.kill(); await new Promise(resolve => chrome.once('exit', resolve)); server.close(); await rm(profileDirectory, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }); await pool.end(); });
+    t.after(async () => { devtools?.close(); chrome.kill(); await new Promise(resolve => chrome.once('exit', resolve)); server.close(); await rm(profileDirectory, { recursive: true, force: true, maxRetries: 3, retryDelay: 50 }); await session.cleanup(); await pool.end(); });
     await eventually(async () => (await fetch('http://127.0.0.1:9227/json/version').catch(() => null)) !== null, 'Chrome DevTools'); devtools = await connectDevTools(9227);
+    const [cookieName,cookieValue]=session.headers.cookie.split('=',2);await devtools.call('Network.setCookie',{name:cookieName,value:cookieValue,url:`http://127.0.0.1:${address.port}/`,path:'/'});await devtools.call('Network.setExtraHTTPHeaders',{headers:{Origin:session.headers.origin,'x-csrf-token':session.headers['x-csrf-token']}});
     await devtools.call('Page.navigate', { url: `http://127.0.0.1:${address.port}/` }); await sleep(300);
     const evaluate = async (expression: string) => (await devtools!.call('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })).result.value;
-    await evaluate(`window.__f517Errors=[];window.__f517Requests=[];window.addEventListener('unhandledrejection',event=>window.__f517Errors.push(String(event.reason?.stack||event.reason)));window.__f517Fetch=window.fetch;window.fetch=async(...args)=>{const entry={url:String(args[0]),state:'pending'};window.__f517Requests.push(entry);try{const response=await window.__f517Fetch(...args);entry.state='resolved';entry.status=response.status;return response}catch(error){entry.state='rejected';entry.error=String(error);throw error}};f517OpenProject('${project}')`);
-    try { await eventually(async () => await evaluate(`[...document.querySelectorAll('#f517Baseline')].some(panel=>panel.textContent.includes('Revise as orientações técnicas antes de criar o primeiro módulo.'))`), 'v3 baseline block'); }
-    catch (error) { assert.fail(`${error instanceof Error ? error.message : String(error)} ${await evaluate('JSON.stringify({errors:window.__f517Errors,requests:window.__f517Requests,dom:[...document.querySelectorAll(\'#f517Baseline\')].map(x=>x.outerHTML)})')}`); }
-    assert.equal(await evaluate(`[...document.querySelectorAll('#f517Baseline button')].some(button=>button.disabled&&button.textContent==='Criar módulo')`), true);
-    assert.equal(await evaluate(`document.querySelector('#f517Baseline')?.textContent.includes(${JSON.stringify(renderedCatalog.profile_name)})`), true);
-    assert.equal(await evaluate(`document.querySelector('#f517Baseline')?.textContent.includes(${JSON.stringify(renderedCatalog.category_name)})`), true);
-    assert.equal(await evaluate(`document.querySelector('#f517Baseline')?.textContent.includes(${JSON.stringify(renderedCatalog.selection_mode)})&&document.querySelector('#f517Baseline')?.textContent.includes('mínimo ${renderedCatalog.min_selections}')`), true);
-    assert.equal(await evaluate(`document.querySelector('#f517Baseline')?.textContent.includes(${JSON.stringify(renderedCatalog.item_name)})&&document.querySelector('#f517Baseline')?.textContent.includes(${JSON.stringify(renderedCatalog.classification)})`), true);
-    if (renderedCatalog.version_constraint) assert.equal(await evaluate(`document.querySelector('#f517Baseline')?.textContent.includes(${JSON.stringify(renderedCatalog.version_constraint)})`), true);
-    assert.equal(await evaluate(`document.querySelector('#f517Baseline')?.textContent.includes('source_path: package.json')&&document.querySelector('#f517Baseline')?.textContent.includes('confiança/incerteza: 80%')`), true);
+    await evaluate(`window.fetch=((original)=>async(input,init={})=>original(input,{...init,headers:{...Object.fromEntries(new Headers(init.headers||{})),'x-csrf-token':${JSON.stringify(session.headers['x-csrf-token'])}}}))(window.fetch);window.confirm=()=>true`);
+    await eventually(async () => await evaluate(`document.querySelector('[data-project-id="${project}"]') !== null`), 'v3 project list');
+    await evaluate(`document.querySelector('[data-project-id="${project}"]').click()`);
+    await eventually(async () => await evaluate(`[...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='DECIDE_TECHNOLOGY_BASELINE')`), 'canonical v3 baseline decision');
+    assert.equal(await evaluate(`document.querySelector('#gatesAndStops')?.textContent.includes('Technology Baseline · PENDING_APPROVAL')`), true, 'safe baseline summary is rendered from the canonical projection');
+    assert.equal(await evaluate(`document.querySelector('#gatesAndStops')?.textContent.includes('Revisão 1 · gate OPEN · versão 1')`), true);
     assert.equal(await evaluate(`performance.getEntriesByType('navigation').length`), 1);
-    await evaluate(`[...document.querySelectorAll('#f517Baseline button')].find(button=>button.textContent==='Aprovar orientações técnicas').click()`);
-    await eventually(async () => await evaluate(`[...document.querySelectorAll('#f517Baseline')].some(panel=>panel.textContent.includes('Orientações técnicas aprovadas'))`), 'baseline approval reflected through SSE');
-    assert.equal(await evaluate(`document.querySelector('#f514Materialization button[type="submit"]')?.disabled===false`), true);
+    await evaluate(`const form=[...document.querySelectorAll('#actions form')].find(form=>form.querySelector('h3')?.textContent==='DECIDE_TECHNOLOGY_BASELINE');form.querySelector('select[name="decision"]').value='APPROVED';form.querySelector('button[type="submit"]').click()`);
+    await eventually(async () => await evaluate(`![...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='DECIDE_TECHNOLOGY_BASELINE')`), 'baseline decision removed after canonical refresh');
+    await eventually(async () => await evaluate(`[...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='MATERIALIZE_MODULE')`), 'materialization enabled after baseline approval');
+    assert.equal(await evaluate(`document.querySelector('#gatesAndStops')?.textContent.includes('Technology Baseline · APPROVED')`), true);
     assert.equal(await evaluate(`performance.getEntriesByType('navigation').length`), 1);
-    await evaluate(`f517OpenProject('${legacy}')`);
-    await eventually(async () => await evaluate(`[...document.querySelectorAll('#f517Baseline')].some(panel=>panel.textContent.includes('Technology Baseline não é necessária'))`), 'legacy notice');
-    assert.equal(await evaluate(`document.querySelector('#f514Materialization button[type="submit"]')?.disabled===false`), true);
+    await evaluate(`document.querySelector('[data-project-id="${legacy}"]').click()`);
+    await eventually(async () => await evaluate(`[...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='MATERIALIZE_MODULE')`), 'legacy v2 materialization');
+    assert.equal(await evaluate(`[...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='DECIDE_TECHNOLOGY_BASELINE')`), false);
   });
 }

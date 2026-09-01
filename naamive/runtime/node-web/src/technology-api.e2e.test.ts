@@ -12,6 +12,7 @@ else {
   const { createApiServer } = await import('./server.js');
   const { loadCatalogSeedPackage, catalogPackageHash, publishTechnologyCatalog } = await import('./catalog-publisher.js');
   const { validateTechnologyCatalogSeedPackage } = await import('./technology-contracts.js');
+  const { testAuthenticatedHeaders } = await import('./test-auth.js');
   const publish = async () => { const seed: any = structuredClone(await loadCatalogSeedPackage()), n = Date.now() * 100 + Math.floor(Math.random() * 99); for (const key of ['categories','catalogItems','profiles','profileItems','compatibilityRules','catalogRevision']) seed[key].catalog_revision = n; seed.catalogRevision.records[0].catalog_revision = n; seed.catalogRevision.records[0].content_hash = catalogPackageHash(await validateTechnologyCatalogSeedPackage(seed)); return publishTechnologyCatalog(seed, 'f5-15-api-tester', randomUUID()); };
   const fixture = async () => {
     const catalog: any = await publish(), project = randomUUID(), context = randomUUID(), intake = randomUUID(), inventoryOperation = randomUUID(), job = randomUUID();
@@ -28,9 +29,10 @@ else {
   test.after(() => pool.end());
   test('F5-15 exposes only selectable catalog data and creates an idempotent baseline without an intake revision FK violation', async t => {
     const f = await fixture(), server = createApiServer(); await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve)); const base = `http://127.0.0.1:${(server.address() as any).port}`;
+    const session=await testAuthenticatedHeaders(f.project,[{role_code:'OPERATOR',action_code:'READ_PROJECT'},{role_code:'OPERATOR',action_code:'OPERATE_PROJECT'}]);t.after(session.cleanup);
     t.after(() => new Promise<void>(resolve => server.close(() => resolve())));
-    const get = async (path: string, expected = 200) => { const response = await fetch(`${base}${path}`), body = await response.text(); assert.equal(response.status, expected, body); return JSON.parse(body) as any; };
-    const post = async (path: string, body: any, key: string = randomUUID(), expected = 201) => { const response = await fetch(`${base}${path}`, { method: 'POST', headers: { 'content-type': 'application/json', 'idempotency-key': key }, body: JSON.stringify(body) }), responseBody = await response.text(); assert.equal(response.status, expected, responseBody); return JSON.parse(responseBody) as any; };
+    const get = async (path: string, expected = 200) => { const response = await fetch(`${base}${path}`,{headers:session.headers}), body = await response.text(); assert.equal(response.status, expected, body); return JSON.parse(body) as any; };
+    const post = async (path: string, body: any, key: string = randomUUID(), expected = 201) => { const response = await fetch(`${base}${path}`, { method: 'POST', headers: { ...session.headers,'content-type': 'application/json', 'idempotency-key': key }, body: JSON.stringify(body) }), responseBody = await response.text(); assert.equal(response.status, expected, responseBody); return JSON.parse(responseBody) as any; };
     const categories = await get('/api/technology/categories'); assert.ok(categories.items.every((item: any) => item.is_active));
     const items = await get('/api/technology/catalog-items'); assert.ok(items.items.length > 0 && items.items.every((item: any) => item.is_active));
     const profiles = await get('/api/technology/profiles'); assert.ok(profiles.items.length > 0 && profiles.items.every((profile: any) => profile.is_active));
@@ -46,7 +48,7 @@ else {
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, unknown: true }, randomUUID(), 422);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, selection_context_id: undefined }, randomUUID(), 422);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, technology_catalog_revision_id: randomUUID() }, randomUUID(), 422);
-    await post(`/api/projects/${randomUUID()}/technology-baseline/revisions`, f.payload, randomUUID(), 409);
+    await post(`/api/projects/${randomUUID()}/technology-baseline/revisions`, f.payload, randomUUID(), 403);
     const inactiveContext = randomUUID(); await pool.query(`INSERT INTO technology_selection_contexts(id,project_id,project_key,technology_catalog_revision_id,technology_profile_id,hash,status) VALUES($1,$2::uuid,$2,$3,$4,$5,'SUPERSEDED')`, [inactiveContext,f.project,f.catalog.revisionId,f.profile,'f'.repeat(64)]);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, selection_context_id: inactiveContext }, randomUUID(), 409);
     await post(`/api/projects/${f.project}/technology-baseline/revisions`, { ...f.payload, items: [{ ...f.payload.items[0], catalog_item_id: randomUUID() }] }, randomUUID(), 422);

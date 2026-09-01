@@ -1,0 +1,614 @@
+# NAAMIVE — Resumo de Continuidade da Fase 6.5
+
+**Data do checkpoint:** 24/08/2026
+**Branch:** `phase6.5-lifecycle-alignment`  
+**Fase:** 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery  
+**Objetivo deste arquivo:** permitir retomar o trabalho em um novo chat sem reconstruir todo o histórico.
+
+---
+
+## 1. Por que a Fase 6.5 foi criada
+
+A Fase 6 havia sido implementada e marcada como concluída, porém um teste manual do projeto real mostrou que o runtime não seguia corretamente o lifecycle planejado.
+
+O problema central observado foi que o processo deveria ser predominantemente automático, com intervenção humana apenas em gates legítimos ou situações excepcionais, mas o runtime ainda possuía paradas operacionais, autorizações individuais e estados sem continuidade adequada.
+
+Princípio arquitetural reforçado:
+
+> **AUTOMATION FIRST, HUMAN BY EXCEPTION OR EXPLICIT GATE.**
+
+A Fase 6.5 foi criada como fase corretiva entre F6 e F7. A F7 permanece bloqueada até o aceite integral da F6.5.
+
+Auditoria baseline:
+
+`naamive/orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`
+
+Planejamento principal:
+
+`naamive/orchestration/demand-intake/node-web-orchestration-platform/16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md`
+
+Tasks:
+
+`naamive/orchestration/demand-intake/node-web-orchestration-platform/phase-6-5-implementation-tasks/`
+
+---
+
+## 2. Escopo planejado
+
+A Fase 6.5 possui 15 demandas, incluindo a bloqueadora LR-02A criada durante
+a pré-validação de LR-02:
+
+| Ordem | Task | Objetivo resumido | Status atual |
+|---:|---|---|---|
+| 1 | **LR-01** | Publicar workflows aderentes v2 e corrigir o modelo de estados/transições | **DONE** |
+| 2 | **GAT-01** | Catálogo server-side versionado de gates e autoridade | **DONE** |
+| 3 | **GAT-03** | Autenticação e RBAC server-side | **DONE** |
+| 4 | **AUT-01** | Scheduler transacional de elegibilidade e dispatch automático | **DONE** |
+| 5 | **REC-01** | Recovery orientado pela causa | **DONE** |
+| 6A | **LR-02A** | Publicar módulos canônicos do PRODUCT_COMMITMENT | **DONE** |
+| 6 | **LR-02** | Sincronizar lifecycle macro de projeto e módulo | **DONE** |
+| 7 | **AUT-02** | Automatizar QA → review → merge → integração | **DONE** |
+| 8 | **AUT-03** | Expandir assurance F6 para os trabalhos reais | **TO_DO** |
+| 9 | **REC-02** | Recovery de reviewer, assistência e routing | **TO_DO** |
+| 10 | **GAT-02** | Lifecycle de entrega, pausa, retomada e cancelamento | **TO_DO** |
+| 11 | **UI-01** | Projeção única de estado e `allowed_actions` | **TO_DO** |
+| 12 | **UI-02** | Superfícies completas para estados de parada/recovery | **TO_DO** |
+| 13 | **TST-01** | Suíte transversal de conformidade do lifecycle | **TO_DO** |
+| 14 | **DOC-01** | Reconciliar documentação F5/F6/F6.5 | **TO_DO** |
+
+Ordem planejada:
+
+`LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02 → AUT-02 → AUT-03 → REC-02 → GAT-02 → UI-01 → UI-02 → TST-01 → DOC-01`
+
+---
+
+## 3. LR-01 — DONE
+
+### Objetivo
+
+Publicar contratos de workflow compatíveis com o lifecycle normativo antes de construir automações em cima do modelo antigo.
+
+### Implementado
+
+Foram publicados:
+
+- `PROJECT_DISCOVERY v4`
+- `MODULE_DELIVERY v2`
+- `WORK_ITEM_DELIVERY v2`
+- `ORCHESTRATION_EXECUTION v1`
+
+Migration:
+
+`048_phase_6_5_conformant_workflows.sql`
+
+A LR-01 separou semanticamente:
+
+- blocker externo;
+- dependência técnica;
+- elegibilidade;
+- dispatch;
+- produção;
+- output;
+- QA;
+- review;
+- `ACCEPT`;
+- rework;
+- block;
+- recovery;
+- gate humano.
+
+Regra importante:
+
+> `EXECUTION_SUCCEEDED != WORK_ACCEPTED`
+
+No caminho supervisionado, somente `ACCEPT` representa aceite técnico.
+
+Novos WIs podem nascer como:
+
+- `WAITING_FOR_EXTERNAL_INPUT`
+- `WAITING_FOR_DEPENDENCIES`
+- `ELIGIBLE_FOR_DISPATCH`
+
+A autorização humana individual existente no workflow legado não faz parte do novo fluxo.
+
+### Compatibilidade
+
+O legado foi preservado sem reinterpretar registros históricos.
+
+A LR-01 não implementou scheduler ou auto-dispatch; isso pertence à AUT-01.
+
+### Validação
+
+As suítes diretamente afetadas passaram.
+
+Foram encontradas quatro falhas em `inventory.e2e.test.ts`. Foi feita comparação contra o commit anterior à LR-01 e comprovado que as mesmas quatro falhas já existiam.
+
+Causa conhecida:
+
+`agentMaxRetries=2` faz a primeira falha resultar em `RETRYABLE`, enquanto quatro testes antigos esperam `FAILED`.
+
+Classificação:
+
+**DÍVIDA PREEXISTENTE — NÃO CAUSADA PELA LR-01.**
+
+Não corrigir essa dívida dentro de tasks sem relação com inventory.
+
+---
+
+## 4. GAT-01 — DONE
+
+### Objetivo
+
+Transformar o servidor na fonte de verdade para gates.
+
+Gate humano deve ser exceção, não mecanismo normal de progressão.
+
+### Implementado
+
+Catálogo server-side versionado, incluindo:
+
+- hash;
+- contratos imutáveis;
+- registros auditáveis;
+- decisões auditáveis;
+- idempotência;
+- condições;
+- evidências;
+- autoridade requerida;
+- decisões permitidas;
+- consequências;
+- snapshot obrigatório do contrato para gates v2+.
+
+Arquivo principal:
+
+`naamive/runtime/node-web/src/gate-catalog.ts`
+
+Migrations:
+
+`049` a `052`
+
+Matriz de pré-validação:
+
+`phase-6-5-implementation-tasks/GAT-01-gate-matrix.md`
+
+O assurance F6 passou a aceitar somente tipos presentes no catálogo.
+
+### Regra central
+
+Não são gates humanos por si só:
+
+- blocker externo;
+- dependência;
+- erro técnico;
+- retry;
+- recovery;
+- rework automático;
+- QA;
+- review independente;
+- espera por reviewer;
+- elegibilidade;
+- integração técnica.
+
+Gate condicional exige:
+
+`condição normativa + evidência + autoridade + decisões + consequência determinística`
+
+O happy path também deve provar **ausência de gate** quando nenhuma condição material existir.
+
+### Fronteira
+
+GAT-01 responde:
+
+> **QUAL autoridade é necessária?**
+
+GAT-03 responde:
+
+> **QUEM está autenticado e possui essa autoridade?**
+
+---
+
+## 5. GAT-03 — DONE
+
+### Objetivo
+
+Eliminar confiança em identidade/role declarada pelo cliente e implementar autenticação + RBAC server-side.
+
+### Pré-validação
+
+A task parou corretamente em:
+
+`BLOCKED_BY_ARCHITECTURAL_DECISION`
+
+porque o deployment existente não possuía:
+
+- IdP;
+- sessão;
+- proxy autenticador;
+- credenciais de serviço;
+- modelo confiável de usuários/grants.
+
+Foi criado:
+
+`phase-6-5-implementation-tasks/GAT-03-authentication-rbac-prevalidation.md`
+
+Após revisão, a decisão arquitetural foi aprovada.
+
+### Decisão arquitetural aprovada
+
+#### Humanos
+
+Autenticação local server-side:
+
+`login → credencial validada → sessão opaca server-side → cookie HttpOnly → principal/roles/grants server-side`
+
+Características:
+
+- `HttpOnly`;
+- `SameSite=Strict`;
+- expiração;
+- revogação;
+- logout;
+- CSRF/origin protection;
+- fail-closed.
+
+Roles e scopes nunca são confiados ao browser.
+
+#### Service principals
+
+Workers/agentes possuem identidades próprias e credenciais separadas.
+
+Não podem:
+
+- assumir identidade humana;
+- ganhar role humana;
+- decidir gate reservado a humano;
+- aumentar o próprio scope;
+- usar credencial humana.
+
+#### Futuro
+
+A autenticação deve possuir uma fronteira que permita futuramente substituir o provider local por OIDC/IdP sem redesenhar RBAC, grants, GAT-01 e audit trail.
+
+OIDC/Keycloak/Auth0 **não fazem parte da F6.5 atual**.
+
+#### Bootstrap
+
+Primeiro administrador criado por bootstrap explícito usando:
+
+`NAAMIVE_AUTH_BOOTSTRAP_SECRET`
+
+Não permitir:
+
+- `admin/admin`;
+- senha default;
+- bypass permanente;
+- master password.
+
+O secret serve somente ao bootstrap e não deve permanecer como caminho alternativo de autorização.
+
+#### Legado
+
+Não são prova de autoridade:
+
+- `NAAMIVE_OPERATOR_ID`
+- `x-actor-role`
+- `x-actor-id`
+- `x-naamive-operator`
+- role/actor enviados no payload
+
+Podem permanecer apenas quando necessário para compatibilidade/auditoria histórica.
+
+### Implementação concluída
+
+Foram concluídos:
+
+- migration `053`;
+- principals;
+- credenciais com hash `scrypt`;
+- roles/grants;
+- sessões opacas;
+- expiração;
+- revogação;
+- auditoria;
+- bootstrap do primeiro administrador;
+- login/logout;
+- cookie `HttpOnly` / `SameSite=Strict`;
+- CSRF por Origin + token;
+- RBAC por ação, projeto e recurso;
+- rejeição cross-project;
+- fail-closed;
+- integração com autoridade da GAT-01;
+- headers legados sem autoridade;
+- service principals;
+- credenciais próprias de serviços;
+- rotação/revogação;
+- bloqueio de ações humanas por service principal;
+- worker exigindo credencial de serviço ao iniciar;
+- documentação/configuração de exemplo.
+
+Arquivos principais:
+
+- `naamive/runtime/node-web/src/auth.ts`
+- `naamive/runtime/node-web/src/server.ts`
+- `naamive/runtime/node-web/migrations/053_phase_6_5_authentication_rbac.sql`
+
+### Validações já verdes
+
+- `npm run migrate`
+- `npm run build`
+- `auth.e2e.test.ts`
+- regressões GAT-01
+- regressões F6
+- `git diff --check`
+
+### Conclusão validada
+
+O ajuste de `http-acceptance.e2e.test.ts` passou a autenticar pelos mecanismos
+legítimos. GAT-03 foi aceita sem enfraquecer a fronteira de segurança: não há
+bypass de teste, header mágico, usuário implícito, role default ou reutilização
+de headers legados como autenticação. Build, testes GAT-03, regressões GAT-01/F6
+e `git diff --check` foram validados; as quatro falhas históricas de inventory
+(`FAILED` versus `RETRYABLE`) permaneceram classificadas como preexistentes.
+
+---
+
+## 6. AUT-01 — DONE
+
+AUT-01 entregou scheduler v2 com dispatch automático, capacidade configurável,
+guarda PostgreSQL contra oversubscription, reavaliação de dependências e
+reconciler. As decisões são auditáveis e o scheduler cobre DAG/ciclo,
+fan-in/fan-out, concorrência, rollback de crash, restart e replay; o cenário
+de regressão inclui Métrica e Interface.
+
+**Ponto de capacidade fechado por REC-01:** além do reconciler periódico como
+safety net, recovery que libera slot solicita reavaliação idempotente pós-commit
+com o trigger `RECOVERY_CAPACITY_RELEASED`, preservando o lock global de AUT-01.
+
+## 7. REC-01 — DONE
+
+Fronteira funcional final: `[LR-01, AUT-01]`. LR-01 fornece o lifecycle v2;
+AUT-01 fornece attempts, reservations, jobs, capacidade e scheduler/reconciler.
+GAT-01/GAT-03 são guardrails para qualquer escalada humana, não dependências
+funcionais mecânicas. A pré-validação está em
+`REC-01-cause-aware-recovery-prevalidation.md` e foi implementada sem ampliar
+o escopo de REC-02, AUT-02 ou LR-02. Os dois findings da auditoria de `9e9bdaf0`
+foram fechados com fencing persistente do executor e promoção de finding apenas
+após evidência corretiva canônica F3.
+
+Recovery orientado pela causa.
+
+Objetivo:
+
+Estados de falha/parada devem possuir caminho operacional de recuperação compatível com a causa.
+
+Exemplos:
+
+- retry;
+- restart;
+- resume;
+- resolução de blocker;
+- reexecução segura.
+
+Nenhum erro deve deixar o processo permanentemente no limbo. A implementação
+entregou classifier e executor centrais, decisão versionada/auditável,
+replay/convergência, fencing persistente, Git reconciliation, adapters v2,
+projeção explicável, lineage AUT-01 e wake-up pós-commit. Migrations `056`–`060`,
+build e suítes diretamente afetadas passaram; permaneceram somente as quatro
+falhas históricas de inventory já auditadas.
+
+---
+
+### LR-02A — DONE
+
+Publicada a `ProductCommitmentRevision` canônica, versionada e imutável que
+associa `candidate_modules` ao gate `PRODUCT_COMMITMENT`. A migration 061,
+schema/hash server-side, binding GAT-01/GAT-03, read model, eventos e estrutura
+vazia de materialization lineage foram validados em PostgreSQL real. O fluxo
+não materializa módulos e preserva o legado.
+
+O finding LR-02A-FIX-01 foi fechado pela migration 062 e regressões em
+PostgreSQL: uma revisão `APPROVED` admite sucessora pendente; aprovação troca a
+autoridade atomicamente, rejeição preserva a current approved, cadeias de
+rework continuam rastreáveis e os índices impedem duas revisões aprovadas ou
+pendentes por projeto.
+
+---
+
+### LR-02 — DONE
+
+Sincronizar lifecycle macro de projeto e módulo com os novos contratos.
+
+Projeto, módulo, work item e execução precisam refletir coerentemente o progresso real.
+
+A migration 063, o agregador puro versionado, o reconciler PostgreSQL, o
+ledger `CommittedModuleObligation:v1`, os checkpoints e a projeção API/SSE
+implementam `SAME`, `CHANGED`, `ADDED`, `REMOVED` e
+`EffectiveRequiredModuleSet`. Descoberta v4 e materialização são recuperáveis e
+idempotentes; sucessões, reintrodução, replay, concorrência, reabertura e
+fencing temporal foram validados em PostgreSQL real. O legado e os rollouts
+globais foram preservados. GAT-02 não foi iniciada; AUT-02 foi implementada
+posteriormente sobre essas autoridades.
+
+O finding `LR-02-FIX-01` foi fechado pela migration 064 e por regressões HTTP e
+PostgreSQL. A seleção de `PROJECT_DISCOVERY` agora é congelada atomicamente na
+criação da instância; o gate consome somente essa seleção persistida. Assim,
+toggles posteriores de `NEW_PROJECTS` não migram projetos, replay não duplica
+intent/evento/operação/job e a vinculação ativa de intake permanece íntegra até
+a transição explícita. Nenhum projeto existente teve workflow/estado migrado.
+
+---
+
+### AUT-02 — DONE
+
+Automatizar:
+
+`QA → review → ACCEPT → merge → integração`
+
+quando não existir gate/blocker legítimo.
+
+O contrato `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` está em
+`AUT-02-automatic-qa-review-merge-integration-prevalidation.md`. A migration
+065 e o executor AUT-02 implementam snapshot imutável, QA determinístico,
+review Assurance independente, `ACCEPT` como única autoridade de aceite, merge
+por WI, candidata multi-WI exata, integração coletiva e um único handoff
+`MACRO_REEVALUATE` para LR-02. Intents leased/fenced, REC-01, replay,
+concorrência, staleness e unknown effect falham de modo fechado. Regressões com
+PostgreSQL e Git reais cobrem a barreira N−1, rollback coletivo, manifests,
+finalizers concorrentes e `NOT_APPLIED`/`APPLIED_UNRECORDED`. AUT-03, REC-02 e
+GAT-02 permanecem fora deste escopo.
+
+O finding `AUT-02-FIX-01` foi fechado em 24/08/2026. O
+`RequiredWorkItemSet:v1` usa a identidade normativa da plan revision aprovada e
+exige igualdade exata com o conjunto observado,
+incluindo guards contra missing, extra e duplicatas. O manifest congela os dois
+conjuntos, a identidade lógica de cada membro e fingerprint ligado a plan,
+revision e round. A validação recompõe essa prova; cardinalidade isolada deixou
+de ser autoridade.
+
+O finding `AUT-02-FIX-02` foi fechado em 25/08/2026. A identidade
+`PlanWorkItem → WorkItem` agora é persistida em `work_items.plan_work_item_id`,
+com `module_plan_revision_id`, validação e imutabilidade PostgreSQL. O observed
+set, o delivery snapshot, o manifest e a candidate validation usam essa
+lineage; `work_items.payload.work_item_id` deixou de ser autoridade. A migration
+067 faz backfill somente de v2 inequívoco e preserva v1/legado.
+
+A dívida independente `MIG-FIX-01` também foi fechada pela compatibilidade
+restrita do runner e pela migration 066. Fresh 049/051 publica legitimamente o
+mesmo conteúdo/hash em duas versões; o runner só remove a unicidade histórica
+quando filename, lineage, hash conhecido e transformação no-op coincidem, e
+051 continua sendo executada e registrada normalmente. Fresh, segundo migrate
+e upgrade histórico foram validados. Consulte
+`MIG-FIX-01-gate-catalog-fresh-migration-compatibility.md`.
+
+---
+
+### AUT-03 — TO_DO
+
+Expandir o assurance da F6 para o trabalho real.
+
+F6 historicamente nasceu opt-in. F6.5 está autorizada a aplicar assurance aos novos dispatches selecionados do fluxo real.
+
+Sucesso técnico não equivale a aceite.
+
+---
+
+### REC-02 — TO_DO
+
+Recovery relacionado a:
+
+- ausência/falha de reviewer;
+- assistência;
+- routing;
+- fallback controlado.
+
+---
+
+### GAT-02 — TO_DO
+
+Implementar lifecycle funcional de:
+
+- entrega;
+- aceite final;
+- pause;
+- resume;
+- cancel.
+
+GAT-01 já define catálogo/política; GAT-02 implementará esse comportamento funcional.
+
+---
+
+### UI-01 — TO_DO
+
+Criar projeção única de estado + `allowed_actions`.
+
+A UI não deve inferir ações possíveis por conta própria.
+
+Servidor deve informar o estado e as ações legitimamente disponíveis.
+
+---
+
+### UI-02 — TO_DO
+
+Criar superfícies operacionais para todas as paradas legítimas.
+
+Exemplo do problema original que motivou F6.5:
+
+Se existe falha recuperável, a tela precisa apresentar a ação correta de recovery.
+
+Não pode existir estado em limbo sem ação operacional.
+
+---
+
+### TST-01 — TO_DO
+
+Criar suíte transversal de conformidade do lifecycle.
+
+Deve testar o fluxo como sistema, inclusive o cenário real que revelou a divergência original.
+
+---
+
+### DOC-01 — TO_DO
+
+Reconciliar documentação de F5/F6/F6.5 sem falsificar histórico.
+
+Documentos históricos permanecem históricos; documentação corrente deve refletir o comportamento vigente.
+
+---
+
+## 8. Estado consolidado
+
+| Categoria | Quantidade |
+|---|---:|
+| DONE | 8 |
+| DOING | 0 |
+| TO_DO | 7 |
+| Total | 15 |
+
+Progresso funcional da F6.5:
+
+- **LR-01: DONE**
+- **GAT-01: DONE**
+- **GAT-03: DONE**
+- **AUT-01: DONE**
+- **REC-01: DONE**
+- **LR-02A: DONE**
+- **LR-02: DONE**
+- **AUT-02: DONE**
+- restante: **TO_DO**
+
+Fase 7:
+
+> **BLOCKED BY PHASE 6.5**
+
+---
+
+## 9. Regras que não devem ser perdidas ao trocar de chat
+
+1. **Automation First.** Humano somente por exceção ou gate explícito.
+2. Não transformar erro, retry, QA, review, dependência ou conclusão técnica em gate humano.
+3. Nenhum estado recuperável pode ficar em limbo sem ação operacional.
+4. `EXECUTION_SUCCEEDED != WORK_ACCEPTED`.
+5. GAT-01 define autoridade exigida; GAT-03 autentica o principal e valida seus grants.
+6. Client/header/payload nunca concede role ou identidade confiável.
+7. Service principal nunca assume autoridade humana.
+8. Preservar histórico; corrigir novas versões sem reinterpretar execuções antigas.
+9. Não antecipar escopo de tasks posteriores.
+10. Diante de decisão arquitetural material não prevista, usar `DECISÃO ARQUITETURAL NECESSÁRIA` em vez de inventar.
+11. As quatro falhas `inventory.e2e.test.ts` (`FAILED` vs `RETRYABLE`) são dívida preexistente comprovada.
+12. F7 só começa após aceite integral da F6.5.
+13. A versão de workflow pertence à instância: `NEW_PROJECTS` seleciona apenas
+    na criação e gates nunca reavaliam rollout nem migram instâncias existentes.
+
+---
+
+## 10. Ponto exato para retomada
+
+Ao iniciar um novo chat:
+
+1. informar que estamos na branch `phase6.5-lifecycle-alignment`;
+2. fornecer este arquivo;
+3. retomar por **AUT-03**, mantendo GAT-02 e REC-02 em `TO_DO`;
+4. preservar AUT-01 e REC-01 como concluídas, incluindo fencing persistente,
+   lifecycle correto de finding e wake-up pós-commit de capacidade;
+5. confirmar antes de qualquer alteração funcional que o checkpoint permanece:
+   `LR-01 DONE → GAT-01 DONE → GAT-03 DONE → AUT-01 DONE → REC-01 DONE → LR-02A DONE → LR-02 DONE → AUT-02 DONE → AUT-03 TO_DO`.

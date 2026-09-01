@@ -8,6 +8,25 @@ projeto](PROJECT_LIFECYCLE.md), [a máquina de módulo](MODULE_LIFECYCLE.md) e o
 [protocolo de orquestração](ORCHESTRATION_PROTOCOL.md). Setas são transições
 permitidas — não são autorização automática para executá-las.
 
+## Contrato operacional vigente — reconciliação F6.5
+
+Esta bússola é normativa para o comportamento atual do runtime Node/Web. A
+Fase 6 entregou historicamente a fundação aditiva e opt-in de assurance; a
+Fase 6.5 certificou sua aplicação aos fluxos reais selecionados, sem alterar a
+semântica de execuções históricas. As definições publicadas continuam imutáveis:
+novas instâncias usam `PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`,
+`WORK_ITEM_DELIVERY:v2` e `ORCHESTRATION_EXECUTION:v1`; linhas anteriores
+permanecem legadas e consultáveis pela versão que já possuem.
+
+Em `WORK_ITEM_DELIVERY:v2`, um item aprovado não passa por
+`WAITING_FOR_WORK_ITEM_AUTHORIZATION` nem expõe `AUTHORIZE_WORK_ITEM`. A
+elegibilidade, o despacho, QA, review independente, `ACCEPT`, merge, candidata,
+validação, integração e reavaliação de dependentes são automáticos e
+idempotentes, dentro das políticas versionadas aplicáveis. `ACCEPT` permanece
+distinto de sucesso técnico. `STATE_ACTION_PROJECTION:v1` é a única projeção
+pública de estado e ações; `GATE_CATALOG:v2` e a autorização server-side
+delimitam as decisões humanas proporcionais.
+
 ## Mapa geral: da ideia ao próximo ciclo
 
 <p align="right">
@@ -138,19 +157,22 @@ Uma execução `REJECTED`, `FAILED` ou em `REWORK_REQUIRED` não promove o estad
 do projeto/módulo. Só uma decisão de gate favorável com as evidências exigidas
 registra a transição.
 
-## Evolução planejada: micro-lifecycle universal de supervisão (Fase 6)
+## Micro-lifecycle universal de supervisão: fundação F6 e expansão Fase 6.5
 
-O mapa macro acima permanece canônico. A Fase 6 não acrescentará uma etapa
-macro de audit; ela introduzirá, para cada execução delegada, um micro-lifecycle
-transversal: `DISPATCH → PRODUCE → OUTPUT ou BLOCK`; `OUTPUT → INDEPENDENT
+O mapa macro acima permanece canônico. A Fase 6 não introduziu uma etapa macro
+de audit; ela introduziu, para cada execução delegada, o micro-lifecycle
+transversal `DISPATCH → PRODUCE → OUTPUT ou BLOCK`; `OUTPUT → INDEPENDENT
 REVIEW → ACCEPT ou REWORK`; `BLOCK → ASSIST / ROUTE / ESCALATE`; e `REWORK →
-PRODUCE → REVIEW`. Só `ACCEPT` caracterizará trabalho concluído pela
+PRODUCE → REVIEW`. Só `ACCEPT` caracteriza trabalho concluído pela
 orquestração. Portanto, `EXECUTION_SUCCEEDED != WORK_ACCEPTED`.
 
-No estado atual, `EVIDENCE_REVIEW` continua com a semântica publicada e não é
-retroativamente reinterpretado como completeness review. O detalhamento futuro
-separará validação de evidência, review de completude/especialista, aceite de
-trabalho e gate, preservando os contratos e gates humanos existentes.
+No escopo histórico e opt-in da Fase 6, `EVIDENCE_REVIEW` continuou com a
+semântica publicada e não foi retroativamente reinterpretado como completeness
+review. Essa coexistência não impede evolução posterior. A Fase 6.5 publica
+novas versões de workflow e rollout controlado para aplicar o micro-lifecycle aos
+trabalhos e handoffs reais selecionados, preservando a consulta e a semântica das
+execuções históricas. Validação de evidência, review de completude/especialista,
+aceite de trabalho e gate continuam controles distintos.
 
 ## Mapa do módulo: a esteira paralela da capacidade de negócio
 

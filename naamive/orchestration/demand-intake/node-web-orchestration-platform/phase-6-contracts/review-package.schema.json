@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "naamive://assurance/v1/review-package",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "reviewId", "acceptanceId", "correlationId", "version", "classification", "contract", "authorizedActivity", "inputArtifacts", "expectedOutputs", "requiredEvidence", "completionCriteria", "outputReference"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "reviewId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "acceptanceId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "correlationId": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" },
+    "version": { "type": "integer", "minimum": 1 },
+    "classification": { "$ref": "naamive://assurance/v1/common#/$defs/classification" },
+    "contract": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "authorizedActivity": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "inputArtifacts": { "type": "array", "items": { "$ref": "naamive://assurance/v1/common#/$defs/artifactReference" } },
+    "expectedOutputs": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "requiredEvidence": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "completionCriteria": { "$ref": "naamive://assurance/v1/common#/$defs/sanitizedObject" },
+    "outputReference": { "$ref": "naamive://assurance/v1/common#/$defs/artifactReference" },
+    "priorDecisions": { "type": "array", "items": { "$ref": "naamive://assurance/v1/common#/$defs/uuid" } }
+  }
+}

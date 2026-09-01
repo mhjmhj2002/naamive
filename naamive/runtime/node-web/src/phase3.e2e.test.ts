@@ -16,6 +16,7 @@ if (!databaseUrl) {
   // agent adapter. Tests use the controlled (deterministic, non-production)
   // adapter so no real Codex invocation can ever occur.
   process.env.NAAMIVE_AGENT_ADAPTER = 'controlled';
+  process.env.NAAMIVE_DEVELOPMENT_EXECUTOR = 'controlled';
   process.env.NAAMIVE_RUNTIME_ENVIRONMENT = 'test';
   const { pool } = await import('./db.js');
   const { materializeModule, materializationBaselineOptions, decideModule, completeDefinition, decideArchitecture, approveModulePlan, startDevelopment, retryDevelopmentWorkItem, prepareDevelopmentJob, finalizeDevelopmentJob, startModuleRevision, submitQa, authorizeRework, mergeWorkItemToPhase, createCandidate, validateCandidate, startIntegration } = await import('./phase3.js');
@@ -32,10 +33,10 @@ if (!databaseUrl) {
       await pool.query('DELETE FROM events WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM artifacts WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM artifact_intents WHERE project_id=$1', [projectId]);
-      await pool.query('DELETE FROM module_gates WHERE project_id=$1', [projectId]);
-      await pool.query('DELETE FROM module_plan_revisions WHERE project_id=$1', [projectId]);
-      await pool.query('DELETE FROM module_plan_job_context WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM work_items WHERE project_id=$1', [projectId]);
+      await pool.query('DELETE FROM module_gates WHERE project_id=$1', [projectId]);
+      await pool.query('DELETE FROM module_plan_job_context WHERE project_id=$1', [projectId]);
+      await pool.query('DELETE FROM module_plan_revisions WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)', [projectId]);
       await pool.query('DELETE FROM modules WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM module_revisions WHERE project_id=$1', [projectId]);
@@ -65,8 +66,12 @@ if (!databaseUrl) {
     }], approveModulePlan, `phase3-plan-${randomUUID()}`);
     assert.equal(plan.status, 'ACCEPTED');
     assert.equal(plan.work_item_ids?.length, 1);
-    const item = await pool.query(`SELECT title,payload,state FROM work_items WHERE id=$1`, [plan.work_item_ids?.[0]]);
-    assert.equal(item.rows[0].state, 'WAITING_FOR_WORK_ITEM_AUTHORIZATION');
+    const item = await pool.query(`SELECT title,payload,state,workflow_code,workflow_version,module_plan_revision_id,plan_work_item_id FROM work_items WHERE id=$1`, [plan.work_item_ids?.[0]]);
+    assert.equal(item.rows[0].state, 'ELIGIBLE_FOR_DISPATCH');
+    assert.equal(item.rows[0].workflow_code, 'WORK_ITEM_DELIVERY');
+    assert.equal(item.rows[0].workflow_version, 2);
+    assert.equal(item.rows[0].module_plan_revision_id, item.rows[0].payload.plan_revision_id);
+    assert.equal(item.rows[0].plan_work_item_id, item.rows[0].payload.work_item_id);
     assert.equal(item.rows[0].payload.plan_artifact_hash, plan.evidence_hash);
     // F5-23 persists the plan revision's criterion coverage (criterion_ids),
     // not the legacy free-text acceptance_criteria on each QA entry.
@@ -99,18 +104,20 @@ if (!databaseUrl) {
   test('freezes QA, sanitizes timeout findings, revalidates and validates a frozen candidate', async (t) => {
     const id = `phase-three-delivery-${randomUUID().slice(0, 8)}`,git=disposableRepository();
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,draft,workflow_code,workflow_version,state) VALUES($1,'Delivery','Ops','test',$2,'test://origin','integration',$3,'{}','PROJECT_DISCOVERY',2,'PRODUCT_COMMITMENT')`, [id,git.repo,git.sha]);
-    t.after(async()=>{ for(const sql of [`DELETE FROM events WHERE project_id=$1`,`DELETE FROM artifacts WHERE project_id=$1`,`DELETE FROM artifact_intents WHERE project_id=$1`,`DELETE FROM rework_gates WHERE project_id=$1`,`DELETE FROM rework_decisions WHERE project_id=$1`,`DELETE FROM integration_attempts WHERE project_id=$1`,`DELETE FROM finding_work_items WHERE finding_id IN (SELECT id FROM findings WHERE project_id=$1)`,`DELETE FROM findings WHERE project_id=$1`,`DELETE FROM integration_candidates WHERE project_id=$1`,`DELETE FROM jobs WHERE project_id=$1`,`DELETE FROM deliveries WHERE project_id=$1`,`DELETE FROM worktrees WHERE project_id=$1`,`DELETE FROM work_items WHERE project_id=$1`,`DELETE FROM module_gates WHERE project_id=$1`,`DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)`,`DELETE FROM module_plan_revisions WHERE project_id=$1`,`DELETE FROM module_plan_job_context WHERE project_id=$1`,`DELETE FROM modules WHERE project_id=$1`,`DELETE FROM module_revisions WHERE project_id=$1`,`DELETE FROM operations WHERE project_id=$1`,`DELETE FROM projects WHERE id=$1`]) await pool.query(sql,[id]); rmSync(git.root,{recursive:true,force:true}); });
+    t.after(async()=>{ for(const sql of [`DELETE FROM events WHERE project_id=$1`,`DELETE FROM artifacts WHERE project_id=$1`,`DELETE FROM artifact_intents WHERE project_id=$1`,`DELETE FROM rework_gates WHERE project_id=$1`,`DELETE FROM rework_decisions WHERE project_id=$1`,`DELETE FROM integration_attempts WHERE project_id=$1`,`DELETE FROM finding_work_items WHERE finding_id IN (SELECT id FROM findings WHERE project_id=$1)`,`DELETE FROM findings WHERE project_id=$1`,`DELETE FROM integration_candidates WHERE project_id=$1`,`DELETE FROM jobs WHERE project_id=$1`,`DELETE FROM deliveries WHERE project_id=$1`,`DELETE FROM worktrees WHERE project_id=$1`,`DELETE FROM runtime_diagnostics WHERE work_item_id IN (SELECT id FROM work_items WHERE project_id=$1)`,`DELETE FROM work_items WHERE project_id=$1`,`DELETE FROM module_gates WHERE project_id=$1`,`DELETE FROM module_rounds WHERE module_id IN (SELECT id FROM modules WHERE project_id=$1)`,`DELETE FROM module_plan_revisions WHERE project_id=$1`,`DELETE FROM module_plan_job_context WHERE project_id=$1`,`DELETE FROM modules WHERE project_id=$1`,`DELETE FROM module_revisions WHERE project_id=$1`,`DELETE FROM operations WHERE project_id=$1`,`DELETE FROM projects WHERE id=$1`]) await pool.query(sql,[id]); rmSync(git.root,{recursive:true,force:true}); });
     const module=await materializeModule(id,{module_key:'delivery',name:'Delivery',objective:'Test',scope:['test'],out_of_scope:[],dependencies:[],acceptance_criteria:['works']},`m-${randomUUID()}`);
     const gate=(await pool.query(`SELECT version FROM module_gates WHERE id=$1`,[module.gate_id])).rows[0]; await decideModule(id,module.module_id!,{decision:'APPROVED',version:gate.version},`d-${randomUUID()}`); await completeDefinition(id,module.module_id!,{},`def-${randomUUID()}`);
     const architecture=(await pool.query(`SELECT version FROM module_gates WHERE module_id=$1 AND kind='ARCHITECTURE_DECISION'`,[module.module_id])).rows[0]; await decideArchitecture(id,module.module_id!,{decision:'APPROVED',version:architecture.version},`a-${randomUUID()}`);
-    const plan=await seedAndApprovePlan(id,module.module_id!,[{title:'Fix me',inputs:['input'],allowlist:['src/delivery.txt','src/reworked.txt'],denylist:['.env'],output:'output',acceptance_criteria:['works'],qa_matrix:[{command:"test -f src/reworked.txt",cwd:'.',timeout_seconds:1}]}],approveModulePlan,`p-${randomUUID()}`); const workItemId=plan.work_item_ids![0];
-    // A corrupted v3 fixture without the mandatory inherited reference must fail
-    // before Dev reserves a delivery. Restoring v2 proves the legacy path remains intact.
-    await pool.query(`UPDATE projects SET workflow_version=3 WHERE id=$1`,[id]);
-    await assert.rejects(() => startDevelopment(id,workItemId,{},`dev-v3-missing-baseline-${randomUUID()}`), /TECHNOLOGY_BASELINE_APPROVAL_REQUIRED/);
+    const plan=await seedAndApprovePlan(id,module.module_id!,[{title:'Fix me',inputs:['input'],allowlist:['src/delivery.txt','src/reworked.txt'],denylist:['.env'],output:'output',acceptance_criteria:['works'],qa_matrix:[{command:'test "$(cat src/reworked.txt 2>/dev/null)" = fixed',cwd:'.',timeout_seconds:1}]}],approveModulePlan,`p-${randomUUID()}`,1); const workItemId=plan.work_item_ids![0];
+    // LR-02-FIX-01 rejects the historical test-only v2 -> v3 rebinding before
+    // it can turn an existing instance into a corrupted workflow selection.
+    await assert.rejects(pool.query(`UPDATE projects SET workflow_version=3 WHERE id=$1`,[id]),(error:any)=>error.code==='23514');
     assert.equal((await pool.query(`SELECT count(*)::int AS count FROM deliveries WHERE work_item_id=$1`,[workItemId])).rows[0].count,0);
-    await pool.query(`UPDATE projects SET workflow_version=2 WHERE id=$1`,[id]);
     const started=await startDevelopment(id,workItemId,{},`dev-${randomUUID()}`); await runOnce(id); const firstTree=(await pool.query(`SELECT path FROM worktrees WHERE work_item_id=$1 AND state='ACTIVE'`,[workItemId])).rows[0].path;
+    // The final cherry-pick is made by the worker, not by the repository's
+    // configured developer identity. This keeps headless workers from
+    // rejecting valid agent commits when user.name/user.email are absent.
+    assert.equal(execFileSync('git',['-C',firstTree,'log','-1','--format=%cn <%ce>'],{encoding:'utf8'}).trim(),'naamive-bot <naamive-bot@localhost>');
     // Exercise the governed retry lineage from a terminal, clean failure. This
     // covers operator authorization, origin linkage, idempotency and the
     // redispatch into the controlled agent before the normal evidence -> QA flow.
@@ -120,7 +127,8 @@ if (!databaseUrl) {
     await pool.query(`UPDATE deliveries SET state='FAILED' WHERE work_item_id=$1`,[workItemId]);
     await pool.query(`UPDATE worktrees SET state='RELEASED' WHERE work_item_id=$1`,[workItemId]);
     await pool.query(`UPDATE work_items SET state='REWORK_ELIGIBLE' WHERE id=$1`,[workItemId]);
-    await assert.rejects(()=>retryDevelopmentWorkItem(id,workItemId,{failed_operation_id:started.operation_id},`retry-denied-${randomUUID()}`,'not-the-operator'),/OPERATOR_NOT_AUTHORIZED/);
+    // Authentication/RBAC is enforced at the HTTP boundary; direct domain
+    // calls are test setup only and cannot receive caller-declared authority.
     const retryKey=`retry-${randomUUID()}`,retry=await retryDevelopmentWorkItem(id,workItemId,{failed_operation_id:started.operation_id},retryKey),retryRepeat=await retryDevelopmentWorkItem(id,workItemId,{failed_operation_id:started.operation_id},retryKey);
     assert.equal(retry.operation_id,retryRepeat.operation_id); assert.equal(retry.reconciliation,'REUSE_CLEAN_RESERVATION');
     assert.equal((await pool.query(`SELECT origin_operation_id FROM operations WHERE id=$1`,[retry.operation_id])).rows[0].origin_operation_id,started.operation_id);

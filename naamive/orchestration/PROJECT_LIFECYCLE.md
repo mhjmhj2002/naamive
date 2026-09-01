@@ -2,6 +2,16 @@
 
 Esta máquina governa o ciclo de vida de `projects/<project-id>/`. Ela começa em `ANALYSIS` após a decisão humana `REGISTER_PROJECT`; a qualificação inicial da necessidade ocorre na máquina pré-projeto.
 
+## Reconciliação operacional F6.5
+
+Para novas instâncias, `PROJECT_DISCOVERY:v4` materializa este contrato. Após
+`REGISTER_PROJECT`, a descoberta é disparada/reavaliada automaticamente; após
+o compromisso de produto, a materialização canônica de módulos e as transições
+agregadas são dirigidas por fatos persistidos, intents recuperáveis e versões
+de workflow. Pausa, retomada, cancelamento e aceite final de entrega são fatos
+governados e auditáveis. Instâncias anteriores permanecem legíveis segundo sua
+versão publicada e não são reinterpretadas por esta reconciliação.
+
 ## Estados
 
 | Estado | Significado | Próximos estados permitidos |

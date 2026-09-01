@@ -1,14 +1,26 @@
 ---
 document_type: phase-planning
-status: PLANNING_COMPLETE_PENDING_IMPLEMENTATION_AUTHORIZATION
+status: IMPLEMENTATION_COMPLETE_VALIDATED
 created_at: 2026-08-13
-scope: conceptual planning of Phase 6 only; no runtime implementation authorization
+scope: normative planning and implementation of Phase 6
 primary_roadmap: 01_DELIVERY_ROADMAP.md
 related_protocol: ../../ORCHESTRATION_PROTOCOL.md
 related_compass: ../../LIFECYCLE_COMPASS.md
 ---
 
 # Planejamento da Fase 6 — Agent Supervision & Assurance
+
+## Nota aditiva de reconciliação F6.5 — 2026-09-01
+
+Este documento preserva o planejamento e a entrega histórica da fundação F6:
+assurance aditiva, versionada e opt-in, sem reinterpretar F3/F4/F5. A auditoria
+posterior constatou que essa fundação ainda não cobria integralmente o fluxo
+operacional real. A Fase 6.5 corrigiu a lacuna por novos workflows, catálogo de
+gates, scheduler, recovery, projeção única e `AUT-03`; ela não transforma F6
+em uma entrega histórica mais ampla do que foi. Para novas instâncias cobertas,
+o pipeline `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2` usa
+`IntegrationCohort:v1`; registros F6/AUT-02 v1 continuam históricos,
+compatíveis e fail-closed.
 
 ## Origem e objetivo
 
@@ -28,8 +40,14 @@ SELF_CHECK != INDEPENDENT_REVIEW
 
 Uma execução bem-sucedida somente prova que o produtor terminou a tentativa e
 submeteu uma saída; não autoriza a orquestração a tratá-la como trabalho aceito.
-Esta fase não implementa runtime nem altera contratos certificados da Fase 5.
-As decisões abaixo são normativas para a implementação futura autorizada.
+Na formulação histórica da Fase 6, essa capacidade seria implantada de modo
+aditivo e opt-in, sem reinterpretar contratos ou execuções já certificados das
+Fases 3, 4 e 5. As decisões abaixo registram essa fronteira e a fundação
+normativa entregue pela Fase 6; elas não proíbem evolução posterior autorizada.
+A auditoria posterior identificou que o fluxo operacional real permaneceu fora
+da cobertura F6 em pontos relevantes. A Fase 6.5, por novos workflows e rollout
+versionado, é responsável por integrar supervision/assurance a esses fluxos sem
+reinterpretar execuções históricas concluídas.
 
 ## F6-01 — Micro-lifecycle universal
 
@@ -189,6 +207,13 @@ em `SUCCEEDED`. Migration F6 é aditiva/versionada: amplia o estado de
 reinterpretar linhas F4. Política publicada de assurance seleciona requests do
 novo caminho; rollout inicial é opt-in e reversível para novos dispatches.
 
+Esse rollout inicial documenta a coexistência histórica da Fase 6, não congela o
+escopo do runtime. A Fase 6.5 pode publicar novas versões de workflow e contrato
+e, pela `AUT-03`, selecionar jobs e handoffs reais para supervision/assurance.
+Versões e execuções históricas continuam consultáveis sob sua semântica original;
+somente novos dispatches selecionados pelo rollout corretivo passam ao contrato
+novo.
+
 Invariantes: no máximo um `REVIEW` ativo por aceite e uma decisão terminal por
 versão; retry/restart usa as mesmas chaves idempotentes e não duplica finding ou
 block; cancelamento vence novo dispatch; e a restrição F4 de uma tentativa
@@ -214,9 +239,15 @@ de reviewer e antecipação de riscos. Isso não é escopo desta fase.
 - A fronteira terminal de review, handoff transacional, independência verificável, coexistência F3/F4 e contexto seguro são normativos.
 - Findings, rework, blocks, assistência, routing e escalonamento são entidades/processos rastreáveis.
 - Ownership entre orquestrador, governance, especialista, advisory, QA e humano está delimitado.
-- A documentação declara que não há implementação antecipada nem alteração do comportamento certificado F4/F5.
+- A implementação histórica preserva o comportamento certificado F4/F5 para
+  dispatches fora da política F6 opt-in; a Fase 6.5 pode ampliar essa seleção em
+  versões novas, sem reinterpretar execuções históricas.
 
-## Questões para o detalhamento/implementação da Fase 6
+## Questões históricas do detalhamento/implementação da Fase 6
+
+As questões a seguir eram abertas no planejamento original. O estado vigente é
+o da nota aditiva e dos contratos F6.5; a lista é preservada como histórico e
+não indica capacidade pendente.
 
 1. Schema físico, nomes finais de APIs/projeções web e valores iniciais das políticas versionadas, obedecendo às decisões acima.
 2. Matriz detalhada de routing por categoria e decisão sobre `engineering-advisor` como agente ou capability.

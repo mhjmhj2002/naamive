@@ -12,6 +12,7 @@ import { OpenAiCompatibleHttpAdapter } from './adapters/openai-compatible-http-a
 import { persistDiscoveryAgentOutcome } from './discovery-agent-jobs.js';
 import { transitionTarget } from './workflow.js';
 import { log } from './log.js';
+import { blockAssuranceFailure, createAcceptance, submitOutputForReview } from './assurance.js';
 
 const agentJobKinds = new Set(['ANALYZE_PRODUCT_NEED', 'DEFINE_PRODUCT_REQUIREMENTS', 'REVIEW_PRODUCT_COMMITMENT']);
 const terminalAttemptStates = new Set(['SUCCEEDED', 'FAILED', 'TIMED_OUT', 'RATE_LIMITED', 'QUOTA_EXHAUSTED', 'AUTHENTICATION_FAILED', 'INVALID_OUTPUT', 'POLICY_BLOCKED', 'CANCELLED', 'RECONCILIATION_REQUIRED']);
@@ -126,6 +127,7 @@ const markJobCompleted = async (client: pg.PoolClient, job: any) => {
 };
 
 const markPermanentFailure = async (client: pg.PoolClient, job: any, code: string, nextAction: string, executionId?: string, executionState: 'FAILED' | 'BLOCKED_NO_EXECUTOR_AVAILABLE' = 'FAILED') => {
+  if (executionId && await blockAssuranceFailure(client, executionId, code, { code, next_action: nextAction, stage: job.kind })) return;
   await client.query(`UPDATE jobs SET status='FAILED',completed_at=clock_timestamp(),lease_expires_at=NULL,last_error=$2 WHERE id=$1`, [job.id, code]);
   await client.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id, code]);
   let target: string;
@@ -255,7 +257,9 @@ const createOrLoadExecution = async (client: pg.PoolClient, job: any, request: A
   if (existing.rowCount) return existing.rows[0];
   const inserted = await client.query(`INSERT INTO agent_execution(id,job_id,operation_id,project_id,project_key,revision_id,job_kind,idempotency_key,agent_id,agent_version,task_type,classification,policy_id,policy_name,policy_version,state,selected_runtime_id,selected_configuration_version,selected_runtime_name,selected_adapter_type,selection_reason,next_action)
     VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING *`, [request.executionId, job.id, job.operation_id, request.projectId, job.project_id, job.revision_id, job.kind, request.idempotencyKey, request.agentId, request.agentVersion, request.taskType, request.classification, policy.id, policy.name, policy.version, selected.runtime ? 'SELECTED' : 'BLOCKED_NO_EXECUTOR_AVAILABLE', selected.runtime?.id ?? null, selected.configurationVersion, selected.runtime?.name ?? null, selected.runtime?.adapter_type ?? null, selectionReason, selected.runtime ? 'Planejando a primeira tentativa.' : 'Nenhum runtime elegível para esta execução.']);
-  return inserted.rows[0];
+  const execution=inserted.rows[0];
+  await createAcceptance(client, execution, job.operation_id);
+  return execution;
 };
 
 export class AgentExecutionService {
@@ -342,6 +346,9 @@ export class AgentExecutionService {
       const fallbackUsed = attempts.some((row) => row.attempt_kind === 'FALLBACK');
       const decision = await attemptDecision(client, execution, policy, runtime, outcome, sameRuntimeCount, fallbackUsed);
       if (result.status === 'SUCCEEDED' && decoded) {
+        const submitted=await putArtifact(client,job.project_id,'assurance-structured-output',JSON.stringify(decoded),execution.id);
+        const acceptance=await submitOutputForReview(client,execution.id,{artifact_id:submitted.id,artifact_hash:submitted.hash,schema_version:1,validated:true});
+        if(acceptance) { await event(client, job.project_id, 'ASSURANCE_OUTPUT_SUBMITTED', job.operation_id, job.id, job.revision_id, { execution_id: execution.id, acceptance_id: acceptance.id }); return; }
         await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Aguardando a próxima etapa do workflow.' WHERE id=$1`, [execution.id]);
         await event(client, job.project_id, 'AGENT_EXECUTION_SUCCEEDED', job.operation_id, job.id, job.revision_id, { execution_id: execution.id, attempt_id: currentAttempt.id, runtime_name: runtime.name, adapter_type: runtime.adapter_type, usage: outcome.usage ?? null });
         await persistDiscoveryAgentOutcome(client, job, decoded, result.structuredOutputReference?.sha256);
@@ -397,7 +404,7 @@ export class AgentExecutionService {
         const startedAt = attempt.dispatched_at ? new Date(attempt.dispatched_at).toISOString() : new Date().toISOString();
         const finishedAt = new Date().toISOString();
         const { decoded } = await persistAttemptOutcome(client, job, { id: attempt.execution_id }, attempt, runtimeRow, resolution.outcome, startedAt, finishedAt);
-        if (decoded) await persistDiscoveryAgentOutcome(client, { id: job.id, kind: attempt.job_kind, project_id: attempt.project_key, operation_id: job.operation_id, revision_id: job.revision_id }, decoded);
+        if (decoded) { const submitted=await putArtifact(client,attempt.project_key,'assurance-structured-output',JSON.stringify(decoded),attempt.execution_id); const acceptance=await submitOutputForReview(client,attempt.execution_id,{artifact_id:submitted.id,artifact_hash:submitted.hash,schema_version:1,validated:true}); if(acceptance) { await event(client,attempt.project_key,'ASSURANCE_OUTPUT_SUBMITTED',job.operation_id,job.id,job.revision_id,{execution_id:attempt.execution_id,acceptance_id:acceptance.id}); return; } await persistDiscoveryAgentOutcome(client, { id: job.id, kind: attempt.job_kind, project_id: attempt.project_key, operation_id: job.operation_id, revision_id: job.revision_id }, decoded); }
         await client.query(`UPDATE agent_execution SET state='SUCCEEDED',completed_at=clock_timestamp(),next_action='Reconciliação concluída com sucesso.' WHERE id=$1`, [attempt.execution_id]);
         await event(client, attempt.project_key, 'AGENT_EXECUTION_RECONCILED', job.operation_id, job.id, job.revision_id, { execution_id: attempt.execution_id, attempt_id: attemptId, resolution: 'FOUND' });
         await markJobCompleted(client, job);
@@ -409,6 +416,10 @@ export class AgentExecutionService {
         await client.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp(),lease_expires_at=NULL,last_error='RECONCILIATION_NOT_FOUND' WHERE id=$1`, [job.id]);
         await client.query(`UPDATE jobs SET status='RETRYABLE',available_at=clock_timestamp(),lease_expires_at=NULL,last_error='RECONCILIATION_NOT_FOUND' WHERE id=(SELECT job_id FROM agent_execution WHERE id=$1)`, [attempt.execution_id]);
         await event(client, attempt.project_key, 'AGENT_EXECUTION_RECONCILED', job.operation_id, job.id, job.revision_id, { execution_id: attempt.execution_id, attempt_id: attemptId, resolution: 'NOT_FOUND' });
+        return;
+      }
+      if (await blockAssuranceFailure(client, attempt.execution_id, 'RECONCILIATION_AMBIGUOUS', { attempt_id: attemptId, resolution: 'AMBIGUOUS' })) {
+        await event(client, attempt.project_key, 'ASSURANCE_FAILURE_BLOCKED', job.operation_id, job.id, job.revision_id, { execution_id: attempt.execution_id, attempt_id: attemptId, code: 'RECONCILIATION_AMBIGUOUS' });
         return;
       }
       await client.query(`UPDATE agent_execution SET state='RECONCILIATION_REQUIRED',next_action='Resultado ambíguo; intervenção operacional necessária.' WHERE id=$1`, [attempt.execution_id]);

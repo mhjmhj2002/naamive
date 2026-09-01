@@ -8,6 +8,16 @@
 Este documento preserva a interface e as regras históricas do runtime Python em
 `naamive/runtime/python/`, usadas como fonte de paridade durante a migração.
 
+## Contrato operacional atual
+
+Para operar a plataforma vigente, use o runtime Node/Web e sua interface local
+descritos em [`runtime/node-web/README.md`](../runtime/node-web/README.md). O
+conteúdo CLI abaixo é histórico e não descreve comandos, estados ou autoridade
+do runtime F6.5. No Node/Web, novas instâncias usam workflows versionados,
+autenticação/RBAC server-side, `STATE_ACTION_PROJECTION:v1` e automação de
+elegibilidade/assurance; nenhuma autorização humana individual de work item é
+exigida em `WORK_ITEM_DELIVERY:v2`.
+
 ## Instalação do runtime inicial
 
 Em um ambiente Python 3.10 ou superior:

@@ -31,7 +31,10 @@ if (!databaseUrl) {
       await pool.query('DELETE FROM jobs WHERE project_id=$1', [projectId]); await pool.query('DELETE FROM operations WHERE project_id=$1', [projectId]);
       await pool.query('DELETE FROM intake_revisions WHERE project_id=$1', [projectId]); await pool.query('DELETE FROM projects WHERE id=$1', [projectId]); await pool.end();
     });
-    for (let n = 0; n < 30; n++) { await runOnce(); const job = await pool.query('SELECT status FROM jobs WHERE id=$1', [jobId]); if (job.rows[0]?.status === 'COMPLETED') break; await new Promise((done) => setTimeout(done, 100)); }
+    // Scope the worker to this fixture. The consolidated suite deliberately
+    // contains retryable jobs from other phases, which must not be consumed by
+    // a Phase 1 recovery assertion.
+    for (let n = 0; n < 30; n++) { await runOnce(projectId); const job = await pool.query('SELECT status FROM jobs WHERE id=$1', [jobId]); if (job.rows[0]?.status === 'COMPLETED') break; await new Promise((done) => setTimeout(done, 100)); }
     const state = await pool.query('SELECT state FROM projects WHERE id=$1', [projectId]); assert.equal(state.rows[0].state, 'WAITING_FOR_REGISTRATION');
     const artifacts = await pool.query('SELECT artifact_type FROM artifacts WHERE project_id=$1 ORDER BY artifact_type', [projectId]); assert.deepEqual(artifacts.rows.map((row) => row.artifact_type), ['gate-opened', 'validation-report']);
     const timeline = await projectTimeline(projectId); assert.deepEqual(timeline.map((row) => row.event_type), ['INTAKE_VALIDATED', 'GATE_OPENED']);

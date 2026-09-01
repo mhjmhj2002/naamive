@@ -1,6 +1,6 @@
 ---
 task: F6-02
-status: TODO
+status: DONE
 depends_on: [F6-01]
 ---
 
@@ -12,12 +12,11 @@ Use migrations aditivas e transacionais. Não reinterprete linhas F3/F4/F5 exist
 
 ## Itens de implementação
 
-- [ ] **TO_DO:** Criar migrations para `work_acceptances`, versões de review/decisões, `work_blocks`, propostas de assistência, exceções de independência e referências auditáveis, com FKs, índices por alvo/estado/correlação e chaves de idempotência.
-- [ ] **TO_DO:** Estender aditivamente `agent_executions` com `OUTPUT_SUBMITTED` e a entidade canônica F3 `findings` com referências de assurance, origem `ASSURANCE_REVIEW` e restrição de alvo compatível com todos os alvos F3.
-- [ ] **TO_DO:** Aplicar constraints para um review ativo por aceite, decisão terminal única por versão, block aberto deduplicado por `(source_type, source_id, block_code)` e nenhuma correção ativa paralela por work item/revisão.
-- [ ] **TO_DO:** Implementar repositórios transacionais que armazenem somente referências/hash/metadados e evidência sanitizada, preservem histórico e proíbam prompt, payload bruto, logs, segredos e paths internos.
+- [x] **DONE:** Criar migrations para `work_acceptances`, versões de review/decisões, `work_blocks`, propostas de assistência, exceções de independência e referências auditáveis, com FKs, índices por alvo/estado/correlação e chaves de idempotência.
+- [x] **DONE:** Estender aditivamente `agent_executions` com `OUTPUT_SUBMITTED` e a entidade canônica F3 `findings` com referências de assurance, origem `ASSURANCE_REVIEW` e restrição de alvo compatível com todos os alvos F3.
+- [x] **DONE:** Aplicar constraints para um review ativo por aceite, decisão terminal única por versão, block aberto deduplicado por `(source_type, source_id, block_code)` e nenhuma correção ativa paralela por work item/revisão.
+- [x] **DONE:** Implementar repositórios transacionais que armazenem somente referências/hash/metadados e evidência sanitizada, preservem histórico e proíbam prompt, payload bruto, logs, segredos e paths internos.
 
 ## Aceite
 
 Verificar upgrade em base com dados legados, rollback seguro para novos dispatches, atomicidade e todas as constraints/índices de unicidade.
-

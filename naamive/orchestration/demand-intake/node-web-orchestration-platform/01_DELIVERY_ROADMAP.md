@@ -1,11 +1,12 @@
 ---
 document_type: delivery-roadmap
-status: APPROVED_FOR_PHASE_5
+status: PHASE_6_5_PLANNED_AWAITING_REVIEW
 created_at: 2026-07-30
 approved_at: 2026-07-30
 approved_by: NAAMIVE product and engineering
 parent: 00_PRODUCT_NORTH_STAR.md
 related_baseline: ../ORCHESTRATION_END_TO_END_AUDIT_GAPS_BACKLOG.md
+lifecycle_alignment_baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 delivery_strategy: vertical-end-to-end-slices
 ---
 
@@ -31,6 +32,7 @@ uma fase posterior para ter valor.
 | Release 4 | Fase 4 | Executar agentes por Codex ou DeepSeek, com seleção/fallback auditáveis e observabilidade de IA. |
 | Release 5 | Fase 5 | Confirmar uma baseline tecnológica auditável antes da primeira materialização de módulo. |
 | Release 6 | Fase 6 | Supervisionar independentemente todo trabalho delegado, exigir aceite técnico e assistir bloqueios. |
+| Release intermediário 6.5 | Fase 6.5 | Alinhar lifecycle e runtime e recuperar a orquestração autônoma antes da entrega completa. |
 | Release 7 — **MVP completo** | Fase 7 | Concluir um projeto de referência até entrega, aceite e PR draft auditáveis. |
 | Release 8 | Fase 8 | Operar e recuperar a plataforma de forma sustentável após o MVP. |
 
@@ -170,32 +172,45 @@ vincular uma pendência explicável.
 | 5 | F5-19 | `DONE` | Testes de integração cobrem inventário, workflow, gate e evolução por nova revisão sem alterar registros autorizados. |
 | 5 | F5-20 | `DONE` | Regressões da Fase 3 confirmam coexistência do legado e propagação obrigatória da baseline em projetos v3. |
 | 5 | F5-21 | `DONE` | Aceite consolidado validou a jornada versionada Catálogo → Perfil → Projeto → Baseline → Módulo e a preservação do legado. |
-| 6 | F6-GATE | `TO DO` | Aprovação registrada do escopo, política inicial, evidência e autoridade para iniciar a implementação F6. |
-| 6 | F6-01 | `TO DO` | Contratos fechados e política opt-in de assurance. |
-| 6 | F6-02 | `TO DO` | Persistência aditiva, constraints e sanitização. |
-| 6 | F6-03 | `TO DO` | Seleção e independência verificável do reviewer. |
-| 6 | F6-04 | `TO DO` | Handoff de produção para work acceptance. |
-| 6 | F6-05 | `TO DO` | Serviço de review e decisões independentes. |
-| 6 | F6-06 | `TO DO` | Findings, rework e re-review compatíveis com F3. |
-| 6 | F6-07 | `TO DO` | Gestão de blocks e assistência estruturada. |
-| 6 | F6-08 | `TO DO` | Routing, advisory e gates humanos. |
-| 6 | F6-09 | `TO DO` | Handoff de bloqueio e reconciliação. |
-| 6 | F6-10 | `TO DO` | APIs e projeções sanitizadas. |
-| 6 | F6-11 | `TO DO` | Auditoria, observabilidade e SSE. |
-| 6 | F6-12 | `TO DO` | UI operacional de assurance e blocks. |
-| 6 | F6-13 | `TO DO` | Migração, rollout e coexistência. |
-| 6 | F6-14 | `TO DO` | Testes unitários e de persistência. |
-| 6 | F6-15 | `TO DO` | Testes de integração e jornadas E2E. |
-| 6 | F6-16 | `TO DO` | Regressão das Fases 3, 4 e 5. |
-| 6 | F6-17 | `TO DO` | Aceite consolidado da Fase 6. |
-| 7 | F7-01 | `TO DO` | — |
-| 7 | F7-02 | `TO DO` | — |
-| 7 | F7-03 | `TO DO` | — |
-| 7 | F7-04 | `TO DO` | — |
-| 7 | F7-05 | `TO DO` | — |
-| 7 | F7-06 | `TO DO` | — |
-| 7 | F7-07 | `TO DO` | — |
-| 7 | F7-08 | `TO DO` | — |
+| 6 | F6-01 | `DONE` | Contratos JSON Schema fechados/versionados e política opt-in validados. |
+| 6 | F6-02 | `DONE` | Persistência aditiva, constraints, idempotência e sanitização completas nas migrations 044–047. |
+| 6 | F6-03 | `DONE` | Reviewer validado pelo servidor com identidade congelada e independência verificável. |
+| 6 | F6-04 | `DONE` | Handoff cria aceite e dispatch de review automaticamente na mesma transação. |
+| 6 | F6-05 | `DONE` | Worker de review aplica `ACCEPT`, `REWORK`, `BLOCK` e `ESCALATE` sem autoaceite. |
+| 6 | F6-06 | `DONE` | Findings, rework e re-review preservam a coleção e a autoridade da Fase 3. |
+| 6 | F6-07 | `DONE` | Gestão de blocks e assistência estruturada com decisões reservadas preservadas. |
+| 6 | F6-08 | `DONE` | Routing, advisory e gates humanos autenticados, limitados e auditados. |
+| 6 | F6-09 | `DONE` | Handoff de bloqueio e reconciliação idempotente certificados com regressão F3/F4/F5. |
+| 6 | F6-10 | `DONE` | APIs e comandos governados expõem somente projeções sanitizadas. |
+| 6 | F6-11 | `DONE` | Auditoria, métricas e SSE com cursor/replay/reconexão validados. |
+| 6 | F6-12 | `DONE` | UI operacional de assurance, blocks, gates e reconciliação validada em navegador real. |
+| 6 | F6-13 | `DONE` | Migration repetível, rollout opt-in e coexistência histórica certificados. |
+| 6 | F6-14 | `DONE` | Unitários, contratos, persistência e idempotência cobertos. |
+| 6 | F6-15 | `DONE` | Integração e 67 jornadas E2E obrigatórias aprovadas contra PostgreSQL. |
+| 6 | F6-16 | `DONE` | Regressões das Fases 3, 4 e 5 aprovadas sem alterar dispatches fora da política. |
+| 6 | F6-17 | `DONE` | Aceite consolidado aprovado em 2026-08-14 com build, migration, testes e E2E verdes. |
+| 6.5 | LR-01 | `DONE` | Workflows aderentes publicados sem alterar versões históricas. |
+| 6.5 | GAT-01 | `DONE` | Catálogo server-side de gates e autoridade publicado. |
+| 6.5 | GAT-03 | `DONE` | Identidade autenticada e RBAC aplicados. |
+| 6.5 | AUT-01 | `DONE` | WIs elegíveis agendados transacionalmente. |
+| 6.5 | REC-01 | `DONE` | Recovery selecionado pela causa. |
+| 6.5 | LR-02 | `DONE` | Projeto e módulo sincronizados no macro-lifecycle. |
+| 6.5 | AUT-02 | `DONE` | QA, review, merge e integração automatizados. |
+| 6.5 | AUT-03 | `DONE` | F6 ampliada aos trabalhos reais selecionados. |
+| 6.5 | REC-02 | `DONE` | Reviewer e blocks recuperados sem limbo. |
+| 6.5 | GAT-02 | `DONE` | Entrega, pausa e cancelamento completos. |
+| 6.5 | UI-01 | `DONE` | Projeção única de estado e ações publicada. |
+| 6.5 | UI-02 | `DONE` | Superfícies de parada e recovery completas. |
+| 6.5 | TST-01 | `DONE` | Conformidade ponta a ponta certificada (20/20). |
+| 6.5 | DOC-01 | `DONE` | Documentação F5/F6/F6.5 reconciliada. |
+| 7 | F7-01 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-02 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-03 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-04 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-05 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-06 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-07 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-08 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
 | 8 | F8-01 | `TO DO` | — |
 | 8 | F8-02 | `TO DO` | — |
 | 8 | F8-03 | `TO DO` | — |
@@ -455,13 +470,21 @@ política.
 
 O detalhamento normativo desta fase está em
 [15_PHASE_6_AGENT_SUPERVISION_AND_ASSURANCE.md](15_PHASE_6_AGENT_SUPERVISION_AND_ASSURANCE.md).
-Esta fase só pode iniciar após `F6-GATE` aprovado; a implementação é aditiva,
-opt-in e não retroaltera o runtime, contratos ou comportamento certificado das
+Esta fase é implementada de forma aditiva e opt-in; não retroaltera o runtime,
+contratos ou comportamento certificado das
 Fases 3, 4 e 5.
+
+Esta descrição registra a estratégia histórica de implantação e coexistência da
+Fase 6: ela preservou as versões e execuções certificadas até então, sem
+reinterpretá-las. Não é uma proibição permanente de evoluir o runtime. A
+auditoria posterior de aderência identificou que partes relevantes do fluxo
+operacional principal continuaram fora do micro-lifecycle de supervision e
+assurance. A Fase 6.5 corrige essa lacuna por novos workflows, contratos e
+rollout versionado, inclusive pela `AUT-03`, sem reinterpretar execuções
+históricas concluídas.
 
 | ID | Tarefa de implementação e definição de pronto | Impedimento / tratamento |
 | --- | --- | --- |
-| F6-GATE | Registrar aprovação da Fase 6, ator autorizador, data, escopo/política inicial e evidência da decisão antes de qualquer task entrar em `DOING`. | Sem evidência de gate, nenhuma implementação F6 é iniciada. |
 | F6-01 | Publicar contratos e política versionada, fechada e opt-in de assurance. | Não duplicar contratos nem mudar o caminho F4 legado. |
 | F6-02 | Criar persistência aditiva, constraints transacionais e limites de dados sanitizados. | Não reinterpretar legado nem introduzir cascata destrutiva. |
 | F6-03 | Selecionar reviewer com independência verificável e exceção humana limitada. | Nunca permitir auto-review ou exceção de `agent_id`. |
@@ -480,7 +503,63 @@ Fases 3, 4 e 5.
 | F6-16 | Certificar regressão e coexistência F3/F4/F5. | Diferença de comportamento só em dispatch F6 opt-in. |
 | F6-17 | Consolidar aceite integral da Fase 6. | Não marcar `DONE` sem todos os cenários verdes. |
 
+## Fase 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery
+
+**Status:** concluída e certificada em 01/09/2026. Todas as tasks listadas,
+incluindo LR-02A, estão `DONE`, e
+os 20 critérios globais foram certificados por TST-01. A certificação final do
+operador em `npm run e2e` registrou 139 testes, 132 `PASS`, exatamente 7
+`KNOWN_BASELINE`, 0 falhas novas, 0 skipped, 0 cancelled e 0 todo. A auditoria
+de 22/08 permanece evidência histórica imutável; esta conclusão não a reescreve.
+
+**Valor esperado:** depois de um escopo autorizado, a plataforma conduz o
+trabalho automaticamente até um gate explícito, decisão material, bloqueio não
+solucionável ou conclusão, sem transformar estados técnicos em filas humanas.
+
+**Demonstração ponta a ponta:** plano aprovado despacha WIs elegíveis; produção
+aciona QA e review; somente `ACCEPT` aciona merge e integração; dependentes são
+reavaliados; projeto e módulo avançam até entrega; paradas legítimas informam
+motivo, autoridade, decisões e continuação.
+
+A baseline imutável é
+`orchestration/audits/2026-08-22-lifecycle-conformance-audit.md`. O planejamento,
+a rastreabilidade, a ordem e os critérios estão em
+[16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md](16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md),
+e as tasks em
+[phase-6-5-implementation-tasks/](phase-6-5-implementation-tasks/README.md).
+
+| ID | Tarefa e definição de pronto | Impedimento / tratamento |
+| --- | --- | --- |
+| LR-01 | Publicar workflows aderentes, versionados e compatíveis com dados históricos. | Nenhuma automação deve ser construída sobre estados ambíguos. |
+| GAT-01 | Publicar catálogo server-side de gates, condições e autoridade. | Gate implícito ou universal viola a proporcionalidade. |
+| GAT-03 | Implementar autenticação e RBAC verificáveis. | Headers/payloads não podem conceder autoridade. |
+| AUT-01 | Agendar e despachar WIs elegíveis transacionalmente. | Corridas, dependências e capacidade exigem idempotência. |
+| REC-01 | Aplicar retry, restart, resume, rework ou recuperação de integração conforme a causa. | Recovery incorreto pode perder evidência ou duplicar efeito. |
+| LR-02 | Sincronizar projeto e módulo e automatizar passagens macro elegíveis. | Agregados não avançam por contagem ou sem evidência. |
+| AUT-02 | Encadear QA, review, merge, candidata, validação e integração. | Sucesso técnico nunca substitui `ACCEPT`. |
+| AUT-03 | Aplicar F6 aos trabalhos reais selecionados. | Rollout permanece versionado, opt-in e compatível. |
+| REC-02 | Recuperar reviewer e blocks por fallback, assistência e routing. | Escalada humana somente após política/materialidade. |
+| GAT-02 | Implementar entrega aceita, pausa, retomada e cancelamento. | Cancelamento não equivale a archive/delete. |
+| UI-01 | Usar uma única projeção server-side e `allowed_actions`. | Client não deriva transição nem autoridade. |
+| UI-02 | Cobrir todas as paradas, gates e ações de recovery. | Estados automáticos não pedem clique humano. |
+| TST-01 | Certificar o lifecycle em PostgreSQL, API, SSE e navegador. | Nenhum cenário obrigatório pode ser ignorado. |
+| DOC-01 | Reconciliar documentação e versões sem falsificar histórico. | A auditoria baseline permanece inalterada. |
+
+Todos os itens acima estão `DONE`. Para novas instâncias, os contratos
+publicados relevantes são `PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`,
+`WORK_ITEM_DELIVERY:v2`, `ORCHESTRATION_EXECUTION:v1`,
+`STATE_ACTION_PROJECTION:v1`, `GATE_CATALOG:v2` e
+`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`/`IntegrationCohort:v1` quando o
+pipeline v2 é selecionado. As versões e execuções anteriores continuam
+consultáveis sem reclassificação retroativa.
+
 ## Fase 7 — Projeto entregue e aceito pela web
+
+**Status:** `F7 UNBLOCKED AFTER PHASE 6.5 ACCEPTANCE`. A condição documental
+foi satisfeita em 01/09/2026: todas as tasks e os 20 critérios globais da Fase
+6.5 foram aceitos e DOC-01 reconciliou as fontes vigentes. Seu número e escopo
+histórico são preservados; essa liberação não resolve nem remove impedimentos
+próprios de F7, como `P2-01` para abertura de PR.
 
 **Valor entregue:** o operador conduz um projeto de referência até entrega,
 incluindo integração, validação, risco, release, aceite e consulta completa de

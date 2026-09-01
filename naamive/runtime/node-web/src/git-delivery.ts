@@ -19,22 +19,47 @@ export const commitMessage = (type:string, workItem:string, summary:string, meta
   if (!safe(type)||!safe(workItem)||!safe(meta.project)||!safe(meta.phase)||!safe(meta.execution)) throw new GitDeliveryError('GIT_DIVERGED','invalid Git delivery identifier');
   return `${type}(${workItem}): ${summary}\n\nNaamive-Project: ${meta.project}\nNaamive-Phase: ${meta.phase}\nNaamive-Execution: ${meta.execution}\nNaamive-Work-Item: ${workItem}`;
 };
-export const assertClean = (repository:string) => { if(git(repository,['status','--porcelain'])) throw new GitDeliveryError('GIT_TREE_DIRTY'); };
+export const assertClean = (repository:string) => {
+  // Active delivery worktrees are deliberately rooted here. They are managed
+  // through Git's worktree metadata and must not make the primary checkout
+  // look dirty to a subsequent AUT-02 phase merge.
+  const dirty=git(repository,['status','--porcelain','--untracked-files=all','--','.',':(exclude).naamive-worktrees/**']);
+  if(dirty) throw new GitDeliveryError('GIT_TREE_DIRTY');
+};
 export const createWorktree = (repository:string, worktree:string, branch:string, baseSha:string) => {
   assertClean(repository); if(!safe(branch)||!existsSync(repository)||existsSync(worktree)) throw new GitDeliveryError('GIT_DIVERGED');
   // Independent work items may execute in parallel.  Database delivery leases,
   // not a repository-wide worktree count, serialize a single work item.
   const refs=git(repository,['for-each-ref','--format=%(refname:short)','refs/heads']).split('\n').filter(Boolean); assertDistinctRefs(branch,...refs.filter(ref=>ref!==branch));
-  if(refs.includes(branch)) git(repository,['worktree','add',worktree,branch]); else git(repository,['worktree','add','-b',branch,worktree,baseSha]);
+  if(refs.includes(branch)) {
+    // A prior failed delivery can leave its private branch behind even after
+    // the worktree was released.  `git worktree add <branch>` would silently
+    // reuse its old HEAD and ignore baseSha, making the next executor collide
+    // with unrecorded files. An active branch is still never repointed.
+    const listed=git(repository,['worktree','list','--porcelain']);
+    if (listed.split('\n\n').some(entry=>entry.includes(`branch refs/heads/${branch}`))) throw new GitDeliveryError('GIT_DIVERGED','delivery branch is already active');
+    git(repository,['branch','-f',branch,baseSha]);
+    git(repository,['worktree','add',worktree,branch]);
+  } else git(repository,['worktree','add','-b',branch,worktree,baseSha]);
   return {path:realpathSync(worktree),baseSha};
 };
 export const removeWorktree = (repository:string, worktree:string) => { assertClean(worktree); git(repository,['worktree','remove',worktree]); };
 /** Recovery-only removal for a worktree already classified as untrusted. */
 export const discardWorktree = (repository:string, worktree:string) => {
-  if (!existsSync(worktree)) return;
-  try { git(repository,['worktree','remove','--force',worktree]); }
-  finally { rmSync(worktree,{recursive:true,force:true}); }
+  try { if (existsSync(worktree)) git(repository,['worktree','remove','--force',worktree]); }
+  finally { rmSync(worktree,{recursive:true,force:true}); git(repository,['worktree','prune']); }
 };
+/** A failed delivery with no persisted evidence has no recoverable branch
+ * state. Remove its orphan branch before a governed restart so a new attempt
+ * cannot inherit an unrecorded commit and replay it into itself. */
+export const discardDeliveryBranch = (repository:string, branch:string) => {
+  if(!safe(branch)) throw new GitDeliveryError('GIT_DIVERGED','invalid delivery branch');
+  const listed=git(repository,['worktree','list','--porcelain']);
+  if(listed.split('\n\n').some(entry=>entry.includes(`branch refs/heads/${branch}`))) throw new GitDeliveryError('GIT_DIVERGED','delivery branch is still active');
+  const refs=git(repository,['for-each-ref','--format=%(refname:short)','refs/heads',branch]).trim();
+  if(refs===branch) git(repository,['branch','-D',branch]);
+};
+export const pruneWorktrees = (repository:string) => { git(repository,['worktree','prune']); };
 export const botCommit = (repository:string, files:string[], message:string) => {
   if(!files.length) throw new GitDeliveryError('GIT_DIVERGED'); git(repository,['add','--',...files]);
   if(!git(repository,['diff','--cached','--name-only'])) throw new GitDeliveryError('GIT_DIVERGED','no staged changes');
