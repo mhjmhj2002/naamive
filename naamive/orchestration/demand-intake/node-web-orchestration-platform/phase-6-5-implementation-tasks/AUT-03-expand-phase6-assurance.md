@@ -16,8 +16,10 @@ Implementar exclusivamente conforme
 [`AUT-03-expand-phase6-assurance-prevalidation.md`](AUT-03-expand-phase6-assurance-prevalidation.md)
 (`ASSURANCE_EXPANSION_TO_REAL_WORK:v1`). O contrato fecha subject, generation,
 policy snapshot, autoridade, compatibilidade AUT-02, rollout, idempotência e
-fronteira REC-02. AUT-03 está `READY_FOR_IMPLEMENTATION`; a implementação
-funcional continua pendente.
+fronteira REC-02. O estado `READY_FOR_IMPLEMENTATION` foi a pré-validação
+histórica; AUT-03 está concluída. A implementação certificada aplica a matriz
+fechada aos subjects selecionados, preserva a coexistência das versões antigas
+e é evidenciada por TST-01.
 
 ## Objetivo e problema corrigido
 
@@ -33,8 +35,8 @@ por interpretação do implementador. Atualmente, a matriz cobre:
 - integration / `MERGE_WORK_ITEM`, `REASSESS_INTEGRATION_CANDIDATE` e
   `VALIDATE_INTEGRATION_CANDIDATE`, exclusivamente como evidência/validação
   interna AUT-02;
-- release / `PREPARE_DELIVERY_PACKAGE`, reservado para ativação futura por
-  GAT-02 conforme o contrato.
+- release / `PREPARE_DELIVERY_PACKAGE`, ativado sob o contrato de entrega
+  publicado por GAT-02, sem transformar QA ou integração em acceptance própria.
 
 Nenhum job kind ou subject adicional, incluindo security, pode ser selecionado
 por AUT-03 sem nova revisão explícita do contrato normativo.

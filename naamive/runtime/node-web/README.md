@@ -1,4 +1,4 @@
-# Runtime Node/Web — Fase 1
+# Runtime Node/Web — contrato operacional F1–F6.5
 
 Pré-requisitos: consulte o [guia de pré-requisitos de ambiente](ENVIRONMENT_PREREQUISITES.md).
 Todos os comandos abaixo devem ser executados no diretório
@@ -89,6 +89,24 @@ escalonamentos e falhas de handoff.
 Os comandos `start`, `dev`, `worker`, `migrate` e `reconcile` carregam
 automaticamente o arquivo `.env` desse diretório quando ele existe.
 
+## Lifecycle certificado da Fase 6.5
+
+As migrations 048 e 063–076 complementam a fundação F6 para novas instâncias
+pelos workflows `PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`,
+`WORK_ITEM_DELIVERY:v2` e `ORCHESTRATION_EXECUTION:v1`. Workflows publicados e
+execuções históricas não são reescritos. Em v2, um plano aprovado agenda
+automaticamente itens elegíveis; dependência técnica exige predecessor aceito e
+integrado, e não existe autorização humana individual de work item.
+
+O pipeline selecionado separa sucesso técnico, QA, review independente,
+`ACCEPT`, merge, candidata, validação e integração. Para novas coortes AUT-02,
+o contrato é `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2` com
+`IntegrationCohort:v1`; v1 permanece histórico, compatível e fail-closed.
+Recovery é orientado pela causa, gates usam catálogo versionado e as telas
+consomem somente `STATE_ACTION_PROJECTION:v1`. Ações sensíveis exigem sessão
+autenticada, CSRF, papel e escopo válidos no servidor; nunca headers legados ou
+o payload do navegador.
+
 ## Depois de iniciar
 
 Mantenha os dois terminais abertos:
@@ -111,10 +129,10 @@ Para encerrar, pressione `Ctrl+C` em cada terminal. O PostgreSQL permanece em
 execução; para pará-lo também, execute `docker compose stop postgres` no
 diretório `naamive/runtime/node-web`.
 
-A API aceita somente loopback. `NAAMIVE_REPOSITORY_ROOTS`,
-`NAAMIVE_ARTIFACT_STORE_URI` e `NAAMIVE_OPERATOR_ID` são obrigatórios; o worker
-não inicia sem eles. O operador é injetado pelo servidor: a interface não pode
-escolhê-lo.
+A API aceita somente loopback. `NAAMIVE_REPOSITORY_ROOTS` e
+`NAAMIVE_ARTIFACT_STORE_URI` são obrigatórios; o worker também exige as
+credenciais de serviço GAT-03 descritas acima. `NAAMIVE_OPERATOR_ID` é legado e
+não concede identidade ou autoridade. A interface não escolhe o principal.
 Use `scripts/backup.sh backup.dump` e `scripts/restore.sh backup.dump` para os
 procedimentos manuais de Fase 1. O destino de restore deve ser um PostgreSQL
 efêmero durante o teste de aceite.

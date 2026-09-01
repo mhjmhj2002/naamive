@@ -1,12 +1,23 @@
 ---
 task: DOC-01
-status: TO DO
+status: DONE
+implementation_status: COMPLETED
+implementation_completed_at: 2026-09-01
 title: Reconciliar documentação F5, F6 e F6.5
 depends_on: [TST-01]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # DOC-01 — Reconciliar documentação F5/F6/F6.5
+
+## Evidência de conclusão — 2026-09-01
+
+Foram reconciliadas as fontes normativas, planejamento vivo, roadmap, lifecycles,
+política de gates, guias operacionais, runtime README, índice F6.5 e tasks com
+status desatualizado. F5-22/F5-23 e o planejamento F6 receberam notas aditivas
+que distinguem intenção/entrega histórica da expansão corretiva F6.5. A matriz
+final de TST-01 (20/20 certificados) é a evidência funcional reutilizada; esta
+task não alterou runtime, workflows publicados nem a auditoria baseline.
 
 ## Objetivo e problema corrigido
 

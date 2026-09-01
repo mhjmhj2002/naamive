@@ -1,6 +1,8 @@
 ---
 task: UI-02
-status: TO DO
+status: DONE
+implementation_status: COMPLETED
+implementation_completed_at: 2026-08-29
 title: Superfícies completas de parada
 depends_on: [UI-01, REC-02, GAT-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
@@ -13,9 +15,19 @@ validated_at: 2026-08-29
 
 # UI-02 — Superfícies completas de parada
 
+## Evidência de conclusão
+
+UI-02 foi concluída e certificada no fechamento de TST-01. A coleção
+allowlisted `stop_surfaces` complementa `STATE_ACTION_PROJECTION:v1` por
+recurso, sem criar fonte paralela de lifecycle ou authority. Gates, recovery,
+reviewer/block, delivery, pausa e cancelamento informam motivo, autoridade,
+decisões, evidência pública e continuação permitida; operações automáticas não
+são convertidas em botões humanos. O conteúdo de pré-validação abaixo é
+preservado como registro do contrato que guiou a entrega.
+
 ## 1. Decisão de pré-validação
 
-**READY_FOR_IMPLEMENTATION.** UI-02 deve implementar superfícies operacionais
+**READY_FOR_IMPLEMENTATION (estado histórico da pré-validação).** UI-02 devia implementar superfícies operacionais
 completas, server-driven e acessíveis para cada parada legítima. A única fonte
 de leitura continua sendo `STATE_ACTION_PROJECTION:v1`, criado pela UI-01. A
 implementação adicionará, de modo allowlisted e compatível, a coleção
@@ -426,6 +438,7 @@ estado--causa--superfície coberta, testes unitários/HTTP/browser/PostgreSQL
 aplicáveis, evidência de RBAC e redaction, prova de response fencing/SSE e
 revisão de que não foi introduzido endpoint ou fonte de estado paralela.
 
-Esta rodada é exclusivamente normativa. Não implementa runtime, migration,
-frontend ou testes e mantém UI-02 em `TO DO` até a implementação e suas
-evidências de fechamento.
+Esta rodada foi exclusivamente normativa no momento da pré-validação. A
+implementação posterior entregou runtime, migration, frontend e testes e
+marcou UI-02 como `DONE`; o texto é preservado para distinguir a decisão
+original da evidência de fechamento registrada no início deste documento.

@@ -69,18 +69,27 @@ invariante é que uma execução bem-sucedida nunca implica automaticamente acei
 do trabalho.
 
 Essa coexistência histórica não é uma proibição permanente de evolução. A Fase
-6.5 pode publicar novos workflows e contratos e aplicar supervision/assurance
-aos jobs e handoffs reais selecionados. O rollout corretivo substitui o
+6.5 publicou novos workflows e contratos e aplica supervision/assurance aos
+jobs e handoffs reais selecionados. O rollout corretivo substitui o
 comportamento operacional legado em novas versões, preservando a semântica,
 consulta e rastreabilidade das execuções históricas já concluídas.
 
-Cada dispatch deverá passar por produção e review independente, com findings
-rastreáveis, rework delimitado e re-review. Block deixará de ser somente falha
-ou texto livre para ter diagnóstico, assistência, roteamento especializado,
+Cada dispatch coberto pela política passa por produção e review independente,
+com findings rastreáveis, rework delimitado e re-review. Block não é somente
+falha ou texto livre: possui diagnóstico, assistência, roteamento especializado,
 limites configuráveis de tentativa/progresso e escalonamento. O orquestrador
 controlará lifecycle e routing; governance verificará processo e autoridade;
 especialistas avaliarão sua área; advisory recomendará alternativas; e gates
 humanos continuarão soberanos. Ver o planejamento da Fase 6 no roadmap.
+
+Para instâncias F6.5, as versões operacionais são
+`PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`, `WORK_ITEM_DELIVERY:v2` e
+`ORCHESTRATION_EXECUTION:v1`. `WORK_ITEM_DELIVERY:v2` agenda automaticamente
+um item elegível e não abre autorização humana individual. `ACCEPT`, sob o
+pipeline selecionado (`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2` para novas
+coortes), encadeia os handoffs técnicos e a reavaliação de dependentes. A
+projeção pública é exclusivamente `STATE_ACTION_PROJECTION:v1`; o cliente não
+infere uma ação e todo comando revalida estado, catálogo, versão e autoridade.
 
 ## Elegibilidade de papéis
 

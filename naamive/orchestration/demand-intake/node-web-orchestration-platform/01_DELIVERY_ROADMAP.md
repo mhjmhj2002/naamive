@@ -189,28 +189,28 @@ vincular uma pendência explicável.
 | 6 | F6-15 | `DONE` | Integração e 67 jornadas E2E obrigatórias aprovadas contra PostgreSQL. |
 | 6 | F6-16 | `DONE` | Regressões das Fases 3, 4 e 5 aprovadas sem alterar dispatches fora da política. |
 | 6 | F6-17 | `DONE` | Aceite consolidado aprovado em 2026-08-14 com build, migration, testes e E2E verdes. |
-| 6.5 | LR-01 | `TO DO` | Publicar workflows aderentes e preservar versões históricas. |
-| 6.5 | GAT-01 | `TO DO` | Publicar catálogo server-side de gates e autoridade. |
-| 6.5 | GAT-03 | `TO DO` | Autenticar identidade e aplicar RBAC. |
-| 6.5 | AUT-01 | `TO DO` | Despachar WIs elegíveis transacionalmente. |
-| 6.5 | REC-01 | `TO DO` | Selecionar recovery pela causa. |
-| 6.5 | LR-02 | `TO DO` | Sincronizar projeto e módulo no macro-lifecycle. |
-| 6.5 | AUT-02 | `TO DO` | Automatizar QA, review, merge e integração. |
-| 6.5 | AUT-03 | `TO DO` | Ampliar F6 aos trabalhos reais. |
-| 6.5 | REC-02 | `TO DO` | Recuperar reviewer e blocks sem limbo. |
-| 6.5 | GAT-02 | `TO DO` | Completar entrega, pausa e cancelamento. |
-| 6.5 | UI-01 | `TO DO` | Unificar projeção de estado e ações. |
-| 6.5 | UI-02 | `TO DO` | Cobrir superfícies de parada e recovery. |
-| 6.5 | TST-01 | `TO DO` | Certificar conformidade ponta a ponta. |
-| 6.5 | DOC-01 | `TO DO` | Reconciliar documentação F5/F6/F6.5. |
-| 7 | F7-01 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-02 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-03 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-04 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-05 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-06 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-07 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
-| 7 | F7-08 | `BLOCKED` | F7 BLOCKED BY PHASE 6.5. |
+| 6.5 | LR-01 | `DONE` | Workflows aderentes publicados sem alterar versões históricas. |
+| 6.5 | GAT-01 | `DONE` | Catálogo server-side de gates e autoridade publicado. |
+| 6.5 | GAT-03 | `DONE` | Identidade autenticada e RBAC aplicados. |
+| 6.5 | AUT-01 | `DONE` | WIs elegíveis agendados transacionalmente. |
+| 6.5 | REC-01 | `DONE` | Recovery selecionado pela causa. |
+| 6.5 | LR-02 | `DONE` | Projeto e módulo sincronizados no macro-lifecycle. |
+| 6.5 | AUT-02 | `DONE` | QA, review, merge e integração automatizados. |
+| 6.5 | AUT-03 | `DONE` | F6 ampliada aos trabalhos reais selecionados. |
+| 6.5 | REC-02 | `DONE` | Reviewer e blocks recuperados sem limbo. |
+| 6.5 | GAT-02 | `DONE` | Entrega, pausa e cancelamento completos. |
+| 6.5 | UI-01 | `DONE` | Projeção única de estado e ações publicada. |
+| 6.5 | UI-02 | `DONE` | Superfícies de parada e recovery completas. |
+| 6.5 | TST-01 | `DONE` | Conformidade ponta a ponta certificada (20/20). |
+| 6.5 | DOC-01 | `DONE` | Documentação F5/F6/F6.5 reconciliada. |
+| 7 | F7-01 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-02 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-03 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-04 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-05 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-06 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-07 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
+| 7 | F7-08 | `TO DO` | F6.5 aceita; dependências próprias de F7 governam o início. |
 | 8 | F8-01 | `TO DO` | — |
 | 8 | F8-02 | `TO DO` | — |
 | 8 | F8-03 | `TO DO` | — |
@@ -505,7 +505,12 @@ históricas concluídas.
 
 ## Fase 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery
 
-**Status:** planejamento estruturado; implementação funcional não iniciada.
+**Status:** concluída e certificada em 01/09/2026. Todas as tasks listadas,
+incluindo LR-02A, estão `DONE`, e
+os 20 critérios globais foram certificados por TST-01. A certificação final do
+operador em `npm run e2e` registrou 139 testes, 132 `PASS`, exatamente 7
+`KNOWN_BASELINE`, 0 falhas novas, 0 skipped, 0 cancelled e 0 todo. A auditoria
+de 22/08 permanece evidência histórica imutável; esta conclusão não a reescreve.
 
 **Valor esperado:** depois de um escopo autorizado, a plataforma conduz o
 trabalho automaticamente até um gate explícito, decisão material, bloqueio não
@@ -540,12 +545,21 @@ e as tasks em
 | TST-01 | Certificar o lifecycle em PostgreSQL, API, SSE e navegador. | Nenhum cenário obrigatório pode ser ignorado. |
 | DOC-01 | Reconciliar documentação e versões sem falsificar histórico. | A auditoria baseline permanece inalterada. |
 
+Todos os itens acima estão `DONE`. Para novas instâncias, os contratos
+publicados relevantes são `PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`,
+`WORK_ITEM_DELIVERY:v2`, `ORCHESTRATION_EXECUTION:v1`,
+`STATE_ACTION_PROJECTION:v1`, `GATE_CATALOG:v2` e
+`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`/`IntegrationCohort:v1` quando o
+pipeline v2 é selecionado. As versões e execuções anteriores continuam
+consultáveis sem reclassificação retroativa.
+
 ## Fase 7 — Projeto entregue e aceito pela web
 
-**Status:** `F7 BLOCKED BY PHASE 6.5`. A fase não pode iniciar até que todas as
-tasks e os critérios globais da Fase 6.5 estejam aceitos. Seu número e escopo
-histórico são preservados; sobreposições serão reconciliadas por `DOC-01` sem
-apagar requisitos de entrega, projeto de referência ou PR draft.
+**Status:** `F7 UNBLOCKED AFTER PHASE 6.5 ACCEPTANCE`. A condição documental
+foi satisfeita em 01/09/2026: todas as tasks e os 20 critérios globais da Fase
+6.5 foram aceitos e DOC-01 reconciliou as fontes vigentes. Seu número e escopo
+histórico são preservados; essa liberação não resolve nem remove impedimentos
+próprios de F7, como `P2-01` para abertura de PR.
 
 **Valor entregue:** o operador conduz um projeto de referência até entrega,
 incluindo integração, validação, risco, release, aceite e consulta completa de

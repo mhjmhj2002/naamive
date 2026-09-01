@@ -1,12 +1,24 @@
 ---
 task: UI-01
-status: TO DO
+status: DONE
+implementation_status: COMPLETED
+implementation_completed_at: 2026-08-29
 title: Projeção única de estado e allowed_actions
 depends_on: [AUT-01, REC-01, GAT-01, GAT-03, AUT-03, REC-02, GAT-02]
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # UI-01 — Projeção única de estado e `allowed_actions`
+
+## Evidência de conclusão
+
+UI-01 foi concluída e certificada no fechamento de TST-01. O runtime publica
+`STATE_ACTION_PROJECTION:v1` como leitura canônica server-side, com cursor
+factual, workflow/version, estado/cause/activity e `allowed_actions` para o
+principal autenticado; a UI apenas a renderiza e cada comando revalida a
+autoridade. A cobertura de contrato, SSE, DOM e navegador integra a matriz
+20/20 de TST-01. O texto de estratégia abaixo preserva o escopo originalmente
+planejado e não deve ser lido como trabalho pendente.
 
 ## Objetivo e problema corrigido
 

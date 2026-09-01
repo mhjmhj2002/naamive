@@ -10,6 +10,18 @@ related_compass: ../../LIFECYCLE_COMPASS.md
 
 # Planejamento da Fase 6 — Agent Supervision & Assurance
 
+## Nota aditiva de reconciliação F6.5 — 2026-09-01
+
+Este documento preserva o planejamento e a entrega histórica da fundação F6:
+assurance aditiva, versionada e opt-in, sem reinterpretar F3/F4/F5. A auditoria
+posterior constatou que essa fundação ainda não cobria integralmente o fluxo
+operacional real. A Fase 6.5 corrigiu a lacuna por novos workflows, catálogo de
+gates, scheduler, recovery, projeção única e `AUT-03`; ela não transforma F6
+em uma entrega histórica mais ampla do que foi. Para novas instâncias cobertas,
+o pipeline `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2` usa
+`IntegrationCohort:v1`; registros F6/AUT-02 v1 continuam históricos,
+compatíveis e fail-closed.
+
 ## Origem e objetivo
 
 Testes práticos da Fase 5 revelaram duas lacunas: agentes podem declarar uma
@@ -231,7 +243,11 @@ de reviewer e antecipação de riscos. Isso não é escopo desta fase.
   dispatches fora da política F6 opt-in; a Fase 6.5 pode ampliar essa seleção em
   versões novas, sem reinterpretar execuções históricas.
 
-## Questões para o detalhamento/implementação da Fase 6
+## Questões históricas do detalhamento/implementação da Fase 6
+
+As questões a seguir eram abertas no planejamento original. O estado vigente é
+o da nota aditiva e dos contratos F6.5; a lista é preservada como histórico e
+não indica capacidade pendente.
 
 1. Schema físico, nomes finais de APIs/projeções web e valores iniciais das políticas versionadas, obedecendo às decisões acima.
 2. Matriz detalhada de routing por categoria e decisão sobre `engineering-advisor` como agente ou capability.

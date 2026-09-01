@@ -2,6 +2,17 @@
 
 Esta máquina governa uma capacidade de negócio materializada em `projects/<project-id>/modules/<module-id>/`. Ela não substitui a máquina do projeto.
 
+## Reconciliação operacional F6.5
+
+Para novas instâncias, `MODULE_DELIVERY:v2` e `WORK_ITEM_DELIVERY:v2`
+materializam esta máquina. Um plano aprovado cria o conjunto de work items
+canônico e o scheduler despacha automaticamente as raízes elegíveis; um
+predecessor técnico só libera dependente depois de aceito **e integrado**.
+`WAITING_FOR_WORK_ITEM_AUTHORIZATION` é estado legado, não uma parada humana do
+v2. QA, review independente, `ACCEPT`, merge, candidata, validação e integração
+permanecem fatos distintos; o agregador promove o módulo somente com a evidência
+exigida. Workflows antigos continuam imutáveis e consultáveis pela sua versão.
+
 ## Estados
 
 | Estado | Significado | Próximos estados permitidos |

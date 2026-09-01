@@ -1,5 +1,10 @@
 # Tasks de implementação — Fase 6
 
+> Registro histórico de execução da fundação F6. O escopo aqui descrito foi
+> entregue de modo aditivo e opt-in. A ampliação posterior aos fluxos reais foi
+> entregue pela Fase 6.5, por versões novas e sem reinterpretação de requests
+> legados; consulte o planejamento F6.5 e TST-01 para a certificação vigente.
+
 Execute uma task por vez; atualize o item correspondente no roadmap somente depois de seu aceite. A Fase 6 acrescenta assurance a dispatches selecionados por política, sem reinterpretar requests legados F4/F5 nem alterar o lifecycle macro.
 
 | Ordem | Task | Dependência |

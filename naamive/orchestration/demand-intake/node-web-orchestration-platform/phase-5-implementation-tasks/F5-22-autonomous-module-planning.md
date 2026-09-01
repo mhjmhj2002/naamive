@@ -5,6 +5,18 @@ status: TODO
 
 # F5-22 — Planejamento autônomo de módulos com revisão única
 
+## Nota aditiva de reconciliação F6.5 — 2026-09-01
+
+`status: TODO` acima é o estado histórico desta especificação F5 e não uma
+declaração sobre o contrato operacional atual. A intenção registrada aqui —
+proposta auditável, um único `MODULE_PLAN_APPROVAL`, nenhuma autorização humana
+por work item e agendamento posterior — foi parcialmente materializada no
+caminho F5 e detalhada/corrigida por F5-23. A Fase 6.5 completou a passagem
+operacional por `WORK_ITEM_DELIVERY:v2`: novos itens elegíveis são agendados
+automaticamente, não entram em `WAITING_FOR_WORK_ITEM_AUTHORIZATION` e não
+expõem `AUTHORIZE_WORK_ITEM`. Esta nota não muda o status histórico nem atribui
+retroativamente a F5 capacidades entregues pela Fase 6.5.
+
 ## Contexto
 
 Após a arquitetura do módulo ser aprovada, o operador não deve decompor o

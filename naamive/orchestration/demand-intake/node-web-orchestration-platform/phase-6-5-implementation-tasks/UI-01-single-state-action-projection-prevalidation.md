@@ -25,9 +25,10 @@ gates, RBAC, scheduler, recovery, assurance, pause ou cancellation. Esses
 contratos continuam sendo as autoridades dos fatos e comandos que a projeção
 apenas torna legíveis.
 
-UI-01 permanece `TO DO` até a implementação e sua matriz de evidências serem
-concluídas. UI-02 continua dona de painéis especializados de parada; UI-01 é
-dona da infraestrutura canônica que os alimenta.
+No estado histórico desta pré-validação, UI-01 permanecia `TO DO` até a
+implementação e sua matriz de evidências serem concluídas. Ambas foram
+concluídas e certificadas por TST-01; UI-02 continua dona dos painéis
+especializados de parada e UI-01 da infraestrutura canônica que os alimenta.
 
 ## 1. Autoridade e precedência
 

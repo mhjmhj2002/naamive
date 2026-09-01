@@ -13,10 +13,10 @@ scope: documental; nenhuma alteração funcional, migration ou teste funcional
 
 ## Decisão de pré-validação
 
-REC-01 permanece `TO DO`, mas está **READY_FOR_IMPLEMENTATION**: os contratos
-abaixo eliminam a ambiguidade que impedia escolher recovery com segurança. Não
-há bloqueio externo de arquitetura. A implementação deverá fechar os gaps
-inventariados; este documento não os implementa.
+No momento desta pré-validação, REC-01 estava `TO DO`, mas
+**READY_FOR_IMPLEMENTATION**: os contratos abaixo eliminavam a ambiguidade que
+impedia escolher recovery com segurança. A implementação posterior fechou os
+gaps e está `DONE`; este documento preserva somente a decisão de pré-validação.
 
 A dependência conceitual original em LR-01 significa que REC-01 consome os
 workflows v2 e seus estados. A dependência funcional final é `[LR-01, AUT-01]`:

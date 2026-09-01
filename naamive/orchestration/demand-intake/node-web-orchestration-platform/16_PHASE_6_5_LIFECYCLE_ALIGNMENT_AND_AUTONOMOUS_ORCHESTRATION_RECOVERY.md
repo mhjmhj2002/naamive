@@ -1,14 +1,24 @@
 ---
 document_type: phase-planning
-status: READY_FOR_REVIEW
+status: IMPLEMENTATION_COMPLETE_CERTIFIED
 created_at: 2026-08-22
-scope: planejamento da Fase 6.5, sem implementação funcional
+scope: planejamento histórico e reconciliação do contrato certificado da Fase 6.5
 execution_checkpoint: 2026-08-24
 primary_roadmap: 01_DELIVERY_ROADMAP.md
 baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 ---
 
 # Planejamento da Fase 6.5 — Lifecycle Alignment and Autonomous Orchestration Recovery
+
+## Reconciliação de encerramento — 2026-09-01
+
+O planejamento abaixo é preservado como registro da preparação de 22/08. Sua
+execução foi concluída: todas as tasks funcionais, UI-01, UI-02, TST-01 e DOC-01
+estão `DONE`; TST-01 certificou os 20/20 critérios e a execução final do
+operador registrou 132 `PASS` e somente as 7 `KNOWN_BASELINE` autorizadas. O
+contrato vigente para novas instâncias usa workflows e políticas publicados,
+sem alterar versões, dados ou execuções históricas. A Fase 7 fica elegível por
+essa condição; requisitos e decisões próprios dela continuam independentes.
 
 ## Objetivo
 
@@ -390,8 +400,8 @@ descartável equivalente, sem mutar o projeto original.
 ## Registro histórico da preparação — 2026-08-22
 
 Esta seção registra o estado do pacote quando o planejamento foi fechado; não é
-o estado de execução atual. O checkpoint vivo acima e o índice de tasks são as
-fontes para a retomada operacional.
+o estado de execução atual. A reconciliação de encerramento acima, TST-01 e o
+índice de tasks são as fontes do estado certificado.
 
 ## Critérios de conclusão deste planejamento
 

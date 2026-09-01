@@ -1,6 +1,14 @@
 # Tasks de implementação — Fase 6.5
 
-Índice vivo da execução da Fase 6.5. Checkpoint em 24/08/2026:
+Índice vivo da execução da Fase 6.5. **Encerramento certificado em 01/09/2026:**
+todas as tasks listadas, incluindo LR-02A, estão `DONE`; TST-01 fechou 20/20
+critérios e DOC-01 reconciliou a
+documentação vigente sem alterar a auditoria baseline. A certificação manual do
+operador em `npm run e2e` registrou 139 testes, 132 `PASS`, exatamente 7
+`KNOWN_BASELINE`, 0 falhas novas, 0 skipped, 0 cancelled e 0 todo. A Fase 7 está
+documentalmente desbloqueada; seus próprios requisitos continuam independentes.
+
+Checkpoint histórico em 24/08/2026:
 `LR-01`, `GAT-01`, `GAT-03`, `AUT-01`, `REC-01`, `LR-02A`, `LR-02` e `AUT-02` estão
 `DONE`; os dois findings da auditoria de `9e9bdaf0` foram fechados. LR-02
 entregou o agregador macro versionado, intents/outbox recuperáveis, materialização
@@ -78,10 +86,10 @@ Baseline histórica imutável:
 | 8 | [AUT-03 — Ampliar F6 aos trabalhos reais](AUT-03-expand-phase6-assurance.md) | `DONE` | AUT-02 |
 | 9 | [REC-02 — Recuperação de reviewer e blocks](REC-02-reviewer-and-block-recovery.md) | `DONE` | AUT-03, GAT-01 |
 | 10 | [GAT-02 — Entrega, pausa e cancelamento](GAT-02-delivery-pause-cancellation.md) | `DONE` | LR-02, GAT-01, GAT-03 |
-| 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `TO_DO` | AUT-01, REC-01, GAT-01, GAT-03, AUT-03, REC-02, GAT-02 |
-| 12 | [UI-02 — Superfícies completas de parada](UI-02-complete-stop-surfaces.md) | `TO_DO` | UI-01, REC-02, GAT-02 |
-| 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `TO_DO` | todas as tasks funcionais |
-| 14 | [DOC-01 — Reconciliar documentação F5/F6/F6.5](DOC-01-reconcile-phase5-phase6-docs.md) | `TO_DO` | TST-01 |
+| 11 | [UI-01 — Projeção única de estado e ações](UI-01-single-state-action-projection.md) | `DONE` | AUT-01, REC-01, GAT-01, GAT-03, AUT-03, REC-02, GAT-02 |
+| 12 | [UI-02 — Superfícies completas de parada](UI-02-complete-stop-surfaces.md) | `DONE` | UI-01, REC-02, GAT-02 |
+| 13 | [TST-01 — Suíte de conformidade do lifecycle](TST-01-lifecycle-conformance-suite.md) | `DONE` | todas as tasks funcionais |
+| 14 | [DOC-01 — Reconciliar documentação F5/F6/F6.5](DOC-01-reconcile-phase5-phase6-docs.md) | `DONE` | TST-01 |
 
 `LR-01 → GAT-01 → GAT-03 → AUT-01 → REC-01 → LR-02A → LR-02 → AUT-02` é a sequência serial concluída. A
 dependência conceitual original de AUT-01 em LR-01 descreve o contrato de
@@ -94,5 +102,6 @@ criar nova execução pela reservation transacional do scheduler.
 Fonte canônica do planejamento:
 [16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md](../16_PHASE_6_5_LIFECYCLE_ALIGNMENT_AND_AUTONOMOUS_ORCHESTRATION_RECOVERY.md).
 
-Uma task só passa a `DONE` com critérios, testes e evidências satisfeitos. A
-Fase 7 permanece bloqueada até o aceite integral da Fase 6.5.
+Uma task só passa a `DONE` com critérios, testes e evidências satisfeitos. Esse
+aceite integral foi alcançado; a Fase 7 está desbloqueada pela Fase 6.5, sem
+que isso elimine suas próprias decisões, gates ou requisitos de execução.
