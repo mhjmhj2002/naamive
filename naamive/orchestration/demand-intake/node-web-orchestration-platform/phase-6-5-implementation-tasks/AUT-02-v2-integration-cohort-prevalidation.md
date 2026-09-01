@@ -3,8 +3,8 @@ task: TST-01
 subwork: AUT-02-v2-integration-cohort
 ownership: TST-01
 document_type: corrective-architecture-prevalidation
-status: PREVALIDATION_READY_FOR_IMPLEMENTATION
-implementation_status: NOT_IMPLEMENTED
+status: DONE
+implementation_status: COMPLETED
 contract: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2
 supersedes_for_new_executions: AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1
 preserves: [AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1, RequiredWorkItemSet:v1]
@@ -16,7 +16,12 @@ corrects_historical_contract: AUT-02:v1
 
 ## Decisão e conflito resolvido
 
-**PREVALIDATION: READY_FOR_IMPLEMENTATION.** Este documento é subtrabalho corretivo de **TST-01**, sua task dona; não cria uma task AUT-02 independente. Ele corrige aditivamente o contrato histórico AUT-02 v1 para que TST-01 possa certificar o critério 18, sem alterar registros nem a semântica histórica de `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1`. TST-01 só pode encerrar depois da certificação completa.
+**IMPLEMENTADO E CERTIFICADO SOB TST-01.** Este documento é subtrabalho
+corretivo de **TST-01**, sua task dona; não cria uma task AUT-02 independente.
+A certificação completa do operador confirmou o contrato v2, o recovery
+canônico de cohorts e a compatibilidade de retry v1. Registros e a semântica
+histórica de `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` permanecem
+preservados.
 
 V1 exige um único plano aprovado e igualdade completa com `RequiredWorkItemSet:v1` antes de formar uma candidate. Isso impede que Persistência integre e libere Métrica enquanto Interface aguarda prioridade; dois planos `APPROVED` tampouco são válidos. Para novas execuções, v2 introduz `IntegrationCohort:v1`: depois de `ACCEPT`, um WI aceito e merged integra em uma fronteira determinística e seus dependentes são reavaliados automaticamente. A aprovação continua cobrindo o plano inteiro e não cria gates adicionais.
 
@@ -67,9 +72,9 @@ No cenário TST-01, um plano aprovado contém Persistência, Métrica e Interfac
 
 V1 permanece legível, recuperável e fail-closed para registros históricos. Não há conversão automática de candidate, manifesto ou execução v1. Novas plan revisions selecionam explicitamente v2; a versão é congelada na plan revision, nos WIs e copiada para a candidate/manifesto. Versão ausente ou desconhecida falha fechada. V1 continua reconhecível, mas não é reinterpretada como v2.
 
-## Persistência esperada — não implementada aqui
+## Persistência implementada
 
-Uma migration nova, sem reescrever migrations aplicadas, deve:
+A migration 075 implementou, sem reescrever migrations aplicadas:
 
 - congelar `integration_pipeline_version` em plan revision e work items, com classificação explícita de legado;
 - persistir `integration_cohort_version`, `cohort_hash` e membros imutáveis no manifesto/candidate v2;
@@ -77,18 +82,16 @@ Uma migration nova, sem reescrever migrations aplicadas, deve:
 - indexar seleção por revision/round/plan/estado e registrar intents/eventos v2 idempotentes;
 - impor, por checks/foreign keys, lineage pertencente ao plano/round congelados.
 
-`065_phase_6_5_automatic_assurance_integration.sql` já oferece
+`065_phase_6_5_automatic_assurance_integration.sql` oferece
 `integration_candidates`, `integration_candidate_members`, intents, attempts,
 `pipeline_version`, `policy_version`, manifest/hash e seus guardas de
-imutabilidade como base de reutilização. A migration v2 deve ampliar os checks
-v1 que hoje restringem versões, registrar o marker congelado na plan revision e
-no WI e adicionar a reservation ativa. Tabelas existentes só podem ser
-reutilizadas se estes invariantes — sobretudo a unicidade de reservation ativa
-no banco — forem realmente impostos; caso contrário, uma tabela v2 é necessária.
+imutabilidade como base de reutilização. A migration v2 ampliou os checks v1,
+registrou o marker congelado na plan revision e no WI e adicionou a reservation
+ativa, impondo os invariantes de lineage e unicidade no banco.
 
 ## Critérios de certificação
 
-A implementação v2 deve usar PostgreSQL e Git reais para provar o fluxo Persistência→integração→Métrica, Interface bloqueada e liberada, cohorts independentes, rejeição de dependência intra-cohort, replay, concorrência, crash/restart, stale/blocker/rework/recovery e macro apenas após o required set inteiro integrar. O critério 18 de TST-01 permanece bloqueado até a implementação e certificação PostgreSQL/Git sem SQL de atalho após dispatch.
+A implementação v2 usa PostgreSQL e Git reais para provar o fluxo Persistência→integração→Métrica, Interface bloqueada e liberada, cohorts independentes, rejeição de dependência intra-cohort, replay, concorrência, crash/restart, stale/blocker/rework/recovery e macro apenas após o required set inteiro integrar. A certificação completa de TST-01 confirmou o cenário Persistência→Métrica→Interface e `AUT-02 v2 recovery canonically records and retries integration cohorts while preserving v1 retry compatibility`; o critério 18 está certificado sem SQL de atalho após dispatch.
 
 ## Relação com AUT-02 v1
 

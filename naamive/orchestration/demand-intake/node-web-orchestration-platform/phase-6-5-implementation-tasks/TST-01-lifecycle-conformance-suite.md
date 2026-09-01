@@ -10,7 +10,7 @@ baseline: orchestration/audits/2026-08-22-lifecycle-conformance-audit.md
 
 # TST-01 — Suíte de conformidade do lifecycle
 
-## Evidência de certificação final — 2026-08-31
+## Evidência de certificação final — 2026-09-01
 
 TST-01 está concluída e certificada. A implementação contém manifesto e
 verificador estático fail-closed, as migrations 075
@@ -20,12 +20,37 @@ incremental com reservation exclusiva e a fixture PostgreSQL/Git de plano único
 Persistência→Métrica→Interface. AUT-02 v1 permanece histórico, compatível e
 fail-closed; não foi reinterpretado.
 
-O operador executou `npm run e2e`: 138 testes, 131 PASS e somente as sete
-baselines históricas autorizadas. Em particular, passaram o cenário obrigatório
-`TST-01 drives Persistence → Metric → Interface through AUT-01 and AUT-02`, o
-LR-02 PostgreSQL completo (incluindo races e replay, ~409 s) e o AUT-01 de
-dispatch do root/dependências/blocker. `npm run build`, migration 075 e
-migration 076 também passaram. Não há falha nova atribuível à TST-01.
+O operador executou a certificação completa `npm run e2e`: **139 testes, 132
+PASS, 7 failures KNOWN_BASELINE, 0 novas falhas, 0 skipped, 0 cancelled e 0
+todo**, em 206144 ms. As sete failures correspondem exatamente às fingerprints
+oficiais: quatro expectativas `RETRYABLE` vs `FAILED`, duas
+`ANALYSIS_IN_PROGRESS` vs `WAITING_FOR_PRODUCT_COMMITMENT` e a limpeza
+histórica `SQLSTATE 23503`/`work_acceptances_execution_id_fkey`; são dívida
+autorizada, não falha da TST-01.
+
+Passaram o cenário obrigatório `TST-01 drives Persistence → Metric → Interface
+through AUT-01 and AUT-02`, `AUT-02 v2 recovery canonically records and retries
+integration cohorts while preserving v1 retry compatibility` e o LR-02
+PostgreSQL completo, incluindo discovery, SAME/CHANGED/ADDED/REMOVED, replay e
+races, em aproximadamente **13,65 s**. A correção de recovery roteia v1/v2
+para `finalizeAut02IntegratedCandidate`, preserva retry v1 histórico e falha
+fechada para versão ausente/desconhecida. A correção LR-02 introduz escopo
+opcional em `reconcileMacroLifecycle(..., projectId?)`: sem escopo a produção
+permanece global; com escopo, a fixture não descobre, reclama nem processa
+outro projeto.
+
+## Correção de isolamento LR-02 — 2026-08-31
+
+O diagnóstico PostgreSQL encontrou resíduos de fixtures LR-02 e uma fila
+global de intents. `reconcileMacroLifecycle` preserva seu comportamento global
+quando chamado sem escopo, mas agora aceita opcionalmente `projectId`; nesse
+modo, discovery, criação de reavaliações por evento e claim processam somente
+o projeto da fixture. O E2E passa esse escopo em drain, replay parcial e todas
+as corridas; ele também prova que um intent de outro projeto continua PENDING
+no modo scoped e é processado por uma chamada sem escopo. Três execuções
+consecutivas do cenário PostgreSQL completo passaram em 18,33 s, 18,19 s e
+18,59 s, sem espera por locks. A certificação final do operador confirmou o
+mesmo cenário em ~13,65 s; a regressão de isolamento/performance está resolvida.
 
 As sete falhas remanescentes são dívida `KNOWN_BASELINE`, por nome e fingerprint
 exatos, e não são falhas da TST-01: quatro expectativas `RETRYABLE` vs
@@ -46,9 +71,9 @@ históricos e fail-closed; novas execuções selecionam explicitamente
 `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v2`.
 
 O critério 18 foi certificado sobre o contrato v2: a fixture percorre a cadeia
-real sem dispatch manual de Métrica ou Interface. `RequiredWorkItemSet:v1`
-continua a expressar a completude macro, enquanto `IntegrationCohort:v1`
-delimita cada integração incremental v2.
+real sem dispatch manual de Métrica ou Interface.
+`RequiredWorkItemSet:v1` continua a expressar a completude macro, enquanto
+`IntegrationCohort:v1` delimita cada integração incremental v2.
 
 ## Decisão de pré-validação
 
@@ -60,8 +85,8 @@ concluiu a certificação transversal.
 A pré-validação original não conhecia conflito arquitetural. Durante a
 implementação/auditoria, TST-01 revelou o conflito AUT-02 v1 × lifecycle DAG;
 ele foi resolvido normativamente por AUT-02 v2. Não existe decisão arquitetural
-pendente agora; o contrato v2 e a fixture isolada foram implementados e
-certificados.
+pendente agora; o contrato v2, a fixture isolada e a correção de recovery estão
+implementados e certificados sob ownership de TST-01.
 
 ## Autoridade normativa e inventário atual
 
@@ -91,13 +116,19 @@ recovery é orientado por causa; ações sensíveis são autorizadas no servidor
 E2E PostgreSQL usa `DATABASE_URL`; ausência é `SKIPPED: set DATABASE_URL`,
 nunca evidência de PASS.
 
-## Matriz dos 20 critérios
+## Matriz final de certificação
 
-`COVERED` exige prova transversal executada; unitário, mock ou teste estreito
-não basta. Resultado final: **20 COVERED, 0 PARTIALLY_COVERED, 0 GAP**.
-O operador certificou a execução PostgreSQL/Git completa. A tabela abaixo
-preserva os gaps de planejamento originalmente identificados; ela está superada
-pela evidência final registrada acima.
+| Critérios | Resultado final | Evidência |
+| --- | --- | --- |
+| 1–20 | **COVERED — CERTIFICADOS (20/20)** | `npm run e2e` do operador: 139 testes, 132 PASS, apenas os 7 `KNOWN_BASELINE` oficiais e nenhuma falha nova. |
+
+### Matriz histórica de gaps de planejamento
+
+Esta é a matriz de gaps da pré-validação de 22/08, preservada para
+rastreabilidade. Seus rótulos de planejamento não são o status corrente: a
+certificação final acima fechou a matriz em **20/20 critérios COVERED e
+certificados**, incluindo o recovery AUT-02 v2/v1 e a correção de isolamento
+LR-02.
 
 | Criterion | Requirement | Scenario | Layer(s) | Existing evidence/test | Gap | Required test/change | PostgreSQL required? | Negative assertion | Expected artifact/evidence |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -108,7 +139,7 @@ pela evidência final registrada acima.
 | 5 — PARTIALLY_COVERED | F6 incompleto até `ACCEPT`. | QA PASS/review/ACCEPT. | execution,assurance | AUT-02/AUT-03 | Não ligado ao macro. | Assertar antes/depois de ACCEPT. | Sim | Success/QA não integra/libera. | acceptance,WI,intent |
 | 6 — PARTIALLY_COVERED | REWORK corretivo automático salvo gate material. | Finding/re-review. | assurance,recovery | assurance/recovery | Sem matriz comum. | Nova delivery/review; material abre gate publicado. | Sim | Sem start humano/aceite de geração velha. | finding,lineage,recovery |
 | 7 — PARTIALLY_COVERED | BLOCK faz assistência/routing antes de escalar. | Reviewer indisponível. | REC-02,gates,UI | assurance/reviewer recovery | Sem prova no manifesto. | Diagnóstico→routing/fallback→escalada. | Sim | Sem gate/ESCALATED precoce. | block,intents,surface |
-| 8 — PARTIALLY_COVERED | Falha recuperável tem retry/restart/resume visível. | Crashes/lease. | REC-01,worker,UI | recovery,worker restart,UI-02 | Casos dispersos. | Reusar matriz REC-01 e projection. | Sim | Confirmado não reaplica; desconhecido não retry cego. | decision,footprint,lineage |
+| 8 — PARTIALLY_COVERED | Falha recuperável tem retry/restart/resume visível. | Crashes/lease e recovery de candidate AUT-02 v1/v2. | REC-01,worker,UI | `recovery.e2e` e `aut02-integration-recovery.e2e` | Casos dispersos; a certificação transversal ainda é pendente. | Reusar matriz REC-01, recovery AUT-02 v1/v2 e projection. | Sim | Confirmado não reaplica; desconhecido não retry cego; versão ausente falha fechada. | decision,footprint,lineage,eventos,evidência |
 | 9 — PARTIALLY_COVERED | Recuperável não fica sem saída. | Recovery/rework/reviewer wait. | recovery,gates,UI | REC-01/02,UI-01/02 | Sem enumeração fail-closed. | Manifesto estado→automação/surface. | Sim | Estado sem mapper falha. | relatório/projection |
 | 10 — PARTIALLY_COVERED | Gates só onde autorizados. | Plano, commitment, materialidade, delivery. | workflow,catalog | gate catalog | Não cruza todos v2. | Um permitido e um proibido. | Sim | Sem gate individual/técnico universal. | record,transition,audit |
 | 11 — PARTIALLY_COVERED | Stop humano explica motivo/estado/authority/decisões/consequências. | Gate,blocker,recovery,pause. | projection,browser | UI-01/UI-02 | Não cobre matriz/fixture. | Tabela stops→campos + browser. | Sim | Descriptor incompleto não cria form; LEGACY não vira humano ordinário. | JSON/DOM sanitizado |
@@ -119,7 +150,7 @@ pela evidência final registrada acima.
 | 16 — PARTIALLY_COVERED | Sensível exige identidade/papel autenticados. | Gate,blocker,delivery,recovery. | auth,HTTP | auth/UI-01/delivery | Falta amostra da fixture. | Humano permitido/negado/service. | Sim | Header/payload não concede role; service sem ação humana. | session/audit,401/403 |
 | 17 — PARTIALLY_COVERED | UI usa projection server-side única. | Snapshot antes/depois blocker. | API,SSE,browser | UI-01/UI-02/web UI | Browser simulada em parte. | API→DOM/SSE real por descriptor/surface ID. | Sim | UI não infere; evento velho não regride action. | `as_of_event_id`,JSON,DOM |
 | 18 — COVERED | Cenário auditado completa QA/review/merge/Métrica e preserva Interface. | Persistência→Métrica/Interface. | todas | Fixture v2 PostgreSQL/Git executada pelo operador. | Nenhum. | Certificado em `npm run e2e`. | Sim/Git | Sem auth individual, sem dispatch manual dependente; Interface só após blocker+dep. | relatório,IDs,hashes,eventos |
-| 19 — COVERED | E2E happy/rework/block/retry/deps/gates/restart. | Subcenários registrados. | all E2E | Execução completa do operador, com somente `KNOWN_BASELINE`. | Nenhum fora da dívida baseline. | Runner fail-closed validado. | Sim | Ausência/skip indevido/assert faltante falha. | JSON sanitizado/TAP |
+| 19 — COVERED | E2E happy/rework/block/retry/deps/gates/restart. | Subcenários registrados. | all E2E | Certificação completa do operador e `aut02-integration-recovery.e2e` focado. | Nenhum. | Runner fail-closed e recovery AUT-02 v1/v2 certificados juntos. | Sim | Ausência/skip indevido/assert faltante falha; retry não pode pular finalização coletiva. | JSON sanitizado/TAP, candidate/attempt/membros/reservations |
 | 20 — COVERED | Docs/workflow/runtime/API/UI/testes coerentes. | Static. | docs,migration,source | Verificador estático TST-01 executado: 048, 075, cohort v2, versões e ownership. | Snapshot PostgreSQL é evidência complementar dos critérios runtime, não substitui a certificação deles. | Manter teste estático fail-closed. | Não | Desconhecido fail-closed; v2 não declara gate removido. | relatório links/hashes/versions |
 
 ## Fixture real obrigatória
@@ -238,8 +269,9 @@ E2E compara então o snapshot real. Isto não antecipa DOC-01.
 
 Foram executados build, migrations e os testes focados listados durante a
 implementação; o operador executou adicionalmente `npm run e2e` completo e
-forneceu o resultado certificado acima. O macro lifecycle não foi repetido pelo
-agent, mas foi executado pelo operador e passou.
+forneceu a certificação final registrada acima. Após a correção de isolamento,
+o agent executou autorizadamente `node --test dist/macro-lifecycle.e2e.test.js`
+três vezes consecutivas; todas passaram em aproximadamente 18 s.
 
 Os comandos focados utilizados pela implementação foram:
 
@@ -257,9 +289,9 @@ git diff --check
 ```
 
 `MANUAL_OPERATOR_VALIDATION_REQUIRED` aplicou-se ao agent para `npm test`,
-`npm run e2e`, `node --test dist/macro-lifecycle.e2e.test.js` e agregado que o
-inclua. O operador executou a rodada autorizada e forneceu TAP/resumo
-sanitizado; essa limitação não bloqueia mais a certificação desta task.
+`npm run e2e` e a qualquer agregado que inclua o macro lifecycle. O macro
+isolado foi exceção explicitamente autorizada para este corretivo; a execução
+completa do operador encerrou essa validação.
 
 ## Critérios históricos de início da implementação — atendidos
 

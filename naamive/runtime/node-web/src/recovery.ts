@@ -4,14 +4,27 @@ import { config } from './config.js';
 import { pool, withTransaction } from './db.js';
 import { ApiError } from './service.js';
 import { assertAuditableCommits, assertIncrementalPaths, discardDeliveryBranch, discardWorktree, gitValue, mergeAndPushDetached, reconcileIntegration, reconcileWorktree } from './git-delivery.js';
-import { scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
+import { reconcileWaitingDependencies, scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
 import { RecoveryClassifier, RECOVERY_POLICY_VERSION, type RecoveryAction, type RecoveryCause, type RecoverySignals, type WorktreeObservation } from './recovery-policy.js';
+import { AUT02_PIPELINE_VERSION, AUT02_V1_PIPELINE_VERSION } from './aut02-ledger.js';
 
 const classifier=new RecoveryClassifier();
 const delays=[5,15,30];
 const hash=(value:string)=>createHash('sha256').update(value).digest('hex');
 const arrays=(value:unknown):string[]=>Array.isArray(value)?value.filter((item):item is string=>typeof item==='string'):[];
 const reservationGraceSeconds=()=>Math.max(Number(config().developmentReservationGraceSeconds)||0,1);
+type Aut02RecoveryPipeline=typeof AUT02_V1_PIPELINE_VERSION|typeof AUT02_PIPELINE_VERSION;
+const aut02RecoveryPipeline=(value:unknown):Aut02RecoveryPipeline=>{
+  if(value===AUT02_V1_PIPELINE_VERSION||value===AUT02_PIPELINE_VERSION)return value;
+  throw new ApiError(409,'AUT02_PIPELINE_VERSION_UNSUPPORTED');
+};
+const finalizeRecoveredAut02Candidate=async(row:any,decision:RecoveryExecutionClaim,remoteSha:string,details:Record<string,unknown>)=>{
+  const {finalizeAut02IntegratedCandidate}=await import('./automatic-assurance-integration.js');
+  await finalizeAut02IntegratedCandidate(row.candidate_id,row.id,remoteSha,'RECOVERY',decision);
+  await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{...details,collective_finalization:true});});
+  await reconcileWaitingDependencies('AUT02_RECOVERY_INTEGRATION_COMPLETED',row.project_id);
+  await scheduleEligibleWorkItems('AUT02_RECOVERY_INTEGRATION_COMPLETED');
+};
 
 export type PersistedRecoveryDecision={
   id:string;project_id:string;policy_version:typeof RECOVERY_POLICY_VERSION;cause:RecoveryCause;effect_certainty:'NO_EFFECT'|'EFFECT_PRESENT'|'EFFECT_UNKNOWN';evidence_footprint:string[];selected_action:RecoveryAction;reason:string;
@@ -286,14 +299,12 @@ const executeRecordAndContinue=async(decision:RecoveryExecutionClaim)=>{
   if(decision.assurance_integration_intent_id){const {recordAut02MergeAfterRecovery}=await import('./automatic-assurance-integration.js');const mergeSha=await recordAut02MergeAfterRecovery(decision.assurance_integration_intent_id,decision);await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{recorded_phase_sha:mergeSha,reapplied:false,merge_recorded:true});});return;}
   const row=(await pool.query(`SELECT a.id,a.candidate_id,c.pipeline_version,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
   const remote=await withClaimedExternalEffect(decision,()=>gitValue(row.repository_path,'rev-parse','origin/integration'));
-  if(row.pipeline_version==='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1'){
-    const {finalizeAut02IntegratedCandidate}=await import('./automatic-assurance-integration.js');
-    await finalizeAut02IntegratedCandidate(row.candidate_id,row.id,remote,'RECOVERY',decision);
-    await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{recorded_remote_sha:remote,reapplied:false,collective_finalization:true});});
-    await scheduleEligibleWorkItems('AUT02_RECOVERY_INTEGRATION_COMPLETED');
-    return;
+  switch(aut02RecoveryPipeline(row.pipeline_version)){
+    case AUT02_V1_PIPELINE_VERSION:
+    case AUT02_PIPELINE_VERSION:
+      await finalizeRecoveredAut02Candidate(row,decision,remote,{recorded_remote_sha:remote,reapplied:false});
+      return;
   }
-  await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=coalesce(merge_sha,$2),push_sha=coalesce(push_sha,$2) WHERE id=$1`,[decision.integration_attempt_id,remote]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{recorded_remote_sha:remote,reapplied:false});});
 };
 
 const executeIntegrationRecovery=async(decision:RecoveryExecutionClaim)=>withTransaction(async c=>{
@@ -309,8 +320,20 @@ const executeIntegrationRetry=async(decision:RecoveryExecutionClaim)=>{
   if(decision.effect_certainty!=='NO_EFFECT')throw new ApiError(409,'RECOVERY_RETRY_EFFECT_NOT_ABSENT');
   const row=(await pool.query(`SELECT a.*,c.phase_sha,c.pipeline_version,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
   await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='RESERVED' WHERE id=$1`,[row.id]);await c.query(`UPDATE integration_candidates SET state='INTEGRATION_IN_PROGRESS',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);});
-  try{let result:any;if(row.pipeline_version==='AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1'){const {finalizeAut02IntegratedCandidate,retryAut02IntegrationAfterRecoveryReconciliation}=await import('./automatic-assurance-integration.js');result=await retryAut02IntegrationAfterRecoveryReconciliation(row,decision);if(!result){await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{reconciled_before_retry:true,retry_suppressed:'STALE_OR_BLOCKED'});});return;}await finalizeAut02IntegratedCandidate(row.candidate_id,row.id,result.mergeSha,'RECOVERY',decision);await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{merge_sha:result.mergeSha,reconciled_before_retry:true,collective_finalization:true});});await scheduleEligibleWorkItems('AUT02_RECOVERY_INTEGRATION_COMPLETED');}else{result=await withClaimedExternalEffect(decision,()=>mergeAndPushDetached(row.repository_path,'phases/3','integration',row.candidate_sha,row.integration_before_sha));await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='INTEGRATED',merge_sha=$2,push_sha=$2 WHERE id=$1`,[row.id,result.mergeSha]);await c.query(`UPDATE integration_candidates SET state='INTEGRATED',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);if(decision.attempt_id)await c.query(`UPDATE operations SET status='SUCCEEDED',completed_at=coalesce(completed_at,clock_timestamp()) WHERE id=$1`,[decision.attempt_id]);await transitionClaim(c,decision,'COMPLETED',{merge_sha:result.mergeSha,reconciled_before_retry:true});});}}
-  catch(error){if(error instanceof ApiError&&error.code==='RECOVERY_EXECUTION_FENCED')throw error;const signals=await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,'MERGE_TIMEOUT');const next=await supersedeWithDecision(decision,signals,`recovery-uncertain:${decision.id}`,{uncertain_external_result:true});await executeRecoveryDecision(next.id);}
+  try{
+    let result:any;
+    switch(aut02RecoveryPipeline(row.pipeline_version)){
+      case AUT02_V1_PIPELINE_VERSION:
+      case AUT02_PIPELINE_VERSION: {
+        const {retryAut02IntegrationAfterRecoveryReconciliation}=await import('./automatic-assurance-integration.js');
+        result=await retryAut02IntegrationAfterRecoveryReconciliation(row,decision);
+        if(!result){await withTransaction(async c=>{await assertExecutionClaim(c,decision);await transitionClaim(c,decision,'COMPLETED',{reconciled_before_retry:true,retry_suppressed:'STALE_OR_BLOCKED'});});return;}
+        await finalizeRecoveredAut02Candidate(row,decision,result.mergeSha,{merge_sha:result.mergeSha,reconciled_before_retry:true});
+        return;
+      }
+    }
+  }
+  catch(error){if(error instanceof ApiError&&['RECOVERY_EXECUTION_FENCED','AUT02_PIPELINE_VERSION_UNSUPPORTED'].includes(error.code))throw error;const signals=await collectIntegrationRecoverySignals(decision.project_id,decision.integration_candidate_id!,'MERGE_TIMEOUT');const next=await supersedeWithDecision(decision,signals,`recovery-uncertain:${decision.id}`,{uncertain_external_result:true});await executeRecoveryDecision(next.id);}
 };
 
 export const executeClaimedRecoveryDecision=async(decision:RecoveryExecutionClaim)=>{

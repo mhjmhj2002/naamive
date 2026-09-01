@@ -421,24 +421,28 @@ const processIntent=async(intentId:string,leaseToken:string)=>withTransaction(as
   return completeIntent(client,intent.id,leaseToken,'COMPLETED');
 });
 
-const discoverMissingWork=async()=>{
-  const approvals=(await pool.query(`SELECT id,project_id FROM product_commitment_revisions WHERE status='APPROVED' ORDER BY approved_at,id`)).rows;
+const discoverMissingWork=async(projectId?:string)=>{
+  const approvals=(await pool.query(`SELECT id,project_id FROM product_commitment_revisions
+    WHERE status='APPROVED' AND ($1::text IS NULL OR project_id=$1)
+    ORDER BY approved_at,id`,[projectId??null])).rows;
   for(const row of approvals) await withTransaction(client=>synchronizeApprovedCommitment(client,row.project_id,row.id));
   await withTransaction(async client=>{
     await client.query(`INSERT INTO macro_lifecycle_intents(id,project_id,destination,kind,aggregate_type,aggregate_id,idempotency_key,payload,evidence_refs)
       SELECT gen_random_uuid(),e.project_id,'MACRO_LIFECYCLE','MACRO_REEVALUATE','PROJECT',e.project_id,'macro-event:v1:'||e.id,jsonb_build_object('event_id',e.id,'event_type',e.event_type),jsonb_build_array('event:'||e.id)
       FROM events e JOIN projects p ON p.id=e.project_id AND p.workflow_code='PROJECT_DISCOVERY' AND p.workflow_version=4
       WHERE e.event_type IN ('ANALYSIS_ACCEPTED','PRODUCT_COMMITMENT_READY','ARCHITECTURE_ACCEPTED','DELIVERY_ACCEPTED','PROJECT_REWORK_REQUIRED','MODULE_DEFINITION_ACCEPTED','MODULE_ARCHITECTURE_ACCEPTED','MODULE_PLANNING_STARTED','MODULE_PLAN_PROPOSED','MODULE_PLAN_APPROVED','WORK_ITEM_SCHEDULED','DEVELOPMENT_STARTED','ASSURANCE_REVIEW_DECIDED','INTEGRATION_COMPLETED','RECOVERY_DECISION_RECORDED','RECOVERY_EXECUTION_COMPLETED','RECOVERY_REWORK_REQUIRED','MODULE_VALIDATION_ACCEPTED','PROJECT_DELIVERY_ACCEPTED')
-      ON CONFLICT(idempotency_key) DO NOTHING`);
+        AND ($1::text IS NULL OR e.project_id=$1)
+      ON CONFLICT(idempotency_key) DO NOTHING`,[projectId??null]);
   });
 };
 
-export const reconcileMacroLifecycle=async(limit=25,leaseOwner=`macro-reconciler:${process.pid}`)=>{
-  await discoverMissingWork();
+export const reconcileMacroLifecycle=async(limit=25,leaseOwner=`macro-reconciler:${process.pid}`,projectId?:string)=>{
+  await discoverMissingWork(projectId);
   const claimed=await withTransaction(async client=>{
     const rows=(await client.query(`SELECT id FROM macro_lifecycle_intents
-      WHERE (status IN ('PENDING','FAILED') AND available_at<=clock_timestamp()) OR (status='LEASED' AND lease_expires_at<clock_timestamp())
-      ORDER BY available_at,created_at,id FOR UPDATE SKIP LOCKED LIMIT $1`,[limit])).rows;
+      WHERE ((status IN ('PENDING','FAILED') AND available_at<=clock_timestamp()) OR (status='LEASED' AND lease_expires_at<clock_timestamp()))
+        AND ($2::text IS NULL OR project_id=$2)
+      ORDER BY available_at,created_at,id FOR UPDATE SKIP LOCKED LIMIT $1`,[limit,projectId??null])).rows;
     const claims=[];
     for(const row of rows){const token=randomUUID();await client.query(`UPDATE macro_lifecycle_intents SET status='LEASED',attempts=attempts+1,lease_owner=$2,lease_token=$3,lease_expires_at=clock_timestamp()+interval '2 minutes',updated_at=clock_timestamp(),completed_at=NULL WHERE id=$1`,[row.id,leaseOwner,token]);claims.push({id:row.id,token});}
     return claims;

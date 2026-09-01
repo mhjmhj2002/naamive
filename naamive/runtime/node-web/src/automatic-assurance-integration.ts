@@ -391,7 +391,8 @@ export const retryAut02IntegrationAfterRecoveryReconciliation=async(row:any,reco
   const owned=await client.query(`SELECT 1 FROM recovery_decisions WHERE id=$1 AND execution_claim_id=$2 AND execution_generation=$3 AND execution_state='EXECUTING' AND execution_lease_expires_at>clock_timestamp() FOR UPDATE`,[recoveryClaim.id,recoveryClaim.execution_claim_id,recoveryClaim.execution_generation]);
   if(!owned.rowCount)throw new ApiError(409,'RECOVERY_EXECUTION_FENCED');
   const snapshot=(await client.query(`SELECT * FROM integration_candidates WHERE id=$1`,[row.candidate_id])).rows[0];
-  if(!snapshot||snapshot.pipeline_version!==AUT02_PIPELINE_VERSION)throw new ApiError(409,'AUT02_CANDIDATE_NOT_FOUND');
+  if(!snapshot)throw new ApiError(409,'AUT02_CANDIDATE_NOT_FOUND');
+  if(!supportedPipeline(snapshot.pipeline_version))throw new ApiError(409,'AUT02_PIPELINE_VERSION_UNSUPPORTED');
   await client.query(`SELECT id FROM projects WHERE id=$1 FOR UPDATE`,[snapshot.project_id]);
   const module=(await client.query(`SELECT * FROM modules WHERE id=$1 FOR UPDATE`,[snapshot.module_id])).rows[0];
   await client.query(`SELECT id FROM module_rounds WHERE id=$1 FOR UPDATE`,[snapshot.module_round_id]);

@@ -26,7 +26,7 @@ if(!process.env.DATABASE_URL){
   const approve=async(revision:any,key:string)=>decideProductCommitmentGate(revision.project_id,revision.gate_record_id,{version:1,decision:'APPROVE',reason:'Compromisso aprovado.',evidence:{acknowledged:true},actor_id:'lr02-owner',actor_role:'BUSINESS_OWNER',idempotency_key:key});
   const drain=async(projectId:string)=>{
     for(let turn=0;turn<20;turn++){
-      await reconcileMacroLifecycle(100,`lr02-test:${randomUUID()}`);
+      await reconcileMacroLifecycle(100,`lr02-test:${randomUUID()}`,projectId);
       const remaining=Number((await pool.query(`SELECT count(*)::int AS n FROM macro_lifecycle_intents WHERE project_id=$1 AND status IN ('PENDING','FAILED','LEASED') AND available_at<=clock_timestamp()`,[projectId])).rows[0].n);
       if(!remaining)return;
     }
@@ -41,7 +41,7 @@ if(!process.env.DATABASE_URL){
     await approve(r1,`approve-r1:${main.projectId}`);
     const obligationsBefore=(await pool.query(`SELECT module_key,required,materialized_module_id,present_in_current_commitment,scope_change_pending FROM committed_module_obligations WHERE project_id=$1 ORDER BY module_key`,[main.projectId])).rows;
     assert.deepEqual(obligationsBefore.map((row:any)=>[row.module_key,row.required,row.materialized_module_id,row.present_in_current_commitment,row.scope_change_pending]),[['a',true,null,true,false],['b',true,null,true,false],['c',true,null,true,false]],'obligations exist before materialization');
-    await Promise.all([reconcileMacroLifecycle(100,'lr02-racer-a'),reconcileMacroLifecycle(100,'lr02-racer-b')]);
+    await Promise.all([reconcileMacroLifecycle(100,'lr02-racer-a',main.projectId),reconcileMacroLifecycle(100,'lr02-racer-b',main.projectId)]);
     await drain(main.projectId);
     const firstModules=(await pool.query(`SELECT m.id,m.module_key,m.state,m.workflow_code,m.workflow_version,r.id AS revision_id,r.revision,r.status,r.candidate_fingerprint,(SELECT count(*)::int FROM module_rounds mr WHERE mr.module_id=m.id) AS rounds FROM modules m JOIN module_revisions r ON r.id=m.current_revision_id WHERE m.project_id=$1 ORDER BY m.module_key`,[main.projectId])).rows;
     assert.deepEqual(firstModules.map((row:any)=>[row.module_key,row.state,row.workflow_version,row.revision,row.status,row.rounds]),[['a','IDENTIFIED',2,1,'APPROVED',1],['b','IDENTIFIED',2,1,'APPROVED',1],['c','IDENTIFIED',2,1,'APPROVED',1]]);
@@ -92,8 +92,8 @@ if(!process.env.DATABASE_URL){
     assert.equal((await pool.query(`SELECT state FROM projects WHERE id=$1`,[main.projectId])).rows[0].state,'ARCHITECTURE','architecture evidence predating the current commitment revision is fenced');
     await Promise.all([
       pool.query(`INSERT INTO events(project_id,event_type,correlation_id,payload) VALUES($1,'MODULE_DEFINITION_ACCEPTED',$2,$3)`,[main.projectId,randomUUID(),{module_id:b3.id,module_revision_id:b3.revision_id}]),
-      reconcileMacroLifecycle(100,'lr02-event-racer')
-    ]);await Promise.all([reconcileMacroLifecycle(100,'lr02-transition-racer-a'),reconcileMacroLifecycle(100,'lr02-transition-racer-b')]);await drain(main.projectId);
+      reconcileMacroLifecycle(100,'lr02-event-racer',main.projectId)
+    ]);await Promise.all([reconcileMacroLifecycle(100,'lr02-transition-racer-a',main.projectId),reconcileMacroLifecycle(100,'lr02-transition-racer-b',main.projectId)]);await drain(main.projectId);
     assert.equal((await pool.query(`SELECT state FROM modules WHERE id=$1`,[b3.id])).rows[0].state,'DEFINED');
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM macro_lifecycle_transitions WHERE aggregate_id=$1 AND source_state='IDENTIFIED' AND target_state='DEFINED'`,[b3.id])).rows[0].n),1,'event discovery and concurrent reconcilers emit one transition');
     await assert.rejects(pool.query(`UPDATE module_revisions SET candidate_fingerprint=$2 WHERE id=$1`,[b3.revision_id,'f'.repeat(64)]),(error:any)=>error.code==='23514');
@@ -103,7 +103,7 @@ if(!process.env.DATABASE_URL){
     const sf1:any=await create(successionFirst,`r1:${successionFirst.projectId}`,[candidate('a'),candidate('b'),candidate('c')]);
     await approve(sf1,`approve-r1:${successionFirst.projectId}`);
     await pool.query(`UPDATE macro_lifecycle_intents SET available_at=clock_timestamp()+interval '1 day' WHERE project_id=$1 AND payload->>'module_key'='c'`,[successionFirst.projectId]);
-    await reconcileMacroLifecycle(100,'lr02-partial');
+    await reconcileMacroLifecycle(100,'lr02-partial',successionFirst.projectId);
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM modules WHERE project_id=$1`,[successionFirst.projectId])).rows[0].n),2);
     const sf2:any=await create(successionFirst,`r2:${successionFirst.projectId}`,[candidate('a'),candidate('b'),candidate('d')]);
     await approve(sf2,`approve-r2:${successionFirst.projectId}`);await drain(successionFirst.projectId);
@@ -138,15 +138,26 @@ if(!process.env.DATABASE_URL){
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM macro_lifecycle_intents WHERE project_id=$1 AND kind='DISCOVERY'`,[discoveryProject])).rows[0].n),1);
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM operations WHERE project_id=$1`,[discoveryProject])).rows[0].n),0,'commit can end after durable intent and before operation');
     await pool.query(`UPDATE macro_lifecycle_intents SET status='LEASED',lease_owner='crashed-worker',lease_token=$2,lease_expires_at=clock_timestamp()-interval '1 second' WHERE project_id=$1 AND kind='DISCOVERY'`,[discoveryProject,randomUUID()]);
-    await Promise.all([reconcileMacroLifecycle(100,'discovery-racer-a'),reconcileMacroLifecycle(100,'discovery-racer-b')]);
+    await Promise.all([reconcileMacroLifecycle(100,'discovery-racer-a',discoveryProject),reconcileMacroLifecycle(100,'discovery-racer-b',discoveryProject)]);
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM operations WHERE project_id=$1 AND kind='PRODUCT_DISCOVERY'`,[discoveryProject])).rows[0].n),1);
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM jobs WHERE project_id=$1 AND kind='ANALYZE_PRODUCT_NEED'`,[discoveryProject])).rows[0].n),1);
     await pool.query(`UPDATE workflow_rollouts SET selection_enabled=false WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4`);
 
     const legacy=randomUUID();
     await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft) VALUES($1,'LR-02 legacy','owner','tester','/tmp','local','main','000','PROJECT_DISCOVERY',3,'REGISTERED','{}')`,[legacy]);
-    await reconcileMacroLifecycle(100,'legacy-regression');
+    await reconcileMacroLifecycle(100,'legacy-regression',legacy);
     assert.equal((await pool.query(`SELECT workflow_version,state FROM projects WHERE id=$1`,[legacy])).rows[0].workflow_version,3);
     assert.equal(Number((await pool.query(`SELECT count(*)::int AS n FROM macro_lifecycle_intents WHERE project_id=$1`,[legacy])).rows[0].n),0);
+
+    const scoped=await fixture('LR-02 scoped reconciliation'),external=await fixture('LR-02 global reconciliation');
+    const addReevaluation=async(f:Fixture,key:string)=>pool.query(`INSERT INTO macro_lifecycle_intents(id,project_id,destination,kind,aggregate_type,aggregate_id,idempotency_key,payload,evidence_refs,available_at)
+      VALUES($1,$2,'MACRO_LIFECYCLE','MACRO_REEVALUATE','PROJECT',$2,$3,'{}','[]','epoch')`,[randomUUID(),f.projectId,key]);
+    const scopedKey=`lr02-scope:${scoped.projectId}`,externalKey=`lr02-global:${external.projectId}`;
+    await addReevaluation(external,externalKey);await addReevaluation(scoped,scopedKey);
+    await reconcileMacroLifecycle(1,'lr02-scope-only',scoped.projectId);
+    assert.deepEqual((await pool.query(`SELECT status,attempts FROM macro_lifecycle_intents WHERE idempotency_key=$1`,[scopedKey])).rows[0],{status:'COMPLETED',attempts:1});
+    assert.deepEqual((await pool.query(`SELECT status,attempts FROM macro_lifecycle_intents WHERE idempotency_key=$1`,[externalKey])).rows[0],{status:'PENDING',attempts:0},'a scoped reconcile neither claims nor processes another project');
+    await reconcileMacroLifecycle(1,'lr02-global-regression');
+    assert.deepEqual((await pool.query(`SELECT status,attempts FROM macro_lifecycle_intents WHERE idempotency_key=$1`,[externalKey])).rows[0],{status:'COMPLETED',attempts:1},'an unscoped reconcile remains global');
   });
 }
