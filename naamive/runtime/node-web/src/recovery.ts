@@ -319,10 +319,11 @@ const executeIntegrationRecovery=async(decision:RecoveryExecutionClaim)=>withTra
 const executeIntegrationRetry=async(decision:RecoveryExecutionClaim)=>{
   if(decision.effect_certainty!=='NO_EFFECT')throw new ApiError(409,'RECOVERY_RETRY_EFFECT_NOT_ABSENT');
   const row=(await pool.query(`SELECT a.*,c.phase_sha,c.pipeline_version,p.repository_path FROM integration_attempts a JOIN integration_candidates c ON c.id=a.candidate_id JOIN projects p ON p.id=a.project_id WHERE a.id=$1`,[decision.integration_attempt_id])).rows[0];if(!row)throw new ApiError(409,'INTEGRATION_ATTEMPT_NOT_FOUND');
+  const pipeline=aut02RecoveryPipeline(row.pipeline_version);
   await withTransaction(async c=>{await assertExecutionClaim(c,decision);await c.query(`UPDATE integration_attempts SET state='RESERVED' WHERE id=$1`,[row.id]);await c.query(`UPDATE integration_candidates SET state='INTEGRATION_IN_PROGRESS',blocked_kind=NULL,version=version+1 WHERE id=$1`,[decision.integration_candidate_id]);});
   try{
     let result:any;
-    switch(aut02RecoveryPipeline(row.pipeline_version)){
+    switch(pipeline){
       case AUT02_V1_PIPELINE_VERSION:
       case AUT02_PIPELINE_VERSION: {
         const {retryAut02IntegrationAfterRecoveryReconciliation}=await import('./automatic-assurance-integration.js');

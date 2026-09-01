@@ -18,10 +18,11 @@ corrects_historical_contract: AUT-02:v1
 
 **IMPLEMENTADO E CERTIFICADO SOB TST-01.** Este documento é subtrabalho
 corretivo de **TST-01**, sua task dona; não cria uma task AUT-02 independente.
-A certificação completa do operador confirmou o contrato v2, o recovery
-canônico de cohorts e a compatibilidade de retry v1. Registros e a semântica
-histórica de `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` permanecem
-preservados.
+A certificação final do operador confirmou o contrato v2, o recovery canônico
+de cohorts, o fechamento dos dois P1 e a compatibilidade de retry v1: 139
+testes, 132 PASS, exatamente 7 `KNOWN_BASELINE`, 0 falhas novas, 0 skipped, 0
+cancelled e 0 todo, em 152381.953786 ms. Registros e a semântica histórica de
+`AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` permanecem preservados.
 
 V1 exige um único plano aprovado e igualdade completa com `RequiredWorkItemSet:v1` antes de formar uma candidate. Isso impede que Persistência integre e libere Métrica enquanto Interface aguarda prioridade; dois planos `APPROVED` tampouco são válidos. Para novas execuções, v2 introduz `IntegrationCohort:v1`: depois de `ACCEPT`, um WI aceito e merged integra em uma fronteira determinística e seus dependentes são reavaliados automaticamente. A aprovação continua cobrindo o plano inteiro e não cria gates adicionais.
 
@@ -67,6 +68,22 @@ ACCEPT -> MERGE_RECORDED -> REASSESS_INTEGRATION_COHORT
 ```
 
 No cenário TST-01, um plano aprovado contém Persistência, Métrica e Interface. Persistência forma cohort unitária, integra e libera Métrica automaticamente; Interface permanece bloqueada apenas por `priority-group`. Cohorts posteriores tratam Métrica e Interface quando elegíveis. A completude macro exige o `RequiredWorkItemSet:v1` inteiro integrado.
+
+## Fechamento de recovery certificado
+
+Os P1 de recovery identificados na auditoria foram fechados sob ownership de
+TST-01:
+
+1. `AUTOMATIC_ASSURANCE_INTEGRATION_PIPELINE:v1` e `:v2` são resolvidos antes
+   de qualquer mutação de RETRY;
+2. versão ausente ou desconhecida falha fechada sem mutar candidate, attempt ou
+   WI, e sem efeito Git, evidência ou eventos de integração;
+3. o replay real de `RECORD_AND_CONTINUE`, pela mesma idempotency key de
+   recovery, converge sem duplicar decisão, eventos, evidência ou dispatch;
+4. `RETRY` v2 reavalia, acorda e despacha automaticamente o dependente; seu
+   replay não duplica integração, evidência, eventos ou reservation; e
+5. v1 é recuperado como candidate histórica válida com required set completo,
+   membros finalizados atomicamente, sem criar `IntegrationCohort:v1`.
 
 ## Compatibilidade e rollout
 
