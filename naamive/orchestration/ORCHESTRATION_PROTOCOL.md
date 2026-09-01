@@ -78,9 +78,9 @@ Cada dispatch coberto pela política passa por produção e review independente,
 com findings rastreáveis, rework delimitado e re-review. Block não é somente
 falha ou texto livre: possui diagnóstico, assistência, roteamento especializado,
 limites configuráveis de tentativa/progresso e escalonamento. O orquestrador
-controlará lifecycle e routing; governance verificará processo e autoridade;
-especialistas avaliarão sua área; advisory recomendará alternativas; e gates
-humanos continuarão soberanos. Ver o planejamento da Fase 6 no roadmap.
+controla lifecycle e routing; governance verifica processo e autoridade;
+especialistas avaliam sua área; advisory recomenda alternativas; e gates humanos
+continuam soberanos nos pontos previstos pela política. Ver o planejamento da Fase 6 no roadmap.
 
 Para instâncias F6.5, as versões operacionais são
 `PROJECT_DISCOVERY:v4`, `MODULE_DELIVERY:v2`, `WORK_ITEM_DELIVERY:v2` e
