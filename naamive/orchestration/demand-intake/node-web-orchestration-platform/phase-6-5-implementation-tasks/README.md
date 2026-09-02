@@ -105,3 +105,10 @@ Fonte canônica do planejamento:
 Uma task só passa a `DONE` com critérios, testes e evidências satisfeitos. Esse
 aceite integral foi alcançado; a Fase 7 está desbloqueada pela Fase 6.5, sem
 que isso elimine suas próprias decisões, gates ou requisitos de execução.
+
+## Correções pós-certificação
+
+Findings descobertos depois da certificação histórica da Fase 6.5 são tratados
+como correções próprias, sem reabrir ou reescrever as tasks certificadas.
+
+- [GAT-03-FIX-01 — Conceder acesso project-scoped ao criador do projeto](GAT-03-FIX-01-project-creator-rbac-grants.md) — `P1`, bloqueante do fluxo manual ponta a ponta.

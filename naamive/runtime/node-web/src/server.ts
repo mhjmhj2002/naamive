@@ -137,7 +137,7 @@ export const createApiServer = () => createServer(async (request, response) => {
     } else await authorize(principal!,{action:request.method==='GET'?'READ_PROJECT':'OPERATE_PROJECT',projectId:scopedProject,roles:['OPERATOR']});
   }
   if(url.pathname.startsWith('/api/admin/')&&!url.pathname.startsWith('/api/admin/auth/')) await authorize(principal!,{action:'ADMIN_CONFIG',roles:['CONFIGURATION_ADMIN']});
-  if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
+  if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request),principal!));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
   if (request.method === 'GET' && url.pathname === '/api/gate-catalog') return respond(response, 200, await publishedGateCatalog());
   if (deliveryMatch) {
