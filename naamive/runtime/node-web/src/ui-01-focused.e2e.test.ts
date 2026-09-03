@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { resolve } from 'node:path';
 import test, { after } from 'node:test';
 import type { AuthenticatedPrincipal } from './auth.js';
 
 if (!process.env.DATABASE_URL) {
   test('UI-01 focused PostgreSQL validation requires DATABASE_URL', { skip: 'set DATABASE_URL' }, () => {});
 } else {
+  process.env.NAAMIVE_ARTIFACT_STORE_URI ??= 'file:///tmp/naamive-ui01-intake-artifacts';
+  process.env.NAAMIVE_REPOSITORY_ROOTS ??= resolve(process.cwd(), '../../..');
   const { pool } = await import('./db.js');
   const { authorize, matchAuthorization, resolveCapability, createServicePrincipal } = await import('./auth.js');
   const { buildStateActionProjection, STATE_ACTION_PROJECTION_SCHEMA } = await import('./state-action-projection.js');
@@ -293,5 +296,129 @@ if (!process.env.DATABASE_URL) {
     const transport = new TextDecoder().decode(first.value);
     assert.match(transport, /event: UI01_FIXTURE_EVENT/);
     assert.equal((transport.match(/data: \{/g) ?? []).length, 2, 'one durable timeline item is emitted as both named and generic SSE');
+  });
+
+  test('PROJECT_INTAKE v1 publishes only its explicit canonical continuation actions', async t => {
+    const { testAuthenticatedHeaders } = await import('./test-auth.js');
+    const ids = [`ui01-intake-${randomUUID().slice(0, 8)}`, `ui01-intake-invalid-${randomUUID().slice(0, 8)}`, `ui01-intake-v3-${randomUUID().slice(0, 8)}`, `ui01-intake-v4-${randomUUID().slice(0, 8)}`];
+    const sessions: Array<Awaited<ReturnType<typeof testAuthenticatedHeaders>>> = [];
+    const cleanup = async () => {
+      for (const id of ids) {
+        for (const table of ['macro_lifecycle_transitions', 'macro_lifecycle_intents', 'events', 'artifacts', 'artifact_intents', 'gates', 'jobs', 'operations', 'intake_revisions']) {
+          await pool.query(`DELETE FROM ${table} WHERE project_id=$1`, [id]);
+        }
+        await pool.query(`DELETE FROM projects WHERE id=$1`, [id]);
+      }
+      for (const session of sessions.reverse()) await session.cleanup();
+      await pool.query(`UPDATE workflow_rollouts SET selection_enabled=false WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4 AND selection_scope='NEW_PROJECTS'`);
+    };
+    t.after(async () => { await cleanup(); });
+    const server = createApiServer();
+    await new Promise<void>(resolveListen => server.listen(0, '127.0.0.1', resolveListen));
+    t.after(() => { server.closeAllConnections(); server.close(); });
+    const base = `http://127.0.0.1:${(server.address() as import('node:net').AddressInfo).port}`;
+    await pool.query(`UPDATE workflow_rollouts SET selection_enabled=false WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4 AND selection_scope='NEW_PROJECTS'`);
+    const intake = (projectId: string) => ({
+      project_id: projectId, repository_path: resolve(process.cwd(), '../../..'), base_branch: 'main',
+      dirty_tree_confirmation: { confirmed: true, reason: 'UI-01-FIX-01 disposable PostgreSQL coverage.' },
+      title: `Canonical intake ${projectId}`, business_owner: 'Operações',
+      business_problem: 'O registro de uma necessidade deve continuar pelo fluxo governado.',
+      desired_outcome: 'Publicar apenas a próxima ação autorizada pelo servidor.',
+      success_metrics: ['Ação canônica visível'], stakeholders: ['Operações'], known_constraints: ['Sem novas rotas'],
+      evidence_sources: ['Teste PostgreSQL descartável'], assumptions: ['Clone Git disponível'], open_questions: ['Nenhuma']
+    });
+    const create = async (projectId: string) => {
+      const session = await testAuthenticatedHeaders(projectId, [{ role_code: 'OPERATOR', action_code: 'CREATE_PROJECT', project_id: null }]);
+      sessions.push(session);
+      const response = await fetch(`${base}/api/projects`, { method: 'POST', headers: { ...session.headers, 'content-type': 'application/json' }, body: JSON.stringify(intake(projectId)) });
+      assert.equal(response.status, 201, await response.text());
+      return session;
+    };
+    const creator = await create(ids[0]);
+    let projection = await fetch(`${base}/api/projects/${ids[0]}/projection`, { headers: creator.headers });
+    assert.equal(projection.status, 200);
+    let body = await projection.json() as any;
+    const submit = body.allowed_actions.find((action: any) => action.code === 'SUBMIT_INTAKE');
+    assert.ok(submit, 'a newly created PROJECT_INTAKE v1 draft publishes SUBMIT_INTAKE');
+    assert.equal(submit.presentation.kind, 'HUMAN_OPERATION');
+    assert.deepEqual(submit.command, { method: 'POST', href: `/api/projects/${ids[0]}/submit`, idempotency_required: true });
+    assert.deepEqual(submit.input_binding.fields, [], 'the descriptor does not invent intake input or CSRF fields');
+    assert.ok(body.stop_surfaces.some((surface: any) => surface.action_descriptor_id === submit.descriptor_id), 'UI-02 receives the exact surface-to-descriptor binding');
+
+    const observer = await testAuthenticatedHeaders(ids[0], [{ role_code: 'OPERATOR', action_code: 'READ_PROJECT' }]);
+    sessions.push(observer);
+    const observerProjection = await fetch(`${base}/api/projects/${ids[0]}/projection`, { headers: observer.headers });
+    assert.equal(observerProjection.status, 200);
+    assert.equal((await observerProjection.json() as any).allowed_actions.some((action: any) => action.code === 'SUBMIT_INTAKE'), false, 'READ_PROJECT never implies OPERATE_PROJECT');
+
+    const idempotencyKey = `ui01-intake-submit:${ids[0]}`;
+    let response = await fetch(`${base}${submit.command.href}`, { method: submit.command.method, headers: { ...creator.headers, 'content-type': 'application/json', 'idempotency-key': idempotencyKey }, body: '{}' });
+    const accepted = await response.json() as { operation_id: string };
+    assert.equal(response.status, 202, JSON.stringify(accepted));
+    response = await fetch(`${base}${submit.command.href}`, { method: submit.command.method, headers: { ...creator.headers, 'content-type': 'application/json', 'idempotency-key': idempotencyKey }, body: '{}' });
+    const replay = await response.json() as { operation_id: string };
+    assert.equal(response.status, 202, JSON.stringify(replay));
+    assert.equal(replay.operation_id, accepted.operation_id, 'replay returns the same operation');
+    assert.equal((await pool.query(`SELECT count(*)::int AS n FROM operations WHERE project_id=$1 AND kind='VALIDATE_INTAKE'`, [ids[0]])).rows[0].n, 1);
+    assert.equal((await pool.query(`SELECT count(*)::int AS n FROM jobs WHERE project_id=$1 AND kind='VALIDATE_INTAKE'`, [ids[0]])).rows[0].n, 1);
+    body = await (await fetch(`${base}/api/projects/${ids[0]}/projection`, { headers: creator.headers })).json() as any;
+    assert.equal(body.allowed_actions.some((action: any) => action.code === 'SUBMIT_INTAKE'), false, 'an active validation operation suppresses an incompatible second descriptor');
+
+    const invalidCreator = await create(ids[1]);
+    await pool.query(`UPDATE projects SET draft='{}'::jsonb WHERE id=$1`, [ids[1]]);
+    response = await fetch(`${base}/api/projects/${ids[1]}/submit`, { method: 'POST', headers: { ...invalidCreator.headers, 'content-type': 'application/json', 'idempotency-key': `ui01-intake-invalid:${ids[1]}` }, body: '{}' });
+    assert.equal(response.status, 422);
+    assert.equal((await response.json() as { code: string }).code, 'INTAKE_INVALID', 'the command remains the final intake validator');
+
+    // Model the durable post-validation facts without starting a worker: the
+    // projection must adapt the actual v1 gate and its current version.
+    const registrationGate = randomUUID();
+    const revision = (await pool.query(`SELECT id FROM intake_revisions WHERE project_id=$1`, [ids[0]])).rows[0].id;
+    await pool.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp() WHERE project_id=$1`, [ids[0]]);
+    await pool.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE project_id=$1`, [ids[0]]);
+    await pool.query(`UPDATE projects SET state='WAITING_FOR_REGISTRATION' WHERE id=$1`, [ids[0]]);
+    await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id) VALUES($1,$2,'REGISTER_PROJECT',$3)`, [registrationGate, ids[0], revision]);
+    body = await (await fetch(`${base}/api/projects/${ids[0]}/projection`, { headers: creator.headers })).json() as any;
+    const decide = body.allowed_actions.find((action: any) => action.code === 'DECIDE_GATE' && action.target.resource_id === registrationGate);
+    assert.ok(decide, 'WAITING_FOR_REGISTRATION exposes only the persisted REGISTER_PROJECT decision');
+    assert.equal(decide.presentation.kind, 'HUMAN_DECISION');
+    assert.equal(decide.command.href, `/api/projects/${ids[0]}/decision`);
+    assert.equal(decide.expected.gate_version, 1);
+    assert.deepEqual(decide.input_binding.fields.filter((field: any) => field.source === 'SERVER_BOUND').map((field: any) => field.name), ['gate_id', 'version']);
+    response = await fetch(`${base}${decide.command.href}`, { method: 'POST', headers: { ...creator.headers, 'content-type': 'application/json', 'idempotency-key': `ui01-intake-reject:${ids[0]}` }, body: JSON.stringify({ gate_id: registrationGate, version: 1, decision: 'REJECTED', feedback: 'Completar a necessidade.' }) });
+    assert.equal(response.status, 200, await response.text());
+    body = await (await fetch(`${base}/api/projects/${ids[0]}/projection`, { headers: creator.headers })).json() as any;
+    assert.ok(body.allowed_actions.some((action: any) => action.code === 'SUBMIT_INTAKE'), 'a rejected registration returns to the explicitly declared DRAFT continuation');
+
+    const v3Creator = await create(ids[2]);
+    const v3Revision = randomUUID(), v3Gate = randomUUID();
+    await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,'{}',$3,$4,$5,'tester')`, [v3Revision, ids[2], 'a'.repeat(64), 'b'.repeat(64), `file:///tmp/${v3Revision}`]);
+    await pool.query(`UPDATE projects SET state='WAITING_FOR_REGISTRATION' WHERE id=$1`, [ids[2]]);
+    await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id) VALUES($1,$2,'REGISTER_PROJECT',$3)`, [v3Gate, ids[2], v3Revision]);
+    body = await (await fetch(`${base}/api/projects/${ids[2]}/projection`, { headers: v3Creator.headers })).json() as any;
+    const v3Decision = body.allowed_actions.find((action: any) => action.code === 'DECIDE_GATE' && action.target.resource_id === v3Gate);
+    assert.ok(v3Decision);
+    response = await fetch(`${base}${v3Decision.command.href}`, { method: 'POST', headers: { ...v3Creator.headers, 'content-type': 'application/json', 'idempotency-key': `ui01-intake-approve:${ids[2]}` }, body: JSON.stringify({ gate_id: v3Gate, version: 1, decision: 'APPROVED', feedback: '' }) });
+    assert.equal(response.status, 200, await response.text());
+    const v3Facts = (await pool.query(`SELECT workflow_code,workflow_version,state,selected_discovery_workflow_code,selected_discovery_workflow_version FROM projects WHERE id=$1`, [ids[2]])).rows[0];
+    assert.deepEqual(v3Facts, { workflow_code: 'PROJECT_INTAKE', workflow_version: 1, state: 'REGISTERED', selected_discovery_workflow_code: 'PROJECT_DISCOVERY', selected_discovery_workflow_version: 3 });
+    body = await (await fetch(`${base}/api/projects/${ids[2]}/projection`, { headers: v3Creator.headers })).json() as any;
+    const startDiscovery = body.allowed_actions.find((action: any) => action.code === 'START_PRODUCT_DISCOVERY');
+    assert.ok(startDiscovery, 'only the persisted v3 selection keeps the historical explicit discovery start');
+    response = await fetch(`${base}${startDiscovery.command.href}`, { method: 'POST', headers: { ...v3Creator.headers, 'content-type': 'application/json', 'idempotency-key': `ui01-intake-start:${ids[2]}` }, body: '{}' });
+    assert.equal(response.status, 202, await response.text());
+    assert.deepEqual((await pool.query(`SELECT workflow_code,workflow_version,state FROM projects WHERE id=$1`, [ids[2]])).rows[0], { workflow_code: 'PROJECT_DISCOVERY', workflow_version: 3, state: 'ANALYSIS_IN_PROGRESS' });
+
+    await pool.query(`UPDATE workflow_rollouts SET selection_enabled=true WHERE workflow_code='PROJECT_DISCOVERY' AND workflow_version=4 AND selection_scope='NEW_PROJECTS'`);
+    const v4Creator = await create(ids[3]);
+    const v4Revision = randomUUID(), v4Gate = randomUUID();
+    await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by) VALUES($1,$2,1,'{}',$3,$4,$5,'tester')`, [v4Revision, ids[3], 'c'.repeat(64), 'd'.repeat(64), `file:///tmp/${v4Revision}`]);
+    await pool.query(`UPDATE projects SET state='WAITING_FOR_REGISTRATION' WHERE id=$1`, [ids[3]]);
+    await pool.query(`INSERT INTO gates(id,project_id,kind,revision_id) VALUES($1,$2,'REGISTER_PROJECT',$3)`, [v4Gate, ids[3], v4Revision]);
+    body = await (await fetch(`${base}/api/projects/${ids[3]}/projection`, { headers: v4Creator.headers })).json() as any;
+    const v4Decision = body.allowed_actions.find((action: any) => action.code === 'DECIDE_GATE' && action.target.resource_id === v4Gate);
+    response = await fetch(`${base}${v4Decision.command.href}`, { method: 'POST', headers: { ...v4Creator.headers, 'content-type': 'application/json', 'idempotency-key': `ui01-intake-v4:${ids[3]}` }, body: JSON.stringify({ gate_id: v4Gate, version: 1, decision: 'APPROVED', feedback: '' }) });
+    assert.equal(response.status, 200, await response.text());
+    assert.deepEqual((await pool.query(`SELECT workflow_code,workflow_version,state,selected_discovery_workflow_version FROM projects WHERE id=$1`, [ids[3]])).rows[0], { workflow_code: 'PROJECT_DISCOVERY', workflow_version: 4, state: 'ANALYSIS', selected_discovery_workflow_version: 4 }, 'v4 remains on LR-02 macro-lifecycle rather than receiving v3 start semantics');
   });
 }

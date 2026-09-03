@@ -79,6 +79,7 @@ test('F6 canonical UI operates a server-published governed action and refreshes 
     if (url.pathname === '/') { response.writeHead(200, { 'content-type': 'text/html' }); response.end(html); return; }
     if (url.pathname === '/projection-refresh.js') { response.writeHead(200, { 'content-type': 'text/javascript' }); response.end(refreshHelper); return; }
     if (url.pathname === '/action-payload.js') { response.writeHead(200, { 'content-type': 'text/javascript' }); response.end(actionPayload); return; }
+    if (url.pathname === '/api/auth/session') { response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ principal: { id: 'fixture-user', type: 'HUMAN', username: 'fixture-user' }, csrf_token: 'fixture-csrf-token' })); return; }
     if (url.pathname === '/api/projects') { response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify({ items: [{ id: project, title: 'Governed assurance fixture', state: 'IMPLEMENTATION' }] })); return; }
     if (url.pathname === `/api/projects/${project}/projection`) { projectionRequests += 1; response.writeHead(200, { 'content-type': 'application/json' }); response.end(JSON.stringify(projection())); return; }
     if (url.pathname === `/api/projects/${project}/events`) {

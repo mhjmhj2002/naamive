@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>NAAMIVE · Entrar</title>
+  <link rel="stylesheet" href="/assets/bootstrap.min.css">
+  <style>
+    body { min-height: 100vh; background: #f5f7fb; }
+    .hero { background: linear-gradient(120deg,#14213d,#3155a6); }
+  </style>
+</head>
+<body class="d-flex align-items-center py-5">
+  <main class="container" style="max-width: 28rem;">
+    <section class="card shadow-sm border-0">
+      <div class="card-body p-4">
+        <h1 class="h3 fw-bold text-center mb-1">NAAMIVE</h1>
+        <p class="text-muted text-center mb-4">Entrar na orquestração</p>
+        <div id="notice" class="alert alert-danger" role="alert" hidden></div>
+        <form id="login" class="vstack gap-3">
+          <label class="form-label mb-0">Usuário
+            <input class="form-control mt-1" name="username" autocomplete="username" required autofocus>
+          </label>
+          <label class="form-label mb-0">Senha
+            <input class="form-control mt-1" name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button class="btn btn-primary" type="submit">Entrar</button>
+        </form>
+      </div>
+    </section>
+  </main>
+  <script>
+    const form = document.querySelector('#login');
+    const notice = document.querySelector('#notice');
+    const showError = (text) => { notice.textContent = text; notice.hidden = false; };
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!form.checkValidity()) { form.reportValidity(); return; }
+      const button = form.querySelector('button[type="submit"]');
+      button.disabled = true;
+      try {
+        const data = new FormData(form);
+        const response = await fetch('/api/auth/login', {
+          method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin',
+          body: JSON.stringify({ username: data.get('username'), password: data.get('password') })
+        });
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) { showError(`${body.code || 'AUTH_LOGIN_INVALID'}: ${body.message || 'Credenciais inválidas.'}`); return; }
+        // The app obtains a fresh CSRF token from its authenticated session
+        // endpoint; neither password nor CSRF leaves this page via storage/URL.
+        window.location.replace('/');
+      } catch { showError('Falha de rede ao iniciar a sessão.'); }
+      finally { button.disabled = false; }
+    });
+  </script>
+</body>
+</html>

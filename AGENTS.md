@@ -122,6 +122,8 @@ Do not leave known failures caused by the implementation for the user to fix.
 
 ## Testing expectations
 
+Automated PostgreSQL tests MUST use disposable isolated databases. The runtime/manual database `naamive` MUST NEVER be used by automated tests; do not point a test `DATABASE_URL` at it, use the repository test runner/helper, and never solve a failing test by deleting or resetting the runtime/manual database.
+
 Tests must validate behavior, not merely implementation details.
 
 When applicable, cover:

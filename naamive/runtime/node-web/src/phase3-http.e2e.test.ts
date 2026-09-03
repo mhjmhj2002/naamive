@@ -2,7 +2,7 @@ import { after, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -113,7 +113,10 @@ if (!databaseUrl) {
       scope: ['runtime'], out_of_scope: [], dependencies: [], acceptance_criteria: ['passes']
     });
     assert.ok(proposal.gates.some(gate => gate.kind === 'MODULE_APPROVAL' && gate.status === 'OPEN' && gate.module_id === moduleId));
-    const page = await (await fetch(base)).text();
+    // Root is deliberately session-protected. These are static UI contract
+    // assertions, so read the application asset directly instead of making an
+    // anonymous request that correctly receives login.html.
+    const page = readFileSync(new URL('../web/index.html', import.meta.url), 'utf8');
     for (const copy of ['A visualização de detalhe é uma única projeção autorizada do servidor.', 'Superfícies de parada', 'Ações permitidas']) assert.match(page, new RegExp(copy));
     assert.doesNotMatch(page, /\?phase3=true/, 'the browser does not revive the retired phase-specific projection');
     const approval = (await pool.query('SELECT version FROM module_gates WHERE id=$1', [module.gate_id])).rows[0];
@@ -246,7 +249,9 @@ if (!databaseUrl) {
     const replay=await read(0), ids=[...replay.matchAll(/^id: (\d+)$/gm)].map(match=>Number(match[1]));
     assert.deepEqual(ids,[...new Set(ids)]); assert.equal(ids.length,4); assert.match(replay,/approved-sha/); assert.doesNotMatch(replay,/host\/private|raw|private/);
     const resumed=await read(Number(first)); assert.doesNotMatch(resumed,/event: QA_APPROVED/); assert.match(resumed,/event: QA_REJECTED/);
-    const page=await (await fetch(base)).text(); assert.match(page,/stream\.onmessage = invalidate/); assert.match(page,/appendEvent\(event\.data\)/);
+    // UI-01 owns this static SSE handler contract; the SSE HTTP assertions
+    // above remain authenticated through the real project event endpoint.
+    const page=readFileSync(new URL('../web/index.html', import.meta.url),'utf8'); assert.match(page,/stream\.onmessage = invalidate/); assert.match(page,/appendEvent\(event\.data\)/);
   });
   after(() => assert.deepEqual(readdirSync(process.cwd()).filter(name => name.startsWith('.phase3-http-')), [], 'HTTP acceptance left temporary repositories behind'));
 }

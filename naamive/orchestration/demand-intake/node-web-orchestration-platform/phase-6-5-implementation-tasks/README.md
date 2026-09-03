@@ -112,3 +112,4 @@ Findings descobertos depois da certificação histórica da Fase 6.5 são tratad
 como correções próprias, sem reabrir ou reescrever as tasks certificadas.
 
 - [GAT-03-FIX-01 — Conceder acesso project-scoped ao criador do projeto](GAT-03-FIX-01-project-creator-rbac-grants.md) — `P1`, bloqueante do fluxo manual ponta a ponta.
+- [UI-01-FIX-01 — Destravar PROJECT_INTAKE v1 na projeção canônica](UI-01-FIX-01-project-intake-canonical-actions.md) — `P1`, corrige a continuidade canônica do intake histórico publicado.

@@ -1,6 +1,24 @@
 import pg from 'pg';
 import { config } from './config.js';
-export const pool = new pg.Pool({ connectionString: config().databaseUrl });
+import { assertSafeConnectedTestDatabase, assertSafeTestDatabaseUrl, requiresTestDatabaseSafetyGuard } from './test-database-safety.js';
+
+const databaseUrl = config().databaseUrl;
+
+// A Node test process (including `node --test ...` used directly) cannot open
+// the persistent manual/runtime database. The URL check fails before a fixture
+// can be created; the second check proves what PostgreSQL actually selected.
+if (requiresTestDatabaseSafetyGuard()) {
+  const expectedName = assertSafeTestDatabaseUrl(databaseUrl);
+  const guardClient = new pg.Client({ connectionString: databaseUrl });
+  try {
+    await guardClient.connect();
+    await assertSafeConnectedTestDatabase((sql) => guardClient.query(sql), expectedName);
+  } finally {
+    await guardClient.end().catch(() => undefined);
+  }
+}
+
+export const pool = new pg.Pool({ connectionString: databaseUrl });
 export const withTransaction = async <T>(work: (client: pg.PoolClient) => Promise<T>): Promise<T> => {
   const client = await pool.connect();
   try { await client.query('BEGIN'); const result = await work(client); await client.query('COMMIT'); return result; }

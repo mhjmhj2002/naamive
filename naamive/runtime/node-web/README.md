@@ -29,7 +29,10 @@ versionados.
 
 Use `POST /api/auth/login` para receber o cookie de sessão `HttpOnly` e o token
 CSRF, que deve ser enviado em `X-CSRF-Token` para mutações. `POST
-/api/auth/logout` revoga a sessão. O administrador cria usuários, grants e
+/api/auth/logout` revoga a sessão. A interface restaura uma sessão válida após
+reload por `GET /api/auth/session`, que devolve a identidade mínima e renova o
+CSRF sem expor o segredo da sessão; o token continua apenas em memória e nunca
+em URL ou armazenamento local. O administrador cria usuários, grants e
 service principals em `/api/admin/auth/principals` e
 `/api/admin/auth/service-principals`; a credencial de serviço é retornada uma
 única vez, deve ir ao secret store/configuração protegida e pode ser rotacionada.

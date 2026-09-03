@@ -248,7 +248,7 @@ const CURRENT_WORKFLOWS = new Set<string>([
 
 /** Explicitly declared legacy workflow/version adapters. Each may publish only
  * the actions it declares; anything else stays read-only fail-closed. */
-type LegacyActionCode = 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE' | 'DECIDE_TECHNOLOGY_BASELINE';
+type LegacyActionCode = 'SUBMIT_INTAKE' | 'DECIDE_GATE' | 'START_PRODUCT_DISCOVERY' | 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE' | 'DECIDE_TECHNOLOGY_BASELINE';
 
 type LegacyAdapter = {
   /** Human-readable journey summary for this historical workflow. */
@@ -261,7 +261,15 @@ type LegacyAdapter = {
 const LEGACY_ADAPTERS: Record<string, LegacyAdapter> = {
   'PROJECT_INTAKE:1': {
     journey_status: 'LEGACY',
-    publishes: {},
+    // PROJECT_INTAKE v1 is immutable and historical, but its original
+    // commands remain supported. This exact adapter declaration is not a
+    // promotion to a current workflow nor a state-name fallback for another
+    // legacy workflow.
+    publishes: {
+      DRAFT: ['SUBMIT_INTAKE'],
+      WAITING_FOR_REGISTRATION: ['DECIDE_GATE'],
+      REGISTERED: ['START_PRODUCT_DISCOVERY'],
+    },
   },
   'PROJECT_DISCOVERY:1': {
     journey_status: 'LEGACY',
@@ -331,11 +339,16 @@ type ProjectFacts = {
   archived: boolean;
   failure_stage: string | null;
   failure_code: string | null;
+  selected_discovery_workflow_code: string | null;
+  selected_discovery_workflow_version: number | null;
+  has_active_operation: boolean;
 };
 
 const readProjectFacts = async (client: pg.PoolClient, projectId: string): Promise<ProjectFacts> => {
   const row = (await client.query(
     `SELECT p.id,p.workflow_code,p.workflow_version,p.state,p.archived_at,p.failure_stage,p.failure_code,
+       p.selected_discovery_workflow_code,p.selected_discovery_workflow_version,
+       EXISTS(SELECT 1 FROM operations o WHERE o.project_id=p.id AND o.status IN ('ACCEPTED','QUEUED','RUNNING')) AS has_active_operation,
        wd.status AS workflow_status,
        coalesce(ws.metadata->>'canonical_state', p.state) AS canonical_state
      FROM projects p
@@ -353,6 +366,9 @@ const readProjectFacts = async (client: pg.PoolClient, projectId: string): Promi
     archived: Boolean(row.archived_at),
     failure_stage: row.failure_stage ?? null,
     failure_code: row.failure_code ?? null,
+    selected_discovery_workflow_code: row.selected_discovery_workflow_code ?? null,
+    selected_discovery_workflow_version: row.selected_discovery_workflow_version != null ? Number(row.selected_discovery_workflow_version) : null,
+    has_active_operation: Boolean(row.has_active_operation),
   };
 };
 
@@ -889,6 +905,15 @@ const gateDecisionSchema = (gate: { allowed_decisions: string[] }) => jsonSchema
   },
   ['version', 'decision', 'evidence']
 );
+const legacyRegisterProjectDecisionSchema = (gateId: string) => jsonSchema(
+  {
+    gate_id: { type: 'string', enum: [gateId], description: 'Gate REGISTER_PROJECT aberto para esta instância.' },
+    version: { type: 'integer', description: 'Versão atual do gate.' },
+    decision: { type: 'string', enum: ['APPROVED', 'REJECTED'], enum_labels: { APPROVED: 'Aprovar', REJECTED: 'Retornar para ajustes' }, description: 'Decisão publicada para o registro.' },
+    feedback: { type: 'string', description: 'Feedback obrigatório ao retornar para ajustes.' },
+  },
+  ['gate_id', 'version', 'decision']
+);
 const gateDecisionOptions = (gate: { allowed_decisions: string[]; decision_effects: unknown }) => {
   const effects = gate.decision_effects && typeof gate.decision_effects === 'object' ? gate.decision_effects as Record<string, unknown> : {};
   return gate.allowed_decisions.map((code) => {
@@ -1088,12 +1113,51 @@ const buildWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<type
   return actions;
 };
 
-const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, project: ProjectFacts, adapter: LegacyAdapter) => {
+const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, principal: AuthenticatedPrincipal, project: ProjectFacts, adapter: LegacyAdapter) => {
   const actions: ActionDescriptor[] = [];
   const { projectId } = ctx;
   const declared = adapter.publishes[project.state] ?? [];
   for (const code of declared) {
-    if (code === 'PRODUCT_COMMITMENT_DECISION') {
+    if (code === 'SUBMIT_INTAKE') {
+      // The v1 command is valid only for a human operator on the exact
+      // persisted DRAFT fact and only while no operation is already active.
+      if (principal.type !== 'HUMAN' || project.archived || project.has_active_operation || ctx.gates.some((gate) => gate.status === 'OPEN') || ctx.legacyGates.some((gate) => gate.status === 'OPEN')) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'SUBMIT_INTAKE', resourceKind: 'PROJECT', resourceId: projectId,
+        href: `/api/projects/${projectId}/submit`, idempotencyRequired: true,
+        confirmationRequired: false, schema: null, bindings: [],
+      }));
+    } else if (code === 'DECIDE_GATE') {
+      // PROJECT_INTAKE v1 predates gate_records. Its persisted legacy gate is
+      // still the authoritative CURRENT_GATE fact for the official decision
+      // endpoint, so it is adapted explicitly rather than inferred by state.
+      const openGate = ctx.legacyGates.find((gate) => gate.gate_code === 'REGISTER_PROJECT' && gate.status === 'OPEN');
+      if (principal.type !== 'HUMAN' || !openGate || project.archived) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'DECIDE_GATE', resourceKind: 'GATE', resourceId: openGate.id,
+        href: `/api/projects/${projectId}/decision`, idempotencyRequired: true,
+        gateVersion: openGate.version, confirmationRequired: true,
+        schema: legacyRegisterProjectDecisionSchema(openGate.id),
+        bindings: [bound('gate_id', openGate.id), bound('version', openGate.version), human('decision', true), human('feedback', false)],
+        decisionOptions: [
+          { code: 'APPROVED', label: 'Aprovar', consequence: 'Registra o projeto; a continuação usa a seleção de discovery persistida.' },
+          { code: 'REJECTED', label: 'Retornar para ajustes', consequence: 'Retorna ao rascunho e preserva o gate/decisão auditáveis.' },
+        ],
+      }));
+    } else if (code === 'START_PRODUCT_DISCOVERY') {
+      // v3 alone keeps the historical explicit start command. v4 is governed
+      // by LR-02's macro-lifecycle and must never receive v3 semantics.
+      if (principal.type !== 'HUMAN' || project.archived || project.has_active_operation) continue;
+      if (project.selected_discovery_workflow_code !== 'PROJECT_DISCOVERY' || project.selected_discovery_workflow_version !== 3) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'START_PRODUCT_DISCOVERY', resourceKind: 'PROJECT', resourceId: projectId,
+        href: `/api/projects/${projectId}/start-discovery`, idempotencyRequired: true,
+        confirmationRequired: false, schema: null, bindings: [],
+      }));
+    } else if (code === 'PRODUCT_COMMITMENT_DECISION') {
       // Legacy product commitment gate decided via POST /api/projects/:id/decision.
       const openGate = ctx.legacyGates.find((gate) => gate.gate_code === 'PRODUCT_COMMITMENT' && gate.status === 'OPEN');
       if (!openGate) continue;
@@ -1441,7 +1505,7 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
     // The adapter and its exact state declaration decide which actions are
     // applicable.  We only associate descriptors from this same snapshot;
     // neither a state name nor a generic legacy classification grants one.
-    const descriptors = declared.flatMap((code) => actions.filter((action) => action.code === code && action.presentation.kind === 'LEGACY' && (
+    const descriptors = declared.flatMap((code) => actions.filter((action) => action.code === code && (
       item.kind === 'PROJECT'
         ? action.command.href.startsWith(`/api/projects/${ctx.projectId}/`)
         : action.target.resource_kind === item.kind && action.target.resource_id === item.id
@@ -1476,7 +1540,7 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
  * ------------------------------------------------------------------ */
 
 const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_kind: ResourceKind; resource_id: string | null } => {
-  const { project, stop, gates, recovery, technologyBaseline } = ctx;
+  const { project, stop, gates, legacyGates, recovery, technologyBaseline } = ctx;
   if (stop.projectCancellation) return { code: 'CANCELLED', resource_kind: 'PROJECT', resource_id: project.id };
   if (stop.projectPause) return { code: 'PAUSED', resource_kind: 'PROJECT', resource_id: project.id };
   const activeRecovery = recovery.find((r) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(r.execution_state));
@@ -1484,6 +1548,10 @@ const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_ki
   if (activeRecovery) return { code: 'UNMAPPED_STOP_SURFACE', resource_kind: 'PROJECT', resource_id: project.id };
   const openGate = gates.find((gate) => gate.status === 'OPEN');
   if (openGate) return { code: openGate.gate_code, resource_kind: 'GATE', resource_id: openGate.id };
+  const intakeGate = project.workflow_code === 'PROJECT_INTAKE' && project.workflow_version === 1 && project.state === 'WAITING_FOR_REGISTRATION'
+    ? legacyGates.find((gate) => gate.gate_code === 'REGISTER_PROJECT' && gate.status === 'OPEN')
+    : undefined;
+  if (intakeGate) return { code: intakeGate.gate_code, resource_kind: 'GATE', resource_id: intakeGate.id };
   if (technologyBaseline?.gate_status === 'OPEN') return { code: 'TECHNOLOGY_BASELINE', resource_kind: 'GATE', resource_id: technologyBaseline.gate_id };
   if (project.archived) return { code: 'ARCHIVED', resource_kind: 'PROJECT', resource_id: project.id };
   if (project.failure_code) return { code: project.failure_code, resource_kind: 'PROJECT', resource_id: project.id };
@@ -1491,7 +1559,7 @@ const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_ki
 };
 
 const deriveNextAction = (ctx: DescriptorContext, allowed: ActionDescriptor[]): { text: string; descriptor_code?: string } | null => {
-  const { stop, gates, recovery, technologyBaseline } = ctx;
+  const { project, stop, gates, legacyGates, recovery, technologyBaseline } = ctx;
   if (stop.projectCancellation) return { text: 'Projeto cancelado; nenhuma continuação pendente.' };
   if (stop.projectPause) {
     const resume = allowed.find((action) => action.code === 'RESUME_PROJECT');
@@ -1501,6 +1569,13 @@ const deriveNextAction = (ctx: DescriptorContext, allowed: ActionDescriptor[]): 
   if (openGate) {
     const decide = allowed.find((action) => action.code === 'DECIDE_GATE' || action.code === 'DECIDE_DELIVERY_ACCEPTANCE');
     return { text: `Decisão pendente no gate ${openGate.gate_code}.`, ...(decide ? { descriptor_code: decide.code } : {}) };
+  }
+  const intakeGate = project.workflow_code === 'PROJECT_INTAKE' && project.workflow_version === 1 && project.state === 'WAITING_FOR_REGISTRATION'
+    ? legacyGates.find((gate) => gate.gate_code === 'REGISTER_PROJECT' && gate.status === 'OPEN')
+    : undefined;
+  if (intakeGate) {
+    const decide = allowed.find((action) => action.code === 'DECIDE_GATE' && action.target.resource_kind === 'GATE' && action.target.resource_id === intakeGate.id);
+    return { text: 'Decisão pendente no gate REGISTER_PROJECT.', ...(decide ? { descriptor_code: decide.code } : {}) };
   }
   if (technologyBaseline?.gate_status === 'OPEN') {
     const decide = allowed.find((action) => action.code === 'DECIDE_TECHNOLOGY_BASELINE');
@@ -1621,7 +1696,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     if (projectKind.current) {
       allowed.push(...await buildCurrentProjectActions(ctx, can));
     } else if (projectKind.legacy && !projectKind.unknown && projectAdapter) {
-      allowed.push(...await buildLegacyProjectActions(ctx, can, project, projectAdapter));
+      allowed.push(...await buildLegacyProjectActions(ctx, can, principal, project, projectAdapter));
     }
     // Module actions (per module adapter; legacy module adapters currently
     // publish no actions and remain read-only fail-closed)

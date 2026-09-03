@@ -53,6 +53,19 @@ export const login=async(body:Record<string,unknown>,response:ServerResponse)=>{
   if(!row||row.status!=='ACTIVE'||!await passwordMatches(body.password,row.secret_hash))throw new ApiError(401,'AUTH_LOGIN_INVALID');
   const principal:AuthenticatedPrincipal={id:row.id,type:row.principal_type,username:row.username};const session=await issueSession(principal);setSessionCookie(response,session.raw,session.expires);await audit({principal,action:'AUTH_LOGIN',outcome:'AUTHENTICATED',reason:'PASSWORD_VERIFIED'});return {principal:{id:principal.id,type:principal.type,username:principal.username},csrf_token:session.csrf,expires_at:session.expires.toISOString()};
 };
+/**
+ * Re-establishes the browser-only CSRF context for an already authenticated
+ * human session. The token is never persisted by the browser: it is generated
+ * afresh, only its hash is stored, and it is returned over the authenticated
+ * same-origin response. This deliberately does not inspect or grant roles.
+ */
+export const restoreSession=async(principal:AuthenticatedPrincipal)=>{
+  if(principal.type!=='HUMAN'||!principal.sessionId)throw new ApiError(403,'AUTH_SESSION_HUMAN_REQUIRED');
+  const csrf=opaque();
+  const session=(await pool.query(`UPDATE auth_sessions SET csrf_hash=$2 WHERE id=$1 AND revoked_at IS NULL AND expires_at>clock_timestamp() RETURNING expires_at`,[principal.sessionId,hash(csrf)])).rows[0];
+  if(!session)throw new ApiError(401,'AUTH_SESSION_INVALID');
+  return {principal:{id:principal.id,type:principal.type,username:principal.username},csrf_token:csrf,expires_at:new Date(session.expires_at).toISOString()};
+};
 export const authenticate=async(request:IncomingMessage):Promise<AuthenticatedPrincipal>=>{
   const authorization=String(request.headers.authorization??'');
   const service=authorization.match(/^Service\s+([0-9a-f-]{36}):([A-Za-z0-9_-]{16,})$/);

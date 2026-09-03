@@ -12,7 +12,7 @@
     "migrate:validate-043": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/migrate-validate-043.ts",
     "reconcile": "node --env-file-if-exists=.env node_modules/tsx/dist/cli.mjs src/reconcile.ts",
     "test": "npm run build && node --env-file-if-exists=.env scripts/run-tests.mjs",
-    "test:catalog-publisher:integration": "node scripts/run-catalog-publisher-integration.mjs",
+    "test:catalog-publisher:integration": "node --env-file-if-exists=.env scripts/run-catalog-publisher-integration.mjs",
     "git:smoke": "node --env-file-if-exists=.env dist/git-delivery-smoke.js",
     "e2e": "npm run build && node --env-file-if-exists=.env scripts/run-e2e.mjs"
   },
