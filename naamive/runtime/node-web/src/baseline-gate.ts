@@ -72,7 +72,7 @@ export const submitTechnologyBaseline = async (projectId: string, baselineRevisi
   const correlationId = randomUUID(), operationId = await operation(client, projectId, 'SUBMIT_TECHNOLOGY_BASELINE', key, correlationId);
   const gateId = randomUUID();
   await client.query(`INSERT INTO technology_baseline_gates(id,project_id,project_key,baseline_revision_id,status)
-    VALUES($1,$2::uuid,$2,$3,'OPEN')`, [gateId, projectId, revision.id]);
+    VALUES($1,$2,$2,$3,'OPEN')`, [gateId, projectId, revision.id]);
   await client.query(`UPDATE technology_baseline_revisions SET status='PENDING_APPROVAL',updated_at=clock_timestamp() WHERE id=$1`, [revision.id]);
   const target = await transitionTarget(client, projectId, 'SUBMIT_TECHNOLOGY_BASELINE');
   await client.query(`UPDATE projects SET state=$2,updated_at=clock_timestamp() WHERE id=$1`, [projectId, target]);

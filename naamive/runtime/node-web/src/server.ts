@@ -25,6 +25,7 @@ import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from '
 import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, restoreSession, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
 import { buildStateActionProjection } from './state-action-projection.js';
 import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
+import { requestTerminalJobRecovery } from './inconsistency-recovery.js';
 import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
 import { activateV4DiscoveryAfterRegistration, reconcileMacroLifecycle } from './macro-lifecycle.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
@@ -111,6 +112,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|restart-development|retry-development|qa|rework|rework-decision|merge|reconcile|recovery|resolve-external-blocker)$/);
   const developmentRuntimeMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/development-runtime$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|recovery|escalate|archive)$/);
+  const inconsistencyRecoveryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/inconsistencies\/([0-9a-f-]{36})\/recover$/);
   const deliveryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/delivery(?:\/(prepare|projection|pause|cancel|packages\/([^/]+)\/(outputs|materialize|technical-acceptance|gate)|gates\/([^/]+)\/decision|pauses\/([^/]+)\/resume|external-effects\/([^/]+)\/(start|unknown)))?$/);
   const moduleLifecycleMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules\/([^/]+)\/lifecycle\/(pause|cancel)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
@@ -278,6 +280,14 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'restart-development') return respond(response,202,await restartDevelopmentOrchestration(workItemMatch[1],workItemMatch[2],request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'retry-development') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');return respond(response,202,await retryDevelopmentWorkItem(workItemMatch[1],workItemMatch[2],await json(request),idempotencyKey,principal!.id)); }
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'recovery') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');await json(request);return respond(response,202,await requestWorkItemRecovery(workItemMatch[1],workItemMatch[2],idempotencyKey)); }
+  if (inconsistencyRecoveryMatch && request.method === 'POST') {
+    const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();
+    if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
+    const body=await json(request);
+    // The scoped-route authorization above revalidates OPERATE_PROJECT for
+    // every request; expected_generation is the descriptor's stale fence.
+    return respond(response,202,await requestTerminalJobRecovery(inconsistencyRecoveryMatch[1],inconsistencyRecoveryMatch[2],body.expected_generation));
+  }
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'resolve-external-blocker') return respond(response,202,await resolveExternalBlocker(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'qa') return respond(response,202,await submitQa(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'rework') return respond(response,202,await authorizeRework(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));

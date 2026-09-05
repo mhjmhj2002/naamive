@@ -12,6 +12,9 @@ test('UI-01 frontend has one projection owner, generic SSE invalidation, and det
   for (const canonical of ['/projection', 'refreshProjection', 'renderProjection', 'stream.onmessage = invalidate', 'appendEvent(event.data)']) {
     assert.ok(index.includes(canonical), `canonical UI-01 path missing: ${canonical}`);
   }
+  assert.match(index, /if \(Array\.isArray\(schema\.enum\)\)/, 'the generic renderer creates selects from the published field schema');
+  assert.match(index, /for \(const value of schema\.enum\)/, 'every published decision option is rendered without a gate-specific list');
+  assert.doesNotMatch(index, /PRODUCT_COMMITMENT_DECISION/, 'the frontend has no product commitment special case');
   assert.ok(index.includes("import { canApplyProjection } from './projection-refresh.js'"));
 
   const { canApplyProjection } = await import(new URL('projection-refresh.js', web).href) as { canApplyProjection: (input: Record<string, unknown>) => boolean };

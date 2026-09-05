@@ -23,6 +23,7 @@ import { configuredWorkerService } from './auth.js';
 import { recoverDevelopmentFailure, reconcileCauseAwareRecovery } from './recovery.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
 import { deliveryPreparationExecutionContext, persistDeliveryPreparationOutputs, reconcileDeliveryLifecycle } from './delivery-lifecycle.js';
+import { markInconsistencyRecoveryRunning, markInconsistencyRecoveryTerminalFailure, materializeTerminalJobInconsistency, resolveInconsistencyRecovery } from './inconsistency-recovery.js';
 
 const delays = [5, 15, 30];
 const leaseSeconds = () => Math.max(config().agentTimeoutSeconds + config().agentHeartbeatSeconds * 2, 120);
@@ -50,6 +51,7 @@ const leaseJob = (projectId?: string) => withTransaction(async (client) => {
   if (!leased.rowCount) return null;
   const job = leased.rows[0];
   await client.query(`UPDATE operations SET status='RUNNING' WHERE id=$1`, [job.operation_id]);
+  await markInconsistencyRecoveryRunning(client, job);
   return job;
 });
 
@@ -80,6 +82,7 @@ const completeJob = async (job: any, result?: any, actorId='system:worker') => w
   await client.query(`UPDATE jobs SET status='COMPLETED',completed_at=clock_timestamp() WHERE id=$1`, [job.id]);
   const pending = await client.query(`SELECT 1 FROM jobs WHERE operation_id=$1 AND status IN('PENDING','RETRYABLE','LEASED')`, [job.operation_id]);
   if (!pending.rowCount) await client.query(`UPDATE operations SET status='SUCCEEDED',completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id]);
+  await resolveInconsistencyRecovery(client, job);
 });
 
 const failLegacyJob = async (job: any, error: unknown) => withTransaction(async (client) => {
@@ -111,6 +114,11 @@ const failLegacyJob = async (job: any, error: unknown) => withTransaction(async 
   }
   if (permanent) {
     await client.query(`UPDATE operations SET status='FAILED',failure_code=$2,completed_at=clock_timestamp() WHERE id=$1`, [job.operation_id, code]);
+    // REC-01 materializes a supported terminal project job in the same
+    // transaction as its terminalization.  The source job remains FAILED;
+    // recoveries are separate jobs marked with inconsistency_case_id.
+    await materializeTerminalJobInconsistency(client, job.id);
+    await markInconsistencyRecoveryTerminalFailure(client, job, code);
     if (job.kind === 'PLAN_MODULE_WORK_ITEMS') {
       // F5-23 pendency 20/22: durable termination evidence with the cause of
       // interruption and the accumulated duration, associated with job/operation.

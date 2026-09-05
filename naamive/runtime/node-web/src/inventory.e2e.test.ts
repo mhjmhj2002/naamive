@@ -17,6 +17,10 @@ else {
   const { publishTechnologyCatalog, loadCatalogSeedPackage, catalogPackageHash } = await import('./catalog-publisher.js');
   const { validateTechnologyCatalogSeedPackage } = await import('./technology-contracts.js');
   const { startTechnologyInventory, parsePackageInventoryFacts } = await import('./inventory.js');
+  const { prepareTechnologySelectionContext } = await import('./selection-context.js');
+  const { createTechnologyBaselineDraft } = await import('./baseline-draft.js');
+  const { submitTechnologyBaseline, decideTechnologyBaseline } = await import('./baseline-gate.js');
+  const { materializeModule } = await import('./phase3.js');
   const { runOnce } = await import('./worker.js');
   const git = (cwd: string, args: string[]) => execFileSync('git', ['-C', cwd, ...args], { encoding: 'utf8' }).trim();
   const base = await loadCatalogSeedPackage(); let revision = Date.now() * 10;
@@ -32,6 +36,96 @@ else {
   const expectWorkerFailure = async (repo: { root: string; sha: string }, revisionId: string, t: test.TestContext) => { const p = await project(repo, revisionId); t.after(() => cleanup(p.id, repo.root)); const accepted = await withTransaction(c => startTechnologyInventory(c, p.id, `failure:${p.id}`)); await runOnce(p.id); assert.equal((await pool.query(`SELECT status FROM jobs WHERE operation_id=$1`, [accepted.operation_id])).rows[0].status, 'FAILED'); assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM technology_inventory WHERE project_key=$1`, [p.id])).rows[0].n), 0); return p; };
   const cleanup = async (id: string, repo: string) => { for (const table of ['technology_inventory','technology_selection_contexts']) await pool.query(`DELETE FROM ${table} WHERE project_key=$1`, [id]); for (const table of ['events','artifacts','artifact_intents','jobs','operations','intake_revisions']) await pool.query(`DELETE FROM ${table} WHERE project_id=$1`, [id]); await pool.query('DELETE FROM projects WHERE id=$1', [id]); rmSync(repo, { recursive: true, force: true }); };
   test.after(async () => pool.end());
+
+  test('F5-03-FIX-01 carries a realistic textual project id through context, inventory, baseline, gate, and QA persistence', async (t) => {
+    const projectId = 'financas-familiares-test-1';
+    const catalog: any = await publish();
+    const repo = fixtureRepo({ dependencies: { 'modular-monolith': '1' }, engines: { node: '22' } });
+    t.after(() => rmSync(repo.root, { recursive: true, force: true }));
+    const intake = randomUUID(), contextOperation = randomUUID(), contextJob = randomUUID(), correlation = randomUUID();
+    await pool.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft)
+      VALUES($1,'Text project pipeline','owner','tester',$2,'local','main',$3,'PROJECT_DISCOVERY',3,'TECHNOLOGY_SELECTION_PREPARING','{}')`, [projectId, repo.root, repo.sha]);
+    await pool.query(`INSERT INTO intake_revisions(id,project_id,schema_version,payload,structured_sha256,markdown_sha256,artifact_uri,submitted_by)
+      VALUES($1,$2,1,'{}',$3,$4,'file:///tmp/intake','tester')`, [intake, projectId, 'a'.repeat(64), 'b'.repeat(64)]);
+    await pool.query(`INSERT INTO operations(id,project_id,kind,status,idempotency_key,correlation_id,revision_id,workflow_code,workflow_version)
+      VALUES($1,$2,'PREPARE_TECHNOLOGY_SELECTION_CONTEXT','QUEUED',$3,$4,$5,'PROJECT_DISCOVERY',3)`, [contextOperation, projectId, `text-context:${projectId}`, correlation, intake]);
+    await pool.query(`INSERT INTO jobs(id,operation_id,project_id,revision_id,kind,status,idempotency_key)
+      VALUES($1,$2,$3,$4,'PREPARE_TECHNOLOGY_SELECTION_CONTEXT','PENDING',$5)`, [contextJob, contextOperation, projectId, intake, `text-context-job:${projectId}`]);
+
+    assert.equal(await runOnce(projectId), true, 'the real worker claims the selection-context job');
+    const context: any = (await pool.query(`SELECT * FROM technology_selection_contexts WHERE project_id=$1`, [projectId])).rows[0];
+    assert.equal(context.status, 'READY');
+    assert.equal(context.project_id, projectId);
+    assert.equal(context.project_key, projectId);
+    const contextCompletion: any = (await pool.query(`SELECT j.status,j.last_error,o.failure_code FROM jobs j JOIN operations o ON o.id=j.operation_id WHERE j.id=$1`, [contextJob])).rows[0];
+    assert.deepEqual(contextCompletion, { status: 'COMPLETED', last_error: null, failure_code: null });
+
+    const inventoryOperation: any = await withTransaction(client => startTechnologyInventory(client, projectId, `text-inventory:${projectId}`));
+    assert.equal(await runOnce(projectId), true, 'the real worker claims the inventory job');
+    const inventoryJob: any = (await pool.query(`SELECT j.id,j.status,j.last_error,o.failure_code FROM jobs j JOIN operations o ON o.id=j.operation_id WHERE j.operation_id=$1`, [inventoryOperation.operation_id])).rows[0];
+    assert.deepEqual({ status: inventoryJob.status, last_error: inventoryJob.last_error, failure_code: inventoryJob.failure_code }, { status: 'COMPLETED', last_error: null, failure_code: null });
+    const inventory: any = (await pool.query(`SELECT * FROM technology_inventory WHERE project_id=$1`, [projectId])).rows[0];
+    assert.equal(inventory.project_id, projectId);
+    assert.equal(inventory.project_key, projectId);
+
+    const draft: any = await withTransaction(client => createTechnologyBaselineDraft(client, projectId));
+    const submitted: any = await submitTechnologyBaseline(projectId, draft.revisionId, `text-submit:${projectId}`);
+    await decideTechnologyBaseline(projectId, draft.revisionId, { gate_id: submitted.gate_id, version: 1, decision: 'APPROVED' }, `text-approve:${projectId}`);
+    const [baseline, revision, gate, project] = await Promise.all([
+      pool.query(`SELECT * FROM technology_baselines WHERE id=$1`, [draft.baselineId]),
+      pool.query(`SELECT * FROM technology_baseline_revisions WHERE id=$1`, [draft.revisionId]),
+      pool.query(`SELECT * FROM technology_baseline_gates WHERE id=$1`, [submitted.gate_id]),
+      pool.query(`SELECT state FROM projects WHERE id=$1`, [projectId])
+    ]);
+    for (const row of [baseline.rows[0], revision.rows[0], gate.rows[0]]) {
+      assert.equal(row.project_id, projectId);
+      assert.equal(row.project_key, projectId);
+    }
+    assert.equal(revision.rows[0].status, 'APPROVED');
+    assert.equal(gate.rows[0].status, 'APPROVED');
+    assert.equal(project.rows[0].state, 'READY_FOR_MODULE_MATERIALIZATION');
+
+    const materialized: any = await materializeModule(projectId, { module_key: 'text-project-module' }, `text-module:${projectId}`);
+    const round = randomUUID(), workItem = randomUUID(), matrix = randomUUID();
+    await pool.query(`INSERT INTO module_rounds(id,module_id,revision_id,round_number,state) VALUES($1,$2,$3,2,'WORK_ITEMS_ACTIVE')`, [round, materialized.module_id, materialized.revision_id]);
+    await pool.query(`INSERT INTO work_items(id,project_id,module_id,revision_id,round_id,title,payload) VALUES($1,$2,$3,$4,$5,'Text project work item','{}')`, [workItem, projectId, materialized.module_id, materialized.revision_id, round]);
+    await pool.query(`INSERT INTO qa_matrices(id,project_id,project_key,work_item_id,technology_baseline_revision_id,payload,hash)
+      VALUES($1,$2,$2,$3,$4,'{}',$5)`, [matrix, projectId, workItem, draft.revisionId, 'd'.repeat(64)]);
+    const qa: any = (await pool.query(`SELECT project_id,project_key,technology_baseline_revision_id FROM qa_matrices WHERE id=$1`, [matrix])).rows[0];
+    assert.deepEqual(qa, { project_id: projectId, project_key: projectId, technology_baseline_revision_id: draft.revisionId });
+
+    const schema: any[] = (await pool.query(`SELECT c.relname AS table_name,a.attname AS column_name,format_type(a.atttypid,a.atttypmod) AS data_type
+      FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid
+      WHERE c.relname = ANY($1::text[]) AND a.attname IN ('project_id','project_key') AND a.attnum>0 AND NOT a.attisdropped
+      ORDER BY c.relname,a.attname`, [['technology_inventory','technology_selection_contexts','technology_baselines','technology_baseline_revisions','technology_baseline_gates','qa_matrices']])).rows;
+    assert.equal(schema.length, 12);
+    assert.ok(schema.every(row => row.data_type === 'text'));
+    const integrity: any[] = (await pool.query(`SELECT c.conname,c.contype,c.convalidated
+      FROM pg_constraint c
+      WHERE c.conname = ANY($1::text[])`, [[
+        'technology_inventory_project_id_fkey','technology_inventory_project_identity_matches',
+        'technology_selection_contexts_project_id_fkey','technology_selection_contexts_project_identity_matches',
+        'technology_baselines_project_id_fkey','technology_baselines_project_identity_matches',
+        'technology_baseline_revisions_project_id_fkey','technology_baseline_revisions_project_identity_matches',
+        'technology_baseline_gates_project_id_fkey','technology_baseline_gates_project_identity_matches',
+        'qa_matrices_project_id_fkey','qa_matrices_project_identity_matches'
+      ]])).rows;
+    assert.equal(integrity.length, 12);
+    assert.ok(integrity.every(row => row.convalidated));
+    const indexes: string[] = (await pool.query(`SELECT indexname FROM pg_indexes WHERE schemaname='public' AND indexname = ANY($1::text[]) ORDER BY indexname`, [[
+      'technology_baselines_project_id_key','technology_baselines_project_key_key',
+      'technology_selection_contexts_supersedes_baseline_revision_idx',
+      'one_active_draft_baseline_revision_per_baseline','one_open_baseline_gate_per_revision',
+      'one_baseline_gate_decision_per_revision','one_qa_matrix_per_delivery'
+    ]])).rows.map(row => row.indexname);
+    assert.deepEqual(indexes, [
+      'one_active_draft_baseline_revision_per_baseline','one_baseline_gate_decision_per_revision',
+      'one_open_baseline_gate_per_revision','one_qa_matrix_per_delivery',
+      'technology_baselines_project_id_key','technology_baselines_project_key_key',
+      'technology_selection_contexts_supersedes_baseline_revision_idx'
+    ]);
+    assert.equal(Number((await pool.query(`SELECT count(*)::int n FROM events WHERE project_id=$1 AND event_type IN ('TECHNOLOGY_SELECTION_CONTEXT_READY','TECHNOLOGY_INVENTORY_READY','TECHNOLOGY_BASELINE_APPROVED')`, [projectId])).rows[0].n), 3);
+  });
 
   test('runs the reserved SHA through the worker, resolves facts, and writes an immutable sanitized snapshot', async (t) => {
     const published: any = await publish(); const repo = fixtureRepo({ dependencies: { 'modular-monolith': '1', microservices: '1', 'not-in-catalog': '1' }, engines: { node: '22' }, password: 'password=hidden', scripts: { postinstall: 'touch SHOULD_NOT_EXIST' } });

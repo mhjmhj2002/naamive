@@ -113,3 +113,5 @@ como correções próprias, sem reabrir ou reescrever as tasks certificadas.
 
 - [GAT-03-FIX-01 — Conceder acesso project-scoped ao criador do projeto](GAT-03-FIX-01-project-creator-rbac-grants.md) — `P1`, bloqueante do fluxo manual ponta a ponta.
 - [UI-01-FIX-01 — Destravar PROJECT_INTAKE v1 na projeção canônica](UI-01-FIX-01-project-intake-canonical-actions.md) — `P1`, corrige a continuidade canônica do intake histórico publicado.
+- [UI-01-FIX-02 — Corrigir descriptor legado de PRODUCT_COMMITMENT](UI-01-FIX-02-product-commitment-legacy-decision-descriptor.md) — `P1`, restaura a execução da decisão humana no gate legado pela projeção canônica.
+- [REC-01 — Fila de Inconsistências e recuperação governada de jobs terminais](REC-01-fila-inconsistencias-recuperacao-governada-jobs-terminais.md) — `P1`, cria `inconsistency_cases` dedicada. A decisão não reutiliza `recovery_decisions`: seus contratos e executor são exclusivos de work item/integration candidate; a fila preserva o job terminal e recupera por operação/job sucessores com lineage, fence e reconciliação.
