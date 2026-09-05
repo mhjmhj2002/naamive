@@ -59,7 +59,7 @@ else {
     const [cookieName,cookieValue]=session.headers.cookie.split('=',2);await devtools.call('Network.setCookie',{name:cookieName,value:cookieValue,url:`http://127.0.0.1:${address.port}/`,path:'/'});await devtools.call('Network.setExtraHTTPHeaders',{headers:{Origin:session.headers.origin,'x-csrf-token':session.headers['x-csrf-token']}});
     await devtools.call('Page.navigate', { url: `http://127.0.0.1:${address.port}/` }); await sleep(300);
     const evaluate = async (expression: string) => (await devtools!.call('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true })).result.value;
-    await evaluate(`window.fetch=((original)=>async(input,init={})=>original(input,{...init,headers:{...Object.fromEntries(new Headers(init.headers||{})),'x-csrf-token':${JSON.stringify(session.headers['x-csrf-token'])}}}))(window.fetch);window.confirm=()=>true`);
+    await evaluate(`window.confirm=()=>true`);
     await eventually(async () => await evaluate(`document.querySelector('[data-project-id="${project}"]') !== null`), 'v3 project list');
     await evaluate(`document.querySelector('[data-project-id="${project}"]').click()`);
     await eventually(async () => await evaluate(`[...document.querySelectorAll('#actions h3')].some(node=>node.textContent==='DECIDE_TECHNOLOGY_BASELINE')`), 'canonical v3 baseline decision');

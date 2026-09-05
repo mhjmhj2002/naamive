@@ -7,6 +7,7 @@ import { assertAuditableCommits, assertIncrementalPaths, discardDeliveryBranch, 
 import { reconcileWaitingDependencies, scheduleEligibleWorkItems, scheduleWorkItem } from './eligibility-scheduler.js';
 import { RecoveryClassifier, RECOVERY_POLICY_VERSION, type RecoveryAction, type RecoveryCause, type RecoverySignals, type WorktreeObservation } from './recovery-policy.js';
 import { AUT02_PIPELINE_VERSION, AUT02_V1_PIPELINE_VERSION } from './aut02-ledger.js';
+import { reconcileTerminalJobInconsistencies } from './inconsistency-recovery.js';
 
 const classifier=new RecoveryClassifier();
 const delays=[5,15,30];
@@ -390,13 +391,14 @@ export const recoverDevelopmentFailure=async(job:any,error:unknown,step:string)=
 };
 
 export const reconcileCauseAwareRecovery=async()=>{
+  const terminalJobs=await reconcileTerminalJobInconsistencies();
   const pending=(await pool.query(`SELECT id FROM recovery_decisions WHERE execution_state IN ('PENDING','EXECUTING','WAITING_RECONCILIATION') ORDER BY created_at,id LIMIT 100`)).rows;
   for(const row of pending)try{await executeRecoveryDecision(row.id);}catch{}
   const stuckWork=(await pool.query(`SELECT DISTINCT w.project_id,w.id,j.status,j.attempts,j.lease_expires_at FROM work_items w JOIN deliveries d ON d.work_item_id=w.id JOIN jobs j ON j.id=d.job_id WHERE w.workflow_code='WORK_ITEM_DELIVERY' AND w.workflow_version=2 AND (w.state='RECOVERY_REQUIRED' OR j.status='PENDING' AND j.available_at<clock_timestamp()-($1*interval '1 second') OR j.status='LEASED' AND j.lease_expires_at<clock_timestamp()) LIMIT 100`,[config().developmentReservationGraceSeconds])).rows;
   for(const row of stuckWork)try{await requestWorkItemRecovery(row.project_id,row.id,`reconciler:${row.id}:${row.status}:${Number(row.attempts)}:${row.lease_expires_at??'none'}`,row.status==='PENDING'?'JOB_NOT_CONSUMED':row.status==='LEASED'?'LEASE_LOST':undefined);}catch{}
   const stuckIntegration=(await pool.query(`SELECT c.project_id,c.id,c.version,c.state,c.blocked_kind FROM integration_candidates c LEFT JOIN LATERAL (SELECT created_at FROM integration_attempts WHERE candidate_id=c.id ORDER BY created_at DESC,id DESC LIMIT 1) a ON true WHERE c.state='INTEGRATION_BLOCKED' AND c.blocked_kind IN ('GIT_RECOVERABLE','GIT_DIVERGED') OR c.state='INTEGRATION_IN_PROGRESS' AND a.created_at<clock_timestamp()-($1*interval '1 second') LIMIT 100`,[reservationGraceSeconds()])).rows;
   for(const row of stuckIntegration)try{await requestIntegrationRecovery(row.project_id,row.id,`integration-reconciler:${row.id}:${row.version}`,row.blocked_kind==='GIT_DIVERGED'?'GIT_DIVERGED':row.state==='INTEGRATION_BLOCKED'?'MERGE_TIMEOUT':'HANDOFF_CRASH');}catch{}
-  return {replayed:pending.length,work_items:stuckWork.length,integration_candidates:stuckIntegration.length};
+  return {replayed:pending.length,work_items:stuckWork.length,integration_candidates:stuckIntegration.length,terminal_jobs:terminalJobs};
 };
 
 export const recoveryDecisionProjection=async(id:string)=>{

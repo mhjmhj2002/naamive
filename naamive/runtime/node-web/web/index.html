@@ -16,12 +16,10 @@
   <nav class="navbar navbar-dark hero shadow-sm">
     <div class="container d-flex gap-3 align-items-center">
       <a class="navbar-brand fw-bold" href="#">NAAMIVE <span class="fw-normal opacity-75">· Orquestração</span></a>
-      <form id="login" class="ms-auto d-flex gap-2 align-items-end">
-        <label class="small text-white">Usuário<input class="form-control form-control-sm" name="username" autocomplete="username" required></label>
-        <label class="small text-white">Senha<input class="form-control form-control-sm" name="password" type="password" autocomplete="current-password" required></label>
-        <button class="btn btn-sm btn-light" type="submit">Entrar</button>
-        <button class="btn btn-sm btn-outline-light" id="logout" type="button" hidden>Sair</button>
-      </form>
+      <div class="ms-auto d-flex gap-3 align-items-center text-white">
+        <span id="currentUser" class="small"></span>
+        <button class="btn btn-sm btn-outline-light" id="logout" type="button">Sair</button>
+      </div>
     </div>
   </nav>
   <header class="hero text-white py-4">
@@ -32,9 +30,9 @@
     </div>
   </header>
   <main class="container py-4">
-    <div id="notice" class="alert alert-info shadow-sm" role="status">Entre e selecione um projeto.</div>
+    <div id="notice" class="alert alert-info shadow-sm" role="status">Restaurando sessão…</div>
     <div class="row g-4">
-      <aside class="col-lg-4">
+      <section class="col-lg-4" data-dashboard-region="projects">
         <section class="card shadow-sm border-0">
           <div class="card-header bg-white d-flex justify-content-between align-items-center">
             <h2 class="h5 mb-0">Projetos</h2>
@@ -42,28 +40,30 @@
           </div>
           <div id="projects" class="list-group list-group-flush"><div class="p-4 text-muted">Carregando projetos…</div></div>
         </section>
-        <section class="card mt-4 shadow-sm border-0">
-          <div class="card-body">
-            <h2 class="h6">Criar rascunho</h2>
+      </section>
+      <section class="col-lg-8" data-dashboard-region="create-draft">
+        <section class="card shadow-sm border-0">
+          <div class="card-body p-md-4">
+            <h2 class="h5">Criar rascunho</h2>
             <form id="intake" class="vstack gap-2">
-              <input class="form-control form-control-sm" name="project_id" placeholder="Identificador" pattern="[a-z0-9]+(-[a-z0-9]+)*" required>
-              <input class="form-control form-control-sm" name="repository_path" placeholder="Clone Git local" required>
-              <input class="form-control form-control-sm" name="title" placeholder="Título" required>
-              <input class="form-control form-control-sm" name="business_owner" placeholder="Responsável de negócio" required>
-              <textarea class="form-control form-control-sm" name="business_problem" placeholder="Problema de negócio" required></textarea>
-              <textarea class="form-control form-control-sm" name="desired_outcome" placeholder="Resultado desejado" required></textarea>
-              <textarea class="form-control form-control-sm" name="success_metrics" placeholder="Métricas (uma por linha)" required></textarea>
-              <textarea class="form-control form-control-sm" name="stakeholders" placeholder="Stakeholders (um por linha)" required></textarea>
-              <textarea class="form-control form-control-sm" name="known_constraints" placeholder="Restrições conhecidas" required></textarea>
-              <textarea class="form-control form-control-sm" name="evidence_sources" placeholder="Evidências e fontes" required></textarea>
-              <textarea class="form-control form-control-sm" name="assumptions" placeholder="Premissas" required></textarea>
-              <textarea class="form-control form-control-sm" name="open_questions" placeholder="Questões em aberto" required></textarea>
-              <button class="btn btn-primary btn-sm" type="submit">Criar rascunho</button>
+              <input class="form-control" name="project_id" placeholder="Identificador" pattern="[a-z0-9]+(-[a-z0-9]+)*" required>
+              <input class="form-control" name="repository_path" placeholder="Clone Git local" required>
+              <input class="form-control" name="title" placeholder="Título" required>
+              <input class="form-control" name="business_owner" placeholder="Responsável de negócio" required>
+              <textarea class="form-control" name="business_problem" placeholder="Problema de negócio" required></textarea>
+              <textarea class="form-control" name="desired_outcome" placeholder="Resultado desejado" required></textarea>
+              <textarea class="form-control" name="success_metrics" placeholder="Métricas (uma por linha)" required></textarea>
+              <textarea class="form-control" name="stakeholders" placeholder="Stakeholders (um por linha)" required></textarea>
+              <textarea class="form-control" name="known_constraints" placeholder="Restrições conhecidas" required></textarea>
+              <textarea class="form-control" name="evidence_sources" placeholder="Evidências e fontes" required></textarea>
+              <textarea class="form-control" name="assumptions" placeholder="Premissas" required></textarea>
+              <textarea class="form-control" name="open_questions" placeholder="Questões em aberto" required></textarea>
+              <button class="btn btn-primary" type="submit">Criar rascunho</button>
             </form>
           </div>
         </section>
-      </aside>
-      <section class="col-lg-8">
+      </section>
+      <section class="col-12" data-dashboard-region="project-detail">
         <section id="detail" hidden>
           <div class="card shadow-sm border-0">
             <div class="card-body p-md-4">
@@ -97,6 +97,7 @@
     const stopSurfaces = document.querySelector('#stopSurfaces');
     const actions = document.querySelector('#actions');
     const events = document.querySelector('#events');
+    const currentUser = document.querySelector('#currentUser');
     const listFields = new Set(['success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions']);
     const projectionState = {
       selectedProject: null,
@@ -492,31 +493,42 @@
       await loadProjects();
       selectProject(String(body.project_id));
     });
-    document.querySelector('#login').addEventListener('submit', async (event) => {
-      event.preventDefault();
-      const form = event.currentTarget;
-      const data = new FormData(form);
-      const response = await fetch('/api/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, credentials: 'same-origin', body: JSON.stringify({ username: data.get('username'), password: data.get('password') }) });
-      const body = await responseBody(response);
-      if (!response.ok) { showMessage(`${body.code || 'AUTH_LOGIN_INVALID'}: ${body.message || 'Credenciais inválidas.'}`, 'danger'); return; }
-      csrfToken = String(body.csrf_token);
-      form.querySelector('button[type="submit"]').hidden = true;
-      document.querySelector('#logout').hidden = false;
-      showMessage('Sessão iniciada.', 'success');
-      void loadProjects();
-    });
+    async function restoreSession() {
+      try {
+        const response = await request('/api/auth/session');
+        const body = await responseBody(response);
+        if (response.status === 401 || response.status === 403) {
+          window.location.replace('/login');
+          return false;
+        }
+        if (!response.ok || !body.principal || typeof body.csrf_token !== 'string' || !body.csrf_token) {
+          showMessage(`${body.code || 'AUTH_SESSION_RESTORE_FAILED'}: não foi possível restaurar a sessão.`, 'danger');
+          return false;
+        }
+        csrfToken = body.csrf_token;
+        currentUser.textContent = String(body.principal.username || 'Sessão autenticada');
+        return true;
+      } catch {
+        showMessage('Falha de rede ao restaurar a sessão.', 'danger');
+        return false;
+      }
+    }
     document.querySelector('#logout').addEventListener('click', async () => {
-      await request('/api/auth/logout', { method: 'POST' });
+      try { await request('/api/auth/logout', { method: 'POST' }); } finally {
       csrfToken = '';
       projectionState.stream?.close();
       projectionState.controller?.abort();
       projectionState.selectedProject = null;
       detail.hidden = true;
-      document.querySelector('#login').querySelector('button[type="submit"]').hidden = false;
-      document.querySelector('#logout').hidden = true;
-      showMessage('Sessão encerrada.', 'info');
+      window.location.replace('/login');
+      }
     });
-    void loadProjects();
+    async function initializeApplication() {
+      if (!await restoreSession()) return;
+      showMessage('Sessão restaurada. Selecione um projeto.', 'info');
+      await loadProjects();
+    }
+    void initializeApplication();
   </script>
 </body>
 </html>

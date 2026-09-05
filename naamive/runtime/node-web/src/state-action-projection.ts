@@ -116,6 +116,28 @@ export type RecoverySummary = {
   executed_at: string | null;
 };
 
+export type InconsistencySummary = {
+  id: string;
+  source_operation_id: string;
+  source_job_id: string;
+  source_job_kind: string;
+  cause_code: string;
+  classification: string;
+  severity: string;
+  status: string;
+  generation: number;
+  recovery_attempts: number;
+  recoverability: string;
+  recommended_action: string;
+  resolution_operation_id: string | null;
+  resolution_job_id: string | null;
+  created_at: string;
+  updated_at: string;
+  resolved_at: string | null;
+  effect_present: boolean;
+  equivalent_operation_active: boolean;
+};
+
 export type AssuranceSummary = {
   acceptance_id: string;
   state: string;
@@ -206,6 +228,7 @@ export type StateActionProjection = {
     gates: GateProjection[];
     delivery: unknown;
     recovery: RecoverySummary[];
+    inconsistencies: InconsistencySummary[];
     assurance: AssuranceSummary[];
     technology_baseline: TechnologyBaselineSummary | null;
   };
@@ -248,7 +271,7 @@ const CURRENT_WORKFLOWS = new Set<string>([
 
 /** Explicitly declared legacy workflow/version adapters. Each may publish only
  * the actions it declares; anything else stays read-only fail-closed. */
-type LegacyActionCode = 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE' | 'DECIDE_TECHNOLOGY_BASELINE';
+type LegacyActionCode = 'SUBMIT_INTAKE' | 'DECIDE_GATE' | 'START_PRODUCT_DISCOVERY' | 'PRODUCT_COMMITMENT_DECISION' | 'APPLY_REVIEW_ADJUSTMENTS' | 'RETRY_DISCOVERY' | 'RESOLVE_EXTERNAL_BLOCKER' | 'AUTHORIZE_REWORK' | 'MATERIALIZE_MODULE' | 'DECIDE_TECHNOLOGY_BASELINE';
 
 type LegacyAdapter = {
   /** Human-readable journey summary for this historical workflow. */
@@ -261,7 +284,15 @@ type LegacyAdapter = {
 const LEGACY_ADAPTERS: Record<string, LegacyAdapter> = {
   'PROJECT_INTAKE:1': {
     journey_status: 'LEGACY',
-    publishes: {},
+    // PROJECT_INTAKE v1 is immutable and historical, but its original
+    // commands remain supported. This exact adapter declaration is not a
+    // promotion to a current workflow nor a state-name fallback for another
+    // legacy workflow.
+    publishes: {
+      DRAFT: ['SUBMIT_INTAKE'],
+      WAITING_FOR_REGISTRATION: ['DECIDE_GATE'],
+      REGISTERED: ['START_PRODUCT_DISCOVERY'],
+    },
   },
   'PROJECT_DISCOVERY:1': {
     journey_status: 'LEGACY',
@@ -331,11 +362,16 @@ type ProjectFacts = {
   archived: boolean;
   failure_stage: string | null;
   failure_code: string | null;
+  selected_discovery_workflow_code: string | null;
+  selected_discovery_workflow_version: number | null;
+  has_active_operation: boolean;
 };
 
 const readProjectFacts = async (client: pg.PoolClient, projectId: string): Promise<ProjectFacts> => {
   const row = (await client.query(
     `SELECT p.id,p.workflow_code,p.workflow_version,p.state,p.archived_at,p.failure_stage,p.failure_code,
+       p.selected_discovery_workflow_code,p.selected_discovery_workflow_version,
+       EXISTS(SELECT 1 FROM operations o WHERE o.project_id=p.id AND o.status IN ('ACCEPTED','QUEUED','RUNNING')) AS has_active_operation,
        wd.status AS workflow_status,
        coalesce(ws.metadata->>'canonical_state', p.state) AS canonical_state
      FROM projects p
@@ -353,6 +389,9 @@ const readProjectFacts = async (client: pg.PoolClient, projectId: string): Promi
     archived: Boolean(row.archived_at),
     failure_stage: row.failure_stage ?? null,
     failure_code: row.failure_code ?? null,
+    selected_discovery_workflow_code: row.selected_discovery_workflow_code ?? null,
+    selected_discovery_workflow_version: row.selected_discovery_workflow_version != null ? Number(row.selected_discovery_workflow_version) : null,
+    has_active_operation: Boolean(row.has_active_operation),
   };
 };
 
@@ -493,6 +532,8 @@ const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
        WHERE p.project_id=$1 AND r.result='RESUME_RECONCILIATION_REQUIRED' ORDER BY r.resolved_at DESC, r.id DESC`, [projectId]);
   const recoveryReconciliations = await client.query(
       `SELECT 1 FROM recovery_decisions WHERE project_id=$1 AND execution_state='WAITING_RECONCILIATION' LIMIT 1`, [projectId]);
+  const inconsistencyReconciliations = await client.query(
+      `SELECT 1 FROM inconsistency_cases WHERE project_id=$1 AND status='WAITING_RECONCILIATION' LIMIT 1`, [projectId]);
   const projectPause = pauses.rows.find((row) => row.resource_kind === 'PROJECT');
   const projectCancellation = cancellations.rows.find((row) => row.resource_kind === 'PROJECT');
   const toStopRecord = (row: { id: string; resource_kind: 'PROJECT' | 'MODULE'; resource_id: string; reason: string; version: string | number; pause_fence?: string | number | bigint; cancellation_fence?: string | number | bigint; previous_active_state?: string | null; created_at: string | Date }): StopRecordSummary => ({
@@ -512,7 +553,7 @@ const readStopFacts = async (client: pg.PoolClient, projectId: string) => {
     projectCancellation: projectCancellation ? toStopRecord(projectCancellation) : null,
     external_effects: effects.rows.map((row) => ({ resource_kind: String(row.resource_kind), resource_id: String(row.resource_id), status: String(row.status) })),
     resume_reconciliations: resumeReconciliations.rows.map((row) => ({ resume_id: String(row.resume_id), ...toStopRecord(row) })),
-    reconciliation_required: effects.rows.length > 0 || (resumeReconciliations.rowCount ?? 0) > 0 || (recoveryReconciliations.rowCount ?? 0) > 0,
+    reconciliation_required: effects.rows.length > 0 || (resumeReconciliations.rowCount ?? 0) > 0 || (recoveryReconciliations.rowCount ?? 0) > 0 || (inconsistencyReconciliations.rowCount ?? 0) > 0,
   };
 };
 
@@ -570,6 +611,21 @@ const readRecoveryFacts = async (client: pg.PoolClient, projectId: string) => {
       created_at: new Date(row.created_at).toISOString(), executed_at: row.executed_at ? new Date(row.executed_at).toISOString() : null,
     };
   });
+};
+
+const readInconsistencyFacts = async (client: pg.PoolClient, projectId: string): Promise<InconsistencySummary[]> => {
+  const rows = (await client.query(`SELECT id,source_operation_id,source_job_id,source_job_kind,cause_code,classification,severity,status,generation,recovery_attempts,recoverability,recommended_action,resolution_operation_id,resolution_job_id,created_at,updated_at,resolved_at,
+      EXISTS(SELECT 1 FROM technology_selection_contexts t WHERE t.project_key=inconsistency_cases.project_id AND t.status='READY') AS effect_present,
+      EXISTS(SELECT 1 FROM jobs j WHERE j.project_id=inconsistency_cases.project_id AND j.kind=inconsistency_cases.source_job_kind AND j.status IN ('PENDING','RETRYABLE','LEASED')) AS equivalent_operation_active
+    FROM inconsistency_cases WHERE project_id=$1 ORDER BY created_at DESC,id DESC LIMIT 50`, [projectId])).rows;
+  return rows.map((row) => ({
+    id: String(row.id), source_operation_id: String(row.source_operation_id), source_job_id: String(row.source_job_id), source_job_kind: String(row.source_job_kind),
+    cause_code: String(row.cause_code), classification: String(row.classification), severity: String(row.severity), status: String(row.status),
+    generation: Number(row.generation), recovery_attempts: Number(row.recovery_attempts), recoverability: String(row.recoverability), recommended_action: String(row.recommended_action),
+    resolution_operation_id: row.resolution_operation_id ? String(row.resolution_operation_id) : null, resolution_job_id: row.resolution_job_id ? String(row.resolution_job_id) : null,
+    created_at: new Date(row.created_at).toISOString(), updated_at: new Date(row.updated_at).toISOString(), resolved_at: row.resolved_at ? new Date(row.resolved_at).toISOString() : null,
+    effect_present: Boolean(row.effect_present), equivalent_operation_active: Boolean(row.equivalent_operation_active),
+  }));
 };
 
 const readAssuranceFacts = async (client: pg.PoolClient, projectId: string) => {
@@ -812,6 +868,7 @@ type DescriptorContext = {
   legacyGates: Awaited<ReturnType<typeof readLegacyGateFacts>>;
   stop: Awaited<ReturnType<typeof readStopFacts>>;
   recovery: RecoverySummary[];
+  inconsistencies: InconsistencySummary[];
   delivery: Awaited<ReturnType<typeof readDeliverySummary>>;
   assurance: Awaited<ReturnType<typeof readAssuranceFacts>>;
   technologyBaseline: TechnologyBaselineSummary | null;
@@ -888,6 +945,28 @@ const gateDecisionSchema = (gate: { allowed_decisions: string[] }) => jsonSchema
     evidence: { type: 'object', description: 'Published evidence for the decision.' },
   },
   ['version', 'decision', 'evidence']
+);
+const legacyRegisterProjectDecisionSchema = (gateId: string) => jsonSchema(
+  {
+    gate_id: { type: 'string', enum: [gateId], description: 'Gate REGISTER_PROJECT aberto para esta instância.' },
+    version: { type: 'integer', description: 'Versão atual do gate.' },
+    decision: { type: 'string', enum: ['APPROVED', 'REJECTED'], enum_labels: { APPROVED: 'Aprovar', REJECTED: 'Retornar para ajustes' }, description: 'Decisão publicada para o registro.' },
+    feedback: { type: 'string', description: 'Feedback obrigatório ao retornar para ajustes.' },
+  },
+  ['gate_id', 'version', 'decision']
+);
+// PRODUCT_COMMITMENT in PROJECT_DISCOVERY v1-v3 is governed by the original
+// /decision endpoint, not by gate_records. Its legacy row has no persisted
+// generic decision catalog, so this adapter owns the endpoint-compatible
+// decision contract explicitly instead of treating an empty catalog as one.
+const legacyProductCommitmentDecisionSchema = (gateId: string) => jsonSchema(
+  {
+    gate_id: { type: 'string', enum: [gateId], description: 'Gate PRODUCT_COMMITMENT aberto para esta instância.' },
+    version: { type: 'integer', description: 'Versão atual do gate.' },
+    decision: { type: 'string', enum: ['APPROVED', 'REJECTED'], enum_labels: { APPROVED: 'Aprovar', REJECTED: 'Solicitar ajustes' }, description: 'Decisão publicada para o compromisso de produto.' },
+    feedback: { type: 'string', description: 'Feedback obrigatório ao solicitar ajustes.' },
+  },
+  ['gate_id', 'version', 'decision']
 );
 const gateDecisionOptions = (gate: { allowed_decisions: string[]; decision_effects: unknown }) => {
   const effects = gate.decision_effects && typeof gate.decision_effects === 'object' ? gate.decision_effects as Record<string, unknown> : {};
@@ -1005,6 +1084,27 @@ const buildCurrentProjectActions = async (ctx: DescriptorContext, can: ReturnTyp
   return actions;
 };
 
+/** REC-01 is intentionally independent of legacy workflow adapters: it is an
+ * operational stop, not a newly inferred business transition.  It is emitted
+ * only for the one persisted strategy that the server can revalidate. */
+const buildInconsistencyActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>) => {
+  const actions: ActionDescriptor[] = [];
+  const { projectId, project, inconsistencies } = ctx;
+  for (const item of inconsistencies) {
+    if (item.status !== 'OPEN' || item.effect_present || item.equivalent_operation_active || item.recommended_action !== 'RECOVER_FAILED_OPERATION' || item.source_job_kind !== 'PREPARE_TECHNOLOGY_SELECTION_CONTEXT') continue;
+    if (project.archived || project.workflow_code !== 'PROJECT_DISCOVERY' || project.workflow_version !== 3 || project.state !== 'TECHNOLOGY_SELECTION_PREPARING') continue;
+    if (!(await can({ action: 'OPERATE_PROJECT', projectId, resourceType: 'PROJECT', resourceId: projectId, roles: ['OPERATOR'] }))) continue;
+    actions.push(descriptor(ctx, {
+      code: 'RECOVER_FAILED_OPERATION', resourceKind: 'PROJECT', resourceId: projectId,
+      href: `/api/projects/${projectId}/inconsistencies/${item.id}/recover`, idempotencyRequired: true,
+      confirmationRequired: true,
+      schema: jsonSchema({ expected_generation: { type: 'integer', description: 'Generation published for this inconsistency case.' } }, ['expected_generation']),
+      bindings: [bound('expected_generation', item.generation)], descriptorVariant: `inconsistency:${item.id}:${item.generation}`,
+    }));
+  }
+  return actions;
+};
+
 const buildModuleActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, module: Awaited<ReturnType<typeof readModuleFacts>>[number]) => {
   const actions: ActionDescriptor[] = [];
   const { projectId, stop, asOfEventId } = ctx;
@@ -1088,21 +1188,64 @@ const buildWorkItemActions = async (ctx: DescriptorContext, can: ReturnType<type
   return actions;
 };
 
-const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, project: ProjectFacts, adapter: LegacyAdapter) => {
+const buildLegacyProjectActions = async (ctx: DescriptorContext, can: ReturnType<typeof capabilityResolver>, principal: AuthenticatedPrincipal, project: ProjectFacts, adapter: LegacyAdapter) => {
   const actions: ActionDescriptor[] = [];
   const { projectId } = ctx;
   const declared = adapter.publishes[project.state] ?? [];
   for (const code of declared) {
-    if (code === 'PRODUCT_COMMITMENT_DECISION') {
+    if (code === 'SUBMIT_INTAKE') {
+      // The v1 command is valid only for a human operator on the exact
+      // persisted DRAFT fact and only while no operation is already active.
+      if (principal.type !== 'HUMAN' || project.archived || project.has_active_operation || ctx.gates.some((gate) => gate.status === 'OPEN') || ctx.legacyGates.some((gate) => gate.status === 'OPEN')) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'SUBMIT_INTAKE', resourceKind: 'PROJECT', resourceId: projectId,
+        href: `/api/projects/${projectId}/submit`, idempotencyRequired: true,
+        confirmationRequired: false, schema: null, bindings: [],
+      }));
+    } else if (code === 'DECIDE_GATE') {
+      // PROJECT_INTAKE v1 predates gate_records. Its persisted legacy gate is
+      // still the authoritative CURRENT_GATE fact for the official decision
+      // endpoint, so it is adapted explicitly rather than inferred by state.
+      const openGate = ctx.legacyGates.find((gate) => gate.gate_code === 'REGISTER_PROJECT' && gate.status === 'OPEN');
+      if (principal.type !== 'HUMAN' || !openGate || project.archived) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'DECIDE_GATE', resourceKind: 'GATE', resourceId: openGate.id,
+        href: `/api/projects/${projectId}/decision`, idempotencyRequired: true,
+        gateVersion: openGate.version, confirmationRequired: true,
+        schema: legacyRegisterProjectDecisionSchema(openGate.id),
+        bindings: [bound('gate_id', openGate.id), bound('version', openGate.version), human('decision', true), human('feedback', false)],
+        decisionOptions: [
+          { code: 'APPROVED', label: 'Aprovar', consequence: 'Registra o projeto; a continuação usa a seleção de discovery persistida.' },
+          { code: 'REJECTED', label: 'Retornar para ajustes', consequence: 'Retorna ao rascunho e preserva o gate/decisão auditáveis.' },
+        ],
+      }));
+    } else if (code === 'START_PRODUCT_DISCOVERY') {
+      // v3 alone keeps the historical explicit start command. v4 is governed
+      // by LR-02's macro-lifecycle and must never receive v3 semantics.
+      if (principal.type !== 'HUMAN' || project.archived || project.has_active_operation) continue;
+      if (project.selected_discovery_workflow_code !== 'PROJECT_DISCOVERY' || project.selected_discovery_workflow_version !== 3) continue;
+      if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
+      actions.push(descriptor(ctx, {
+        code: 'START_PRODUCT_DISCOVERY', resourceKind: 'PROJECT', resourceId: projectId,
+        href: `/api/projects/${projectId}/start-discovery`, idempotencyRequired: true,
+        confirmationRequired: false, schema: null, bindings: [],
+      }));
+    } else if (code === 'PRODUCT_COMMITMENT_DECISION') {
       // Legacy product commitment gate decided via POST /api/projects/:id/decision.
       const openGate = ctx.legacyGates.find((gate) => gate.gate_code === 'PRODUCT_COMMITMENT' && gate.status === 'OPEN');
-      if (!openGate) continue;
+      if (principal.type !== 'HUMAN' || !openGate || project.archived) continue;
       if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
       actions.push(descriptor(ctx, {
         code: 'PRODUCT_COMMITMENT_DECISION', resourceKind: 'GATE', resourceId: openGate.id,
         href: `/api/projects/${projectId}/decision`, idempotencyRequired: true,
-        gateVersion: openGate.version, confirmationRequired: true, schema: gateDecisionSchema(openGate),
-        bindings: [bound('version', openGate.version), human('decision', true), human('reason', false), human('evidence', true, { schema: { type: 'string', description: 'Evidência pública permitida.' }, serialize_as: 'EVIDENCE' })], decisionOptions: gateDecisionOptions(openGate),
+        gateVersion: openGate.version, confirmationRequired: true, schema: legacyProductCommitmentDecisionSchema(openGate.id),
+        bindings: [bound('gate_id', openGate.id), bound('version', openGate.version), human('decision', true), human('feedback', false)],
+        decisionOptions: [
+          { code: 'APPROVED', label: 'Aprovar', consequence: 'Aprova o compromisso; a transição seguinte é determinada pelo workflow persistido.' },
+          { code: 'REJECTED', label: 'Solicitar ajustes', consequence: 'Registra o feedback e retorna pelo fluxo legado de ajustes.' },
+        ],
       }));
     } else if (code === 'APPLY_REVIEW_ADJUSTMENTS') {
       if (!(await can({ action: 'OPERATE_PROJECT', projectId, roles: ['OPERATOR'] }))) continue;
@@ -1247,11 +1390,17 @@ const buildAssuranceActions = async (ctx: DescriptorContext, can: ReturnType<typ
 
 const evidence = (reference: string, summary: string, classification: 'PUBLIC' | 'RESTRICTED' = 'PUBLIC') => [{ reference, summary, classification }];
 const actionFor = (actions: ActionDescriptor[], code: string, kind: string, id: string) =>
-  actions.find((action) => action.code === code && action.target.resource_kind === kind && action.target.resource_id === id && (action.presentation.kind === 'HUMAN_DECISION' || action.presentation.kind === 'HUMAN_OPERATION'))?.descriptor_id ?? null;
+  actions.find((action) => action.code === code && action.target.resource_kind === kind && action.target.resource_id === id && (action.presentation.kind === 'HUMAN_DECISION' || action.presentation.kind === 'HUMAN_OPERATION' || action.presentation.kind === 'LEGACY'))?.descriptor_id ?? null;
 const externalBlockerDescriptorId = (projectId: string, workItemId: string, dependencyId: string) =>
   `action:RESOLVE_EXTERNAL_BLOCKER:WORK_ITEM:${workItemId}:/api/projects/${projectId}/work-items/${workItemId}/resolve-external-blocker:${encodeURIComponent(`external-blocker:${dependencyId}`)}`;
 const legacyAdapterFor = (workflowCode: string | null, workflowVersion: number | null) =>
   workflowCode && workflowVersion != null ? LEGACY_ADAPTERS[`${workflowCode}:${workflowVersion}`] ?? null : null;
+
+const legacyProductCommitmentGate = (ctx: DescriptorContext) => {
+  const adapter = legacyAdapterFor(ctx.project.workflow_code, ctx.project.workflow_version);
+  if (!adapter?.publishes[ctx.project.state]?.includes('PRODUCT_COMMITMENT_DECISION')) return undefined;
+  return ctx.legacyGates.find((gate) => gate.gate_code === 'PRODUCT_COMMITMENT' && gate.status === 'OPEN');
+};
 
 const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]): StopSurfaceProjection[] => {
   const surfaces: StopSurfaceProjection[] = [];
@@ -1340,6 +1489,22 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
       continuation: { kind: reconciling ? 'RECONCILIATION' : 'AUTOMATIC', expected: reconciling ? 'RECONCILE BEFORE RETRY' : 'Ação técnica limitada pelo RECOVERY_POLICY:v1.', progress: { stage: decision.execution_state } },
       authority: null, decisions: [], evidence: evidence(`recovery:${decision.id}`, 'Decisão de recovery e referências permitidas.', 'RESTRICTED'), action_descriptor_id: null, terminal: false, restricted: true });
     stopped.add(`${decision.resource_kind}:${decision.resource_id}`);
+  }
+
+  for (const item of ctx.inconsistencies.filter((value) => ['OPEN','RECOVERY_PENDING','RECOVERY_RUNNING','WAITING_RECONCILIATION','TERMINAL'].includes(value.status))) {
+    const action = actions.find((candidate) => candidate.code === 'RECOVER_FAILED_OPERATION' && candidate.command.href.endsWith(`/inconsistencies/${item.id}/recover`))?.descriptor_id ?? null;
+    const reconciling = item.status === 'WAITING_RECONCILIATION';
+    const terminal = item.status === 'TERMINAL';
+    const recovering = ['RECOVERY_PENDING','RECOVERY_RUNNING'].includes(item.status);
+    add({ id: `inconsistency:${item.id}:${item.generation}`, resource_kind: 'PROJECT', resource_id: ctx.project.id, category: 'RECOVERY', type: 'TERMINAL_JOB_INCONSISTENCY',
+      resource_state: ctx.project.state, lifecycle_state: ctx.project.state, canonical_state: ctx.project.canonical_state,
+      subject: { kind: 'INCONSISTENCY_CASE', id: item.id, generation: item.generation },
+      cause: { code: item.cause_code, message: `${item.source_job_kind} falhou após esgotar retries.`, reason: null },
+      operational_message: terminal ? 'As recuperações governadas foram esgotadas; a inconsistência e todo o histórico foram preservados.' : recovering ? 'Uma nova operação de recuperação foi criada e será processada pelo worker.' : reconciling ? 'O efeito da execução não é conclusivo; reconciliar antes de criar nova recuperação.' : 'Inconsistência operacional aberta; o job terminal original permanece preservado.',
+      waiting_for: terminal ? 'Escalonamento operacional humano.' : recovering ? 'Conclusão normal da nova operação.' : reconciling ? 'Reconciliação de efeito.' : action ? 'Sua recuperação autorizada.' : 'Autoridade OPERATOR / OPERATE_PROJECT no escopo do projeto.',
+      continuation: terminal ? { kind:'TERMINAL', expected:'Preservar a cadeia e escalar conforme a operação.', progress:{ attempt:item.recovery_attempts, exhausted:true } } : reconciling ? { kind:'RECONCILIATION', expected:'RECONCILE BEFORE RETRY', progress:{ attempt:item.recovery_attempts } } : recovering ? { kind:'AUTOMATIC', expected:'Worker executará a nova operação normal.', progress:{ attempt:item.recovery_attempts } } : { kind:action ? 'HUMAN_ACTION' : 'EXTERNAL_WAIT', expected:'Criar nova operação/job, sem reabrir o job original.', progress:{ attempt:item.recovery_attempts } },
+      authority: terminal || recovering || reconciling ? null : { required_roles:['OPERATOR'], scope_kind:'PROJECT', scope_id:ctx.project.id }, decisions: [],
+      evidence: evidence(`inconsistency:${item.id}`, 'Caso de inconsistência e lineage de origem.', 'RESTRICTED'), action_descriptor_id: action, terminal, restricted:true });
   }
 
   for (const gate of ctx.gates.filter((value) => value.status === 'OPEN')) {
@@ -1441,7 +1606,7 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
     // The adapter and its exact state declaration decide which actions are
     // applicable.  We only associate descriptors from this same snapshot;
     // neither a state name nor a generic legacy classification grants one.
-    const descriptors = declared.flatMap((code) => actions.filter((action) => action.code === code && action.presentation.kind === 'LEGACY' && (
+    const descriptors = declared.flatMap((code) => actions.filter((action) => action.code === code && (
       item.kind === 'PROJECT'
         ? action.command.href.startsWith(`/api/projects/${ctx.projectId}/`)
         : action.target.resource_kind === item.kind && action.target.resource_id === item.id
@@ -1476,14 +1641,22 @@ const buildStopSurfaces = (ctx: DescriptorContext, actions: ActionDescriptor[]):
  * ------------------------------------------------------------------ */
 
 const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_kind: ResourceKind; resource_id: string | null } => {
-  const { project, stop, gates, recovery, technologyBaseline } = ctx;
+  const { project, stop, gates, legacyGates, recovery, inconsistencies, technologyBaseline } = ctx;
   if (stop.projectCancellation) return { code: 'CANCELLED', resource_kind: 'PROJECT', resource_id: project.id };
   if (stop.projectPause) return { code: 'PAUSED', resource_kind: 'PROJECT', resource_id: project.id };
   const activeRecovery = recovery.find((r) => ['PENDING', 'EXECUTING', 'WAITING_RECONCILIATION'].includes(r.execution_state));
   if (activeRecovery?.resource_kind && activeRecovery.resource_id) return { code: activeRecovery.cause, resource_kind: activeRecovery.resource_kind, resource_id: activeRecovery.resource_id };
   if (activeRecovery) return { code: 'UNMAPPED_STOP_SURFACE', resource_kind: 'PROJECT', resource_id: project.id };
+  const openInconsistency = inconsistencies.find((item) => ['OPEN','RECOVERY_PENDING','RECOVERY_RUNNING','WAITING_RECONCILIATION','TERMINAL'].includes(item.status));
+  if (openInconsistency) return { code: openInconsistency.cause_code, resource_kind: 'PROJECT', resource_id: project.id };
   const openGate = gates.find((gate) => gate.status === 'OPEN');
   if (openGate) return { code: openGate.gate_code, resource_kind: 'GATE', resource_id: openGate.id };
+  const intakeGate = project.workflow_code === 'PROJECT_INTAKE' && project.workflow_version === 1 && project.state === 'WAITING_FOR_REGISTRATION'
+    ? legacyGates.find((gate) => gate.gate_code === 'REGISTER_PROJECT' && gate.status === 'OPEN')
+    : undefined;
+  if (intakeGate) return { code: intakeGate.gate_code, resource_kind: 'GATE', resource_id: intakeGate.id };
+  const productCommitmentGate = legacyProductCommitmentGate(ctx);
+  if (productCommitmentGate) return { code: productCommitmentGate.gate_code, resource_kind: 'GATE', resource_id: productCommitmentGate.id };
   if (technologyBaseline?.gate_status === 'OPEN') return { code: 'TECHNOLOGY_BASELINE', resource_kind: 'GATE', resource_id: technologyBaseline.gate_id };
   if (project.archived) return { code: 'ARCHIVED', resource_kind: 'PROJECT', resource_id: project.id };
   if (project.failure_code) return { code: project.failure_code, resource_kind: 'PROJECT', resource_id: project.id };
@@ -1491,16 +1664,36 @@ const deriveCause = (ctx: DescriptorContext): { code: string | null; resource_ki
 };
 
 const deriveNextAction = (ctx: DescriptorContext, allowed: ActionDescriptor[]): { text: string; descriptor_code?: string } | null => {
-  const { stop, gates, recovery, technologyBaseline } = ctx;
+  const { project, stop, gates, legacyGates, recovery, inconsistencies, technologyBaseline } = ctx;
   if (stop.projectCancellation) return { text: 'Projeto cancelado; nenhuma continuação pendente.' };
   if (stop.projectPause) {
     const resume = allowed.find((action) => action.code === 'RESUME_PROJECT');
     return resume ? { text: 'Projeto pausado. Retomar com evidência.', descriptor_code: 'RESUME_PROJECT' } : { text: 'Projeto pausado; retomada exige autoridade de on-call.' };
   }
+  const inconsistency = inconsistencies.find((item) => ['OPEN','RECOVERY_PENDING','RECOVERY_RUNNING','WAITING_RECONCILIATION','TERMINAL'].includes(item.status));
+  if (inconsistency) {
+    const action = allowed.find((candidate) => candidate.code === 'RECOVER_FAILED_OPERATION' && candidate.command.href.endsWith(`/inconsistencies/${inconsistency.id}/recover`));
+    if (inconsistency.status === 'OPEN') return action ? { text: `Inconsistência operacional aberta: ${inconsistency.source_job_kind} falhou após esgotar retries.`, descriptor_code: action.code } : { text: `Inconsistência operacional aberta: ${inconsistency.source_job_kind} falhou após esgotar retries; recuperação exige autoridade operacional.` };
+    if (inconsistency.status === 'WAITING_RECONCILIATION') return { text: 'Inconsistência aguardando reconciliação antes de nova recuperação.' };
+    if (inconsistency.status === 'TERMINAL') return { text: 'Inconsistência terminal requer escalonamento operacional.' };
+    return { text: 'Recuperação governada em andamento.' };
+  }
   const openGate = gates.find((gate) => gate.status === 'OPEN');
   if (openGate) {
     const decide = allowed.find((action) => action.code === 'DECIDE_GATE' || action.code === 'DECIDE_DELIVERY_ACCEPTANCE');
     return { text: `Decisão pendente no gate ${openGate.gate_code}.`, ...(decide ? { descriptor_code: decide.code } : {}) };
+  }
+  const intakeGate = project.workflow_code === 'PROJECT_INTAKE' && project.workflow_version === 1 && project.state === 'WAITING_FOR_REGISTRATION'
+    ? legacyGates.find((gate) => gate.gate_code === 'REGISTER_PROJECT' && gate.status === 'OPEN')
+    : undefined;
+  if (intakeGate) {
+    const decide = allowed.find((action) => action.code === 'DECIDE_GATE' && action.target.resource_kind === 'GATE' && action.target.resource_id === intakeGate.id);
+    return { text: 'Decisão pendente no gate REGISTER_PROJECT.', ...(decide ? { descriptor_code: decide.code } : {}) };
+  }
+  const productCommitmentGate = legacyProductCommitmentGate(ctx);
+  if (productCommitmentGate) {
+    const decide = allowed.find((action) => action.code === 'PRODUCT_COMMITMENT_DECISION' && action.target.resource_kind === 'GATE' && action.target.resource_id === productCommitmentGate.id);
+    return { text: 'Decisão pendente no gate PRODUCT_COMMITMENT.', ...(decide ? { descriptor_code: decide.code } : {}) };
   }
   if (technologyBaseline?.gate_status === 'OPEN') {
     const decide = allowed.find((action) => action.code === 'DECIDE_TECHNOLOGY_BASELINE');
@@ -1531,13 +1724,14 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     const stop = await readStopFacts(client, projectId);
     const delivery = await readDeliverySummary(client, projectId);
     const recovery = await readRecoveryFacts(client, projectId);
+    const inconsistencies = await readInconsistencyFacts(client, projectId);
     const assurance = await readAssuranceFacts(client, projectId);
     const materializationBaseline = await materializationBaselineOptionsForClient(client, projectId);
     const activityFacts = await readActivityFacts(client, projectId, snapshotNow);
     const asOfEventRow = await client.query(`SELECT COALESCE(MAX(id),0)::bigint AS as_of_event_id FROM events WHERE project_id=$1`, [projectId]);
     const asOfEventId = Number(asOfEventRow.rows[0].as_of_event_id ?? 0);
 
-    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, delivery, assurance, technologyBaseline, materializationBaseline };
+    const ctx: DescriptorContext = { projectId, asOfEventId, project, modules, workItems, gates, legacyGates, stop, recovery, inconsistencies, delivery, assurance, technologyBaseline, materializationBaseline };
     const can = capabilityResolver(principal, snapshotNow, client);
 
     // ----- resource projections (state separation preserved) -----
@@ -1621,8 +1815,9 @@ export const buildStateActionProjection = async (projectId: string, principal: A
     if (projectKind.current) {
       allowed.push(...await buildCurrentProjectActions(ctx, can));
     } else if (projectKind.legacy && !projectKind.unknown && projectAdapter) {
-      allowed.push(...await buildLegacyProjectActions(ctx, can, project, projectAdapter));
+      allowed.push(...await buildLegacyProjectActions(ctx, can, principal, project, projectAdapter));
     }
+    allowed.push(...await buildInconsistencyActions(ctx, can));
     // Module actions (per module adapter; legacy module adapters currently
     // publish no actions and remain read-only fail-closed)
     for (const module of modules) {
@@ -1685,6 +1880,7 @@ export const buildStateActionProjection = async (projectId: string, principal: A
         gates: gateProjections,
         delivery,
         recovery,
+        inconsistencies,
         assurance: assuranceSummaries,
         technology_baseline: technologyBaseline,
       },

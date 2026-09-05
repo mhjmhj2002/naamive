@@ -8,6 +8,7 @@ import type pg from 'pg';
 import { publicEvent } from './projection.js';
 import { listProjectExecutionData } from './agent-execution-admin.js';
 import { macroLifecycleProjection } from './macro-lifecycle.js';
+import type { AuthenticatedPrincipal } from './auth.js';
 
 type Intake = Record<string, unknown>;
 const fields = ['title', 'business_owner', 'business_problem', 'desired_outcome', 'success_metrics', 'stakeholders', 'known_constraints', 'evidence_sources', 'assumptions', 'open_questions'];
@@ -15,8 +16,8 @@ const slug = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const tech = /\b(python|node(?:\.js)?|javascript|typescript|java|angular|react|framework|banco de dados|postgres(?:ql)?|mysql|mongodb|cloud|aws|azure|gcp|openai|modelo de ia|arquitetura|microservi[cç]o|deployment)\b/i;
 export class ApiError extends Error { constructor(readonly status: number, readonly code: string, message = code) { super(message); } }
 const canonical = (value: unknown) => JSON.stringify(value, Object.keys(value as object).sort());
-const event = (client: pg.PoolClient, projectId: string, type: string, correlation: string, payload: object, operationId?: string, jobId?: string, revisionId?: string) => client.query(
-  'INSERT INTO events(project_id,event_type,correlation_id,payload,operation_id,job_id,revision_id,actor_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8)', [projectId, type, correlation, payload, operationId ?? null, jobId ?? null, revisionId ?? null, config().operatorId]);
+const event = (client: pg.PoolClient, projectId: string, type: string, correlation: string, payload: object, operationId?: string, jobId?: string, revisionId?: string, actorId = config().operatorId) => client.query(
+  'INSERT INTO events(project_id,event_type,correlation_id,payload,operation_id,job_id,revision_id,actor_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8)', [projectId, type, correlation, payload, operationId ?? null, jobId ?? null, revisionId ?? null, actorId]);
 
 export const validateIntake = (payload: Intake) => {
   const errors: Array<{ code: string; field: string; message: string }> = [];
@@ -56,15 +57,18 @@ const gitBinding = (path: string, requestedBase: unknown, dirtyConfirmation: unk
   }
 };
 
-export const createProject = async (body: Intake) => {
+export const createProject = async (body: Intake, creator: AuthenticatedPrincipal) => {
+  if (creator.type !== 'HUMAN') throw new ApiError(403, 'AUTH_HUMAN_PRINCIPAL_REQUIRED');
   const id = String(body.project_id ?? ''); if (!slug.test(id)) throw new ApiError(422, 'INTAKE_PROJECT_ID_INVALID');
   const binding = gitBinding(String(body.repository_path ?? ''), body.base_branch, body.dirty_tree_confirmation); const correlation = randomUUID();
   return withTransaction(async (client) => {
     const discoveryWorkflow=await selectedWorkflow(client,'PROJECT_DISCOVERY','NEW_PROJECTS')??{workflow_code:'PROJECT_DISCOVERY',workflow_version:3};
     try { await client.query(`INSERT INTO projects(id,title,business_owner,submitted_by,created_by,updated_by,repository_path,repository_origin,repository_origin_normalized,base_branch,branch_base_source,initial_sha,dirty_tree_confirmed,dirty_tree_reason,dirty_tree_confirmed_by,draft,selected_discovery_workflow_code,selected_discovery_workflow_version)
-      VALUES($1,$2,$3,$4,$4,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`, [id, String(body.title ?? ''), String(body.business_owner ?? ''), config().operatorId, binding.repositoryPath, binding.origin, binding.normalizedOrigin, binding.base, binding.baseSource, binding.sha, binding.dirty, binding.dirtyReason, binding.dirty ? config().operatorId : null, body,discoveryWorkflow.workflow_code,discoveryWorkflow.workflow_version]); }
+      VALUES($1,$2,$3,$4,$4,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)`, [id, String(body.title ?? ''), String(body.business_owner ?? ''), creator.id, binding.repositoryPath, binding.origin, binding.normalizedOrigin, binding.base, binding.baseSource, binding.sha, binding.dirty, binding.dirtyReason, binding.dirty ? creator.id : null, body,discoveryWorkflow.workflow_code,discoveryWorkflow.workflow_version]); }
     catch { throw new ApiError(409, 'INTAKE_PROJECT_ID_EXISTS'); }
-    await event(client, id, 'PROJECT_CREATED', correlation, { repository_origin: binding.origin, base_branch: binding.base, base_branch_source: binding.baseSource, initial_sha: binding.sha, dirty_tree_confirmed: binding.dirty,selected_discovery_workflow:discoveryWorkflow }); return { project_id: id,selected_discovery_workflow:discoveryWorkflow };
+    await client.query(`INSERT INTO auth_role_grants(id,principal_id,role_code,action_code,project_id)
+      VALUES($1,$2,'OPERATOR','READ_PROJECT',$3),($4,$2,'OPERATOR','OPERATE_PROJECT',$3)`, [randomUUID(), creator.id, id, randomUUID()]);
+    await event(client, id, 'PROJECT_CREATED', correlation, { repository_origin: binding.origin, base_branch: binding.base, base_branch_source: binding.baseSource, initial_sha: binding.sha, dirty_tree_confirmed: binding.dirty,selected_discovery_workflow:discoveryWorkflow }, undefined, undefined, undefined, creator.id); return { project_id: id,selected_discovery_workflow:discoveryWorkflow };
   });
 };
 

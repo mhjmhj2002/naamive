@@ -22,9 +22,10 @@ import { reconcileEligibilityScheduler } from './eligibility-scheduler.js';
 import { runtimeHealth, startRuntimeProcess } from './runtime-process.js';
 import { AssuranceError, assuranceProjection, cancelAcceptance, createAssistanceProposal, createIndependentReview, decideReview, recordHumanGate, reconcileAcceptance, transitionBlock } from './assurance.js';
 import { catalogGateProjection, decideCatalogGate, publishedGateCatalog } from './gate-catalog.js';
-import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
+import { authenticate, authorize, authorizeCatalogGate, bootstrapFirstAdministrator, createHumanPrincipal, createServicePrincipal, enforceCsrf, login, logout, restoreSession, revokePrincipal, rotateServiceCredential, type AuthenticatedPrincipal } from './auth.js';
 import { buildStateActionProjection } from './state-action-projection.js';
 import { reconcileCauseAwareRecovery, requestIntegrationRecovery, requestWorkItemRecovery } from './recovery.js';
+import { requestTerminalJobRecovery } from './inconsistency-recovery.js';
 import { decideProductCommitmentGate, productCommitmentProjection } from './product-commitment.js';
 import { activateV4DiscoveryAfterRegistration, reconcileMacroLifecycle } from './macro-lifecycle.js';
 import { reconcileAutomaticAssuranceIntegration } from './automatic-assurance-integration.js';
@@ -33,6 +34,7 @@ const settings = config(); const staticRoot = join(dirname(fileURLToPath(import.
 const bootstrapCss = join(dirname(fileURLToPath(import.meta.url)), '..', 'node_modules', 'bootstrap', 'dist', 'css', 'bootstrap.min.css');
 const projectionRefreshScript = join(staticRoot, 'projection-refresh.js');
 const actionPayloadScript = join(staticRoot, 'action-payload.js');
+const loginPage = join(staticRoot, 'login.html');
 const json = async (request: IncomingMessage) => JSON.parse(await new Promise<string>((resolve, reject) => { let body=''; request.on('data', (chunk) => body += chunk); request.on('end', () => resolve(body || '{}')); request.on('error', reject); }));
 const respond = (response: ServerResponse, status: number, body: object) => { response.writeHead(status, { 'content-type': 'application/json', 'access-control-allow-origin': settings.webOrigin }); response.end(JSON.stringify(body)); };
 const uuidParameter=(value:string|null,code:string)=>{if(value!==null&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value))throw new ApiError(422,code);return value;};
@@ -69,6 +71,27 @@ const decide = async (projectId: string, body: Record<string, unknown>, actor: A
 });
 export const createApiServer = () => createServer(async (request, response) => { try {
   const url = new URL(request.url ?? '/', settings.webOrigin);
+  // The app shell is a protected resource too: an unauthenticated navigation
+  // is redirected before any project/UI content can be rendered.
+  if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/login')) {
+    let sessionValid = false;
+    try {
+      const candidate = await authenticate(request);
+      sessionValid = candidate.type === 'HUMAN' && Boolean(candidate.sessionId);
+    } catch (error) {
+      if (!(error instanceof ApiError)) throw error;
+    }
+    if (url.pathname === '/' && !sessionValid) {
+      response.writeHead(302, { location: '/login', 'cache-control': 'no-store' });
+      return response.end();
+    }
+    if (url.pathname === '/login' && sessionValid) {
+      response.writeHead(302, { location: '/', 'cache-control': 'no-store' });
+      return response.end();
+    }
+    response.writeHead(200, { 'content-type': 'text/html', 'cache-control': 'no-store' });
+    return response.end(await readFile(url.pathname === '/' ? join(staticRoot, 'index.html') : loginPage));
+  }
   if (request.method === 'OPTIONS') { response.writeHead(204, { 'access-control-allow-origin': settings.webOrigin, 'access-control-allow-methods': 'GET,POST,PUT,OPTIONS', 'access-control-allow-headers': 'content-type,idempotency-key,x-csrf-token,last-event-id,authorization' }); return response.end(); }
   if (request.method === 'POST' && url.pathname === '/api/auth/bootstrap') {
     if(String(request.headers.origin??'')!==settings.webOrigin) throw new ApiError(403,'AUTH_CSRF_ORIGIN_INVALID');
@@ -78,7 +101,7 @@ export const createApiServer = () => createServer(async (request, response) => {
     if(String(request.headers.origin??'')!==settings.webOrigin) throw new ApiError(403,'AUTH_CSRF_ORIGIN_INVALID');
     return respond(response,200,await login(await json(request),response));
   }
-  const publicRoute=request.method==='GET'&&['/','/projection-refresh.js','/action-payload.js','/assets/bootstrap.min.css','/health/runtime'].includes(url.pathname);
+  const publicRoute=request.method==='GET'&&['/projection-refresh.js','/action-payload.js','/assets/bootstrap.min.css','/health/runtime'].includes(url.pathname);
   let principal:AuthenticatedPrincipal|undefined;
   if(!publicRoute) {
     principal=await authenticate(request);
@@ -89,6 +112,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const workItemMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/(development|restart-development|retry-development|qa|rework|rework-decision|merge|reconcile|recovery|resolve-external-blocker)$/);
   const developmentRuntimeMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/work-items\/([^/]+)\/development-runtime$/);
   const candidateMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/integration-candidates\/([^/]+)\/(validate|revalidate|supersede|integrate|retry|reconcile|recovery|escalate|archive)$/);
+  const inconsistencyRecoveryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/inconsistencies\/([0-9a-f-]{36})\/recover$/);
   const deliveryMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/delivery(?:\/(prepare|projection|pause|cancel|packages\/([^/]+)\/(outputs|materialize|technical-acceptance|gate)|gates\/([^/]+)\/decision|pauses\/([^/]+)\/resume|external-effects\/([^/]+)\/(start|unknown)))?$/);
   const moduleLifecycleMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/modules\/([^/]+)\/lifecycle\/(pause|cancel)$/);
   const baselineMatch = url.pathname.match(/^\/api\/projects\/([^/]+)\/technology-baselines\/([^/]+)\/(submit|decision)$/);
@@ -121,6 +145,7 @@ export const createApiServer = () => createServer(async (request, response) => {
   const authAdminServiceMatch=url.pathname.match(/^\/api\/admin\/auth\/service-principals\/([0-9a-f-]{36})\/rotate$/);
   if (request.method==='POST' && url.pathname==='/api/auth/logout') { await logout(principal!,response); return respond(response,204,{}); }
   if (request.method==='GET' && url.pathname==='/api/auth/me') return respond(response,200,{principal:{id:principal!.id,type:principal!.type,username:principal!.username}});
+  if (request.method==='GET' && url.pathname==='/api/auth/session') return respond(response,200,await restoreSession(principal!));
   if (request.method==='POST' && url.pathname==='/api/admin/auth/principals') { await authorize(principal!,{action:'ADMIN_CONFIG',roles:['CONFIGURATION_ADMIN']}); return respond(response,201,await createHumanPrincipal(await json(request),principal!)); }
   if (request.method==='POST' && url.pathname==='/api/admin/auth/service-principals') { await authorize(principal!,{action:'ADMIN_CONFIG',roles:['CONFIGURATION_ADMIN']}); return respond(response,201,await createServicePrincipal(await json(request))); }
   if (authAdminPrincipalMatch && request.method==='POST') { await authorize(principal!,{action:'ADMIN_CONFIG',roles:['CONFIGURATION_ADMIN']}); return respond(response,200,await revokePrincipal(authAdminPrincipalMatch[1],principal!)); }
@@ -137,7 +162,7 @@ export const createApiServer = () => createServer(async (request, response) => {
     } else await authorize(principal!,{action:request.method==='GET'?'READ_PROJECT':'OPERATE_PROJECT',projectId:scopedProject,roles:['OPERATOR']});
   }
   if(url.pathname.startsWith('/api/admin/')&&!url.pathname.startsWith('/api/admin/auth/')) await authorize(principal!,{action:'ADMIN_CONFIG',roles:['CONFIGURATION_ADMIN']});
-  if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request)));
+  if (request.method === 'POST' && url.pathname === '/api/projects') return respond(response, 201, await createProject(await json(request),principal!));
   if (request.method === 'GET' && url.pathname === '/api/projects') return respond(response, 200, { items: await listProjects(url.searchParams.get('archived')==='true') });
   if (request.method === 'GET' && url.pathname === '/api/gate-catalog') return respond(response, 200, await publishedGateCatalog());
   if (deliveryMatch) {
@@ -255,6 +280,14 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'restart-development') return respond(response,202,await restartDevelopmentOrchestration(workItemMatch[1],workItemMatch[2],request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'retry-development') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');return respond(response,202,await retryDevelopmentWorkItem(workItemMatch[1],workItemMatch[2],await json(request),idempotencyKey,principal!.id)); }
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'recovery') { const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');await json(request);return respond(response,202,await requestWorkItemRecovery(workItemMatch[1],workItemMatch[2],idempotencyKey)); }
+  if (inconsistencyRecoveryMatch && request.method === 'POST') {
+    const idempotencyKey=request.headers['idempotency-key']?.toString()?.trim();
+    if(!idempotencyKey)throw new ApiError(422,'IDEMPOTENCY_KEY_REQUIRED');
+    const body=await json(request);
+    // The scoped-route authorization above revalidates OPERATE_PROJECT for
+    // every request; expected_generation is the descriptor's stale fence.
+    return respond(response,202,await requestTerminalJobRecovery(inconsistencyRecoveryMatch[1],inconsistencyRecoveryMatch[2],body.expected_generation));
+  }
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'resolve-external-blocker') return respond(response,202,await resolveExternalBlocker(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'qa') return respond(response,202,await submitQa(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
   if (workItemMatch && request.method === 'POST' && workItemMatch[3] === 'rework') return respond(response,202,await authorizeRework(workItemMatch[1],workItemMatch[2],await json(request),request.headers['idempotency-key']?.toString()??randomUUID()));
@@ -282,7 +315,6 @@ export const createApiServer = () => createServer(async (request, response) => {
   if (request.method === 'GET' && url.pathname === '/assets/bootstrap.min.css') { response.writeHead(200, { 'content-type': 'text/css', 'cache-control': 'public, max-age=86400' }); return response.end(await readFile(bootstrapCss)); }
   if (request.method === 'GET' && url.pathname === '/projection-refresh.js') { response.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' }); return response.end(await readFile(projectionRefreshScript)); }
   if (request.method === 'GET' && url.pathname === '/action-payload.js') { response.writeHead(200, { 'content-type': 'text/javascript', 'cache-control': 'no-store' }); return response.end(await readFile(actionPayloadScript)); }
-  if (request.method === 'GET' && url.pathname === '/') { response.writeHead(200, {'content-type':'text/html','cache-control':'no-store'}); return response.end(await readFile(join(staticRoot, 'index.html'))); }
   respond(response, 404, { code: 'NOT_FOUND' });
 } catch (error) { const requestId=randomUUID(); const known=error instanceof ApiError ? error : error instanceof AgentRuntimeAdminError ? new ApiError(error.status, error.code, error.message) : error instanceof AssuranceError ? new ApiError(error.status,error.code) : new ApiError(500, 'INTERNAL_ERROR');
   log('server',known.status>=500?'error':'warn',known.status>=500?'request_failed':'request_rejected',{request_id:requestId,method:request.method,route:new URL(request.url ?? '/',settings.webOrigin).pathname,status:known.status,code:known.code,error_kind:error instanceof Error?error.constructor.name:'UnknownError',database_code:typeof (error as { code?: unknown })?.code==='string'?(error as { code:string }).code:undefined,database_column:typeof (error as { column?: unknown })?.column==='string'?(error as { column:string }).column:undefined,database_message:typeof (error as { message?: unknown })?.message==='string'?(error as { message:string }).message.replace(/[^A-Za-z0-9_. -]/g,'').slice(0,160):undefined});

@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { assuranceExpansionMatrix, assurancePolicyHash, sameLegacyPolicyIdentity, validateAssuranceExpansionPolicy } from './assurance-expansion.js';
+import { assertSafeConnectedTestDatabase, assertSafeTestDatabaseUrl, requiresTestDatabaseSafetyGuard } from './test-database-safety.js';
 
 test('AUT-03 has a closed real-work matrix',()=>{
   assert.equal(assuranceExpansionMatrix('PLAN_MODULE_WORK_ITEMS')?.acceptance,'OWN');
@@ -101,6 +102,7 @@ else test('FINDING-03 freezes the NOT_SELECTED legacy (id,version) pair and reje
   const client=await pool.connect();
   const project=`aut03-finding03-${randomUUID().slice(0,8)}`,operation=randomUUID(),job=randomUUID(),legacyPolicy=randomUUID(),module=randomUUID(),revision=randomUUID(),round=randomUUID(),plan=randomUUID(),workItem=randomUUID(),worktree=randomUUID(),delivery=randomUUID(),candidate=randomUUID();
   try {
+    if (requiresTestDatabaseSafetyGuard()) await assertSafeConnectedTestDatabase((sql) => client.query(sql), assertSafeTestDatabaseUrl(process.env.DATABASE_URL!));
     await client.query('BEGIN');
     await client.query(`INSERT INTO projects(id,title,business_owner,submitted_by,repository_path,repository_origin,base_branch,initial_sha,workflow_code,workflow_version,state,draft)
       VALUES($1,'AUT-03 FINDING-03','test','test','/tmp','local','main','000','PROJECT_DISCOVERY',4,'IMPLEMENTATION','{}')`,[project]);
