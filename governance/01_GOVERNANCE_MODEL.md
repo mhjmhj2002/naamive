@@ -1,12 +1,14 @@
 # NAAMIVE — Governance Model
 
-**Status:** CANDIDATE FOR APPROVAL  
+**Status:** RATIFIED  
 **Versão:** 0.3  
 **Autoridade:** modelo normativo de governança do NAAMIVE  
 **Deriva de:** `../00_NAAMIVE_CONSTITUTION.md` e `../lifecycle/01_LIFECYCLE_MODEL.md`
 
-**Autoridade de ratificação:** autoridade humana competente de governança do NAAMIVE  
-**Vigência:** NOT IN FORCE — pendente de ratificação explícita  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-06T22:09:34-03:00  
+**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
+**Normative Baseline:** `NB-0001`  
 **Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
 **Escopo:** modelo de governança, principals, autoridade, gates, findings, risco, exceções e ratificação normativa do NAAMIVE
 

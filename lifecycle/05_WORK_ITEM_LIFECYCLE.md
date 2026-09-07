@@ -1,12 +1,14 @@
 # NAAMIVE — Work Item Lifecycle
 
-**Status:** CANDIDATE FOR APPROVAL  
+**Status:** RATIFIED  
 **Versão:** 0.2  
 **Autoridade:** lifecycle específico da entidade Work Item  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`, `03_PROJECT_LIFECYCLE.md` e `04_MODULE_LIFECYCLE.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
-**Autoridade de ratificação:** autoridade humana competente de governança do NAAMIVE  
-**Vigência:** NOT IN FORCE — pendente de ratificação explícita  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-06T22:09:34-03:00  
+**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
+**Normative Baseline:** `NB-0001`  
 **Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
 **Escopo:** entidade Work Item, readiness, aceite e relação com Executions
 

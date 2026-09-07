@@ -1,12 +1,14 @@
 # NAAMIVE — Evidence and Audit Contract
 
-**Status:** CANDIDATE FOR APPROVAL  
+**Status:** RATIFIED  
 **Versão:** 0.3  
 **Autoridade:** contrato normativo de evidence, review e audit do NAAMIVE  
 **Deriva de:** `../governance/04_AUDIT_AND_REVIEW_POLICY.md` e `../governance/01_GOVERNANCE_MODEL.md`
 
-**Autoridade de ratificação:** autoridade humana competente de governança do NAAMIVE  
-**Vigência:** NOT IN FORCE — pendente de ratificação explícita  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-06T22:09:34-03:00  
+**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
+**Normative Baseline:** `NB-0001`  
 **Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
 **Escopo:** evidence, review, audit, independência, validade e vínculo decisório
 

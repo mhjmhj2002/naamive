@@ -1,12 +1,14 @@
 # NAAMIVE — Continuity and Recovery Contract
 
-**Status:** CANDIDATE FOR APPROVAL  
+**Status:** RATIFIED  
 **Versão:** 0.3  
 **Autoridade:** contrato normativo de continuity, recovery e reconciliation do NAAMIVE  
 **Deriva de:** `../00_NAAMIVE_CONSTITUTION.md`, `../lifecycle/01_LIFECYCLE_MODEL.md` e `../lifecycle/06_EXECUTION_LIFECYCLE.md`
 
-**Autoridade de ratificação:** autoridade humana competente de governança do NAAMIVE  
-**Vigência:** NOT IN FORCE — pendente de ratificação explícita  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-06T22:09:34-03:00  
+**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
+**Normative Baseline:** `NB-0001`  
 **Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
 **Escopo:** continuity, failure, retry, recovery, reconciliation e compensation
 

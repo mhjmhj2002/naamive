@@ -1,12 +1,14 @@
 # NAAMIVE — Persistence Model
 
-**Status:** CANDIDATE FOR APPROVAL  
+**Status:** RATIFIED  
 **Versão:** 0.3  
 **Autoridade:** modelo conceitual de persistência  
 **Deriva de:** `01_CANONICAL_STATE_MODEL.md` e Contracts
 
-**Autoridade de ratificação:** autoridade humana competente de governança do NAAMIVE  
-**Vigência:** NOT IN FORCE — pendente de ratificação explícita  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-06T22:09:34-03:00  
+**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
+**Normative Baseline:** `NB-0001`  
 **Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
 **Escopo:** garantias conceituais de persistência, histórico, idempotência, causalidade e durabilidade
 
