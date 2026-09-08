@@ -1,28 +1,24 @@
-# Generated package manifest
+# Package Manifest — NB-0002 R2-17 Ratification
 
-- `00_DOCUMENTATION_MAP.md` — 241 lines
-- `api/01_API_MODEL.md` — 138 lines
-- `api/02_COMMAND_QUERY_MODEL.md` — 133 lines
-- `api/03_ERROR_IDEMPOTENCY_AND_CONCURRENCY_MODEL.md` — 102 lines
-- `architecture/01_RUNTIME_ARCHITECTURE_MODEL.md` — 205 lines
-- `architecture/02_TRANSACTION_AND_CONSISTENCY_MODEL.md` — 149 lines
-- `architecture/03_TECHNOLOGY_BASELINE_MODEL.md` — 127 lines
-- `implementation/01_IMPLEMENTATION_READINESS.md` — 104 lines
-- `implementation/02_INCREMENTAL_BUILD_PLAN.md` — 108 lines
-- `implementation/03_TEST_AND_CERTIFICATION_STRATEGY.md` — 143 lines
-- `implementation/04_LEGACY_REFERENCE_AND_REUSE_POLICY.md` — 110 lines
-- `observability/01_OBSERVABILITY_MODEL.md` — 133 lines
-- `observability/02_AUDIT_TRAIL_AND_FORENSICS_MODEL.md` — 115 lines
-- `orchestration/01_ORCHESTRATION_MODEL.md` — 144 lines
-- `orchestration/02_AGENT_EXECUTION_MODEL.md` — 195 lines
-- `orchestration/03_SCHEDULING_AND_ELIGIBILITY_MODEL.md` — 125 lines
-- `orchestration/04_RECOVERY_AND_RECONCILIATION_MODEL.md` — 136 lines
-- `security/01_IDENTITY_AND_ACCESS_MODEL.md` — 136 lines
-- `security/02_SECRETS_AND_TRUST_BOUNDARY_MODEL.md` — 119 lines
-- `state/01_CANONICAL_STATE_MODEL.md` — 384 lines
-- `state/02_PERSISTENCE_MODEL.md` — 339 lines
-- `state/03_PROJECTION_MODEL.md` — 225 lines
-- `state/04_BASELINE_AND_SUPERSESSION_MODEL.md` — 233 lines
-- `ui/01_UI_MODEL.md` — 126 lines
-- `ui/02_ACTION_AND_DECISION_SURFACE_MODEL.md` — 105 lines
-- `ui/03_TIMELINE_AND_EXPLAINABILITY_MODEL.md` — 109 lines
+```text
+NB-0002........................ RATIFIED / IN FORCE
+R2-17.......................... COMPLETE
+Authority...................... Manuel Hinojosa — NAAMIVE Project Owner
+Ratified at.................... 2026-09-08T18:38:36-03:00
+Members........................ 71
+Semantic changes at R2-17...... 0
+Hashes verified................ 71/71
+Predecessor.................... NB-0001
+Automatic migration............ NO
+Next........................... resume Technology Baseline 2.7
+```
+
+Contents:
+
+```text
+ratified/                       final normative tree
+audits/AUD-013...               ratification evidence
+NB0002_RATIFIED_MEMBERSHIP.md   exact membership + SHA-256
+APPLY_INSTRUCTIONS.md           apply/commit instructions
+ratification-verification.json  machine-readable checks
+```

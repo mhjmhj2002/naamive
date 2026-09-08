@@ -1,0 +1,114 @@
+{
+  "source_checkpoint": "7ee08781a069a5d00f6af7a96ca544ec5adb7c65",
+  "membership_count": 71,
+  "corpus_scan": {
+    "no_BRAINSTORM_status": true,
+    "no_RATIFIED_status": true,
+    "candidate_status_all": true,
+    "no_CRITICAL_identifier": true,
+    "no_current_work_item_id": true,
+    "no_orphan_INTEGRATE_RESULTS": true,
+    "no_tech_baseline_project_state": true,
+    "has_value_hierarchy": true,
+    "failed_never_resurrects": true,
+    "has_phasecycle_reentry": true,
+    "has_delivery_manifest": true,
+    "has_three_clocks": true
+  },
+  "broken_path_refs": [],
+  "destructive_scenarios": [
+    {
+      "id": "D01",
+      "description": "Two authoritative current DeliveryTargets prohibited",
+      "pass": true
+    },
+    {
+      "id": "D02",
+      "description": "MVP concurrency is policy, not structural cardinality",
+      "pass": true
+    },
+    {
+      "id": "D03",
+      "description": "Project phase re-entry creates new causal PhaseCycleInstance",
+      "pass": true
+    },
+    {
+      "id": "D04",
+      "description": "Baseline drift requires KEEP/REVALIDATE/SUPERSEDE/REVOKE/RECONCILE",
+      "pass": true
+    },
+    {
+      "id": "D05",
+      "description": "Missing REQUIRED blocks Delivery",
+      "pass": true
+    },
+    {
+      "id": "D06",
+      "description": "OPTIONAL inclusion is explicit and candidacy-specific",
+      "pass": true
+    },
+    {
+      "id": "D07",
+      "description": "ACCEPTED ValueIncrement is not reopened",
+      "pass": true
+    },
+    {
+      "id": "D08",
+      "description": "INTEGRATED Module is not reopened",
+      "pass": true
+    },
+    {
+      "id": "D09",
+      "description": "Finding carries affected scope",
+      "pass": true
+    },
+    {
+      "id": "D10",
+      "description": "NON_BLOCKING does not stop independent eligible work",
+      "pass": true
+    },
+    {
+      "id": "D11",
+      "description": "Roadmap/phase continuity is restart-safe",
+      "pass": true
+    },
+    {
+      "id": "D12",
+      "description": "Stale executor cannot publish authoritative state",
+      "pass": true
+    },
+    {
+      "id": "D13",
+      "description": "Partial handoff is recoverable",
+      "pass": true
+    },
+    {
+      "id": "D14",
+      "description": "Delivery records exact target version",
+      "pass": true
+    },
+    {
+      "id": "D15",
+      "description": "Delivery materialization is idempotent",
+      "pass": true
+    },
+    {
+      "id": "D16",
+      "description": "UI/browser is not supervisor",
+      "pass": true
+    }
+  ],
+  "pre_ratification": {
+    "membership_nonempty": true,
+    "all_members_exist": true,
+    "all_candidate_status": true,
+    "no_brainstorm_status_in_members": true,
+    "no_open_P0_P1": true,
+    "hashes_complete": true,
+    "all_versions_present": true,
+    "ratification_metadata_complete": true,
+    "certificate_not_in_force": true
+  },
+  "ready_for_human_ratification": true,
+  "ratified": false
+}
