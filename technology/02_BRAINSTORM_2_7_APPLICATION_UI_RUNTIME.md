@@ -1,13 +1,15 @@
 # NAAMIVE — Technology Baseline Brainstorm 2.7
 ## Application Shell, UI Runtime and Real-Time Projection Consumption
 
-**Status:** BRAINSTORM — PROPOSED FOR APPROVAL  
-**Versão:** 0.1  
+**Status:** APPROVED  
+**Versão:** 0.2  
 **Natureza:** desenho técnico derivado; não normativo  
 **Deriva de:** `NB-0002`  
 **Technology Baseline atual:** `technology/01_TECHNOLOGY_BASELINE.md` v0.6  
+**Aprovação:** Manuel Hinojosa — NAAMIVE Project Owner — 2026-09-08  
 **Implementação:** NOT AUTHORIZED  
-**Próximo passo após aprovação:** incorporar ao Technology Baseline e seguir para 2.8
+**Resultado:** Brainstorm 2.7 fechado e aprovado; incorporação consolidada será feita no 2.9  
+**Próximo passo:** 2.8 — PostgreSQL physical persistence details
 
 ---
 
@@ -980,19 +982,19 @@ WCAG 2.2 AA target
 
 ---
 
-# 22. Gate de aprovação
+# 22. Fechamento do Brainstorm 2.7
 
-Se aprovado, incorporar este bloco à Technology Baseline como:
-
-```text
-Brainstorm 2.7 — Application Shell / UI Runtime / Real-Time
-```
-
-e atualizar a derivação global da Technology Baseline:
+Decisão humana registrada:
 
 ```text
-Deriva de: NB-0002
+Brainstorm 2.7........................ APPROVED
+Application Shell / UI Runtime....... APPROVED
+Real-Time strategy.................... APPROVED
+Implementation authorization......... NO
 ```
+
+A incorporação consolidada em `technology/01_TECHNOLOGY_BASELINE.md` será feita
+no **2.9 — Technology Baseline consolidation**, junto com os demais blocos.
 
 A aprovação de 2.7 não autoriza código.
 

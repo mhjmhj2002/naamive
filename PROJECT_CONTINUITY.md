@@ -588,22 +588,23 @@ Decisões trabalhadas:
 
 A pausa normativa terminou com a ratificação de `NB-0002`.
 
-Passo técnico atual:
+Brainstorm técnico concluído:
 
 ```text
 2.7 Application Shell / UI Runtime / Real-Time
+Status: APPROVED
 ```
 
-Status:
+Passo técnico atual:
 
 ```text
-ACTIVE — BRAINSTORM / PROPOSED FOR APPROVAL
+2.8 PostgreSQL physical persistence details
 ```
 
 Depois:
 
 ```text
-2.8 PostgreSQL physical persistence details
+2.9 Technology Baseline consolidation
 2.9 Technology Baseline consolidation
 2.10 technical/destructive audit
 2.11 approval/freeze
@@ -697,8 +698,8 @@ RATIFIED / IN FORCE
 
 
 ```text
-2.7   Application Shell / UI Runtime / Real-Time
-2.8   PostgreSQL physical persistence details
+2.7   Application Shell / UI Runtime / Real-Time — APPROVED
+2.8   PostgreSQL physical persistence details — CURRENT
 2.9   Technology Baseline consolidation
 2.10  Technical / destructive audit
 2.11  Technology Baseline approval / freeze
@@ -712,53 +713,39 @@ Nenhuma dessas etapas reabre `NB-0002` sem finding normativo real.
 
 ---
 
-## 18. Próxima ação — Technology Baseline 2.7
-
+## 18. Próxima ação — Technology Baseline 2.8
 
 Objetivo:
 
 ```text
-fechar o desenho técnico da UI
+fechar o desenho físico do PostgreSQL
 +
-consumo de projections
+canonical state persistence
 +
-real-time
+immutable history
 +
-Activity Center
+projection persistence
 +
-action/decision surfaces
+PhaseCycle / DevelopmentRoadmap / ValueIncrement / DeliveryTarget
++
+dispatch/lease/fencing/idempotency
++
+migration boundaries
 ```
 
-Artefato de trabalho:
+O 2.7 está fechado:
 
 ```text
-technology/02_BRAINSTORM_2_7_APPLICATION_UI_RUNTIME.md
+Application Shell / UI Runtime / Real-Time
+APPROVED
 ```
 
-Pontos centrais em análise:
+Aprovar 2.8 ainda não autoriza código.
+
+Depois do 2.8:
 
 ```text
-AppShell estável
-Project selection explícita
-TanStack Query para server state
-fetch nativo via ApiClient
-semantic commands
-stale-version fencing
-SSE invalidation + canonical refetch
-polling fallback
-Activity Center persistente
-three-clock visibility
-deep links
-acessibilidade
-testes UI/E2E
-```
-
-Aprovar 2.7 não autoriza código.
-
-Depois do 2.7:
-
-```text
-2.8 — PostgreSQL physical persistence details
+2.9 — Technology Baseline consolidation
 ```
 
 ---
@@ -886,18 +873,25 @@ NB-0002 human ratification
 NB-0002 root application
 ```
 
-### DOING
+### DONE — TECHNICAL
 
 ```text
 Technology Baseline 2.7
-Application Shell / UI Runtime / Real-Time
+Application Shell / UI Runtime / Real-Time — APPROVED
+```
+
+### DOING
+
+```text
+Technology Baseline 2.8
+PostgreSQL physical persistence details
 ```
 
 ### NEXT
 
 ```text
-aprovar 2.7
-→ 2.8 PostgreSQL physical persistence details
+fechar 2.8
+→ 2.9 Technology Baseline consolidation
 ```
 
 ### LATER
@@ -921,15 +915,15 @@ candidate/ e ratified/ staging... housekeeping não normativa, se ainda presente
 
 ## 24. Próxima ação concreta
 
-
 ```text
-Revisar e aprovar Technology Baseline Brainstorm 2.7
+Executar Technology Baseline 2.8
+PostgreSQL physical persistence details
 ```
 
 Depois:
 
 ```text
-iniciar 2.8 — PostgreSQL physical persistence details
+2.9 — Technology Baseline consolidation
 ```
 
 Não iniciar código ainda.
@@ -957,11 +951,13 @@ Código ainda não está autorizado.
 Último checkpoint validado:
 fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
 
-Task atual:
-Technology Baseline 2.7 — Application Shell / UI Runtime / Real-Time.
+Technology Baseline 2.7 está APPROVED.
 
-Próximo passo após aprovação:
-2.8 — PostgreSQL physical persistence details.
+Task atual:
+Technology Baseline 2.8 — PostgreSQL physical persistence details.
+
+Próximo passo após 2.8:
+2.9 — Technology Baseline consolidation.
 
 Não recrie decisões normativas já ratificadas.
 Não edite NB-0002 sem finding normativo real e novo processo de baseline.
@@ -1004,7 +1000,7 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-HEAD VALIDADO............. fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
+LAST VALIDATED HEAD....... 0cbd7b6c64992a38e7d83d97753c6b488d028af7
 
 NORMATIVE BASELINE........ NB-0002
 NB-0002 STATUS............ RATIFIED / IN FORCE
@@ -1013,13 +1009,14 @@ PREVIOUS BASELINE......... NB-0001 — historical / immutable
 NORMATIVE ROUND........... CLOSED
 R2-01..R2-17.............. COMPLETE
 
-TECH BASELINE............. v0.6 BRAINSTORM
-CURRENT TECH STEP......... 2.7 UI / REAL-TIME
-2.7 STATUS................ PROPOSED FOR APPROVAL
-NEXT...................... 2.8 POSTGRESQL PHYSICAL PERSISTENCE
+TECH BASELINE............. BRAINSTORM
+2.1..2.6.................. APPROVED WORKING DECISIONS
+2.7 UI / REAL-TIME........ APPROVED
+CURRENT TECH STEP......... 2.8 POSTGRESQL PHYSICAL PERSISTENCE
+NEXT...................... 2.9 CONSOLIDATION
 
 CODE AUTHORIZED?.......... NO
 IMPLEMENTATION............ BLOCKED UNTIL TECHNICAL READINESS
 
-NEXT ACTION............... review / approve Technology Baseline 2.7
+NEXT ACTION............... execute Technology Baseline 2.8
 ```

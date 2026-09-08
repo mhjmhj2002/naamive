@@ -1,24 +1,16 @@
-# APPLY — Technology Baseline 2.7 v0.2
+# APPLY — Technology Baseline 2.7 Approved
 
-Este pacote contém somente:
+Este pacote fecha o Brainstorm 2.7 após aprovação humana.
+
+Arquivos:
 
 ```text
 PROJECT_CONTINUITY.md
 technology/02_BRAINSTORM_2_7_APPLICATION_UI_RUNTIME.md
+technology/02_BRAINSTORM_2_7_APPROVAL_RECORD.md
 ```
 
-`PROJECT_CONTINUITY.md` é a versão COMPLETA do arquivo vivo (~17 KB),
-atualizada cirurgicamente a partir da versão atual do repositório.
+Não altera documentos normativos da NB-0002.
+Não autoriza implementação.
 
-O arquivo do Brainstorm 2.7 é novo e continua:
-
-```text
-BRAINSTORM — PROPOSED FOR APPROVAL
-```
-
-Este pacote NÃO altera:
-- NB-0002;
-- documentos normativos ratificados;
-- technology/01_TECHNOLOGY_BASELINE.md.
-
-A Technology Baseline principal só deve incorporar o 2.7 depois da aprovação.
+Próximo passo: Technology Baseline 2.8.
