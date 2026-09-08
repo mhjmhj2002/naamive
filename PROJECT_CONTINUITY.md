@@ -4,11 +4,11 @@
 **Natureza:** documento operacional e de continuidade; não normativo  
 **Local:** raiz do repositório  
 **Arquivo:** `PROJECT_CONTINUITY.md`  
-**Última atualização:** 2026-09-07  
+**Última atualização:** 2026-09-08  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `7ee08781a069a5d00f6af7a96ca544ec5adb7c65`  
-**Normative Baseline vigente:** `NB-0001`  
-**Normative Baseline candidata:** `NB-0002` — NOT IN FORCE
+**Último commit validado:** `fca35ae8d554ea45e1d20444ea755d0d7bbfeb60`  
+**Normative Baseline vigente:** `NB-0002`  
+**Normative Baseline anterior:** `NB-0001` — histórica e imutável
 
 ---
 
@@ -77,60 +77,73 @@ Internal Phase Lifecycle é ortogonal à hierarquia de ownership.
 
 ## 3. Leitura obrigatória ao retomar
 
+
 ```text
 1. PROJECT_CONTINUITY.md
 2. README.md
 3. AGENTS.md
-4. governance/normative-baselines/NB-0001.md
-5. audits/AUD-006_NB0002_INTERNAL_PHASE_LIFECYCLE_GAP_ANALYSIS.md
-6. audits/AUD-007_NB0002_VALUE_DELIVERY_GAP_ANALYSIS.md
+4. governance/normative-baselines/NB-0002.md
+5. NB0002_RATIFIED_MEMBERSHIP.md
+6. technology/01_TECHNOLOGY_BASELINE.md
 7. documentação específica da task atual
 ```
 
 Regras:
 
 ```text
-NB-0001 = lei vigente e imutável
-NB-0002 working docs = candidata, NOT IN FORCE
+NB-0002 = lei vigente
+NB-0001 = histórica e imutável
+Technology Baseline = desenho técnico derivado, não norma
 audits = evidência, não norma
-Technology Baseline = desenho técnico, não norma
 legacy = referência histórica, não autoridade
 ```
+
+As árvores de staging `candidate/` e `ratified/`, se ainda estiverem presentes,
+não são fontes normativas concorrentes. A raiz ratificada e o certificado
+`NB-0002` prevalecem.
 
 ---
 
 ## 4. Estado normativo
 
+
 Baseline vigente:
 
 ```text
-NB-0001
-Status: IN FORCE
-Membership: 43 documentos normativos
-```
-
-Commit de ratificação:
-
-```text
-36dafaf4f62f3b7a6e017696444fb547ce9aed90
-docs(governance): ratify normative baseline NB-0001
-```
-
-`NB-0001` é imutável.
-
-Mudança normativa futura:
-
-```text
-NB-0001
-   ↓
 NB-0002
+Status: RATIFIED / IN FORCE
+Membership: 71 documentos normativos
 ```
 
-Instâncias existentes não migram automaticamente para futura baseline.
+Certificado:
+
+```text
+governance/normative-baselines/NB-0002.md
+```
+
+Commit de aplicação na raiz:
+
+```text
+fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
+docs(governance): apply ratified NB-0002 to repository root
+```
+
+Baseline anterior:
+
+```text
+NB-0001
+Status: histórica / imutável
+```
+
+A ratificação de `NB-0002` não migra automaticamente instâncias historicamente
+governadas por `NB-0001`.
+
+Migração continua explícita, rastreável e governada.
 
 ---
 
 ## 5. Último checkpoint validado
+
 
 Branch:
 
@@ -141,20 +154,24 @@ lifecycle-reboot
 HEAD validado:
 
 ```text
-7ee08781a069a5d00f6af7a96ca544ec5adb7c65
-docs(nb-0002): advance lifecycle reconciliation through R2-11
+fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
+docs(governance): apply ratified NB-0002 to repository root
 ```
 
 Validação:
 
 ```text
-branch/history........................ PASS
-NB-0001 preservada.................... PASS
-working docs NB-0002 publicados....... PASS
-R2-05..R2-11 publicados............... PASS
-AUD-006 aponta Corpus Conformance...... PASS
-Technology Baseline permanece draft... PASS
+branch/history......................... PASS
+NB-0002 certificate na raiz............ PASS
+Constitution NB-0002 / RATIFIED........ PASS
+71-member ratified membership.......... PASS
+ValueIncrement lifecycle vigente....... PASS
+root overlay............................ PASS
+NB-0001 preservada...................... PASS
+Technology Baseline permanece draft.... PASS
 ```
+
+A rodada normativa NB-0002 está encerrada.
 
 ---
 
@@ -543,13 +560,14 @@ Technology Baseline permanece artefato arquitetural separado.
 
 ## 14. Technology Baseline
 
-Arquivo:
+
+Arquivo principal:
 
 ```text
 technology/01_TECHNOLOGY_BASELINE.md
 ```
 
-Estado:
+Estado atual:
 
 ```text
 BRAINSTORM
@@ -557,7 +575,7 @@ v0.6
 NOT APPROVED FOR IMPLEMENTATION
 ```
 
-Fechado antes da pausa:
+Decisões trabalhadas:
 
 ```text
 2.1 Foundation / App Shell
@@ -568,48 +586,71 @@ Fechado antes da pausa:
 2.6 Deployment model
 ```
 
-Próximo item técnico:
+A pausa normativa terminou com a ratificação de `NB-0002`.
+
+Passo técnico atual:
 
 ```text
-2.7 UI
+2.7 Application Shell / UI Runtime / Real-Time
 ```
 
 Status:
 
 ```text
-PAUSED
+ACTIVE — BRAINSTORM / PROPOSED FOR APPROVAL
 ```
 
-Correção terminológica futura:
+Depois:
+
+```text
+2.8 PostgreSQL physical persistence details
+2.9 Technology Baseline consolidation
+2.10 technical/destructive audit
+2.11 approval/freeze
+Technical Implementation Readiness
+First vertical slice
+```
+
+Correção terminológica obrigatória na consolidação:
 
 ```text
 não usar "Technology Baseline IN FORCE"
 usar "Technology Baseline APPROVED" ou equivalente
 ```
 
+`IN FORCE` pertence à lei normativa. Technology Baseline é artefato técnico.
+
 ---
 
 ## 15. Fase atual
 
-```text
-NB-0002 NORMATIVE RECONCILIATION
-```
-
-Motivo:
 
 ```text
-Internal Phase Lifecycle gap
-+
-ValueIncrement / Delivery Target refinements
-+
-continuity / roadmap / Activity Center requirements
+SECOND DOCUMENTATION ROUND
+TECHNOLOGY BASELINE DESIGN
 ```
 
-Implementação continua bloqueada.
+A rodada normativa NB-0002 foi concluída e ratificada.
+
+Pergunta atual:
+
+```text
+como implementar tecnicamente a NB-0002
+sem redefinir sua lei?
+```
+
+Implementação continua bloqueada até:
+
+```text
+Technology Baseline aprovada
++
+Technical Implementation Readiness
+```
 
 ---
 
-## 16. Rodada NB-0002 — concluído
+## 16. Rodada NB-0002 — concluída
+
 
 ```text
 R2-01   Internal Phase Lifecycle general model
@@ -624,6 +665,12 @@ R2-08   Cross-Lifecycle Reconciliation
 R2-09   State / Persistence / Projection Reform
 R2-10   Contracts / Orchestration / Recovery
 R2-11   UI / Observability / API
+R2-12   Corpus Conformance
+R2-13   Destructive Audit
+R2-14   Remediation
+R2-15   Verification
+R2-16   Final Pre-Ratification
+R2-17   Human Ratification
 ```
 
 Value Delivery:
@@ -636,58 +683,92 @@ VD-04 CLOSED
 VD-05 CLOSED
 ```
 
+Resultado:
+
+```text
+NB-0002
+RATIFIED / IN FORCE
+71 normative members
+```
+
 ---
 
 ## 17. Próximas etapas
 
+
 ```text
-R2-12  Corpus Conformance
-R2-13  Destructive Audit
-R2-14  Remediation
-R2-15  Verification
-R2-16  Final Pre-Ratification Check
-R2-17  Human Ratification — NB-0002
+2.7   Application Shell / UI Runtime / Real-Time
+2.8   PostgreSQL physical persistence details
+2.9   Technology Baseline consolidation
+2.10  Technical / destructive audit
+2.11  Technology Baseline approval / freeze
+      ↓
+Technical Implementation Readiness
+      ↓
+First vertical slice
 ```
+
+Nenhuma dessas etapas reabre `NB-0002` sem finding normativo real.
 
 ---
 
-## 18. Próxima ação — R2-12 Corpus Conformance
+## 18. Próxima ação — Technology Baseline 2.7
+
 
 Objetivo:
 
 ```text
-consolidar o corpus candidato
-eliminar deltas concorrentes
-encontrar terminologia velha
-verificar cross-links
-detectar contradições
-preparar documentação normativa completa
+fechar o desenho técnico da UI
++
+consumo de projections
++
+real-time
++
+Activity Center
++
+action/decision surfaces
 ```
 
-Checagens mínimas:
+Artefato de trabalho:
 
 ```text
-Module nunca é camada técnica
-Module → ValueIncrement → Work Item no fluxo normal
-TRIVIAL / MATERIAL / CRÍTICA
-Technology Baseline nunca é Project state
-sem INTEGRATE_RESULTS órfão
-sem Project.current_work_item_id estrutural
-sem reabertura de terminal
-FAILED Execution nunca ressuscita
-included_in_candidate não é atributo eterno do membership
-Development Cycle não compete com Work Item lifecycle
-Phase Cycle não compete com Project lifecycle
-working reconciliations não permanecem como normas concorrentes
+technology/02_BRAINSTORM_2_7_APPLICATION_UI_RUNTIME.md
+```
+
+Pontos centrais em análise:
+
+```text
+AppShell estável
+Project selection explícita
+TanStack Query para server state
+fetch nativo via ApiClient
+semantic commands
+stale-version fencing
+SSE invalidation + canonical refetch
+polling fallback
+Activity Center persistente
+three-clock visibility
+deep links
+acessibilidade
+testes UI/E2E
+```
+
+Aprovar 2.7 não autoriza código.
+
+Depois do 2.7:
+
+```text
+2.8 — PostgreSQL physical persistence details
 ```
 
 ---
 
-## 19. R2-13 — Destructive Audit
+## 19. R2-13 — registro histórico da auditoria destrutiva
 
-O auditor deve tentar quebrar o modelo.
 
-Cenários mínimos:
+Esta etapa já foi concluída durante o fechamento da `NB-0002`.
+
+Ela tentou quebrar o modelo com cenários como:
 
 ```text
 dois DeliveryTargets autoritativos atuais
@@ -708,56 +789,36 @@ Delivery duplicada
 Delivery aceita sem target version exata
 ```
 
-Critério para seguir:
+Resultado de fechamento:
 
 ```text
 P0 = 0
 P1 = 0
 ```
 
+O registro permanece aqui apenas para continuidade histórica.
+
 ---
 
-## 20. R2-14..R2-17
+## 20. R2-14..R2-17 — fechamento histórico
 
-### R2-14 — Remediation
-
-```text
-corrigir findings
-não escrever narrativa de auditoria dentro da norma
-mudança semântica material volta para autoridade humana
-```
-
-### R2-15 — Verification
+As etapas abaixo estão concluídas:
 
 ```text
-verificar correções
-buscar regressão
-produzir diff semântico NB-0001 → NB-0002
+R2-14 Remediation................ COMPLETE
+R2-15 Verification............... PASS
+R2-16 Final Pre-Ratification..... PASS
+R2-17 Human Ratification......... COMPLETE
 ```
 
-### R2-16 — Final Pre-Ratification
+Resultado:
 
 ```text
-corpus completo
-working deltas incorporados
-membership fechada
-nenhum TODO normativo
-nenhum BRAINSTORM na membership
-cross-links válidos
-READY FOR HUMAN RATIFICATION YES/NO
+NB-0002 = RATIFIED / IN FORCE
 ```
 
-### R2-17 — Human Ratification
+A evidência de ratificação deve permanecer preservada.
 
-Somente depois do R2-16:
-
-```text
-autoridade humana ratifica NB-0002
-certificado imutável
-membership exata
-timestamp
-predecessor NB-0001
-```
 
 ---
 
@@ -810,6 +871,7 @@ Backup pré-reboot continua preservado até decisão explícita futura.
 
 ## 23. Status board
 
+
 ### DONE
 
 ```text
@@ -819,88 +881,90 @@ NB-0001 audit/remediation/verification
 NB-0001 ratification/freeze
 Technology Baseline brainstorm 2.1..2.6
 VD-01..VD-05
-R2-01
-R2-02
-R2-02b
-R2-03
-R2-04
-R2-05
-R2-06
-R2-07
-R2-08
-R2-09
-R2-10
-R2-11
+R2-01..R2-17
+NB-0002 human ratification
+NB-0002 root application
 ```
 
 ### DOING
 
 ```text
-NB-0002 normative reconciliation round
+Technology Baseline 2.7
+Application Shell / UI Runtime / Real-Time
 ```
 
 ### NEXT
 
 ```text
-R2-12 — Corpus Conformance
+aprovar 2.7
+→ 2.8 PostgreSQL physical persistence details
 ```
 
 ### LATER
 
 ```text
-R2-13 Destructive Audit
-R2-14 Remediation
-R2-15 Verification
-R2-16 Final Pre-Ratification
-R2-17 Human Ratification NB-0002
-resume Technology Baseline 2.7
-Technology Baseline consolidation/audit/approval
+2.9 Technology Baseline consolidation
+2.10 technical/destructive audit
+2.11 Technology Baseline approval/freeze
 Technical Implementation Readiness
 First vertical slice
 ```
 
-### BLOCKED / PAUSED
+### BLOCKED / HOUSEKEEPING
 
 ```text
-Implementation.......... BLOCKED
-Technology Baseline 2.7. PAUSED
+Implementation................... BLOCKED até technical readiness
+candidate/ e ratified/ staging... housekeeping não normativa, se ainda presentes
 ```
 
 ---
 
 ## 24. Próxima ação concreta
 
+
 ```text
-Executar R2-12 — Corpus Conformance
+Revisar e aprovar Technology Baseline Brainstorm 2.7
 ```
 
-Não ratificar ainda.
+Depois:
+
+```text
+iniciar 2.8 — PostgreSQL physical persistence details
+```
+
+Não iniciar código ainda.
 
 ---
 
 ## 25. Handoff para novo chat/agente
+
 
 ```text
 Estamos continuando o projeto NAAMIVE na branch lifecycle-reboot.
 
 Leia primeiro:
 1. PROJECT_CONTINUITY.md
-2. governance/normative-baselines/NB-0001.md
-3. audits/AUD-006_NB0002_INTERNAL_PHASE_LIFECYCLE_GAP_ANALYSIS.md
-4. audits/AUD-007_NB0002_VALUE_DELIVERY_GAP_ANALYSIS.md
+2. governance/normative-baselines/NB-0002.md
+3. NB0002_RATIFIED_MEMBERSHIP.md
+4. technology/01_TECHNOLOGY_BASELINE.md
+5. technology/02_BRAINSTORM_2_7_APPLICATION_UI_RUNTIME.md
 
-NB-0001 continua IN FORCE e imutável.
-NB-0002 é candidata e NOT IN FORCE.
-Technology Baseline 2.7 está PAUSED.
+NB-0002 está RATIFIED / IN FORCE.
+NB-0001 é histórica e imutável.
+Technology Baseline continua BRAINSTORM.
+Código ainda não está autorizado.
 
 Último checkpoint validado:
-7ee08781a069a5d00f6af7a96ca544ec5adb7c65
+fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
 
-Próxima ação:
-R2-12 — Corpus Conformance.
+Task atual:
+Technology Baseline 2.7 — Application Shell / UI Runtime / Real-Time.
 
-Não recrie decisões já aprovadas.
-Não modifique NB-0001.
+Próximo passo após aprovação:
+2.8 — PostgreSQL physical persistence details.
+
+Não recrie decisões normativas já ratificadas.
+Não edite NB-0002 sem finding normativo real e novo processo de baseline.
 Não inicie código.
 ```
 
@@ -940,23 +1004,22 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-HEAD VALIDADO............. 7ee08781a069a5d00f6af7a96ca544ec5adb7c65
+HEAD VALIDADO............. fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
 
-NORMATIVE BASELINE........ NB-0001
-NB-0001 STATUS............ IN FORCE / IMMUTABLE
-CANDIDATE BASELINE........ NB-0002
-NB-0002 STATUS............ NOT IN FORCE
+NORMATIVE BASELINE........ NB-0002
+NB-0002 STATUS............ RATIFIED / IN FORCE
+PREVIOUS BASELINE......... NB-0001 — historical / immutable
 
-CURRENT ROUND............. NB-0002 NORMATIVE RECONCILIATION
-R2-01..R2-11.............. CLOSED — working decisions
-NEXT...................... R2-12 CORPUS CONFORMANCE
+NORMATIVE ROUND........... CLOSED
+R2-01..R2-17.............. COMPLETE
 
 TECH BASELINE............. v0.6 BRAINSTORM
-TECH BASELINE 2.7......... PAUSED
+CURRENT TECH STEP......... 2.7 UI / REAL-TIME
+2.7 STATUS................ PROPOSED FOR APPROVAL
+NEXT...................... 2.8 POSTGRESQL PHYSICAL PERSISTENCE
 
 CODE AUTHORIZED?.......... NO
-IMPLEMENTATION............ BLOCKED
+IMPLEMENTATION............ BLOCKED UNTIL TECHNICAL READINESS
 
-NEXT ACTION............... execute R2-12 Corpus Conformance
-FINAL HUMAN GATE.......... R2-17 Human Ratification NB-0002
+NEXT ACTION............... review / approve Technology Baseline 2.7
 ```
