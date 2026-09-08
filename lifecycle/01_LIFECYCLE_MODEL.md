@@ -1,14 +1,13 @@
 # NAAMIVE — Lifecycle Model
 
-**Status:** RATIFIED  
-**Versão:** 0.2  
+**Status:** RATIFIED  **Versão:** 0.3  
 **Autoridade:** modelo normativo de alto nível do lifecycle do NAAMIVE  
 **Deriva de:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** relações e regras de alto nível entre todos os lifecycles governados do NAAMIVE
 
 ---
@@ -80,6 +79,7 @@ LIFECYCLES DE NEGÓCIO
 Need
 Project
 Module
+ValueIncrement
 Work Item
 
 LIFECYCLE OPERACIONAL
@@ -102,6 +102,7 @@ O modelo mínimo contém:
 Need
 Project
 Module
+ValueIncrement
 Work Item
 Execution
 Delivery
@@ -151,7 +152,18 @@ independente.
 
 ---
 
-## 4.4 Work Item
+## 4.4 ValueIncrement
+
+Representa uma Entrega de Valor finita, utilizável e verificável pertencente a
+exatamente um Module.
+
+No fluxo normal de implementação:
+
+```text
+Module → ValueIncrement → Work Item → Execution
+```
+
+## 4.5 Work Item
 
 Representa uma unidade planejada de mudança.
 
@@ -169,7 +181,7 @@ Work Items de Module representam trabalho localizado naquela capacidade.
 
 ---
 
-## 4.5 Execution
+## 4.6 Execution
 
 Representa uma tentativa concreta de executar um Work Item autorizado.
 
@@ -179,7 +191,7 @@ Uma nova tentativa não apaga tentativa anterior.
 
 ---
 
-## 4.6 Delivery
+## 4.7 Delivery
 
 Delivery é o **registro governado terminal de um aceite de negócio já ocorrido**.
 
@@ -655,7 +667,7 @@ dependências arquiteturais.
 
 O Project passa a possuir plano executável.
 
-Modules e Work Items são derivados em profundidade suficiente.
+Modules, ValueIncrements e Work Items são derivados em profundidade suficiente.
 
 ---
 
@@ -663,7 +675,7 @@ Modules e Work Items são derivados em profundidade suficiente.
 
 Existe trabalho autorizado em execução.
 
-O Project pode possuir vários Modules e Work Items simultaneamente.
+O Project pode possuir vários Modules, ValueIncrements e Work Items simultaneamente.
 
 ---
 
@@ -743,7 +755,7 @@ O Module possui trabalho planejado e dependências conhecidas.
 
 ## 9.4 IMPLEMENTING
 
-Work Items do Module estão sendo executados.
+ValueIncrements do Module estão sendo materializadas por Work Items.
 
 ---
 
@@ -937,7 +949,9 @@ Need
                   │
                   ├── possui → Module
                   │             │
-                  │             └── governa → Work Item
+                  │             └── possui → ValueIncrement
+                  │                           │
+                  │                           └── referencia → Work Item de Module
                   │
                   ├── pode governar → Work Item transversal
                   │
@@ -972,19 +986,25 @@ A criação exige responsabilidade de negócio identificável.
 
 ---
 
-## 13.4 Work Item
+## 13.4 ValueIncrement
 
-Somente pode ser criado com escopo governante explícito.
+Somente pode ser criada dentro de Module válido, com valor de negócio, critérios e baseline identificáveis.
 
 ---
 
-## 13.5 Execution
+## 13.5 Work Item
+
+Somente pode ser criado com escopo governante explícito. Work Item governado por Module no fluxo normal deve referenciar sua ValueIncrement.
+
+---
+
+## 13.6 Execution
 
 Somente pode ser criada para Work Item autorizado e intenção válida.
 
 ---
 
-## 13.6 Delivery
+## 13.7 Delivery
 
 Somente pode ser criada **depois** que a candidatura em `Project.DELIVERY` tiver
 sido aceita por decisão governada.
@@ -1575,8 +1595,9 @@ A ordem preferida é:
 1. Need
 2. Project
 3. Module
-4. Work Item
-5. Execution
+4. ValueIncrement
+5. Work Item
+6. Execution
 ```
 
 Motivo:
@@ -1595,7 +1616,8 @@ sem inventar nova lei:
 
 - como uma Need vira Project;
 - como Project gera Modules;
-- como Modules e Project geram Work Items;
+- como Modules se decompõem em ValueIncrements e estas originam Work Items;
+- como Project pode governar Work Items transversais;
 - como Work Items geram Executions;
 - como execução técnica se diferencia de aceite;
 - como Project agrega Modules;

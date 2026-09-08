@@ -1,16 +1,15 @@
 # NAAMIVE — Finding and Exception Policy
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** política normativa de findings e exceptions do NAAMIVE  
 **Deriva de:** `01_GOVERNANCE_MODEL.md`  
 **Normas superiores:** `../00_NAAMIVE_CONSTITUTION.md` e `../lifecycle/01_LIFECYCLE_MODEL.md`
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** findings, severidade, tratamentos, risk acceptance, exception, expiração e fechamento
 
 ---
@@ -514,3 +513,84 @@ Risk acceptance reconhece o risco.
 Exception autoriza um desvio.
 
 Essas três coisas nunca devem virar sinônimos.
+
+
+---
+
+# Affected scope, bloqueio e remediation
+
+## Affected scope
+
+Finding deve explicitar, conforme aplicável:
+
+```text
+affected_scope_type
+affected_scope_ref
+```
+
+Exemplos:
+
+```text
+DEVELOPMENT_STEP
+WORK_ITEM
+VALUE_INCREMENT
+MODULE
+PROJECT
+```
+
+---
+
+## NON_BLOCKING
+
+`NON_BLOCKING` significa que o Finding não impede necessariamente o avanço do
+affected scope atual.
+
+Se exigir tratamento:
+
+```text
+persist Finding
+append remediation RoadmapEntry
+continue eligible work
+```
+
+---
+
+## BLOCKING
+
+`BLOCKING` impede avanço normal do affected scope.
+
+Exige:
+
+```text
+GOVERNED_BLOCK continuity
+owner
+exit condition
+remediation route
+roadmap traceability
+```
+
+---
+
+## Future dependency
+
+Finding `NON_BLOCKING` para o trabalho corrente pode ser dependência de trabalho
+futuro.
+
+Nesse caso:
+
+```text
+future item remains ineligible until dependency satisfied
+```
+
+Se a consequência do Finding mudar materialmente, reclassification segue a
+policy vigente e exige evidence/authority/justification aplicáveis.
+
+---
+
+## Não perder Finding no fim da execução
+
+Fim de Execution/agent session não fecha Finding.
+
+Roadmap e Finding permanecem duráveis até disposição governada.
+
+---

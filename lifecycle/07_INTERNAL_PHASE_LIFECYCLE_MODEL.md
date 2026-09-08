@@ -1,12 +1,14 @@
 # NAAMIVE — Internal Phase Lifecycle Model
 
-**Status:** BRAINSTORM  
-**Versão:** 0.2  
+**Status:** RATIFIED  
+**Versão:** 0.3  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a modelo normativo dos ciclos internos das fases de Project  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`, `03_PROJECT_LIFECYCLE.md`, `05_WORK_ITEM_LIFECYCLE.md`, `06_EXECUTION_LIFECYCLE.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 **Escopo:** ciclos internos obrigatoriamente avaliados para todas as fases não terminais de Project: `CONCEPTION`, `ARCHITECTURE`, `PLANNING`, `IMPLEMENTATION`, `VALIDATION` e `DELIVERY`
 
 ---
@@ -1123,7 +1125,136 @@ ser corrigido antes de seguir.
 
 ---
 
-# 42. Princípio final
+# 42. Regra aprovada — durabilidade do ciclo interno
+
+O estado funcional necessário para reconstruir a posição real de uma fase após
+restart não pode existir somente em memória.
+
+Deve ser durável, conforme aplicável:
+
+```text
+Phase Cycle Instance
+phase plan/version
+step current state
+step transition history
+step started/completed timestamps
+functional progress timestamp
+blocking/waiting state
+continuity
+plan changes
+Work Item links
+Execution links
+```
+
+A implementação física será definida no Persistence Model e na Technology
+Baseline.
+
+---
+
+# 43. Regra aprovada — memória somente para estado efêmero
+
+Podem permanecer exclusivamente em memória elementos cuja perda por restart não
+altere verdade, continuidade ou explicabilidade do processo.
+
+Exemplos:
+
+```text
+SSE connection
+AbortController
+Promise
+process-local timers
+temporary stream buffer
+frontend cache
+render-only UI state
+```
+
+Após restart, esses elementos podem ser reconstruídos a partir do estado durável.
+
+---
+
+# 44. Regra aprovada — heartbeat atual versus histórico de heartbeat
+
+O sistema deve persistir informação atual suficiente para responder:
+
+```text
+quando ocorreu o último heartbeat?
+quando houve última atividade operacional?
+quando houve último progresso funcional?
+```
+
+A retenção de cada heartbeat individual não precisa ser permanente.
+
+Deve existir separação conceitual entre:
+
+```text
+CANONICAL / DURABLE FUNCTIONAL HISTORY
+```
+
+e:
+
+```text
+HIGH-VOLUME OPERATIONAL TELEMETRY
+```
+
+Eventos de heartbeat e pulsos operacionais podem receber política futura de
+retenção/expurgo, desde que sua remoção não destrua auditabilidade, causalidade,
+continuidade ou reconstrução exigidas.
+
+---
+
+# 45. Regra aprovada — retenção e expurgo
+
+Volume futuro não é justificativa para omitir persistência necessária hoje.
+
+A implementação pode posteriormente adotar:
+
+```text
+retention policy
+scheduled cleanup
+partitioning
+archival
+compaction
+```
+
+para dados operacionais de alto volume.
+
+É proibido aplicar expurgo puramente por idade a fatos governados necessários
+para explicar ou reconstruir lifecycle.
+
+A classificação mínima deve distinguir:
+
+```text
+GOVERNED HISTORY
+→ retenção conforme obrigação de auditoria/reconstrução
+
+OPERATIONAL TELEMETRY
+→ retenção configurável quando seguro
+```
+
+---
+
+# 46. Regra aprovada — restart proof
+
+Cada ciclo interno material deve possuir prova de restart.
+
+Exemplo de critério:
+
+```text
+fase em andamento
+step atual conhecido
+processo web/worker reinicia
+estado funcional é reconstruído
+passos concluídos permanecem concluídos
+passo corrente/continuidade permanecem explicáveis
+Execution expirada ou perdida é tratada pela lei de recovery
+UI volta a mostrar a jornada correta
+```
+
+Restart não pode resetar visualmente ou semanticamente o ciclo para o início.
+
+---
+
+# 47. Princípio final
 
 O usuário não deve observar apenas:
 

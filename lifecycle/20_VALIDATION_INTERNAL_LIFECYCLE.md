@@ -1,9 +1,11 @@
 # NAAMIVE — VALIDATION Internal Lifecycle
 
-**Status:** BRAINSTORM — R2-06 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -293,16 +295,4 @@ accepted EV never reopens
 integrated Module never reopens
 rework returns to correct governing level
 READY_FOR_DELIVERY is internal
-```
-
----
-
-# 20. Status
-
-```text
-R2-06 VALIDATION Internal Lifecycle
-CLOSED — working decision
-
-NEXT
-R2-07 DELIVERY Internal Lifecycle
 ```

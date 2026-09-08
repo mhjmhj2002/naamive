@@ -1,13 +1,12 @@
 # NAAMIVE Constitution
 
-**Status:** RATIFIED  
-**Versão:** 0.4  
+**Status:** RATIFIED  **Versão:** 0.5  
 **Autoridade:** Constituição conceitual máxima do NAAMIVE  
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** todo o sistema NAAMIVE e todos os documentos normativos derivados
 
 ---
@@ -392,6 +391,8 @@ Projeto
     ↓
 Módulos
     ↓
+Entregas de Valor / ValueIncrements
+    ↓
 Itens de Trabalho
     ↓
 Execuções
@@ -417,6 +418,23 @@ resultado entregue.
 É uma capacidade de negócio coerente pertencente a um projeto.
 
 Módulo não representa camada técnica.
+
+### Entrega de Valor / ValueIncrement
+
+É um incremento finito, utilizável e verificável de valor de negócio pertencente
+a exatamente um Módulo.
+
+No caminho normal de implementação de um Módulo:
+
+```text
+Módulo
+→ Entrega de Valor / ValueIncrement
+→ Item de Trabalho
+→ Execução
+```
+
+A Entrega de Valor não substitui o lifecycle do Módulo, do Item de Trabalho ou
+da Execução.
 
 ### Item de Trabalho
 
@@ -452,7 +470,9 @@ As seguintes relações são constitucionais:
 
 - toda Necessidade aceita deve permanecer rastreável ao Projeto que originou;
 - todo Módulo pertence a exatamente um Projeto proprietário;
+- toda Entrega de Valor / ValueIncrement pertence a exatamente um Módulo;
 - todo Item de Trabalho possui exatamente um escopo governante;
+- todo Item de Trabalho governado por Módulo no fluxo normal referencia exatamente uma ValueIncrement;
 - toda Execução pertence a exatamente um Item de Trabalho;
 - toda Entrega pertence a um Projeto;
 - toda evolução de produto entregue deve permanecer vinculada à Entrega ou
@@ -1359,7 +1379,7 @@ Um Módulo pertence ao contexto de um Projeto.
 Projeto e Módulo possuem responsabilidades e lifecycles próprios.
 
 A progressão do Projeto deve ser derivada de regras explícitas de agregação das
-condições de seus Módulos, Itens de Trabalho, dependências e entregas aplicáveis.
+condições de seus Módulos, Entregas de Valor, Itens de Trabalho, dependências e entregas aplicáveis.
 
 Não pode existir inferência informal como:
 

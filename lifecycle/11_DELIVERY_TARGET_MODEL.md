@@ -1,12 +1,14 @@
 # NAAMIVE — Delivery Target Model
 
-**Status:** BRAINSTORM — VD-03 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.3  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a modelo normativo de escopo-alvo de entrega  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Deriva de:** `03_PROJECT_LIFECYCLE.md`, `09_VALUE_DELIVERY_MODEL.md`, `10_VALUE_INCREMENT_LIFECYCLE.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 **Escopo:** definição, versionamento e uso de Delivery Target para governar quais Entregas de Valor participam ou bloqueiam uma candidatura de Delivery
 
 ---
@@ -309,15 +311,6 @@ split preserva lineage
 accepted nunca é reescrito retroativamente
 optional pronta pode ser incluída
 disposição é relativa ao target
-```
-
----
-
-# 14. Status
-
-```text
-VD-03 Delivery Target model........ CLOSED — working decision
-NB-0002............................ NOT IN FORCE
 ```
 
 

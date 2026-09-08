@@ -1,15 +1,14 @@
 # NAAMIVE — Need Lifecycle
 
-**Status:** RATIFIED  
-**Versão:** 0.4  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** lifecycle específico da entidade Need  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** entidade Need e seu handoff governado para Project
 
 ---

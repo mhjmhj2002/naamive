@@ -1,12 +1,14 @@
 # NAAMIVE — CONCEPTION Internal Lifecycle
 
-**Status:** BRAINSTORM — R2-03 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a lifecycle interno da fase `Project.CONCEPTION`  
 **Deriva de:** `03_PROJECT_LIFECYCLE.md`, `07_INTERNAL_PHASE_LIFECYCLE_MODEL.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -476,14 +478,96 @@ Phase Cycle Plan is durable
 agent memory is not phase memory
 ```
 
+
 ---
 
-# 24. Status
+# Phase Cycle Plan da Concepção
+
+## Requisitos
+
+O plano deve ser:
 
 ```text
-R2-03 CONCEPTION Internal Lifecycle
-CLOSED — working decision
-
-NEXT
-R2-04 ARCHITECTURE Internal Lifecycle
+durable
+versioned
+restart-safe
+reconstructable
+explainable
 ```
+
+e deve representar:
+
+```text
+planned steps
+current step
+completed steps
+open decisions
+findings
+waits
+blockers
+continuity
+material plan changes
+```
+
+---
+
+## Não é checklist descartável
+
+Não pode existir apenas em:
+
+```text
+agent prompt
+chat
+frontend state
+temporary worker memory
+```
+
+---
+
+## Relação com fatos canônicos
+
+Phase Cycle Plan referencia:
+
+```text
+Decision
+Finding
+Evidence
+Review
+Audit
+Continuity
+Business Baseline
+```
+
+Não duplica o lifecycle desses recursos.
+
+---
+
+## Mudança material
+
+Mudança de:
+
+```text
+scope
+required journey
+required capability
+success criteria
+material decision path
+```
+
+deve produzir version/history suficiente.
+
+---
+
+## Supervisão
+
+O backend/worker deve conseguir detectar:
+
+```text
+phase active without next step
+blocking decision without continuity
+step stale too long
+plan current but baseline stale
+all steps done but readiness not decided
+```
+
+Browser não é supervisor.

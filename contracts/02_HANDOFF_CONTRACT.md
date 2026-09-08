@@ -1,15 +1,14 @@
 # NAAMIVE — Handoff Contract
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** contrato normativo de handoffs do NAAMIVE  
 **Deriva de:** `../00_NAAMIVE_CONSTITUTION.md`, `../lifecycle/01_LIFECYCLE_MODEL.md` e `../governance/01_GOVERNANCE_MODEL.md`
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** handoffs governados e transferência durável de responsabilidade
 
 ---
@@ -43,7 +42,9 @@ Incluem:
 
 - Need → Project;
 - Project → Module;
-- Project/Module → Work Item;
+- Module → ValueIncrement;
+- ValueIncrement → Work Item;
+- Project → Work Item transversal;
 - Work Item → Execution;
 - Execution → Work Item;
 - Module → Project;
@@ -235,7 +236,22 @@ Exige:
 
 ---
 
-# 23. Project/Module → Work Item
+# 23. Module → ValueIncrement
+
+Exige:
+
+- Module válido;
+- valor de negócio identificável;
+- critérios;
+- baseline;
+- ownership;
+- intenção.
+
+---
+
+# 24. ValueIncrement / Project → Work Item
+
+Work Item de Module no fluxo normal exige ValueIncrement explícita. Work Item transversal pode ser governada pelo Project.
 
 Exige:
 
@@ -249,7 +265,7 @@ Exige:
 
 ---
 
-# 24. Work Item → Execution
+# 25. Work Item → Execution
 
 Exige:
 
@@ -262,7 +278,7 @@ Exige:
 
 ---
 
-# 25. Execution → Work Item
+# 26. Execution → Work Item
 
 Exige:
 
@@ -275,7 +291,7 @@ Exige:
 
 ---
 
-# 26. Module → Project
+# 27. Module → Project
 
 Ao integrar, Module entrega:
 

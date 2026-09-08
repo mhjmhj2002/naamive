@@ -1,15 +1,14 @@
 # NAAMIVE — Recovery and Reconciliation Model
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.3  
 **Autoridade:** modelo arquitetural de recovery e reconciliation  
 **Deriva de:** Continuity Contract e Execution Lifecycle
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** recovery, reconciliation, compensation, effect certainty e inconsistências operacionais
 
 ---

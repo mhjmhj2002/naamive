@@ -1,12 +1,14 @@
 # NAAMIVE — Value Increment Lifecycle
 
-**Status:** BRAINSTORM — VD-02 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.4  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a lifecycle específico de Entrega de Valor (`ValueIncrement`)  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`, `03_PROJECT_LIFECYCLE.md`, `04_MODULE_LIFECYCLE.md`, `05_WORK_ITEM_LIFECYCLE.md`, `09_VALUE_DELIVERY_MODEL.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 **Escopo:** identificação, definição, planejamento, implementação, validação, aceite, rework, terminalidade e sucessão de Entrega de Valor
 
 ---
@@ -750,18 +752,3 @@ mudança material posterior cria successor
 UI não inventa valor, estado ou progresso
 restart não apaga progresso funcional
 ```
-
----
-
-# 21. Status VD-02
-
-```text
-VD-01 Semântica/ownership........ CLOSED
-VD-02 Lifecycle.................. CLOSED — working decision
-VD-03 Project VALIDATION/Delivery CLOSED
-VD-04 State/Persistence/Projection CLOSED
-VD-05 Orchestration/UI/Observability CLOSED
-R2-02b Work Item Development Internal Lifecycle NEXT
-```
-
-Este documento continua `NOT IN FORCE` até futura ratificação da `NB-0002`.

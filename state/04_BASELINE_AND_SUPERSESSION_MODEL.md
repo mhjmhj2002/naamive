@@ -1,15 +1,14 @@
 # NAAMIVE — Baseline and Supersession Model
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** modelo conceitual de baseline, validade e supersessão  
 **Deriva de:** Constituição, Lifecycles, Governance e Contracts
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** Business Baseline, Normative Baseline, validade, revalidação e supersessão
 
 ---
@@ -280,3 +279,90 @@ Baseline responde:
 ```text
 exatamente sobre qual realidade esta decisão foi tomada?
 ```
+
+
+---
+
+# Baseline, target e supersessão de valor
+
+## ValueIncrement baseline
+
+Toda decisão material de `ValueIncrement` deve ser vinculável à Business Baseline
+avaliada e à Normative Baseline aplicável.
+
+`ValueIncrement.ACCEPTED` significa aceite daquele valor na baseline identificada.
+
+---
+
+## DeliveryTarget baseline
+
+Cada versão material de Delivery Target deve declarar a Business Baseline sobre a
+qual o compromisso foi decidido.
+
+Mudança material:
+
+```text
+new version
+supersedes old version
+```
+
+sem reescrever a versão anterior.
+
+---
+
+## Membership validity
+
+Mudança de:
+
+```text
+REQUIRED_FOR_TARGET
+OPTIONAL_FOR_TARGET
+OUT_OF_TARGET
+```
+
+pode exigir:
+
+```text
+KEEP
+REVALIDATE
+SUPERSEDE
+REVOKE
+RECONCILE
+```
+
+nos objetos dependentes.
+
+---
+
+## Candidate baseline drift
+
+Se:
+
+```text
+Delivery Target = DT-01 v3
+Candidate Business Baseline = B42
+```
+
+e o baseline mudar para `B43`, evidências não continuam válidas por inércia.
+
+---
+
+## Split e successor
+
+Split deve preservar source baseline, successor baselines, decision, lineage e
+efeito no target.
+
+`ACCEPTED` não reabre; mudança posterior cria successor.
+
+---
+
+## Current authoritative value
+
+A agregação corrente deve distinguir:
+
+```text
+historical accepted value
+current authoritative value for target/baseline
+```
+
+---

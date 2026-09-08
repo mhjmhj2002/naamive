@@ -1,15 +1,14 @@
 # NAAMIVE — Agent Execution Model
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** modelo conceitual de execução por agentes  
 **Deriva de:** Execution Lifecycle, Governance e Orchestration
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** participação governada de agents, contexto, tools, independência e execução
 
 ---
@@ -205,3 +204,169 @@ material decision missing => escalate
 Agent é participante governado do sistema.
 
 Nunca é soberano.
+
+
+---
+
+# Agents, proposals e progresso funcional
+
+## Agent como challenger/recommender
+
+Agent de planejamento deve poder:
+
+```text
+analisar Module
+propor ValueIncrements
+questionar granularidade
+sugerir split/merge
+identificar dependências
+propor ordem
+propor critérios de valor
+avaliar REQUIRED/OPTIONAL/OUT_OF_TARGET
+explicar trade-offs
+```
+
+---
+
+## ValueIncrementProposal
+
+Agent pode criar automaticamente um draft/proposal persistente equivalente a:
+
+```text
+ValueIncrementProposal
+```
+
+O proposal deve conter, conforme aplicável:
+
+```text
+source Module
+proposed value statement
+scope
+out-of-scope
+criteria
+dependencies
+rationale
+alternatives
+risk
+recommended disposition
+split/merge recommendation
+Business Baseline
+normative_baseline_ref
+agent principal/context version
+```
+
+---
+
+## Proposal não é fato aprovado
+
+```text
+ValueIncrementProposal
+!=
+ValueIncrement canônica aprovada
+```
+
+Agent pode propor.
+
+Agent não pode aprovar decisão material em nome de humano.
+
+---
+
+## Human decision boundary
+
+Para decisão material:
+
+```text
+agent proposal
+→ decision request
+→ human action surface
+→ governed decision
+→ canonical creation/change
+```
+
+---
+
+## Challenge obrigatório
+
+O agent deve questionar, conforme aplicável:
+
+```text
+isso realmente entrega valor?
+está grande demais?
+está pequeno demais?
+mistura mais de um valor?
+há valor obrigatório + opcional misturados?
+podemos entregar valor útil antes?
+há dependência oculta?
+há Work Item sem rastreabilidade de valor?
+a decomposição está técnica demais?
+```
+
+---
+
+## Split antes de downgrade
+
+Antes de recomendar:
+
+```text
+REQUIRED_FOR_TARGET
+→ OPTIONAL_FOR_TARGET
+ou OUT_OF_TARGET
+```
+
+agent deve avaliar se o problema real é decomposição ruim.
+
+Se sim, sugerir split antes de reduzir compromisso.
+
+---
+
+## Context package
+
+Agent deve receber contexto versionado com:
+
+```text
+Project
+Module
+DeliveryTarget current/version
+ValueIncrement map
+dependencies
+Business Baseline
+normative_baseline_ref
+open decisions
+authority limits
+expected output
+prohibited actions
+```
+
+---
+
+## Stale context
+
+Se target/baseline/lifecycle mudar materialmente durante a Execution:
+
+```text
+agent context becomes stale
+```
+
+Resultado não pode ser aplicado automaticamente sem revalidation.
+
+---
+
+## Evidence
+
+Proposal/recommendation material deve preservar racional e evidência suficiente
+para a decisão humana.
+
+---
+
+## Invariantes
+
+```text
+agent role != authority
+proposal != approval
+material decision missing => escalate
+context pins baseline
+split challenge precedes scope downgrade when applicable
+agent cannot silently create canonical commitment
+```
+
+---

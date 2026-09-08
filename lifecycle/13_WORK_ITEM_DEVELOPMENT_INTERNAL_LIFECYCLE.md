@@ -1,12 +1,14 @@
 # NAAMIVE — Work Item Development Internal Lifecycle
 
-**Status:** BRAINSTORM — R2-02b APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a lifecycle interno de desenvolvimento de Work Item durante `Project.IMPLEMENTATION`  
 **Deriva de:** `05_WORK_ITEM_LIFECYCLE.md`, `06_EXECUTION_LIFECYCLE.md`, `07_INTERNAL_PHASE_LIFECYCLE_MODEL.md`, `08_IMPLEMENTATION_INTERNAL_LIFECYCLE.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -534,16 +536,4 @@ reentry creates new causal cycle
 trivial work uses same mechanism with NOT_APPLICABLE
 READY_FOR_DECISION remains explicit
 agent memory is not continuity
-```
-
----
-
-# 25. Status
-
-```text
-R2-02b Work Item Development Internal Lifecycle
-CLOSED — working decision
-
-NEXT
-R2-03 CONCEPTION Internal Lifecycle
 ```

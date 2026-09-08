@@ -1,15 +1,14 @@
 # NAAMIVE — Module Lifecycle
 
-**Status:** RATIFIED  
-**Versão:** 0.2  
+**Status:** RATIFIED  **Versão:** 0.3  
 **Autoridade:** lifecycle específico da entidade Module  
 **Deriva de:** `01_LIFECYCLE_MODEL.md` e `03_PROJECT_LIFECYCLE.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** entidade Module, suas dependências, integração e sucessão
 
 ---
@@ -985,3 +984,252 @@ Module existe para representar capacidade de negócio, não topologia técnica.
 
 Ele somente avança quando sua responsabilidade atual foi cumprida e o próximo
 passo possui continuidade comprovável.
+
+
+---
+
+# Decomposição do Module por Entregas de Valor
+
+## Semântica preservada
+
+Permanece válido:
+
+```text
+Module = capacidade de negócio coerente pertencente a exatamente um Project
+```
+
+Module continua não sendo camada técnica.
+
+Seu lifecycle macro é:
+
+```text
+IDENTIFIED
+→ DEFINED
+→ PLANNED
+→ IMPLEMENTING
+→ VALIDATING
+→ READY_FOR_INTEGRATION
+→ INTEGRATED
+```
+
+A introdução de `ValueIncrement` altera a decomposição interna e os critérios de
+agregação; não transforma Module em mini-Project.
+
+---
+
+## DEFINED → PLANNED
+
+planejamento de Module deve incluir Entregas de Valor.
+
+Modelo:
+
+```text
+Module DEFINED
+      ↓
+identificar/decompor ValueIncrements
+      ↓
+challenge do agente
+      ↓
+decisão/brainstorm governado
+      ↓
+ordenar/dependências/critérios
+      ↓
+planejar primeira(s) ValueIncrement(s)
+      ↓
+Module PLANNED
+```
+
+A decomposição direta:
+
+```text
+Module → Work Items
+```
+
+deixa de ser o caminho normal.
+
+---
+
+## Conteúdo esperado em Module.PLANNED
+
+Inclui, conforme aplicável:
+
+```text
+ValueIncrements
+ordem
+dependências entre ValueIncrements
+required/optional disposition para baseline alvo
+critérios de valor
+estratégia de validação
+Work Items derivadas
+Work Items transversais do Project relevantes
+riscos
+review/audit requirements
+```
+
+Nem todos os Work Items distantes precisam estar detalhados até o último nível,
+desde que o mapa de valor do Module esteja conhecido e a próxima Entrega de Valor
+possa avançar sem invenção material.
+
+---
+
+## Module.IMPLEMENTING
+
+Semântica:
+
+```text
+ValueIncrements do Module estão sendo materializadas
+```
+
+Fluxo:
+
+```text
+Module
+  ↓
+ValueIncrement
+  ↓
+Work Item
+  ↓
+Execution
+```
+
+No MVP:
+
+```text
+1 ValueIncrement ativa por vez
+1 Work Item ativa por vez
+```
+
+Essa sequencialidade é política inicial, não cardinalidade estrutural.
+
+---
+
+## Continuidade em IMPLEMENTING
+
+Deve existir pelo menos uma rota válida:
+
+```text
+ValueIncrement ativa
+próxima ValueIncrement elegível
+Work Item elegível/em progresso
+review/rework
+WAITING/BLOCKED governado
+human decision
+recovery/reconciliation
+```
+
+Ausência de todas é `Inconsistency`.
+
+---
+
+## IMPLEMENTING → VALIDATING
+
+Critério:
+
+```text
+todas as ValueIncrements obrigatórias para o baseline alvo = ACCEPTED
+nenhuma ValueIncrement ativa capaz de alterar baseline
+nenhuma Execution em voo capaz de alterar baseline
+baseline do Module identificável
+continuidade para validação agregada
+```
+
+A simples conclusão de Work Items não é suficiente.
+
+---
+
+## Module.VALIDATING
+
+Pergunta própria:
+
+```text
+as Entregas de Valor aceitas formam, juntas, a capacidade de negócio prometida?
+```
+
+Pode validar:
+
+```text
+coerência entre incrementos
+regras de negócio agregadas
+dependências
+integrações internas
+experiência da capacidade
+segurança/dados/operação
+evidência agregada
+```
+
+Isso não repete `ValueIncrement.VALIDATING`, que prova o valor local de cada
+incremento.
+
+---
+
+## Finding sobre ValueIncrement ACCEPTED
+
+Se Module.VALIDATING descobrir problema material em incremento já aceito:
+
+```text
+não reabrir ValueIncrement ACCEPTED
+```
+
+Criar successor/rework governado.
+
+O Module pode retornar:
+
+```text
+VALIDATING → IMPLEMENTING
+```
+
+preservando história, baseline e causalidade.
+
+---
+
+## READY_FOR_INTEGRATION / INTEGRATED
+
+Permanecem como estados de capacidade agregada.
+
+`ValueIncrement.ACCEPTED` não significa:
+
+```text
+Module READY_FOR_INTEGRATION
+Module INTEGRATED
+```
+
+Module ainda deve provar coerência agregada e realizar sua integração no Project.
+
+---
+
+## Impacto em agregação
+
+Project e projections não podem usar apenas:
+
+```text
+count(WorkItems DONE)
+```
+
+nem:
+
+```text
+count(ValueIncrements ACCEPTED)
+```
+
+como regra automática.
+
+Devem avaliar o conjunto obrigatório, baseline, dependências, validade e
+condições do lifecycle do Module.
+
+---
+
+## Relação com Delivery Target
+
+A agregação corrente do Module deve considerar a disposição das Entregas de
+Valor no Delivery Target ativo.
+
+Uma Entrega de Valor `OUT_OF_TARGET` não bloqueia o Module para aquela
+candidatura.
+
+Uma Entrega de Valor `OPTIONAL_FOR_TARGET` não bloqueia por ausência.
+
+Uma Entrega de Valor `REQUIRED_FOR_TARGET` deve estar `ACCEPTED` para que o
+Module possa satisfazer a capacidade exigida pelo target corrente.
+
+A disposição é relativa ao Delivery Target e não altera a história intrínseca da
+Entrega de Valor.

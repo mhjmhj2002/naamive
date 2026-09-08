@@ -1,15 +1,14 @@
 # NAAMIVE — Continuity and Recovery Contract
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** contrato normativo de continuity, recovery e reconciliation do NAAMIVE  
 **Deriva de:** `../00_NAAMIVE_CONSTITUTION.md`, `../lifecycle/01_LIFECYCLE_MODEL.md` e `../lifecycle/06_EXECUTION_LIFECYCLE.md`
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** continuity, failure, retry, recovery, reconciliation e compensation
 
 ---
@@ -401,3 +400,102 @@ o que acontece depois
 ```
 
 Recovery Contract garante que falhar não destrua essa resposta.
+
+
+---
+
+# Continuity para desenvolvimento e roadmap
+
+## Finding discovery must materialize continuity
+
+Agent que encontra impedimento não pode apenas retornar erro textual.
+
+Após persistência/classificação, deve existir continuity compatível.
+
+---
+
+## NON_BLOCKING continuity
+
+Quando o Finding não bloqueia o affected scope:
+
+```text
+AUTOMATIC_WORK
+```
+
+pode continuar para trabalho elegível.
+
+A remediation permanece no Development Roadmap.
+
+---
+
+## BLOCKING continuity
+
+Quando bloqueia:
+
+```text
+GOVERNED_BLOCK
+```
+
+deve conter:
+
+```text
+cause_ref = Finding
+affected resource
+owner
+exit condition
+fallback
+escalation
+cadence/deadline quando aplicável
+Business Baseline
+normative_baseline_ref
+```
+
+---
+
+## Roadmap as continuity context
+
+Development Roadmap pode ser referência contextual para:
+
+```text
+next eligible work
+pending remediation
+dependency waits
+decision requests
+recovery/reconciliation
+```
+
+Mas não substitui o Continuity record normativo.
+
+---
+
+## Fail-closed sem abandono
+
+Fail-closed continua obrigatório.
+
+Nova regra de implementação:
+
+```text
+stop affected operation
+!=
+forget roadmap
+```
+
+Mesmo quando nenhuma ação pode continuar agora, o sistema deve preservar rota de
+retomada.
+
+---
+
+## Supervisor
+
+Roadmap Supervisor deve detectar:
+
+```text
+active resource sem continuity
+blocking Finding sem GOVERNED_BLOCK
+remediation sem owner/exit condition quando exigida
+roadmap sem next action apesar de trabalho potencial
+```
+
+Discrepância material abre/vincula `Inconsistency`.
+
+---

@@ -1,12 +1,14 @@
 # NAAMIVE — Implementation Internal Lifecycle
 
-**Status:** BRAINSTORM  
+**Status:** RATIFIED  
 **Versão:** 0.7  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a lifecycle interno da fase `Project.IMPLEMENTATION`  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`, `03_PROJECT_LIFECYCLE.md`, `05_WORK_ITEM_LIFECYCLE.md`, `06_EXECUTION_LIFECYCLE.md`, `07_INTERNAL_PHASE_LIFECYCLE_MODEL.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 **Escopo:** ciclo interno macro da fase `IMPLEMENTATION`, reconciliado com Entrega de Valor, Development Roadmap e Work Item Development Internal Lifecycle
 
 ---
@@ -81,7 +83,7 @@ VERIFY_IMPLEMENTATION
 READY_FOR_VALIDATION
 ```
 
-`INTEGRATE_RESULTS` deixa de ser estado macro exclusivo no MVP.
+Integração de resultados não é um estado macro exclusivo; ocorre continuamente por Work Item e baseline cumulativa.
 
 A integração ocorre dentro da materialização sequencial de cada Work Item /
 Entrega de Valor, produzindo uma baseline técnica cumulativa e identificável.
@@ -730,7 +732,6 @@ Status:
 ```text
 R2-02 IMPLEMENTATION macro................ CLOSED — working
 R2-02b Work Item Development.............. CLOSED — working
-R2-03 CONCEPTION Internal Lifecycle....... NEXT
 ```
 
 ---

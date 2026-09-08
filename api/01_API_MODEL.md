@@ -1,15 +1,14 @@
 # NAAMIVE — API Model
 
-**Status:** RATIFIED  
-**Versão:** 0.2  
+**Status:** RATIFIED  **Versão:** 0.2  
 **Autoridade:** modelo arquitetural da API  
 **Deriva de:** Contracts, State e Governance
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** superfície programática de commands, queries, authority, idempotência e erros
 
 ---

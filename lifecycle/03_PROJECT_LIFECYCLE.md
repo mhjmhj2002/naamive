@@ -1,15 +1,14 @@
 # NAAMIVE — Project Lifecycle
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** lifecycle específico da entidade Project  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** entidade Project, agregação de seus descendentes e produção de Delivery
 
 ---
@@ -26,7 +25,7 @@ Este lifecycle existe para garantir que:
 - Project nunca perca sua origem de negócio;
 - solução não seja materializada antes de maturidade suficiente;
 - arquitetura e planejamento sejam decisões explícitas;
-- Modules e Work Items sejam derivados de forma governada;
+- Modules, ValueIncrements e Work Items sejam derivados de forma governada;
 - implementação não invente decisões materiais;
 - validação seja distinta de execução técnica;
 - Delivery seja aceita com evidência e autoridade;
@@ -886,7 +885,7 @@ A intenção de continuidade do Project foi encerrada.
 - claims em voo devem perder autoridade conforme política;
 - efeitos tardios entram em reconciliation;
 - efeitos indesejados podem exigir compensation;
-- Modules e Work Items precisam receber classificação explícita de cobertura;
+- Modules, ValueIncrements e Work Items precisam receber classificação explícita de cobertura;
 - autorizações e handoffs descendentes devem ser revogados, revalidados ou reconciliados conforme o efeito real;
 - histórico permanece.
 
@@ -1338,3 +1337,121 @@ a autoridade é válida
 +
 o próximo estágio possui continuidade comprovável
 ```
+
+
+---
+
+# Value Delivery, Target e validação global
+
+## PLANNING
+
+Conteúdo de planejamento passa a incluir, conforme aplicável:
+
+```text
+Modules
+ValueIncrements
+Delivery Target
+disposição REQUIRED/OPTIONAL/OUT_OF_TARGET
+ordem e dependências
+Work Items
+estratégia de validação
+```
+
+Antes de implementação, o mapa global de valor deve estar conhecido em
+profundidade suficiente.
+
+---
+
+## IMPLEMENTATION → VALIDATION
+
+Revisão candidata:
+
+```text
+todas as ValueIncrements REQUIRED_FOR_TARGET = ACCEPTED
+Modules necessários em condição compatível
+Work Items transversais obrigatórias concluídas
+baseline global identificável
+nenhuma Execution autorizada em voo para o mesmo baseline
+nenhum blocker incompatível
+continuidade para Project.VALIDATION
+```
+
+---
+
+## VALIDATION
+
+Permanece validação global do Project.
+
+Não é substituída por:
+
+```text
+ValueIncrement.VALIDATING
+Module.VALIDATING
+```
+
+Pode encontrar falha apesar de ValueIncrements individualmente aceitas.
+
+Nesse caso:
+
+```text
+criar successor/rework
+não reabrir histórico terminal
+```
+
+---
+
+## VALIDATION → DELIVERY
+
+Além dos critérios existentes, exige:
+
+```text
+Delivery Target resolvido
+required set satisfeito
+optional included set explícito
+out-of-target set explícito
+baseline final candidato estável
+```
+
+---
+
+## DELIVERY
+
+A candidatura deve mostrar explicitamente:
+
+```text
+Delivery Target id/version
+required
+optional incluídas
+out-of-target
+baseline
+validação global
+findings
+riscos
+limitações
+```
+
+Se required não estiver satisfeita:
+
+```text
+aceite proibido
+```
+
+salvo após mudança governada de escopo/decomposição que produza novo estado
+válido do target.
+
+---
+
+## DELIVERED
+
+A Delivery aceita preserva o escopo exato:
+
+```text
+target version
+ValueIncrements incluídas
+disposições
+baseline
+```
+
+Project permanece terminal.
+
+---

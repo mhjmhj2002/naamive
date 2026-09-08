@@ -1,9 +1,11 @@
 # NAAMIVE — ARCHITECTURE Activity Center Model
 
-**Status:** BRAINSTORM — R2-04 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 

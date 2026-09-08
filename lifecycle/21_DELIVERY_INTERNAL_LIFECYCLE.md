@@ -1,9 +1,11 @@
 # NAAMIVE — DELIVERY Internal Lifecycle
 
-**Status:** BRAINSTORM — R2-07 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -336,16 +338,4 @@ OUT_OF_TARGET cannot be delivered
 Delivery creation is idempotent
 positive decision handoff is recoverable
 Delivery is terminal fact
-```
-
----
-
-# 19. Status
-
-```text
-R2-07 DELIVERY Internal Lifecycle
-CLOSED — working decision
-
-NEXT
-R2-08 Cross-Lifecycle Reconciliation
 ```

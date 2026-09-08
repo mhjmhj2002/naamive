@@ -1,15 +1,14 @@
 # NAAMIVE — Scheduling and Eligibility Model
 
-**Status:** RATIFIED  
-**Versão:** 0.2  
+**Status:** RATIFIED  **Versão:** 0.3  
 **Autoridade:** modelo de elegibilidade e agendamento  
 **Deriva de:** Work Item, Execution, Continuity e Orchestration
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** elegibilidade derivada, scheduling, prioridade, concorrência e revalidação
 
 ---
@@ -130,3 +129,105 @@ cancelled => ineligible
 Scheduler escolhe quando executar.
 
 Eligibility decide se pode executar.
+
+
+---
+
+# Scheduling de ValueIncrement e DeliveryTarget
+
+## Eligibility
+
+Work Item eligibility passa a considerar também, conforme aplicável:
+
+```text
+owner ValueIncrement state compatível
+DeliveryTarget current/version
+membership/disposition
+ordering
+ValueIncrement dependencies
+MVP concurrency policy
+baseline validity
+```
+
+---
+
+## REQUIRED priority
+
+Quando houver candidatos elegíveis:
+
+```text
+REQUIRED_FOR_TARGET
+→ prioridade automática sobre OPTIONAL_FOR_TARGET
+```
+
+Essa prioridade não viola dependências, authority ou gates.
+
+---
+
+## OPTIONAL
+
+`OPTIONAL_FOR_TARGET` pode executar quando:
+
+```text
+não existe REQUIRED elegível concorrente
+ou
+há decisão humana governada alterando prioridade
+```
+
+---
+
+## OUT_OF_TARGET
+
+Por padrão:
+
+```text
+OUT_OF_TARGET => ineligible for current DeliveryTarget execution
+```
+
+salvo fluxo explícito de preparação/evolução fora da candidatura corrente,
+governado separadamente.
+
+---
+
+## Sequencialidade
+
+No MVP:
+
+```text
+eligible active ValueIncrement slots = 1
+eligible active Work Item slots      = 1
+```
+
+O schema não deve assumir que sempre será assim.
+
+---
+
+## Recompute
+
+Eligibility deve ser recomputada quando mudar:
+
+```text
+target version
+membership
+dependency
+baseline
+ValueIncrement state
+Work Item state
+authority
+blocker
+human decision
+```
+
+---
+
+## Invariantes
+
+```text
+priority != authority
+OPTIONAL não fura REQUIRED automaticamente
+OUT_OF_TARGET não executa para target corrente
+stale target => ineligible
+stale baseline => ineligible
+```
+
+---

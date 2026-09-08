@@ -1,15 +1,14 @@
 # NAAMIVE — Error, Idempotency and Concurrency Model
 
-**Status:** RATIFIED  
-**Versão:** 0.2  
+**Status:** RATIFIED  **Versão:** 0.3  
 **Autoridade:** modelo de erros, idempotência e concorrência de API  
 **Deriva de:** Transition Contract e Transaction Model
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** erros, idempotência, concorrência, retry e unknown outcome na API
 
 ---
@@ -107,3 +106,18 @@ unknown outcome not blindly retried
 Erro também faz parte do contrato.
 
 Falhar de forma ambígua é pior que falhar explicitamente.
+
+---
+
+# Stale command fencing
+
+Commands materiais devem carregar contexto/version/watermark suficiente para detectar intenção stale.
+
+```text
+stale command
+→ reject
+→ refresh/refetch
+→ re-decide when necessary
+```
+
+Resultado de executor stale/expired não pode publicar estado autoritativo.

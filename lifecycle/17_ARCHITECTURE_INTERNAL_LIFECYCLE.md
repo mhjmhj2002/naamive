@@ -1,12 +1,14 @@
 # NAAMIVE — ARCHITECTURE Internal Lifecycle
 
-**Status:** BRAINSTORM — R2-04 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a lifecycle interno da fase `Project.ARCHITECTURE`  
 **Deriva de:** `03_PROJECT_LIFECYCLE.md`, `04_MODULE_LIFECYCLE.md`, `07_INTERNAL_PHASE_LIFECYCLE_MODEL.md`, `15_CONCEPTION_INTERNAL_LIFECYCLE.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -479,14 +481,64 @@ NON_BLOCKING may cross only with continuity
 READY_FOR_PLANNING is internal step
 ```
 
+
 ---
 
-# 25. Status
+# Phase Cycle Plan da Arquitetura
+
+## Deve representar
 
 ```text
-R2-04 ARCHITECTURE Internal Lifecycle
-CLOSED — working decision
+architecture steps
+current step
+completed steps
+Module proposals/formalized refs
+open architecture decisions
+findings
+dependencies
+waits
+blockers
+Technology Baseline progress
+Architecture Baseline candidate
+continuity
+```
 
-NEXT
-R2-05 PLANNING Internal Lifecycle
+---
+
+## Mudança material
+
+Mudança de:
+
+```text
+Module boundaries
+responsibility ownership
+dependency topology
+conceptual contracts
+technology strategy
+material architecture decision
+```
+
+deve ser versionada ou manter histórico equivalente.
+
+---
+
+## Não depende do agent
+
+Agent session pode terminar.
+
+O plano continua no sistema.
+
+---
+
+## Supervisor
+
+Deve detectar:
+
+```text
+architecture active without next step
+Module required but not sufficiently defined
+blocking dependency without continuity
+Technology Baseline insufficient for next phase
+baseline stale
+all steps done but readiness not decided
 ```

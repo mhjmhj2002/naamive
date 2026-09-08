@@ -1,15 +1,14 @@
 # NAAMIVE — Work Item Lifecycle
 
-**Status:** RATIFIED  
-**Versão:** 0.2  
+**Status:** RATIFIED  **Versão:** 0.3  
 **Autoridade:** lifecycle específico da entidade Work Item  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`, `03_PROJECT_LIFECYCLE.md` e `04_MODULE_LIFECYCLE.md`  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** entidade Work Item, readiness, aceite e relação com Executions
 
 ---
@@ -837,3 +836,104 @@ Work Item representa trabalho governado.
 Execution representa tentativa.
 
 **Tentativa bem-sucedida não é sinônimo de trabalho aceito.**
+
+
+---
+
+# Desenvolvimento interno e vínculo com ValueIncrement
+
+## Ownership delta
+
+Para Work Item governada por Module no fluxo normal de implementação:
+
+```text
+Module
+→ ValueIncrement
+→ Work Item
+```
+
+A Work Item deve referenciar sua `ValueIncrement`.
+
+Project-scoped Work Item transversal permanece permitida.
+
+---
+
+## IN_PROGRESS
+
+`IN_PROGRESS` continua sendo estado da Work Item.
+
+Seu progresso funcional detalhado é representado por:
+
+```text
+Development Cycle Instance
+Development Steps
+Development Roadmap
+```
+
+sem alterar o macro lifecycle.
+
+---
+
+## IN_PROGRESS → IN_REVIEW
+
+Requer conclusão aplicável do ciclo:
+
+```text
+PREPARE_WORK
+IMPLEMENT_CHANGE
+VERIFY_CHANGE
+MATERIALIZE_CANDIDATE
+VERIFY_CANDIDATE
+PREPARE_REVIEW
+```
+
+Passos explicitamente `NOT_APPLICABLE` não bloqueiam.
+
+---
+
+## IN_REVIEW
+
+Seu ciclo interno:
+
+```text
+REVIEW_RESULT
+VERIFY_ACCEPTANCE
+READY_FOR_DECISION
+```
+
+---
+
+## IN_REVIEW → IN_PROGRESS
+
+Cria nova Development Cycle Instance causal.
+
+Não reseta a anterior.
+
+---
+
+## Impedimentos
+
+Finding descoberto deve:
+
+```text
+persistir
+ser classificado no escopo afetado
+produzir continuity
+ser inserido no Development Roadmap quando exigir tratamento
+```
+
+`NON_BLOCKING` não encerra trabalho ainda elegível.
+
+`BLOCKING` bloqueia o affected scope.
+
+---
+
+## DONE
+
+`DONE` continua terminal.
+
+Development Roadmap não autoriza reabrir Work Item `DONE`.
+
+Correção material futura cria novo trabalho/sucessão.
+
+---

@@ -1,12 +1,14 @@
 # NAAMIVE — Entrega de Valor Model
 
-**Status:** BRAINSTORM  
+**Status:** RATIFIED  
 **Versão:** 0.6  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a modelo normativo de Entrega de Valor  
 **Norma superior:** `../00_NAAMIVE_CONSTITUTION.md`  
 **Deriva de:** `01_LIFECYCLE_MODEL.md`, `03_PROJECT_LIFECYCLE.md`, `04_MODULE_LIFECYCLE.md`, `05_WORK_ITEM_LIFECYCLE.md`, `07_INTERNAL_PHASE_LIFECYCLE_MODEL.md`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE  
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 **Escopo:** relação Project → Module → Entrega de Valor → Work Item → Execution
 
 ---
@@ -154,7 +156,6 @@ depends on:
 A experiência integrada que atravessa vários Modules é validada no nível
 apropriado de Project; não transforma a Entrega de Valor em mini-Project.
 
-**Status VD-01:** CLOSED — working decision for NB-0002 candidate.
 
 ---
 
@@ -367,7 +368,7 @@ ValueIncrement
 
 # 14. Lifecycle próprio
 
-A Entrega de Valor possui lifecycle próprio aprovado como working decision em `VD-02`:
+A Entrega de Valor possui lifecycle próprio aprovado como governed decision em `VD-02`:
 
 ```text
 IDENTIFIED
@@ -385,7 +386,7 @@ READY_FOR_ACCEPTANCE
 ACCEPTED
 ```
 
-Detalhes, retornos, terminalidade, persistência e relação com Module estão definidos em `10_VALUE_INCREMENT_LIFECYCLE.md` como working decision da candidata `NB-0002`.
+Detalhes, retornos, terminalidade, persistência e relação com Module estão definidos em `10_VALUE_INCREMENT_LIFECYCLE.md` como governed decision da candidata `NB-0002`.
 
 ---
 
@@ -772,20 +773,6 @@ Entrega de Valor (ValueIncrement)
 
 quando a distinção for útil.
 
----
-
-# 27. Questões ainda abertas — próximas rodadas
-
-`VD-01`, `VD-02` e `VD-03` estão fechados como working decisions.
-
-Permanecem para `VD-02+`:
-
-```text
-mini-lifecycle detalhado de desenvolvimento de Work Item
-reconciliação final transversal antes de auditoria global
-impacto transversal completo em state/persistence/projection/orchestration/UI
-regra final de migração/supersessão na futura NB-0002
-```
 
 ---
 

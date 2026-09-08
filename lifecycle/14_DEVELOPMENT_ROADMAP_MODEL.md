@@ -1,11 +1,13 @@
 # NAAMIVE — Development Roadmap Model
 
-**Status:** BRAINSTORM — R2-02b APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a modelo governado de sequência, impedimentos e continuidade durante desenvolvimento  
 **Deriva de:** `08_IMPLEMENTATION_INTERNAL_LIFECYCLE.md`, `13_WORK_ITEM_DEVELOPMENT_INTERNAL_LIFECYCLE.md`, Finding Policy, Continuity Contract e Orchestration  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -406,15 +408,4 @@ blocking stops affected scope
 dependencies govern future eligibility
 browser is not supervisor
 roadmap history is explainable
-```
-
----
-
-# 20. Status
-
-```text
-Development Roadmap
-APPROVED WORKING MODEL
-candidate NB-0002
-NOT IN FORCE
 ```

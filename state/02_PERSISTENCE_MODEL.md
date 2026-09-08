@@ -1,15 +1,14 @@
 # NAAMIVE — Persistence Model
 
-**Status:** RATIFIED  
-**Versão:** 0.3  
+**Status:** RATIFIED  **Versão:** 0.4  
 **Autoridade:** modelo conceitual de persistência  
 **Deriva de:** `01_CANONICAL_STATE_MODEL.md` e Contracts
 
 **Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
-**Ratificado em:** 2026-09-06T22:09:34-03:00  
-**Vigência:** IN FORCE — desde 2026-09-06T22:09:34-03:00  
-**Normative Baseline:** `NB-0001`  
-**Supersessão normativa:** nenhuma versão anterior deste documento foi ratificada  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
+**Normative Baseline:** `NB-0002`  
+**Supersessão normativa:** supersedes the corresponding `NB-0001` revision for instances governed by `NB-0002`; `NB-0001` remains immutable for historical and non-migrated instances  
 **Escopo:** garantias conceituais de persistência, histórico, idempotência, causalidade e durabilidade
 
 ---
@@ -273,7 +272,7 @@ Nova Execution deve apontar attempt anterior quando retry/recovery.
 
 # 32. Parent-child relations
 
-Need → Project → Module/Work Item → Execution devem ser enforceáveis.
+Need → Project → Module → ValueIncrement → Work Item → Execution devem ser enforceáveis no fluxo normal de Module; Work Item transversal permanece Project-scoped.
 
 ---
 
@@ -390,3 +389,276 @@ Persistência não é só guardar dados.
 
 É preservar as provas necessárias para que a verdade continue confiável após
 concorrência, falha e restart.
+
+
+---
+
+# Persistência de Value Delivery e progresso interno
+
+## Categorias preservadas
+
+```text
+CURRENT STATE
+IMMUTABLE HISTORY
+EVIDENCE
+PROJECTIONS
+OPERATIONAL CLAIMS
+```
+
+---
+
+## ValueIncrement current state
+
+Deve ser durável o suficiente para responder:
+
+```text
+estado atual
+versão
+Module owner
+baseline
+continuidade
+predecessor/successor
+decisão/evidência
+```
+
+---
+
+## ValueIncrement immutable history
+
+Deve preservar append-only:
+
+```text
+transitions
+returns
+acceptance
+cancellation
+split lineage
+successor creation
+baseline changes
+authority decisions
+evidence linkage
+```
+
+---
+
+## DeliveryTarget current state
+
+Deve ser durável o suficiente para responder:
+
+```text
+qual target é current authoritative?
+qual versão governa?
+qual Project owner?
+qual scope statement?
+qual baseline?
+qual authority/decision?
+```
+
+---
+
+## DeliveryTarget version history
+
+Cada mudança material deve preservar:
+
+```text
+old version
+new version
+cause
+decision
+authority
+Business Baseline
+normative_baseline_ref
+supersession
+```
+
+---
+
+## Membership persistence
+
+A relação target-version ↔ ValueIncrement deve preservar:
+
+```text
+target id/version
+value_increment_id
+disposition
+effective decision
+included-in-candidate fact quando aplicável
+baseline
+authority
+```
+
+A forma física fica para a Technology Baseline.
+
+---
+
+## Um current target por Project
+
+A persistência deve conseguir impedir ou detectar dois Delivery Targets
+autoritativos correntes para o mesmo Project e mesma intenção, inclusive sob
+concorrência.
+
+---
+
+## Atomicidade lógica de mudança de target
+
+Uma mudança material deve formar unidade lógica consistente:
+
+```text
+nova versão
+membership set
+decision
+authority
+history
+supersession da versão anterior
+continuity resultante
+descendant validity classification quando aplicável
+```
+
+Se atomicidade física completa não for possível, deve existir completion/recovery
+durável.
+
+---
+
+## Split de ValueIncrement
+
+Split governado deve persistir:
+
+```text
+source ValueIncrement
+successor ValueIncrements
+reason
+decision
+authority
+Business Baseline
+normative_baseline_ref
+target version effect
+history
+```
+
+A origem não é apagada.
+
+---
+
+## PR e artefatos externos
+
+Vínculos entre ValueIncrement e artefatos técnicos externos, como GitHub Pull
+Requests, devem ser duráveis.
+
+O estado externo observado não vira source of truth do lifecycle de
+ValueIncrement.
+
+---
+
+## Functional progress
+
+Estado funcional necessário para reconstrução após restart deve ser persistido.
+
+Conforme aplicável:
+
+```text
+current internal phase/step
+last_functional_progress_at
+last functional progress description/ref
+blocker/wait
+continuity
+```
+
+---
+
+## Operational activity
+
+Quando necessária para continuidade e UI, deve ser persistida a informação
+corrente de:
+
+```text
+last_heartbeat_at
+last_operational_activity_at
+last_functional_progress_at
+```
+
+Os três conceitos são distintos.
+
+Histórico de heartbeat de alta frequência pode ser submetido futuramente a
+retenção/compaction.
+
+Histórico governado de lifecycle não pode ser apagado apenas por idade quando
+necessário para auditoria/reconstrução.
+
+---
+
+## Restart proof
+
+Cenário:
+
+```text
+Project P
+DT-01 v3 current
+
+EV-C2 = IMPLEMENTING
+disposition = OPTIONAL_FOR_TARGET
+
+WI-C2-03 = IN_PROGRESS
+Execution = RUNNING
+last_functional_progress = "regra de limite validada"
+```
+
+Após restart:
+
+```text
+DT-01 v3 continua current
+EV-C2 continua IMPLEMENTING
+membership continua OPTIONAL_FOR_TARGET
+WI continua conhecida
+progress funcional continua conhecido
+Execution é reavaliada conforme recovery/reconciliation
+```
+
+---
+
+## Idempotência
+
+Operações de:
+
+```text
+accept ValueIncrement
+create DeliveryTarget version
+supersede target version
+change membership
+split ValueIncrement
+include optional ValueIncrement in candidate
+```
+
+devem ser idempotentes por intention identity ou mecanismo equivalente.
+
+---
+
+## Integridade referencial
+
+Devem ser enforceáveis, conforme aplicável:
+
+```text
+Project → DeliveryTarget
+Project → Module
+Module → ValueIncrement
+DeliveryTargetVersion ↔ ValueIncrement membership
+ValueIncrement → Work Item
+Work Item → Execution
+```
+
+---
+
+## Retenção
+
+Pode existir futuramente:
+
+```text
+archival
+partitioning
+compaction
+cleanup
+```
+
+para alto volume operacional, sem destruir fatos necessários para reconstrução,
+auditoria, baseline ou lineage.
+
+---

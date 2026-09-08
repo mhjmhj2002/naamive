@@ -1,10 +1,12 @@
 # NAAMIVE — PLANNING Internal Lifecycle
 
-**Status:** BRAINSTORM — R2-05 APPROVED WORKING DECISION  
+**Status:** RATIFIED  
 **Versão:** 0.1  
+**Autoridade de ratificação:** Manuel Hinojosa — NAAMIVE Project Owner  
+**Ratificado em:** 2026-09-08T18:38:36-03:00  
 **Autoridade:** candidato a lifecycle interno da fase `Project.PLANNING`  
-**Normative Baseline candidata:** `NB-0002`  
-**Vigência:** NOT IN FORCE
+**Normative Baseline:** `NB-0002`  
+**Vigência:** IN FORCE — desde 2026-09-08T18:38:36-03:00  
 
 ---
 
@@ -332,16 +334,4 @@ global EV order may interleave Modules
 material technology must be ready before IMPLEMENTATION
 Planning Baseline identifiable
 READY_FOR_IMPLEMENTATION is internal
-```
-
----
-
-# 21. Status
-
-```text
-R2-05 PLANNING Internal Lifecycle
-CLOSED — working decision
-
-NEXT
-R2-06 VALIDATION Internal Lifecycle
 ```
