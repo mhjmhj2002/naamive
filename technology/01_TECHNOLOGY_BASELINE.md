@@ -1,245 +1,177 @@
 # NAAMIVE — Technology Baseline
 
-**Status:** BRAINSTORM  
-**Versão:** 0.6  
-**Natureza:** desenho técnico derivado; ainda não aprovado para implementação  
-**Deriva de:** `NB-0001`  
-**Fase:** SECOND DOCUMENTATION ROUND — TECHNICAL IMPLEMENTATION DESIGN  
-**Brainstorms consolidados:** 2.1 — Fundação Técnica e Shell da Aplicação; 2.2 — Core Technology Stack e Automated Regression; 2.3 — Web ↔ Worker Transport; 2.4 — Security Implementation; 2.5 — Observability Tooling; 2.6 — Deployment Model  
-**Última atualização:** 2026-09-07
+**Status:** CANDIDATE FOR TECHNICAL AUDIT  
+**Versão:** 0.9  
+**Natureza:** baseline técnica derivada; não normativa  
+**Deriva de:** `NB-0002`  
+**Normative Baseline vigente:** `NB-0002` — RATIFIED / IN FORCE  
+**Brainstorms consolidados:** 2.1–2.8  
+**Implementação:** NOT AUTHORIZED  
+**Próxima etapa:** 2.10 — Technical / Destructive Audit  
+**Última atualização:** 2026-09-08
 
 ---
 
-## 1. Propósito
+# 1. Propósito
 
-Este documento define a fundação técnica proposta para implementar o NAAMIVE
-sem alterar, enfraquecer ou reinterpretar as regras já ratificadas em
-`NB-0001`.
+Esta Technology Baseline define **como implementar tecnicamente** o NAAMIVE sem
+alterar a lei ratificada em `NB-0002`.
 
-A primeira rodada documental respondeu principalmente:
-
-```text
-O QUE o NAAMIVE é
-QUAL problema resolve
-QUAIS são os lifecycles
-QUAIS são as regras
-QUEM possui authority
-QUANDO uma transição é válida
-COMO falhas, recovery, audit e continuity devem se comportar
-```
-
-Esta segunda rodada responde:
+Hierarquia de autoridade:
 
 ```text
-COMO implementar tecnicamente essa lei?
-```
-
-A Technology Baseline não substitui a Normative Baseline.
-
-```text
-NB-0001
+NB-0002
   ↓
 Technology Baseline
   ↓
-Arquitetura concreta
+Architecture / Implementation Design
   ↓
-Implementação
+Code
 ```
 
-Se uma decisão técnica exigir mudança na lei do sistema, a solução não deve ser
-“adaptar silenciosamente” a implementação. O impacto deve ser tratado como
-possível mudança normativa separada.
+Se uma decisão técnica conflitar com `NB-0002`, a decisão técnica perde.
 
----
-
-## 2. Princípio arquitetural central
-
-O `web` será implementado como **monólito modular**.
-
-A intenção é obter a simplicidade operacional de um monólito com fronteiras
-internas comparáveis às de serviços independentes:
+A Technology Baseline:
 
 ```text
-um deploy
-+
-um processo principal
-+
-módulos de negócio fortemente delimitados
-+
-contratos explícitos
-+
-internals privados
-+
-dependências controladas
+não redefine lifecycle
+não redefine authority
+não redefine terminalidade
+não redefine ValueIncrement
+não redefine DeliveryTarget
+não redefine Project PhaseCycle
+não redefine Delivery
 ```
 
-A arquitetura deve favorecer:
-
-- compreensão local;
-- baixo acoplamento;
-- alta coesão;
-- manutenção segura;
-- criação simples de novos módulos;
-- evolução sem efeito cascata desnecessário;
-- fronteiras verificáveis automaticamente.
-
-A robustez não deve vir de distribuir fisicamente o sistema cedo demais.
-
-O objetivo é preservar fronteiras fortes **dentro do monólito**.
+Ela materializa essas regras.
 
 ---
 
-## 3. Decisões aprovadas no Brainstorm 2.1
+# 2. Princípios técnicos centrais
 
-### D2.1-01 — Runtime principal
+```text
+one canonical truth
+immutable governed history
+projection != truth
+browser != supervisor
+heartbeat != functional progress
+terminal means terminal
+FAILED Execution is never reused
+retry/recovery creates causal successor
+authority must be provable
+handoff must be durable
+unknown external effect requires reconciliation
+currentness must be explicit
+frameworks stay peripheral
+domain stays central
+```
+
+Preferências arquiteturais:
+
+```text
+modular monolith before microservices
+single PostgreSQL before distributed persistence
+explicit contracts before cross-module access
+two deployables before premature decomposition
+build once / promote immutable artifact
+local-first development
+automated guardrails from day one
+```
+
+---
+
+# 3. Runtime, linguagem e deployables
+
+## TB-01 — Runtime
 
 ```text
 Node.js
 ```
 
-Node.js permanece como runtime principal do novo NAAMIVE.
+Versão exata será fixada antes da implementação.
 
-A versão exata ainda será definida.
-
----
-
-### D2.1-02 — Linguagem principal
+## TB-02 — Linguagem
 
 ```text
 TypeScript
 ```
 
-TypeScript será a linguagem padrão de implementação.
+JavaScript sem tipagem não é padrão para application code.
 
-JavaScript sem tipagem não deve ser usado como padrão para código de aplicação.
-
-Motivações:
-
-- contratos explícitos;
-- maior segurança de refactor;
-- melhor legibilidade;
-- melhor suporte a boundaries;
-- melhor capacidade de validação estática;
-- menor risco de acoplamentos acidentais.
-
----
-
-### D2.1-03 — Deployables iniciais
-
-A solução terá inicialmente dois projetos executáveis:
+## TB-03 — Deployables iniciais
 
 ```text
 web
 worker
 ```
 
-Visão:
+`web` é monólito modular contendo frontend e backend.
 
-```text
-                ┌────────────┐
-                │ PostgreSQL │
-                └──────┬─────┘
-                       │
-          ┌────────────┴────────────┐
-          │                         │
-        WEB                       WORKER
-  modular monolith           execução assíncrona
-```
+`worker` executa trabalho assíncrono, recovery, reconciliation, scheduling e
+continuity operacional.
 
-Não criar inicialmente uma arquitetura distribuída com múltiplos microserviços.
+Não existem microservices adicionais na baseline inicial.
 
 ---
 
-### D2.1-04 — Aplicação `web`
+# 4. Monorepo e organização
 
-`web` será um **monólito modular** contendo frontend e backend no mesmo
-deployable, mantendo separação interna clara de responsabilidades.
-
-Conceitualmente:
+## TB-04 — Package manager e workspace
 
 ```text
-web
-├── backend
-│   ├── modules
-│   ├── application
-│   ├── infrastructure
-│   └── api
-└── frontend
-    ├── shell
-    ├── modules
-    └── shared-ui
+pnpm
+pnpm workspaces
 ```
 
-A estrutura física exata ainda será definida.
-
-O ponto aprovado é:
+Não adicionar inicialmente:
 
 ```text
-frontend + backend
-dentro do mesmo deployable web
-sem misturar suas responsabilidades
+Nx
+Turborepo
+```
+
+Estrutura conceitual:
+
+```text
+naamive/
+├── apps/
+│   ├── web/
+│   └── worker/
+├── packages/
+└── tests/
+    └── e2e/
+```
+
+Packages internos podem materializar boundaries, mas:
+
+```text
+package != microservice
+package != deployable
 ```
 
 ---
 
-### D2.1-05 — Aplicação `worker`
+# 5. Monólito modular
 
-`worker` será responsável pelas capacidades assíncronas e operacionais que não
-devem depender do ciclo HTTP da aplicação web.
+## TB-05 — Módulos por capacidade de negócio
 
-Escopo conceitual esperado:
+A organização principal segue capacidades de negócio.
 
-```text
-Executions
-Scheduling
-Background work
-Recovery
-Reconciliation
-Async handoffs
-Operational continuity
-```
-
-A divisão exata entre responsabilidades do `web` e do `worker` será refinada em
-documentação posterior.
-
----
-
-### D2.1-06 — Banco de dados
+Exemplos de boundaries:
 
 ```text
-PostgreSQL
+Need
+Project
+Business Module
+Value Delivery
+Work Item
+Execution
+Governance
+Authority
+Delivery
 ```
 
-PostgreSQL permanece como banco principal.
-
-Para o reboot será criada uma base nova.
-
-Não reutilizar a base anterior como fundação da nova implementação.
-
-O legado pode ensinar, mas não governa o novo desenho físico.
-
----
-
-### D2.1-07 — Ambiente local
-
-```text
-Docker
-```
-
-PostgreSQL será executado localmente via Docker.
-
-A composição completa de desenvolvimento ainda será definida.
-
----
-
-## 4. Monólito modular
-
-### 4.1 Módulos por capacidade de negócio
-
-A organização principal deve seguir capacidades de negócio, e não camadas
-técnicas globais.
-
-Evitar arquitetura principal semelhante a:
+Evitar arquitetura global centrada em:
 
 ```text
 controllers/
@@ -248,72 +180,11 @@ repositories/
 models/
 ```
 
-com entidades de todo o sistema misturadas.
+## TB-06 — Internals privados
 
-Preferir:
+Cada módulo possui internals privados.
 
-```text
-modules/
-├── need/
-├── project/
-├── business-module/
-├── work-item/
-├── governance/
-├── execution/
-├── delivery/
-└── ...
-```
-
-Cada módulo pode possuir internamente suas próprias camadas.
-
-Exemplo conceitual:
-
-```text
-project/
-├── api/
-├── application/
-├── domain/
-├── persistence/
-└── public-contract/
-```
-
-Os nomes finais ainda serão definidos.
-
----
-
-### D2.1-08 — Módulos representam capacidades
-
-Um módulo técnico deve corresponder a uma capacidade clara do domínio.
-
-Não criar módulos apenas porque determinada tecnologia existe.
-
-Exemplo:
-
-```text
-Project
-Need
-Execution
-Governance
-Delivery
-```
-
-são candidatos naturais a boundaries.
-
-```text
-Controllers
-Services
-Repositories
-```
-
-não são capacidades de negócio.
-
----
-
-### D2.1-09 — Internals privados
-
-O interior de um módulo é privado.
-
-Outro módulo não deve importar diretamente:
+Outro módulo não importa diretamente:
 
 ```text
 entities internas
@@ -321,125 +192,29 @@ repositories internos
 services internos
 mappers internos
 controllers internos
-persistência interna
+persistence interna
 ```
 
-Integração entre módulos deve ocorrer por superfície explícita e estável.
+Integração ocorre por public contract explícito.
 
-Conceito:
+## TB-07 — Data ownership
+
+Cada módulo é dono de seus dados.
+
+Compartilhar o mesmo PostgreSQL não autoriza:
 
 ```text
-Module A
-   ↓
-Public Contract
-   ↓
-Module B
+cross-module UPDATE
+cross-module repository access
 ```
 
-e não:
+Reads agregados/projections são desenhados explicitamente.
 
-```text
-Module A
-   ↓
-Module B internals
-```
+## TB-08 — Shared mínimo
 
----
+`shared/common/utils` são exceção.
 
-### D2.1-10 — Public contracts explícitos
-
-Cada módulo que precisar ser consumido por outros deve expor uma interface
-pública deliberada.
-
-Essa superfície deve deixar claro:
-
-- o que pode ser chamado;
-- quais dados podem entrar;
-- quais dados podem sair;
-- quais invariantes são preservadas;
-- quais erros são possíveis;
-- quais operações são síncronas ou assíncronas.
-
-A existência de um arquivo interno não significa permissão de uso por outro
-módulo.
-
----
-
-### D2.1-11 — Ownership de dados
-
-Cada módulo é responsável pelos seus próprios dados.
-
-Mesmo compartilhando o mesmo PostgreSQL:
-
-```text
-Need owns Need data
-Project owns Project data
-Execution owns Execution data
-Governance owns Governance data
-```
-
-Um módulo não deve atualizar diretamente a persistência privada de outro.
-
-Evitar:
-
-```text
-ProjectService
-  ↓
-UPDATE execution_table
-```
-
-Preferir:
-
-```text
-Project
-  ↓
-Execution public contract
-  ↓
-Execution module
-  ↓
-Execution persistence
-```
-
----
-
-### D2.1-12 — Sem acesso cruzado direto ao banco
-
-A existência de um único PostgreSQL não autoriza acesso irrestrito entre
-módulos.
-
-Como regra arquitetural:
-
-```text
-módulo A
-não consulta/altera diretamente
-tabelas privadas do módulo B
-```
-
-Casos legítimos de leitura agregada, reporting ou projections deverão ser
-desenhados explicitamente.
-
----
-
-### D2.1-13 — Shared mínimo
-
-Diretórios como:
-
-```text
-shared/
-common/
-utils/
-helpers/
-```
-
-devem ser tratados com cautela.
-
-Regra:
-
-```text
-shared = exceção
-```
-
-Infraestrutura realmente transversal pode ser compartilhada, por exemplo:
+Permitido para infraestrutura realmente transversal:
 
 ```text
 configuration
@@ -451,721 +226,589 @@ logging
 telemetry primitives
 ```
 
-Regra de negócio pertencente a um módulo não deve migrar para `shared` apenas
-porque outro módulo também precisa dela.
+Regra de negócio não migra para `shared` por conveniência.
 
-Duplicação pequena pode ser preferível a criar dependência arquitetural errada.
+## TB-09 — Dependências direcionais
 
----
+Dependências entre módulos devem ser explícitas, direcionais e verificáveis.
 
-### D2.1-14 — Dependências direcionais
+Dependência circular é finding arquitetural.
 
-Dependências entre módulos devem ser explícitas e direcionais.
+## TB-10 — Guardrails automáticos
 
-Evitar grafos do tipo:
-
-```text
-Need ↔ Project ↔ Execution ↔ Governance
- ↑                         ↓
- └─────────────────────────┘
-```
-
-A arquitetura deve permitir identificar:
+Build/CI deve detectar, conforme aplicável:
 
 ```text
-quem depende de quem?
-por qual contrato?
-por qual razão?
-```
-
-Dependência circular deve ser tratada como sinal arquitetural de problema.
-
----
-
-### D2.1-15 — Boundaries verificáveis
-
-As fronteiras entre módulos não devem existir apenas em documentação.
-
-A implementação deverá possuir guardrails automatizados capazes de detectar
-violações.
-
-Exemplos de violações que devem ser detectáveis:
-
-```text
-import direto de internals de outro módulo
+import de internals de outro módulo
 dependência circular proibida
 acesso a persistence privada de outro módulo
 uso de camada proibida
-```
-
-Esses checks devem fazer parte do build e/ou CI quando a estrutura concreta for
-definida.
-
----
-
-### D2.1-16 — Novo módulo deve ser barato
-
-A arquitetura será considerada saudável quando um novo módulo puder ser criado
-sem exigir conhecimento detalhado de todo o monólito.
-
-Objetivo conceitual:
-
-```text
-criar módulo
-  ↓
-definir boundary
-  ↓
-expor contracts
-  ↓
-declarar dependências permitidas
-  ↓
-testar
-```
-
-Evitar arquiteturas em que adicionar uma capacidade exija editar diversos
-arquivos centrais e conhecer internals de módulos não relacionados.
-
----
-
-## 5. Relação entre `web` e `worker`
-
-`web` e `worker` são dois deployables distintos, mas não devem se transformar em
-duas interpretações diferentes da lei do sistema.
-
-O desenho futuro deverá garantir que ambos compartilhem de forma segura:
-
-- contratos;
-- tipos fundamentais;
-- identificadores;
-- invariantes técnicas;
-- conceitos derivados de `NB-0001`.
-
-Sem:
-
-- duplicar regra de negócio;
-- copiar código de domínio;
-- criar implementações divergentes;
-- permitir que o worker contorne authority ou lifecycle.
-
-A forma concreta dessa reutilização ainda está aberta.
-
----
-
-## 6. Shell da aplicação web
-
-A experiência autenticada terá uma estrutura fixa de aplicação.
-
-### 6.1 Login separado
-
-Antes da autenticação:
-
-```text
-┌──────────────────────────────────────────┐
-│                                          │
-│              TELA DE LOGIN               │
-│                                          │
-└──────────────────────────────────────────┘
-```
-
-Login é uma tela separada do shell principal.
-
-Após autenticação válida:
-
-```text
-login
-  ↓
-autenticação
-  ↓
-redirect
-  ↓
-página principal
+boundary violation
 ```
 
 ---
 
-### D2.1-17 — Application Shell
+# 6. Stack de backend e frontend
 
-Após login, a página principal terá:
-
-```text
-┌──────────────────────────────────────────────────────┐
-│                  MENU HORIZONTAL                     │
-├───────────────┬──────────────────────────────────────┤
-│               │                                      │
-│ MENU          │                                      │
-│ VERTICAL      │          CONTENT AREA                │
-│               │                                      │
-│ Projetos      │        inicialmente vazia            │
-│ do usuário    │                                      │
-│               │                                      │
-│               │                                      │
-└───────────────┴──────────────────────────────────────┘
-```
-
-Estrutura:
-
-```text
-Application Shell
-├── Horizontal Menu
-├── Vertical Menu
-└── Content Area
-```
-
----
-
-### D2.1-18 — Content Area inicialmente vazia
-
-Após login, a área principal pode permanecer vazia até o usuário selecionar uma
-ação ou projeto.
-
-Não priorizar dashboard nesta etapa.
-
-Possibilidade futura:
-
-```text
-content area inicial
-  ↓
-dashboard
-```
-
-Dashboard fica explicitamente postergado.
-
----
-
-### D2.1-19 — Navegação por menu
-
-Ao selecionar um item do menu:
-
-```text
-menu item
-  ↓
-content area
-  ↓
-tela correspondente
-```
-
-Cadastros e demais telas devem abrir dentro da área principal do shell.
-
-Evitar substituir toda a estrutura da aplicação a cada navegação.
-
----
-
-### D2.1-20 — Projetos no menu vertical
-
-O menu vertical apresentará os projetos acessíveis ao usuário autenticado.
-
-Conceito:
-
-```text
-authenticated principal
-        ↓
-backend authority / visibility
-        ↓
-authorized projects
-        ↓
-vertical menu
-```
-
-O frontend não é responsável por decidir segurança.
-
-Regra:
-
-```text
-backend decide
-frontend apresenta
-```
-
-Filtragem visual no frontend não substitui authorization no servidor.
-
----
-
-## 7. Separação inicial entre menus
-
-A hipótese atual é:
-
-```text
-MENU HORIZONTAL
-→ contexto de plataforma
-
-MENU VERTICAL
-→ contexto de projetos
-```
-
-Exemplo conceitual, ainda não aprovado:
-
-```text
-Horizontal
-├── cadastros
-├── administração
-├── configurações
-└── usuário
-
-Vertical
-├── Projeto A
-├── Projeto B
-└── Projeto C
-```
-
-Essa divisão permanece em brainstorm até a definição dos módulos e da navegação
-real da aplicação.
-
----
-
-## 8. Princípios técnicos derivados da NB-0001
-
-A implementação deverá preservar, no mínimo:
-
-```text
-one canonical truth
-immutable history
-projections are not truth
-terminal means terminal
-FAILED Execution is never resurrected
-retry/recovery creates causal successor
-authority must be provable
-handoffs must be durable
-fail-closed must remain actionable
-unknown external effect requires reconciliation
-baseline changes require impact coverage
-human authority cannot be silently replaced by an agent
-```
-
-A arquitetura técnica existe para implementar essas propriedades, não para
-redefini-las.
-
----
-
-## 9. Regras de simplicidade
-
-Robustez não significa complexidade gratuita.
-
-Preferir:
-
-```text
-modular monolith
-antes de microservices
-
-explicit contracts
-antes de acesso direto
-
-single PostgreSQL
-antes de bancos distribuídos sem necessidade
-
-two deployables
-antes de decomposição prematura
-
-automated boundaries
-antes de convenções informais
-```
-
-Distribuição física futura só deve ocorrer quando existir necessidade concreta.
-
----
-
-## 10. Brainstorm 2.2 — Core Technology Stack
-
-O Brainstorm 2.2 fecha a stack-base usada para implementar o desenho aprovado no
-Brainstorm 2.1.
-
-Princípio:
-
-```text
-framework é periferia
-
-domain e application core
-não dependem de Fastify, React ou Kysely
-```
-
-As ferramentas existem para implementar os boundaries do NAAMIVE.
-
-Elas não definem a lei do domínio.
-
----
-
-### D2.2-01 — Backend framework
+## TB-11 — Backend HTTP
 
 ```text
 Fastify
+TypeBox
+Fastify Type Provider
 ```
-
-Fastify será o framework HTTP do backend.
-
-A escolha privilegia:
-
-- baixo acoplamento ao framework;
-- composição explícita;
-- encapsulamento;
-- plugins com escopo;
-- boa integração com TypeScript;
-- possibilidade de preservar o domínio independente da camada HTTP.
 
 Regra:
 
 ```text
-Fastify não entra no domínio.
+Fastify não entra no domínio
+TypeBox valida transporte
+domain valida business rule
 ```
 
-Handlers HTTP devem adaptar requests para commands/queries da application layer.
-
----
-
-### D2.2-02 — Frontend framework
+## TB-12 — Frontend
 
 ```text
 React
-```
-
-React será a base da interface web.
-
-A aplicação é predominantemente autenticada e orientada a trabalho interno,
-portanto não existe necessidade atual de adicionar um framework full-stack/SSR
-como requisito estrutural.
-
----
-
-### D2.2-03 — Frontend build tooling
-
-```text
 Vite
-```
-
-Vite será usado para desenvolvimento e build do frontend.
-
----
-
-### D2.2-04 — Frontend routing
-
-```text
 React Router
 ```
 
-React Router será responsável pela navegação do frontend dentro do shell da
-aplicação.
+Não há requisito atual de SSR/full-stack framework.
 
-A navegação deve preservar:
-
-```text
-horizontal menu
-+
-vertical project context
-+
-content area
-```
-
----
-
-### D2.2-05 — Persistence tooling
+## TB-13 — Persistence tooling
 
 ```text
 Kysely
-+
 pg / node-postgres
-+
 PostgreSQL
 ```
 
-Kysely será a camada tipada de construção e execução de SQL.
+Kysely permanece na camada de persistence/infrastructure.
 
-`pg` / `node-postgres` será o driver PostgreSQL.
-
-A escolha busca manter a persistência próxima de SQL explícito, especialmente
-para operações que dependam de:
+Domain não depende de:
 
 ```text
-transactions
-constraints
-locking
-fencing
-idempotency
-immutable history
-projections
-reconciliation
+Kysely
+pg
+SQL
+Fastify
+React
 ```
 
-Kysely não deve transformar persistence models em domain models.
+## TB-14 — Build
 
-O domínio permanece independente da ferramenta de persistência.
-
----
-
-### D2.2-06 — HTTP schema validation
-
-```text
-TypeBox
-+
-Fastify Type Provider
-```
-
-TypeBox será usado nos boundaries HTTP para definição e validação de contratos.
-
-Princípio:
-
-```text
-TypeBox valida contrato de transporte.
-Domain valida regra de domínio.
-```
-
-Schema HTTP não é fonte normativa de lifecycle ou business rule.
-
----
-
-### D2.2-07 — Package manager
-
-```text
-pnpm
-```
-
-`pnpm` será o package manager do repositório.
-
----
-
-### D2.2-08 — Workspace / monorepo tooling
-
-```text
-pnpm workspaces
-```
-
-O repositório usará workspaces nativos do pnpm.
-
-Não adicionar inicialmente:
-
-```text
-Nx
-Turborepo
-```
-
-A inclusão futura de tooling adicional exige necessidade concreta.
-
-Packages internos podem ser usados para boundaries compiláveis, mas:
-
-```text
-package != microservice
-package != deployable
-```
-
-Os deployables permanecem:
-
-```text
-web
-worker
-```
-
----
-
-### D2.2-09 — Build backend e worker
+Backend e worker:
 
 ```text
 TypeScript
-+
 tsc
 ```
 
-Backend e worker serão compilados com a toolchain TypeScript.
-
-Ferramentas adicionais de bundling não fazem parte da baseline neste momento.
+Bundler adicional não é requisito atual.
 
 ---
 
-### D2.2-10 — Test runner
+# 7. Testes e regressão
+
+## TB-15 — Test runner
 
 ```text
 Vitest
 ```
 
-Vitest será o runner principal para testes automatizados da base TypeScript.
-
-Ele poderá cobrir, conforme o tipo de teste:
+Suites permanecem semanticamente separadas:
 
 ```text
 domain
 application
-architecture guardrails
+architecture
 integration
 API
 frontend
 ```
 
-A classificação do teste deve permanecer explícita; usar o mesmo runner não
-significa misturar responsabilidades entre suites.
-
----
-
-### D2.2-11 — E2E desde a primeira vertical slice
+## TB-16 — E2E
 
 ```text
 Playwright
 ```
 
-Playwright fará parte da implementação desde a primeira vertical slice.
+E2E existe desde a primeira vertical slice.
 
-Não será tratado como melhoria futura.
+Core journeys crescem incrementalmente com funcionalidades consolidadas.
 
-O monorepo terá uma suite/projeto E2E próprio, separado dos deployables.
-
-Estrutura conceitual:
+## TB-17 — UI tests
 
 ```text
-naamive/
-├── apps/
-│   ├── web/
-│   └── worker/
-├── tests/
-│   └── e2e/
-└── packages/
+React Testing Library
++
+Vitest
 ```
 
-A estrutura física final pode ser refinada, preservando a separação.
+Testar comportamento, não estrutura interna frágil.
 
----
-
-### D2.2-12 — Automated Regression from Day One
-
-Fluxos consolidados devem adquirir proteção automatizada contra regressão.
-
-Princípio:
-
-```text
-funcionalidade consolidada
-não depende de memória humana
-para continuar funcionando
-```
-
-A partir da primeira vertical slice:
-
-```text
-implementação
-   ↓
-unit/domain tests
-   ↓
-integration/API tests aplicáveis
-   ↓
-E2E do comportamento crítico
-   ↓
-PASS
-   ↓
-funcionalidade consolidada
-```
-
----
-
-### D2.2-13 — Core Journeys Regression Suite
-
-Será mantida uma suite E2E de jornadas centrais já consolidadas.
-
-Ela cresce incrementalmente junto com o produto.
-
-Exemplos conceituais futuros:
-
-```text
-login
-application shell
-Need lifecycle
-Project lifecycle
-human gate
-Execution
-recovery
-Delivery
-```
-
-Somente fluxos implementados e consolidados entram na suite.
-
-Não criar testes fictícios para funcionalidades ainda inexistentes.
-
----
-
-### D2.2-14 — CI Regression Gate
-
-Regressão automatizada será requisito de continuidade da implementação.
+## TB-18 — Regression gate
 
 Pipeline conceitual:
 
 ```text
-change
-  ↓
 architecture guardrails
-  ↓
-unit/domain
-  ↓
-integration/API
-  ↓
-E2E core journeys
-  ↓
-PASS
+→ unit/domain
+→ integration/API
+→ frontend
+→ E2E core journeys
+→ PASS
 ```
 
-Uma task nova não é considerada saudável apenas porque sua nova funcionalidade
-passa.
-
-O comportamento consolidado anterior deve continuar passando.
+Uma nova task não é saudável se quebrar comportamento consolidado.
 
 ---
 
-### D2.2-15 — Architecture guardrails desde o início
+# 8. PostgreSQL — princípio físico
 
-Os testes/guardrails de arquitetura começam junto com a implementação.
+## TB-19 — Database
 
-Eles devem proteger, entre outros:
+No MVP:
 
 ```text
-module internals
-dependency direction
-forbidden cross-module imports
-circular dependencies
-persistence ownership
+PostgreSQL
+└── naamive
 ```
 
-O mecanismo técnico exato para todas as verificações ainda pode ser refinado,
-mas a existência do gate é obrigatória.
+Um database principal da aplicação.
 
----
+Não criar database por módulo.
 
-## 11. Brainstorm 2.3 — Web ↔ Worker Transport
-
-O Brainstorm 2.3 define como os dois deployables iniciais trocam trabalho
-assíncrono sem introduzir infraestrutura distribuída desnecessária.
-
-A decisão preserva o mecanismo estrutural que funcionou no legado, mas corrige
-a semântica de retry, recovery e autoridade para obedecer à `NB-0001`.
-
-Princípio:
+## TB-20 — Categorias persistidas separadamente
 
 ```text
-transport durável
-não é a mesma coisa que
-Execution reutilizável
+CURRENT STATE
+IMMUTABLE HISTORY
+EVIDENCE / AUDIT
+DERIVED PROJECTIONS
+OPERATIONAL CLAIMS / TELEMETRY
 ```
 
-O PostgreSQL será o mecanismo durável de handoff entre `web` e `worker`.
+Regra:
+
+```text
+current row != complete history
+projection != truth
+claim != business state
+log != canonical evidence
+```
+
+## TB-21 — PostgreSQL schemas por ownership
+
+Estrutura conceitual:
+
+```text
+platform
+need
+project
+business_module
+value_delivery
+work_item
+execution
+governance
+authority
+delivery
+
+audit
+evidence
+projection
+ops
+```
+
+Nomes finais podem ser refinados sem mudar ownership.
 
 ---
 
-### D2.3-01 — PostgreSQL-backed durable dispatch
+# 9. Identidade, versão e tempo
 
-O `web` não chama o `worker` diretamente por HTTP.
+## TB-22 — IDs
 
-O `web` persiste a intenção/trabalho de forma durável no PostgreSQL.
+Recursos governados usam:
 
-O `worker` descobre trabalho elegível a partir dessa persistência.
+```text
+uuid
+```
 
-Conceito:
+Preferência de geração:
+
+```text
+UUIDv7 / time-ordered UUID
+```
+
+Biblioteca exata fica aberta.
+
+ID não carrega semântica de state/currentness/version.
+
+## TB-23 — Optimistic concurrency
+
+Current state mutável relevante possui:
+
+```text
+version bigint
+```
+
+Update autoritativo exige:
+
+```text
+id
++
+expected_version
+```
+
+Conflito produz stale/concurrency failure controlada.
+
+## TB-24 — Currentness explícita
+
+Nunca inferir currentness apenas de:
+
+```text
+MAX(version)
+```
+
+Usar, conforme agregado:
+
+```text
+is_current
+current_version_id
+superseded_at
+superseded_by
+```
+
+## TB-25 — Instantes
+
+Usar:
+
+```text
+timestamptz
+```
+
+para fatos temporais.
+
+Fato produzido pelo sistema usa clock server-side/database-side.
+
+---
+
+# 10. Current state + immutable history
+
+## TB-26 — Sem Event Sourcing total
+
+Modelo inicial:
+
+```text
+current table
++
+append-only governed history
+```
+
+Não adotar Event Sourcing completo.
+
+## TB-27 — History append-only
+
+Mudança material registra:
+
+```text
+resource
+from/to
+resource version
+cause
+correlation
+intention
+principal
+authority
+Business Baseline
+normative_baseline_ref
+timestamp
+```
+
+conforme aplicável.
+
+History material não sofre UPDATE corretivo.
+
+Correção ocorre por novo fato/supersession/reversal/compensation.
+
+---
+
+# 11. Transactions e isolation
+
+## TB-28 — Command local = uma transaction
+
+Quando toda operação é local ao PostgreSQL:
+
+```text
+revalidate state
+revalidate authority/context
+update current state
+append history
+persist decision/evidence refs
+update continuity
+create durable dispatch/handoff
+create durable projection invalidation
+commit
+```
+
+Ou tudo aparece, ou nada aparece.
+
+## TB-29 — Sem dual-write desprotegido
+
+É proibido publicar canonical state e depois “tentar” criar handoff obrigatório.
+
+## TB-30 — Isolation
+
+Default:
+
+```text
+READ COMMITTED
+```
+
+com:
+
+```text
+expected-version checks
+unique constraints
+foreign keys
+SELECT ... FOR UPDATE
+```
+
+nos pontos necessários.
+
+`SERIALIZABLE` global não é requisito.
+
+---
+
+# 12. ValueIncrement e DeliveryTarget
+
+## TB-31 — ValueIncrement
+
+Estrutura conceitual:
+
+```text
+value_increment
+value_increment_history
+value_increment_lineage
+```
+
+ValueIncrement normal possui exatamente um Module owner.
+
+Split/successor preservam origem e lineage.
+
+## TB-32 — DeliveryTarget
+
+Estrutura:
+
+```text
+delivery_target
+delivery_target_version
+delivery_target_membership
+```
+
+Membership pertence à **versão** do target.
+
+Disposition:
+
+```text
+REQUIRED_FOR_TARGET
+OPTIONAL_FOR_TARGET
+OUT_OF_TARGET
+```
+
+## TB-33 — Um target current por Project
+
+Constraint física equivalente deve impedir dois DeliveryTargets autoritativos
+correntes para o mesmo Project no MVP.
+
+## TB-34 — Target version transacional
+
+Nova versão materializa de forma coerente:
+
+```text
+new version
+membership
+decision
+authority
+history
+supersession/currentness
+continuity impact
+```
+
+---
+
+# 13. DeliveryManifest
+
+## TB-35 — Snapshot durável
+
+Estrutura:
+
+```text
+delivery_manifest
+delivery_manifest_item
+```
+
+O Manifest identifica exatamente:
+
+```text
+Project
+DeliveryTarget
+DeliveryTargetVersion
+candidate baseline
+required set
+included optional set
+out-of-target set
+decision/evidence context
+```
+
+Depois de materializado para decisão/delivery:
+
+```text
+immutable
+```
+
+Não reconstruir candidatura histórica apenas consultando estado atual.
+
+---
+
+# 14. Project PhaseCycle e internal steps
+
+## TB-36 — PhaseCycleInstance first-class
+
+Persistir:
+
+```text
+phase_cycle_instance
+```
+
+com:
+
+```text
+project
+project phase
+generation
+status
+previous cycle
+phase entry ref
+Business Baseline
+normative_baseline_ref
+cause
+current step
+started/completed
+version
+```
+
+Reentry em fase cria nova instância causal.
+
+## TB-37 — Um current cycle por Project
+
+Transação/constraint impede duas PhaseCycleInstances current autoritativas.
+
+Project transition + nova PhaseCycle formam unidade consistente.
+
+## TB-38 — PhaseStepInstance
+
+Persistir passo semântico com estados inequívocos:
+
+```text
+A_FAZER
+FAZENDO
+FEITO
+AGUARDANDO
+BLOQUEADO
+FALHOU
+CANCELADO
+NAO_APLICAVEL
+```
+
+---
+
+# 15. Work Item e DevelopmentCycle
+
+## TB-39 — Governing scope
+
+Work Item possui exatamente um governing scope.
+
+MVP:
+
+```text
+VALUE_INCREMENT
+PROJECT_TRANSVERSAL
+```
+
+Combinação ambígua é inválida.
+
+## TB-40 — DevelopmentCycle first-class
+
+`IN_REVIEW → IN_PROGRESS` cria successor DevelopmentCycleInstance.
+
+Não reciclar ciclo anterior.
+
+---
+
+# 16. DevelopmentRoadmap e FunctionalProgress
+
+## TB-41 — Roadmap persistente
+
+Estrutura conceitual:
+
+```text
+development_roadmap
+roadmap_version
+roadmap_entry
+```
+
+RoadmapEntry referencia canonical resource; não duplica lifecycle state.
+
+Current version é explícita.
+
+## TB-42 — Restart-safe
+
+Após restart deve ser possível reconstruir:
+
+```text
+entry ativa
+próxima elegível
+blocker/finding
+pending decision
+continuity
+```
+
+## TB-43 — FunctionalProgress
+
+Persistir progresso funcional corrente necessário à retomada.
+
+Separar:
+
+```text
+last_heartbeat_at
+last_operational_activity_at
+last_functional_progress_at
+```
+
+Heartbeat não atualiza progresso funcional automaticamente.
+
+---
+
+# 17. Web ↔ Worker durable transport
+
+## TB-44 — PostgreSQL-backed dispatch
+
+Fluxo:
 
 ```text
 WEB
-  ↓
-durable intent / job / handoff
-  ↓
-PostgreSQL
-  ↓
-WORKER
+→ durable intent / dispatch
+→ PostgreSQL
+→ WORKER
 ```
 
-O handoff deve permanecer recuperável após restart de qualquer processo.
+Web não depende de chamada HTTP direta ao worker.
 
----
+## TB-45 — Sem broker externo inicialmente
 
-### D2.3-02 — Sem broker externo inicialmente
-
-Não adicionar inicialmente:
+Não adicionar agora:
 
 ```text
 Kafka
@@ -1174,383 +817,458 @@ Redis queue
 broker dedicado
 ```
 
-Motivo:
+## TB-46 — Claim concorrente
 
-- PostgreSQL já é dependência obrigatória;
-- o volume e a topologia atuais não justificam um broker separado;
-- um broker adicionaria novos failure modes;
-- exigiria coordenação entre transação do banco e publicação externa;
-- aumentaria deployment e observability sem resolver uma dor atual.
+Worker usa padrão equivalente a:
 
-A introdução futura de broker exige necessidade concreta e nova decisão técnica.
+```sql
+SELECT ...
+FOR UPDATE SKIP LOCKED
+```
+
+Claim físico ocorre em transação curta.
+
+Execução longa ocorre fora do lock de row.
+
+## TB-47 — Polling + wake-up opcional
+
+A fonte durável é tabela PostgreSQL.
+
+`LISTEN / NOTIFY` pode acelerar wake-up, mas:
+
+```text
+NOTIFY != durable queue
+```
+
+Perder NOTIFY não pode perder trabalho.
 
 ---
 
-### D2.3-03 — Worker polling
+# 18. Execution, lease e fencing
 
-O `worker` buscará trabalho elegível no PostgreSQL.
+## TB-48 — Execution attempt tem identity própria
 
-A implementação deverá evitar polling frenético.
+FAILED/CANCELLED/EXPIRED não voltam a RUNNING.
 
-Cadência, backoff e wake-up strategy serão refinados posteriormente.
+Retry/recovery cria nova Execution causal.
 
----
+## TB-49 — Operational claim separado
 
-### D2.3-04 — Claim concorrente seguro
-
-A aquisição de trabalho deverá usar mecanismo transacional equivalente a:
+Estrutura conceitual:
 
 ```text
-SELECT ... FOR UPDATE SKIP LOCKED
+execution
+execution_claim
 ```
 
-ou mecanismo PostgreSQL de segurança equivalente.
-
-Objetivo:
+Claim guarda:
 
 ```text
-vários workers podem competir
-sem dois se tornarem autoritativos
-para a mesma tentativa
+worker instance
+fencing generation
+claimed_at
+lease_expires_at
+last_heartbeat_at
 ```
 
-O SQL físico final será definido no desenho de persistência.
+## TB-50 — Fencing obrigatório
 
----
+Nova authority recebe generation superior.
 
-### D2.3-05 — Lease
+Publish autoritativo exige generation corrente.
 
-Uma Execution em execução assíncrona deverá possuir claim temporal.
+Executor stale não publica resultado.
 
-A lease permite distinguir:
+## TB-51 — Revalidation
 
-```text
-executor ativo
-vs
-executor desaparecido
-```
-
-O tempo exato de lease permanece aberto.
-
----
-
-### D2.3-06 — Heartbeat
-
-Uma Execution `RUNNING` deverá renovar ou provar sua autoridade durante execução
-quando o tipo de trabalho exigir duração suficiente para isso.
-
-Heartbeat é mecanismo operacional.
-
-Heartbeat:
-
-```text
-prova presença
-```
-
-Não significa:
-
-```text
-prova progresso funcional
-```
-
-Cadência será definida posteriormente.
-
----
-
-### D2.3-07 — Fencing obrigatório
-
-Lease sozinha não é suficiente.
-
-Toda publicação autoritativa de resultado deverá provar que o executor ainda
-possui a geração/token de autoridade corrente.
-
-Conceito:
-
-```text
-Execution A
-worker A
-generation = 7
-
-lease expira
-        ↓
-autoridade revogada
-        ↓
-nova Execution B
-worker B
-generation = 8
-
-worker A reaparece
-generation 7 != generation atual 8
-        ↓
-resultado rejeitado
-```
-
-Executor obsoleto não pode publicar resultado autoritativo.
-
----
-
-### D2.3-08 — Expiração não ressuscita Execution
-
-A semântica antiga de reaquisição do mesmo trabalho não deve ser aplicada como
-ressurreição da mesma `Execution`.
-
-Regra:
-
-```text
-lease expirada
-→ autoridade perdida
-→ Execution antiga não volta a RUNNING
-```
-
-Quando continuidade for permitida:
-
-```text
-Execution A
-RUNNING
-  ↓
-EXPIRED / authority lost
-  ↓
-CANCELLED com causa preservada
-
-nova tentativa governada
-  ↓
-Execution B
-CREATED
-  ↓
-ELIGIBLE
-  ↓
-RUNNING
-```
-
----
-
-### D2.3-09 — Retry cria nova Execution causal
-
-Retry técnico não reutiliza uma Execution terminal.
-
-Regra:
-
-```text
-FAILED Execution
-≠
-Execution reativável
-```
-
-Retry:
-
-```text
-Execution A
-FAILED
-  ↓
-policy + revalidation
-  ↓
-Execution B
-CREATED
-```
-
-A nova Execution deve possuir vínculo causal com a anterior e com a mesma
-intenção lógica quando aplicável.
-
----
-
-### D2.3-10 — Recovery cria nova Execution causal
-
-Recovery após falha terminal também cria nova Execution.
-
-A nova tentativa deve registrar:
-
-```text
-cause
-cause_ref
-origin_execution_id
-intent_id
-normative_baseline_ref
-governing baseline/version
-```
-
-conforme aplicável.
-
-Recovery não apaga nem reescreve a tentativa anterior.
-
----
-
-### D2.3-11 — Idempotência durável
-
-A criação de trabalho e de tentativa deve ser idempotente em relação à intenção
-lógica e à política de tentativa.
-
-Duplo clique, request repetida, retry de transporte ou restart não devem
-materializar múltiplas responsabilidades autoritativas equivalentes.
-
-A implementação deverá usar chaves duráveis adequadas.
-
----
-
-### D2.3-12 — Exactly-once lógico
-
-Não exigir transporte físico exactly-once.
-
-Exigir:
-
-```text
-um único resultado autoritativo
-para a mesma intenção
-```
-
-Pode existir concorrência física ou redelivery, desde que fencing,
-idempotência e autoridade impeçam dupla consolidação.
-
----
-
-### D2.3-13 — Revalidation antes de RUNNING
-
-Antes de uma Execution adquirir authority operacional para executar, revalidar,
-conforme aplicável:
+Antes de RUNNING e antes de publicar resultado, revalidar conforme aplicável:
 
 ```text
 Work Item
 intention
 dependencies
 authority
-cancellation
 blockers
-governing baseline/version
-retry/recovery policy
-absence of authoritative final result
-```
-
-Elegibility não deve ser presumida apenas porque existe um registro pendente no
-banco.
-
----
-
-### D2.3-14 — Revalidation antes de publicar resultado
-
-Antes de consolidar sucesso ou efeito autoritativo, verificar novamente:
-
-```text
-claim current
-fencing generation current
-Execution authority current
-Work Item version current
-governing baseline compatible
-intent still valid
-no cancellation
-no competing authoritative result
-```
-
-Processo físico vivo não implica authority válida.
-
----
-
-### D2.3-15 — Reconciliation como safety net
-
-O sistema deverá possuir reconciliation para reencontrar trabalho ou handoff que
-ficou durável no PostgreSQL, mas cuja continuidade operacional foi interrompida.
-
-Exemplos:
-
-```text
-web persiste e cai
-worker cai após claim
-worker perde conexão
-processo reinicia
-evento de wake-up é perdido
-```
-
-Reconciliation não deve criar nova responsabilidade cegamente.
-
-Primeiro deve descobrir o estado durável existente.
-
----
-
-### D2.3-16 — Efeito externo incerto
-
-Quando a Execution produz efeito externo não transacional e o resultado se torna
-incerto:
-
-```text
-não fazer retry cego
-```
-
-Primeiro:
-
-```text
-reconcile
-```
-
-quando duplicação puder ser prejudicial.
-
-Idempotency key externa deve ser propagada quando suportada.
-
----
-
-### D2.3-17 — Web e worker não compartilham autoridade implícita
-
-O fato de ambos usarem o mesmo banco não permite ao `worker` contornar:
-
-```text
-lifecycle
-authority
-module contracts
-ownership
-baseline validation
-```
-
-O worker executa trabalho autorizado.
-
-Ele não inventa autorização.
-
----
-
-### D2.3-18 — Transporte é infraestrutura, handoff é domínio governado
-
-A persistência técnica no PostgreSQL não substitui os requisitos de handoff.
-
-Quando um handoff material existir, devem permanecer observáveis, conforme
-aplicável:
-
-```text
-source
-destination
-responsibility
-intent
+cancellation
 baseline
 normative baseline
-authority context
-causation
-correlation
-acceptance/status
+claim/fencing
+absence of competing authoritative result
 ```
 
 ---
 
-## 12. Brainstorm 2.4 — Security Implementation
+# 19. Idempotency e effect certainty
 
-O Brainstorm 2.4 define a implementação-base de autenticação, autorização,
-principals, secrets e security audit.
+## TB-52 — Intention identity durável
 
-A decisão reaproveita os conceitos que funcionaram no legado, mas os alinha ao
-modelo ratificado de identidade e authority da `NB-0001`.
+Operações materiais usam intention identity persistente.
 
-Princípio:
+Estrutura conceitual:
 
 ```text
-authenticated
-!=
-authorized
+ops.idempotency_record
 ```
 
-Identidade prova quem é.
+Deve responder:
 
-Authority prova o que aquele principal pode fazer agora, sobre qual escopo e
-sob qual contexto governante.
+```text
+esta intenção já foi aplicada?
+qual outcome foi produzido?
+```
+
+## TB-53 — Exactly-once lógico
+
+Não exigir transporte físico exactly-once.
+
+Exigir:
+
+```text
+um único resultado autoritativo por intenção
+```
+
+## TB-54 — External effect certainty
+
+Representar, quando aplicável:
+
+```text
+NO_EFFECT
+EFFECT_CONFIRMED
+PARTIAL_EFFECT
+WRONG_EFFECT
+UNKNOWN
+```
+
+`UNKNOWN` material exige reconciliation antes de retry cego.
 
 ---
 
-### D2.4-01 — Human authentication
+# 20. Findings, Inconsistencies, audit e evidence
 
-Usuários humanos autenticam com:
+## TB-55 — Findings são canônicos
+
+Persistir:
+
+```text
+finding
+finding_history
+inconsistency
+inconsistency_history
+```
+
+Logs/alerts só referenciam esses recursos.
+
+Finding material preserva:
+
+```text
+severity
+affected scope
+cause
+owner
+status
+remediation
+continuity
+normative baseline
+```
+
+## TB-56 — Audit não é log
+
+Audit material possui persistência própria e append-only.
+
+## TB-57 — Evidence
+
+Evidence possui identity e integridade verificável.
+
+Metadados conceituais:
+
+```text
+kind
+content/external ref
+digest
+source
+principal
+correlation
+created_at
+```
+
+Conteúdo grande pode futuramente usar store externo, mantendo referência canônica.
+
+---
+
+# 21. JSONB, enums, FKs e delete
+
+## TB-58 — JSONB
+
+Permitido como extensão para:
+
+```text
+metadata
+provider payload
+diagnostic snapshot
+evidence metadata
+```
+
+Não esconder estrutura central governada em JSONB genérico.
+
+## TB-59 — Estados
+
+Preferir:
+
+```text
+text/varchar
++
+CHECK
+```
+
+ou tabela controlada, em vez de PostgreSQL ENUM rígido para todo lifecycle.
+
+## TB-60 — Foreign keys
+
+Usar FK em relações estruturais críticas.
+
+## TB-61 — Sem cascade destrutivo
+
+Recursos governados não usam `ON DELETE CASCADE` para apagar história.
+
+Preferir:
+
+```text
+RESTRICT / NO ACTION
+```
+
+## TB-62 — Sem hard delete operacional de governados
+
+Lifecycle terminal/archive/supersession preservam história.
+
+---
+
+# 22. Projections e realtime
+
+## TB-63 — Projection rebuildable
+
+Projection é derivada.
+
+Não persistir read model dedicado até access pattern justificar.
+
+Projection materializada deve possuir:
+
+```text
+source watermark/version
+rebuild strategy
+staleness detection
+```
+
+## TB-64 — Durable invalidation
+
+Mudança canônica pode registrar na mesma transação:
+
+```text
+projection invalidation / outbox
+```
+
+## TB-65 — SSE como transporte inicial para UI realtime
+
+Fluxo:
+
+```text
+canonical commit
+→ durable invalidation
+→ optional NOTIFY
+→ SSE
+→ TanStack Query invalidate
+→ canonical refetch
+```
+
+SSE transporta sinal, não a verdade canônica.
+
+## TB-66 — Fallback
+
+Reconnect e polling com backoff recuperam estado quando SSE falha.
+
+---
+
+# 23. Application Shell / UI Runtime
+
+## TB-67 — Login separado
+
+```text
+/login
+→ authenticated session
+→ AppShell
+```
+
+## TB-68 — AppShell estável
+
+Estrutura:
+
+```text
+Top Bar
++
+Project Sidebar
++
+Content Area
++
+Persistent Activity Center
+```
+
+Shell não é desmontado a cada navegação.
+
+## TB-69 — Project selection explícita
+
+Nenhum Project implícito escondido no MVP.
+
+Deep links podem selecionar Project autorizado.
+
+## TB-70 — Server state
+
+```text
+TanStack Query
+```
+
+Responsável por fetch/cache/invalidation/refetch.
+
+Não é source of truth.
+
+## TB-71 — Sem Redux/Zustand inicialmente
+
+Usar:
+
+```text
+TanStack Query → server state
+React Router   → navigation state
+React state    → local transient UI state
+Context        → shell/session local concerns
+```
+
+Adicionar store global só por necessidade concreta.
+
+## TB-72 — API Client
+
+Usar `fetch` nativo por wrapper tipado.
+
+Responsabilidades:
+
+```text
+credentials
+CSRF
+JSON
+standard errors
+stale handling
+abort/cancellation
+correlation when applicable
+```
+
+Axios não é requisito.
+
+## TB-73 — Semantic commands
+
+UI envia intenção semântica.
+
+Proibido API de negócio genérica:
+
+```text
+setStatus(...)
+```
+
+## TB-74 — No optimistic canonical mutation
+
+Estado governado só aparece concluído após confirmação canônica.
+
+---
+
+# 24. Activity Center
+
+## TB-75 — Persistente no AppShell
+
+Activity Center acompanha trabalho longo durante navegação.
+
+Deve deep-linkar para recurso relacionado e possuir view detalhada quando necessário.
+
+## TB-76 — Hierarquia explícita
+
+Exibir separadamente:
+
+```text
+Project phase
+Internal phase step
+Module
+ValueIncrement
+Work Item
+Execution
+Finding
+Decision
+Continuity
+```
+
+## TB-77 — Progresso factual
+
+Permitido:
+
+```text
+3/5 semantic steps
+2/4 Work Items
+4/6 REQUIRED ValueIncrements accepted
+```
+
+Proibido percentual inventado.
+
+## TB-78 — Erro material persistente
+
+Erro governado não pode existir apenas em toast.
+
+## TB-79 — Três relógios
+
+Exibir conforme aplicável:
+
+```text
+last_heartbeat_at
+last_operational_activity_at
+last_functional_progress_at
+```
+
+---
+
+# 25. UI visual e acessibilidade
+
+## TB-80 — Base visual
+
+```text
+Bootstrap 5 CSS
+Bootstrap Icons
+NAAMIVE scoped CSS / design tokens
+```
+
+Não usar Bootstrap JS imperativo.
+
+## TB-81 — Componentes locais
+
+Criar primitives/componentes do produto para padrões recorrentes, sem construir
+framework próprio.
+
+## TB-82 — Desktop-first responsivo
+
+Prioridade:
+
+```text
+desktop
+tablet usable
+mobile basic-safe
+```
+
+## TB-83 — Accessibility target
+
+```text
+WCAG 2.2 AA
+```
+
+Inclui keyboard, visible focus, semantic HTML, labels, contrast e no-color-only
+meaning.
+
+---
+
+# 26. Security
+
+## TB-84 — Human authentication
 
 ```text
 username
@@ -1558,97 +1276,29 @@ username
 password
 ```
 
-A aplicação não usará JWT no browser como mecanismo padrão.
-
----
-
-### D2.4-02 — Password hashing
-
-Passwords serão armazenadas somente como hash.
-
-Algoritmo aprovado:
+## TB-85 — Password hashing
 
 ```text
 Argon2id
 ```
 
-Regras:
+Plain password storage e reversible password encryption são proibidos.
+
+## TB-86 — Session
 
 ```text
-plain password storage............. FORBIDDEN
-reversible password encryption..... FORBIDDEN
-password hash only................. REQUIRED
-unique salt........................ REQUIRED
-parameters configurable............ REQUIRED
-```
-
-Parâmetros concretos de memória/custo/paralelismo serão definidos na
-implementação e poderão ser endurecidos no futuro.
-
----
-
-### D2.4-03 — Server-side opaque session
-
-Após autenticação humana válida:
-
-```text
-server
-  ↓
-creates opaque session
-  ↓
-stores only server-side session state/hash
-  ↓
-browser receives opaque session cookie
-```
-
-A sessão não carrega authority completa.
-
-Regra:
-
-```text
-session identifies principal
-authority is resolved separately
-```
-
----
-
-### D2.4-04 — HttpOnly cookie
-
-Sessão humana será entregue por cookie:
-
-```text
-HttpOnly
+opaque server-side session
+HttpOnly cookie
 SameSite
 Secure in production
 Path=/
 ```
 
-A configuração concreta de duração e política de renovação será definida
-posteriormente.
+Browser JWT/localStorage auth token não fazem parte do modelo.
 
----
+## TB-87 — CSRF
 
-### D2.4-05 — No auth token in localStorage
-
-É proibido usar como padrão:
-
-```text
-JWT in localStorage
-session token in localStorage
-long-lived auth credential in browser storage
-```
-
-O browser não deve possuir credencial reutilizável de longa duração fora do
-cookie protegido.
-
----
-
-### D2.4-06 — CSRF protection
-
-Como autenticação humana usa cookie de sessão, mutações devem possuir proteção
-CSRF.
-
-Modelo aprovado:
+Mutações via cookie session usam:
 
 ```text
 same-origin validation
@@ -1656,148 +1306,40 @@ same-origin validation
 CSRF token
 ```
 
-Requests de leitura seguros podem ser tratados conforme método HTTP e policy.
+## TB-88 — Authorization
 
----
+Authorization é server-side.
 
-### D2.4-07 — Authorization server-side only
-
-Toda ação protegida é autorizada no servidor.
-
-Regra:
+A UI pode projetar capabilities, mas:
 
 ```text
-frontend may display capability
-frontend never grants capability
+button visible != authority
 ```
 
-Claims enviados pelo browser não são fonte de authority.
+## TB-89 — AuthorityService
 
----
+Authority resolution canônica e reutilizável por web/worker/boundaries.
 
-### D2.4-08 — Canonical Authority Service
+Role isolada não é authority.
 
-A resolução de authority deve possuir mecanismo canônico centralizado.
+## TB-90 — Scoped grants
 
-Conceito:
-
-```text
-command
-  ↓
-AuthorityService.authorize(
-  principal,
-  action,
-  scope,
-  context
-)
-  ↓
-ALLOW / DENY
-```
-
-Módulos não devem espalhar regras ad hoc como:
-
-```text
-if user.role === 'ADMIN'
-```
-
-A mesma regra canônica deve ser reutilizável por API, worker e demais
-boundaries autorizados.
-
----
-
-### D2.4-09 — Role is not authority by itself
-
-Roles podem organizar capabilities, mas role isolada não concede ação.
-
-Decisão de autorização considera, conforme aplicável:
+Grants consideram conforme aplicável:
 
 ```text
 principal
-+
 action
-+
 scope
-+
 time
-+
-governing baseline/version
-+
-normative_baseline_ref
-+
+baseline
+normative baseline
 restrictions
-+
 authority source
 ```
 
-Exemplo conceitual:
+## TB-91 — Principal classes
 
-```text
-TECH_LEAD
-```
-
-sozinho não é suficiente.
-
-É necessário grant compatível com a ação e o escopo concretos.
-
----
-
-### D2.4-10 — Scoped grants
-
-Grants devem permitir escopo explícito.
-
-Escopos podem incluir:
-
-```text
-system
-Project
-Module
-Work Item
-Delivery
-action type
-environment
-time window
-baseline
-```
-
-Authority fora do escopo é inválida.
-
----
-
-### D2.4-11 — Expiration and revocation
-
-Grants, sessions e credentials devem suportar:
-
-```text
-expiration
-revocation
-```
-
-Revogação deve impedir uso futuro em tempo compatível com o risco.
-
-Decisões históricas legítimas não são apagadas retroativamente.
-
----
-
-### D2.4-12 — Baseline-aware authority
-
-Authority material deve ser resolvida contra o contexto governante aplicável.
-
-Mudança material pode exigir:
-
-```text
-KEEP
-REVALIDATE
-SUPERSEDE
-REVOKE
-```
-
-Authority nunca deve migrar silenciosamente para baseline incompatível.
-
----
-
-### D2.4-13 — Distinct principal classes
-
-A nova implementação deverá representar separadamente:
+Separar:
 
 ```text
 HUMAN
@@ -1806,1167 +1348,127 @@ AGENT
 EXECUTOR
 ```
 
-Esses principals não são intercambiáveis.
+Human gate exige HUMAN.
 
-Exemplo:
-
-```text
-HUMAN
-manuel
-
-SERVICE
-naamive-worker
-
-AGENT
-architecture-reviewer-gpt
-
-EXECUTOR
-execution-8f382...
-```
-
-A modelagem física exata será definida posteriormente.
-
----
-
-### D2.4-14 — Worker uses service principal
-
-O worker autentica como `SERVICE`.
-
-Regra:
-
-```text
-worker never reuses human credential
-```
-
-O worker recebe somente capabilities necessárias para sua responsabilidade
-técnica.
-
----
-
-### D2.4-15 — Agent uses agent identity
-
-Agentes devem possuir identidade rastreável e distinta do worker e do humano.
-
-A identidade do agent deve permitir reconstruir:
-
-```text
-which configured agent
-which runtime/provider
-which policy/context
-which Execution
-```
-
-conforme aplicável.
-
----
-
-### D2.4-16 — Executor identity
-
-A execução concreta deve ser rastreável a identity/authority operacional própria.
-
-Executor não herda human authority.
-
-Executor também não deve ser confundido com o service principal que o
-orquestrou.
-
----
-
-### D2.4-17 — Human gates require HUMAN
-
-Ação governada explicitamente humana exige principal `HUMAN`.
-
-É proibido:
-
-```text
-SERVICE satisfies human gate
-AGENT satisfies human gate
-EXECUTOR satisfies human gate
-```
-
-Agente pode preparar recomendação.
-
-A decisão humana permanece atribuída ao humano autorizado.
-
----
-
-### D2.4-18 — Least privilege
-
-Toda credencial e principal recebe apenas capabilities necessárias.
-
-Evitar:
-
-```text
-admin credential reused everywhere
-worker with business approval rights
-agent with configuration admin rights
-```
-
-Capability técnica não implica authority de negócio.
-
----
-
-### D2.4-19 — Login rate limiting
-
-Login deverá possuir proteção contra tentativa em massa.
+## TB-92 — Security operations
 
 Obrigatório:
 
 ```text
-rate limiting
-backoff/delay policy
-audit
-generic client error
+least privilege
+expiration
+revocation
+login rate limiting
+generic auth errors
+security headers
+boundary validation
+security audit
+fail closed
 ```
 
-Valores concretos serão definidos na implementação.
+## TB-93 — Secrets
+
+Local:
+
+```text
+.env not versioned
+```
+
+Produção:
+
+```text
+protected host secret files
++
+Docker Compose secrets
+```
+
+Sem secret em Git/log/prompt/telemetry.
 
 ---
 
-### D2.4-20 — Generic authentication errors
+# 27. Observability
 
-O cliente não deve receber detalhes que facilitem enumeração de usuário.
-
-Preferir:
-
-```text
-AUTH_LOGIN_INVALID
-```
-
-em vez de diferenciar publicamente:
-
-```text
-USER_NOT_FOUND
-PASSWORD_WRONG
-```
-
-Detalhes necessários podem permanecer apenas em audit/telemetry protegidos.
-
----
-
-### D2.4-21 — Security headers
-
-O web deverá aplicar security headers apropriados ao deployment final.
-
-O conjunto concreto será definido posteriormente, considerando no mínimo:
-
-```text
-content security policy
-frame protection
-content-type protection
-referrer policy
-transport security in production
-```
-
-A configuração deve ser compatível com o frontend real.
-
----
-
-### D2.4-22 — Boundary validation
-
-Todo input que cruza trust boundary é não confiável por padrão.
-
-Boundaries relevantes incluem:
-
-```text
-browser → API
-API → persistence
-web → durable worker handoff
-worker → agent provider
-worker → external system
-system → human
-```
-
-Validação de transporte não substitui regra de domínio.
-
----
-
-### D2.4-23 — Local secrets
-
-Em desenvolvimento local:
-
-```text
-.env
-```
-
-é permitido somente quando:
-
-```text
-not versioned
-not committed
-not logged
-```
-
-`.env.example` pode existir sem valores reais.
-
----
-
-### D2.4-24 — Production secret store
-
-Em produção, secrets devem usar secret store apropriado ao deployment.
-
-O produto concreto será escolhido no Brainstorm de deployment.
-
-Não fixar agora:
-
-```text
-Vault
-AWS Secrets Manager
-Docker Secrets
-Kubernetes Secrets
-etc.
-```
-
-A obrigação é:
-
-```text
-production secret store........ REQUIRED
-```
-
----
-
-### D2.4-25 — Secret rotation
-
-Credentials materialmente sensíveis devem ser rotacionáveis.
-
-Inclui, conforme aplicável:
-
-```text
-service credentials
-agent provider credentials
-database credentials
-signing material
-external API credentials
-```
-
-Rotação deve preservar auditabilidade.
-
----
-
-### D2.4-26 — No secrets in repository
-
-É proibido versionar secrets reais.
-
-Inclui:
-
-```text
-passwords
-API keys
-service credentials
-database secrets
-signing keys
-provider tokens
-```
-
----
-
-### D2.4-27 — No secrets in logs
-
-Logs, audit trail, telemetry, prompts e error payloads não devem expor secret.
-
-Redaction e minimização são obrigatórias onde houver risco de vazamento.
-
----
-
-### D2.4-28 — Security audit
-
-Eventos relevantes de segurança devem ser auditáveis.
-
-No mínimo:
-
-```text
-login success/failure
-logout
-authorization allow/deny
-grant creation
-grant revocation
-credential creation
-credential rotation
-credential revocation
-principal revocation
-sensitive governed decisions
-break-glass use, if introduced
-```
-
-Audit deve permitir reconstruir principal, ação, scope, authority e resultado.
-
----
-
-### D2.4-29 — UI capability projection
-
-A UI pode receber projeção de ações disponíveis.
-
-Mas:
-
-```text
-projection != authority source
-```
-
-Ao executar a ação, o servidor revalida authority.
-
-Botão visível não é autorização.
-
----
-
-### D2.4-30 — Security fail-closed
-
-Se identidade, sessão, grant, scope, baseline ou authority não puderem ser
-provados:
-
-```text
-DENY
-```
-
-A negação não deve produzir efeito autoritativo parcial.
-
-Quando necessário, a condição deve permanecer observável e tratável.
-
----
-
-## 13. Brainstorm 2.5 — Observability Tooling
-
-O Brainstorm 2.5 define a stack-base e os princípios de observabilidade do
-NAAMIVE.
-
-A decisão preserva os pontos positivos do legado — especialmente logs
-estruturados, telemetria sanitizada, separação entre heartbeat e progresso real
-e evidência durável de falha — e adiciona métricas, tracing e uma plataforma
-self-hosted de observabilidade.
-
-A observabilidade operacional não substitui estado canônico, audit trail,
-Inconsistency ou evidência governada.
-
-Princípio:
-
-```text
-logs
-metrics
-traces
-!=
-canonical truth
-```
-
-A verdade governada continua em mecanismos duráveis definidos pelo NAAMIVE.
-
----
-
-### D2.5-01 — Zero assinatura obrigatória
-
-A stack de observabilidade deve ser utilizável sem assinatura paga obrigatória.
-
-Regra:
-
-```text
-self-hosted OSS/FOSS................ REQUIRED
-mandatory paid subscription......... FORBIDDEN
-mandatory SaaS dependency............ FORBIDDEN
-paid observability platform.......... NOT REQUIRED
-vendor-neutral instrumentation....... REQUIRED
-```
-
-O NAAMIVE não deve depender tecnicamente de plano pago de observabilidade para
-operar.
-
-Custos da infraestrutura onde os componentes são executados não transformam a
-ferramenta em dependência SaaS obrigatória.
-
-Qualquer adoção futura de plataforma paga exige decisão técnica explícita e não
-pode ser pressuposta pela baseline atual.
-
----
-
-### D2.5-02 — Pino para application logging
-
-Logger aprovado:
+## TB-94 — Logging
 
 ```text
 Pino
+structured JSON
+automatic redaction
 ```
 
-Aplicação deve produzir logs estruturados em JSON.
+Log não é canonical event.
 
-Campos conceituais incluem, conforme aplicável:
-
-```text
-timestamp
-level
-service
-component
-event
-correlation_id
-causation_id
-trace_id
-span_id
-project context
-execution context
-error classification
-```
-
-Os campos finais serão definidos por contrato técnico posterior.
-
----
-
-### D2.5-03 — Structured JSON required
-
-Logs operacionais devem ser machine-readable.
-
-Evitar logs relevantes apenas em texto livre.
-
-É permitido possuir mensagem humana complementar, desde que o evento e seus
-campos estruturados continuem disponíveis.
-
----
-
-### D2.5-04 — Automatic redaction
-
-Logs devem possuir redaction para dados sensíveis.
-
-É proibido expor por padrão:
-
-```text
-password
-session token
-service credential
-API key
-provider key
-database secret
-authorization credential
-raw secret-bearing payload
-```
-
-Redaction não substitui evitar capturar o dado.
-
-Primeira preferência:
-
-```text
-do not collect
-```
-
-Segunda proteção:
-
-```text
-redact
-```
-
----
-
-### D2.5-05 — Logs are not canonical events
-
-Log operacional não é substituto de evento canônico.
-
-Exemplo:
-
-```text
-Pino
-worker_claim_success
-```
-
-pode diagnosticar uma operação.
-
-Mas a mudança autoritativa da Execution deve continuar registrada pelo modelo
-durável correspondente.
-
-Perda do backend de logs não pode apagar a história governada do sistema.
-
----
-
-### D2.5-06 — OpenTelemetry
-
-Padrão aprovado para tracing:
+## TB-95 — Tracing
 
 ```text
 OpenTelemetry
-```
-
-A instrumentação deverá ser vendor-neutral.
-
-Não espalhar no domínio código acoplado diretamente a um fornecedor de
-observabilidade.
-
----
-
-### D2.5-07 — OpenTelemetry Collector
-
-Componente de coleta/exportação aprovado:
-
-```text
 OpenTelemetry Collector
+Tempo default backend
 ```
 
-Modelo:
+Instrumentação é vendor-neutral.
 
-```text
-web ─────┐
-         ├── OpenTelemetry → Collector → trace backend
-worker ──┘
-```
+`trace_id` não substitui correlation/causation duráveis.
 
-A aplicação conhece o padrão OpenTelemetry.
-
-O Collector decide como exportar os sinais suportados.
-
----
-
-### D2.5-08 — Tracing ponta a ponta
-
-Tracing deverá permitir acompanhar uma operação através dos boundaries técnicos.
-
-Exemplo conceitual:
-
-```text
-browser request
-  ↓
-web
-  ↓
-command
-  ↓
-database transaction
-  ↓
-durable handoff
-  ↓
-worker claim
-  ↓
-Execution
-  ↓
-agent/external provider
-  ↓
-result publication
-```
-
-Tracing deve ser utilizado para diagnóstico operacional.
-
----
-
-### D2.5-09 — Correlation and causation remain durable
-
-`trace_id` não substitui:
-
-```text
-correlation_id
-causation_id
-```
-
-quando esses identificadores forem materialmente necessários ao domínio,
-governança ou forensics.
-
-Trace pode ser amostrado, expirar ou ser descartado.
-
-Causalidade governada não pode depender da retenção do tracing.
-
----
-
-### D2.5-10 — Prometheus metrics model
-
-Modelo de métricas aprovado:
-
-```text
-Prometheus
-```
-
-A aplicação deve expor métricas em formato compatível com Prometheus.
-
----
-
-### D2.5-11 — prom-client
-
-Biblioteca Node aprovada para métricas:
+## TB-96 — Metrics
 
 ```text
 prom-client
-```
-
-Ela será usada para instrumentar `web` e `worker` conforme aplicável.
-
----
-
-### D2.5-12 — Metrics endpoint
-
-O `web` deve fornecer endpoint protegido/apropriadamente exposto para scraping
-de métricas.
-
-Conceito:
-
-```text
-/metrics
-```
-
-A forma de proteção e exposição externa será definida no deployment.
-
-Worker deverá produzir métricas equivalentes por mecanismo compatível com seu
-modelo de execução.
-
----
-
-### D2.5-13 — Technical metrics
-
-Métricas técnicas incluem, conforme aplicável:
-
-```text
-HTTP request rate
-HTTP error rate
-HTTP latency
-database pool usage
-database errors
-worker activity
-memory
-process health
-event loop health
-external provider latency
-```
-
-Essas métricas não substituem métricas de lifecycle.
-
----
-
-### D2.5-14 — Lifecycle and governance metrics
-
-Observabilidade deve medir também saúde semântica do NAAMIVE.
-
-Exemplos conceituais:
-
-```text
-resources by lifecycle state
-blocked resources
-paused resources
-waiting resources
-stale too long
-pending human gates
-old blockers
-expiring authorities
-expiring exceptions
-critical risks
-```
-
----
-
-### D2.5-15 — Execution metrics
-
-No mínimo, o desenho deve permitir medir:
-
-```text
-running age
-failed count
-retry count
-recovery count
-stale result attempts
-claim/lease expiry
-zombie/fencing rejection
-execution duration
-```
-
----
-
-### D2.5-16 — Handoff and continuity metrics
-
-Devem existir sinais para:
-
-```text
-pending handoff age
-handoff acceptance latency
-uncertain handoff
-lost/recovered handoff
-resource without actionable continuation
-continuity inconsistency
-```
-
----
-
-### D2.5-17 — Projection metrics
-
-Devem existir sinais para:
-
-```text
-projection lag
-rebuild failure
-stale watermark
-semantic conformance failure
-missing required action
-missing blocker
-missing wait condition
-duplicate projection element
-contradictory projection
-unauthorized extra action
-```
-
-Projection atualizada temporalmente ainda pode estar semanticamente errada.
-
----
-
-### D2.5-18 — Inconsistency and reconciliation metrics
-
-Devem existir métricas para:
-
-```text
-open inconsistencies
-inconsistency age
-inconsistency by severity/type
-reconciliation backlog
-reconciliation age
-recovery backlog
-```
-
-Métrica não substitui o registro canônico da Inconsistency.
-
----
-
-### D2.5-19 — No high-cardinality IDs as metric labels
-
-IDs de entidades não devem ser usados normalmente como labels Prometheus.
-
-Proibido por padrão:
-
-```text
-project_id
-work_item_id
-execution_id
-user_id
-handoff_id
-correlation_id
-```
-
-Esses identificadores pertencem a:
-
-```text
-logs
-traces
-canonical records
-```
-
-Métricas devem agregar.
-
----
-
-### D2.5-20 — Grafana
-
-Ferramenta de visualização aprovada:
-
-```text
-Grafana
-```
-
-Uso esperado:
-
-```text
-dashboards
-metrics visualization
-trace navigation
-log navigation
-alert visualization
-```
-
-A instalação padrão será self-hosted.
-
-Grafana Cloud não é requisito.
-
----
-
-### D2.5-21 — Prometheus server
-
-Backend padrão para métricas:
-
-```text
 Prometheus
 ```
 
-Será self-hosted na baseline inicial.
+Evitar high-cardinality IDs em labels.
 
-Retenção e sizing serão definidos conforme deployment.
-
----
-
-### D2.5-22 — Loki as default log backend
-
-Backend padrão aprovado para logs:
-
-```text
-Loki
-```
-
-Status:
-
-```text
-APPROVED AS DEFAULT
-```
-
-A aplicação não deve depender de APIs específicas do Loki.
-
-Logs continuam sendo emitidos em contrato estruturado e coletáveis por
-infraestrutura substituível.
-
----
-
-### D2.5-23 — Tempo as default trace backend
-
-Backend padrão aprovado para traces:
-
-```text
-Tempo
-```
-
-Status:
-
-```text
-APPROVED AS DEFAULT
-```
-
-A aplicação deve instrumentar OpenTelemetry, não Tempo diretamente.
-
----
-
-### D2.5-24 — Observability stack
-
-Stack padrão:
-
-```text
-APPLICATION
-├── Pino
-├── OpenTelemetry
-└── prom-client
-
-COLLECTION / STORAGE
-├── OpenTelemetry Collector
-├── Prometheus
-├── Loki
-└── Tempo
-
-VISUALIZATION
-└── Grafana
-```
-
-Todos os componentes devem poder ser executados de forma self-hosted sem
-assinatura obrigatória.
-
----
-
-### D2.5-25 — Liveness endpoint
-
-O web deve possuir:
-
-```text
-/health/live
-```
-
-Objetivo:
-
-```text
-o processo está vivo?
-```
-
-Liveness não deve falhar apenas porque uma dependência externa está
-temporariamente indisponível, quando o processo continua saudável.
-
----
-
-### D2.5-26 — Readiness endpoint
-
-O web deve possuir:
-
-```text
-/health/ready
-```
-
-Objetivo:
-
-```text
-o processo está apto a servir corretamente?
-```
-
-Exemplo:
-
-```text
-process alive
-+
-PostgreSQL unavailable
-=
-live  OK
-ready FAIL
-```
-
-Dependências concretas de readiness serão definidas por componente.
-
----
-
-### D2.5-27 — Worker health
-
-Worker deve possuir mecanismo equivalente para revelar:
-
-```text
-alive
-ready
-active
-degraded
-draining
-```
-
-conforme aplicável ao modelo final de deployment.
-
-Não assumir que processo existente significa worker funcional.
-
----
-
-### D2.5-28 — ALIVE is not PROGRESS
-
-Decisão herdada e preservada do legado:
-
-```text
-heartbeat
-=
-liveness evidence
-```
-
-Não significa:
-
-```text
-functional progress
-```
-
-É obrigatório distinguir:
-
-```text
-ALIVE
-ALIVE_NO_PROGRESS
-DEGRADED
-```
-
-quando a natureza da Execution permitir detectar essa diferença.
-
----
-
-### D2.5-29 — Operational progress signal
-
-Quando aplicável, progresso funcional deve ser derivado de evento operacional
-válido ou mudança material observável.
-
-Heartbeat não atualiza artificialmente o relógio de progresso funcional.
-
-Isso permite detectar:
-
-```text
-executor vivo
-+
-nenhum avanço
-```
-
-sem classificar falsamente o processo como saudável.
-
----
-
-### D2.5-30 — Agent telemetry closed contract
-
-Telemetria de agentes deve usar contrato fechado e sanitizado.
-
-Permitido, conforme aplicável:
-
-```text
-event type
-timestamp
-sequence
-status
-duration
-usage counters
-provider/runtime identity
-Execution correlation
-sanitized failure classification
-```
-
----
-
-### D2.5-31 — Raw agent payload forbidden by default
-
-Não coletar por padrão em telemetry/logging:
-
-```text
-prompt
-private reasoning
-raw agent output
-tool arguments
-source file contents
-secrets
-raw stderr containing sensitive content
-arbitrary provider payload
-```
-
-Se algum conteúdo material precisar ser preservado como evidence, isso deve
-seguir contrato de evidence próprio, não ser jogado indiscriminadamente em
-observability.
-
----
-
-### D2.5-32 — Durable failure evidence
-
-Falhas materiais devem possuir evidência durável suficiente para diagnóstico,
-recovery e audit quando exigido.
-
-Log de erro sozinho não é evidência suficiente para fato governado.
-
----
-
-### D2.5-33 — Separate operational signals from audit
-
-Quatro categorias devem permanecer semanticamente distintas:
-
-```text
-LOG
-diagnóstico técnico
-
-METRIC
-medição agregada
-
-TRACE
-caminho operacional
-
-AUDIT / CANONICAL RECORD
-história governada e durável
-```
-
-Um mesmo acontecimento pode produzir sinais nas quatro categorias.
-
-Isso não torna as categorias intercambiáveis.
-
----
-
-### D2.5-34 — Actionable alerts
-
-Alertas devem ser acionáveis.
-
-Evitar alertar simplesmente porque um log possui level `error`.
-
-Condições conceituais de alerta incluem:
-
-```text
-Execution running too long
-repeated lease expiry
-worker unavailable
-ALIVE_NO_PROGRESS too long
-pending handoff too old
-projection lag
-projection semantic mismatch
-critical inconsistency
-reconciliation stuck
-human gate aging
-authority near expiration
-```
-
-Thresholds concretos serão definidos na baseline operacional/deployment.
-
----
-
-### D2.5-35 — Governed alert references canonical Inconsistency
-
-Quando um alerta representa discrepancy governada:
-
-```text
-alert
-  ↓
-references canonical Inconsistency
-```
-
-O alerta não cria uma segunda fonte de verdade.
-
-Exemplo:
-
-```text
-Grafana alert
-  ↓
-INCONSISTENCY-...
-```
-
-A Inconsistency continua responsável por lifecycle, ownership, tratamento e
-closure da discrepância.
-
----
-
-### D2.5-36 — Observability failure must not corrupt business state
-
-Falha ao enviar log, trace ou métrica não deve normalmente quebrar transação de
-negócio ou corromper estado canônico.
-
-Exceção:
-
-quando a própria lei exigir persistência durável de audit/evidence para permitir
-a operação.
-
-Nesse caso:
-
-```text
-audit/evidence required
-!=
-optional telemetry
-```
-
----
-
-### D2.5-37 — Observability module boundaries
-
-Instrumentação deve respeitar arquitetura modular.
-
-Módulos podem emitir eventos técnicos através de contracts/shared
-infrastructure controlada.
-
-Eles não devem ganhar dependência direta de:
+## TB-97 — Visualization
 
 ```text
 Grafana
+```
+
+## TB-98 — Logs backend
+
+```text
 Loki
-Tempo
-Prometheus server internals
 ```
 
-Frameworks e backends de observabilidade permanecem periféricos.
+default self-hosted.
+
+## TB-99 — Health
+
+Web:
+
+```text
+/health/live
+/health/ready
+```
+
+Worker possui health equivalente.
+
+## TB-100 — ALIVE != PROGRESS
+
+Observabilidade deve distinguir:
+
+```text
+alive
+operational activity
+functional progress
+```
+
+## TB-101 — Alertas
+
+Alertas devem ser acionáveis.
+
+Discrepancy governada referencia canonical Inconsistency.
+
+## TB-102 — Sem paid dependency obrigatória
+
+Stack deve funcionar self-hosted sem assinatura SaaS obrigatória.
 
 ---
 
-## 14. Brainstorm 2.6 — Deployment Model
+# 28. Environments e deployment
 
-O Brainstorm 2.6 define como o NAAMIVE será executado e promovido entre
-ambientes sem criar custo operacional prematuro.
-
-A decisão preserva a simplicidade do legado para desenvolvimento local e cria
-uma progressão explícita de ambientes:
-
-```text
-DEV
-  ↓
-PRE-HML
-  ↓
-HML
-  ↓
-PROD
-```
-
-Princípio central:
-
-```text
-desenvolver sem custo de infraestrutura
-até o produto estar pronto para evoluir
-```
-
-A existência lógica de HML e PROD não obriga sua infraestrutura a existir desde
-o início.
-
----
-
-### D2.6-01 — Zero infraestrutura paga durante desenvolvimento
-
-Enquanto o projeto ainda estiver em construção, o objetivo é executar localmente
-sem assinatura ou infraestrutura paga obrigatória.
-
-Regra:
-
-```text
-paid hosting before readiness........ NOT REQUIRED
-mandatory cloud subscription......... FORBIDDEN
-mandatory paid deployment platform... FORBIDDEN
-local-first development.............. REQUIRED
-```
-
-HML e PROD podem permanecer apenas como perfis definidos até existir necessidade
-real de provisioná-los.
-
----
-
-### D2.6-02 — Quatro environment profiles
-
-Perfis aprovados:
+## TB-103 — Profiles
 
 ```text
 DEV
@@ -2975,260 +1477,64 @@ HML
 PROD
 ```
 
-Cada perfil representa objetivo operacional diferente.
+## TB-104 — DEV
 
-Ambiente é configuração e boundary operacional.
+```text
+web / worker no host
+PostgreSQL via Docker
+infra auxiliar via Docker
+hot reload
+debug local
+```
 
-Não é uma versão diferente do produto.
+## TB-105 — PRE-HML
+
+Stack containerizada real:
+
+```text
+web
+worker
+PostgreSQL
+migrations
+health
+observability quando necessária
+complete E2E
+```
+
+Local ou CI, preferencialmente descartável.
+
+## TB-106 — HML
+
+Containerizado e persistente quando provisionado.
+
+## TB-107 — PROD
+
+Containerizado, hardened, persistente, backup + observability.
+
+## TB-108 — Local-first
+
+Nenhuma infraestrutura paga é obrigatória antes da readiness.
 
 ---
 
-### D2.6-03 — DEV
+# 29. Containers e promoção
 
-Objetivo:
-
-```text
-máxima produtividade de desenvolvimento
-```
-
-Modelo aprovado:
-
-```text
-web...................... host
-worker................... host
-PostgreSQL............... Docker
-infra auxiliar........... Docker quando necessária
-observability............ Docker opcional
-hot reload............... YES
-debug local.............. YES
-```
-
-`web` e `worker` não precisam rodar em container durante o ciclo diário de
-desenvolvimento.
-
-Isso evita custo de rebuild/restart desnecessário e preserva debugging simples.
-
----
-
-### D2.6-04 — PRE-HML
-
-Objetivo:
-
-```text
-provar o pacote real antes da homologação
-```
-
-PRE-HML executa o sistema como release containerizada.
-
-Modelo:
-
-```text
-web...................... Docker
-worker................... Docker
-PostgreSQL............... Docker
-migrations............... reais
-health checks............ reais
-observability............ real quando necessária à validação
-E2E...................... completo
-```
-
-PRE-HML deve ser preferencialmente:
-
-```text
-local
-ou
-CI
-```
-
-e pode ser descartável.
-
-Não exige servidor permanente.
-
----
-
-### D2.6-05 — PRE-HML local-first
-
-Antes de pagar qualquer infraestrutura externa, PRE-HML deve poder ser executado
-na própria máquina de desenvolvimento ou em runner disponível sem assinatura
-obrigatória.
-
-Conceito:
-
-```text
-DEV
-→ execução rápida no host
-
-PRE-HML
-→ stack Docker completa local
-```
-
-Essa etapa existe para detectar:
-
-```text
-funciona no DEV
-mas quebra quando empacotado
-```
-
-antes de HML.
-
----
-
-### D2.6-06 — HML
-
-Objetivo:
-
-```text
-homologar release candidata
-```
-
-HML será ambiente containerizado e persistente quando for provisionado.
-
-Características:
-
-```text
-Docker
-config própria
-database própria
-secrets próprios
-HTTPS
-observability
-dados de homologação
-```
-
-HML não precisa existir fisicamente enquanto o projeto ainda estiver em
-desenvolvimento local.
-
----
-
-### D2.6-07 — PROD
-
-Objetivo:
-
-```text
-operação real
-```
-
-PROD será containerizado e utilizará a mesma release já validada em PRE-HML e
-HML.
-
-Características:
-
-```text
-Docker
-HTTPS/TLS
-production secrets
-persistent state
-backup
-observability
-hardening
-```
-
----
-
-### D2.6-08 — Build once, promote
-
-Regra central de release:
-
-```text
-BUILD ONCE
-  ↓
-PRE-HML
-  ↓
-HML
-  ↓
-PROD
-```
-
-Não recompilar aplicação entre esses ambientes.
-
----
-
-### D2.6-09 — Same artifact across PRE-HML, HML and PROD
-
-PRE-HML, HML e PROD devem executar os mesmos artefatos imutáveis da release.
-
-Exemplo:
-
-```text
-naamive-web:R27
-digest sha256:ABC
-
-PRE-HML → sha256:ABC
-HML     → sha256:ABC
-PROD    → sha256:ABC
-```
-
-O mesmo princípio vale para `worker`.
-
----
-
-### D2.6-10 — Environment differences are configuration
-
-Entre PRE-HML, HML e PROD podem mudar:
-
-```text
-database
-secrets
-URLs
-capacity
-retention
-backup policy
-observability retention
-external provider configuration
-```
-
-Não devem mudar silenciosamente:
-
-```text
-source code
-Dockerfile
-application binary
-release image
-domain behavior
-```
-
----
-
-### D2.6-11 — Docker Engine
-
-Runtime de container aprovado:
+## TB-109 — Runtime
 
 ```text
 Docker Engine
-```
-
----
-
-### D2.6-12 — Docker Compose v2
-
-Orquestração inicial aprovada:
-
-```text
 Docker Compose v2
 ```
 
-Kubernetes, Docker Swarm e Nomad não são necessários na baseline inicial.
-
----
-
-### D2.6-13 — No Kubernetes initially
-
-Regra:
+Não exigir inicialmente:
 
 ```text
-Kubernetes............... NOT REQUIRED
-Docker Swarm............. NOT REQUIRED
-Nomad.................... NOT REQUIRED
+Kubernetes
+Docker Swarm
+Nomad
 ```
 
-Infraestrutura distribuída futura exige necessidade concreta e nova decisão
-tecnológica.
-
----
-
-### D2.6-14 — Production topology starts single-host
-
-Quando PROD for provisionado, a topologia inicial pode ser:
+## TB-110 — Initial production topology
 
 ```text
 single Linux host
@@ -3236,174 +1542,57 @@ single Linux host
 Docker Compose
 ```
 
-Isso é suficiente para a escala inicial prevista.
+com evolução futura possível.
 
-A arquitetura deve continuar permitindo evolução posterior.
+## TB-111 — Containers
 
----
-
-### D2.6-15 — Web and worker separate containers
-
-Em ambientes containerizados:
+Fora de DEV:
 
 ```text
-web
-worker
+web container
+worker container
 ```
 
-serão containers distintos.
+Worker pode escalar horizontalmente quando necessário.
 
-Isso preserva responsabilidades e permite scaling independente.
-
----
-
-### D2.6-16 — Horizontal worker scaling supported
-
-Inicialmente:
-
-```text
-web....... 1 instance
-worker.... 1 instance
-```
-
-A arquitetura deve permitir múltiplos workers posteriormente.
-
-A segurança contra dupla authority depende do modelo aprovado em 2.3:
-
-```text
-transactional claim
-lease
-fencing
-idempotency
-```
-
----
-
-### D2.6-17 — Reverse proxy
-
-Reverse proxy padrão aprovado:
+## TB-112 — Reverse proxy
 
 ```text
 Caddy
 ```
 
-Objetivos:
+responsável por HTTPS/TLS/reverse proxy.
 
-```text
-HTTPS
-TLS certificate management
-HTTP → HTTPS redirect
-reverse proxy
-external network boundary
-```
+## TB-113 — Network exposure
 
-Caddy deverá ser self-hosted, sem assinatura obrigatória.
+Por padrão, somente reverse proxy exposto externamente.
 
----
-
-### D2.6-18 — TLS
-
-HML e PROD, quando remotamente acessíveis, exigem:
-
-```text
-HTTPS/TLS
-```
-
-Credenciais de sessão marcadas como `Secure` nesses ambientes.
-
----
-
-### D2.6-19 — Network exposure
-
-Por padrão, apenas o reverse proxy pode ser exposto externamente.
-
-Conceito:
-
-```text
-80  → redirect
-443 → HTTPS
-```
-
-É proibida exposição pública direta, por padrão, de:
+Não expor publicamente:
 
 ```text
 PostgreSQL
 worker
-OpenTelemetry Collector
+OTel Collector
 Prometheus
 Loki
 Tempo
+Grafana
 ```
 
-Grafana também não deve ser público por padrão.
-
----
-
-### D2.6-20 — Persistent state outside ephemeral container filesystem
-
-Container pode ser descartado.
-
-Estado material não.
-
-Devem possuir persistência adequada:
+## TB-114 — Build once / promote
 
 ```text
-PostgreSQL data
-artifacts/evidence
-worker workspaces quando necessários
-observability persistence conforme retenção
-backups
+BUILD ONCE
+→ PRE-HML
+→ HML
+→ PROD
 ```
 
-Nenhum estado canônico pode existir apenas no filesystem efêmero do container.
+Mesmo artefato imutável.
 
----
+## TB-115 — Release identity
 
-### D2.6-21 — Repository/source is not runtime state
-
-O código-fonte do NAAMIVE não é local de persistência operacional.
-
-É proibido usar o repositório como destino de:
-
-```text
-database data
-logs
-runtime state
-secrets
-evidence
-backups
-temporary operational files
-```
-
-quando esses dados possuírem destino operacional próprio.
-
----
-
-### D2.6-22 — Worker filesystem access is narrower than web
-
-Acesso a repositories/workspaces deve ser concedido apenas ao componente que
-precisa.
-
-Preferência:
-
-```text
-worker
-→ repository/workspace access
-
-web
-→ no broad repository filesystem access
-```
-
-O desenho físico definitivo será validado quando os adapters Git/agent forem
-implementados.
-
----
-
-### D2.6-23 — Immutable release identification
-
-Cada release deve possuir identificadores suficientes para forensics.
-
-No mínimo:
+Release carrega conforme aplicável:
 
 ```text
 release_id
@@ -3413,863 +1602,371 @@ technology_baseline_ref
 image_digest
 ```
 
-conforme aplicável.
+`:latest` não é identidade autoritativa.
 
 ---
 
-### D2.6-24 — Same release ID for web and worker
+# 30. Migrations
 
-`web` e `worker` pertencentes à mesma promoção devem carregar a mesma identidade
-de release.
-
-Isso não impede imagens distintas.
-
-Exemplo:
-
-```text
-release R27
-
-web image....... digest A
-worker image.... digest B
-```
-
-Ambas pertencem a:
-
-```text
-release_id = R27
-```
-
----
-
-### D2.6-25 — No latest tag in authoritative deployment
-
-É proibido depender de:
-
-```text
-:latest
-```
-
-como identidade de release em HML/PROD.
-
-Deploy deve referenciar tag/digest imutável ou equivalentemente verificável.
-
----
-
-### D2.6-26 — Controlled migration step
-
-Migration de banco será etapa controlada da promoção.
-
-Não permitir que toda instância de `web` ou `worker` execute migrations
-automaticamente ao iniciar.
-
-Conceito:
-
-```text
-release
-  ↓
-controlled migration step
-  ↓
-runtime promotion
-```
-
-A ferramenta e estratégia exatas de migration permanecem para o Brainstorm 2.8.
-
----
-
-### D2.6-27 — Release flow
-
-Fluxo conceitual:
-
-```text
-code
-  ↓
-unit / integration / architecture tests
-  ↓
-DEV
-  ↓
-build immutable images
-  ↓
-PRE-HML
-  ↓
-migrations + health + E2E
-  ↓
-release candidate
-  ↓
-HML
-  ↓
-homologation
-  ↓
-explicit approval
-  ↓
-PROD
-  ↓
-production smoke + observability
-```
-
-Enquanto HML/PROD não forem provisionados, o fluxo pode parar em PRE-HML.
-
----
-
-### D2.6-28 — Health validation
-
-Promotion não considera container saudável apenas porque o processo existe.
+## TB-116 — Versionadas no repositório
 
 Usar:
 
 ```text
-/health/live
-/health/ready
+Kysely migration infrastructure
++
+explicit SQL when necessary
 ```
 
-e health equivalente do worker.
+## TB-117 — Controlled migration step
 
----
+`web` e `worker` não executam migrations automaticamente ao iniciar.
 
-### D2.6-29 — Post-deploy smoke
+Promoção possui etapa explícita de migration.
 
-Após promoção de release deve existir smoke test técnico mínimo.
+## TB-118 — Forward-only
 
-Em PRE-HML isso é obrigatório desde o início.
-
-Em HML/PROD será obrigatório quando esses ambientes forem provisionados.
-
----
-
-### D2.6-30 — Graceful worker shutdown
-
-Worker deve responder a shutdown controlado.
-
-Conceito:
+Padrão:
 
 ```text
-SIGTERM
-  ↓
-stop claiming new work
-  ↓
-drain current activity safely
-  ↓
-terminate
+expand
+migrate/backfill
+switch
+contract
 ```
 
-Se authority expirar durante interrupção, o lifecycle aprovado de Execution
-governa a continuidade.
+Rollback de aplicação não deve exigir apagar fato novo válido.
 
----
+## TB-119 — Migration lock
 
-### D2.6-31 — Restart policy
+Um migrator por database/ambiente, usando advisory lock ou equivalente.
 
-Serviços containerizados devem possuir restart policy apropriada.
+## TB-120 — Backfills
 
-Restart automático não pode esconder crash loop.
-
-Observability deve revelar indisponibilidade e repetição de restart.
-
----
-
-### D2.6-32 — PostgreSQL backup
-
-Quando HML/PROD persistentes forem provisionados, backup do PostgreSQL será
-obrigatório conforme criticidade do ambiente.
-
-Para PROD:
+Backfill material deve ser:
 
 ```text
-automated backup........ REQUIRED
-integrity validation.... REQUIRED
-restore test............ REQUIRED
-separate backup storage. REQUIRED
+idempotent
+checkpointed
+observable
+safe to rerun
 ```
 
 ---
 
-### D2.6-33 — Backup integrity
+# 31. Database roles e secrets
 
-Preservar o princípio positivo do legado:
+## TB-121 — Roles mínimos
+
+```text
+naamive_migrator
+naamive_app
+```
+
+Runtime normal não recebe DDL amplo.
+
+Web/worker podem inicialmente compartilhar runtime DB role técnico.
+
+PostgreSQL role não substitui AuthorityService.
+
+## TB-122 — Database credentials
+
+Connection string via environment/secret injection.
+
+Nunca versionada.
+
+---
+
+# 32. Backup / restore
+
+## TB-123 — PROD backup
+
+Quando PROD existir:
+
+```text
+automated backup
+integrity validation
+restore test
+separate backup storage
+```
+
+Obrigatórios.
+
+## TB-124 — Integrity
+
+Padrão inicial compatível com:
 
 ```text
 pg_dump
-+
 validation
-+
-SHA-256 or equivalent integrity proof
-+
+SHA-256 or equivalent
 metadata
 ```
 
-A ferramenta final poderá evoluir, mas integridade verificável permanece
-obrigatória.
+## TB-125 — Restore controlado
 
----
+Restore destrutivo exige operação/confirmacão explícita.
 
-### D2.6-34 — Restore is explicitly destructive
+## TB-126 — Post-restore reconciliation
 
-Restore destrutivo deve exigir confirmação explícita e operação controlada.
-
-Nunca executar restore por automatismo ambíguo.
-
----
-
-### D2.6-35 — Restore testing
-
-Backup não é considerado confiável apenas porque foi criado.
-
-Deve existir validação periódica por restore em ambiente descartável ou
-equivalente.
-
----
-
-### D2.6-36 — Backup separate from primary DB storage
-
-Backup de PROD não deve existir somente no mesmo filesystem/volume físico do
-banco primário.
-
-A mídia concreta pode evoluir:
+Após restore/restart, reavaliar:
 
 ```text
-separate disk
-NAS
-another host
-object storage
-```
-
-Não é exigido serviço pago.
-
----
-
-### D2.6-37 — Production secret delivery
-
-Modelo inicial aprovado:
-
-```text
-protected host secret files
-+
-Docker Compose secrets
-```
-
-Segredos reais ficam fora do Git e com permissões restritas.
-
-`.env` de produção deve preferencialmente conter apenas configuração não
-sensível.
-
----
-
-### D2.6-38 — No Vault requirement initially
-
-Não exigir inicialmente:
-
-```text
-Vault
-cloud secret manager
-enterprise secret platform
-```
-
-Esses componentes só entram mediante necessidade concreta.
-
----
-
-### D2.6-39 — Container hardening
-
-Em HML/PROD:
-
-```text
-non-root containers.............. REQUIRED
-minimal image.................... REQUIRED
-drop unnecessary capabilities... REQUIRED WHEN POSSIBLE
-read-only filesystem............. REQUIRED WHEN POSSIBLE
-only necessary mounts............ REQUIRED
-only necessary networks.......... REQUIRED
+RUNNING Executions
+claims/leases
+pending dispatch
+UNKNOWN external effects
+pending handoffs
+roadmap continuity
 ```
 
 ---
 
-### D2.6-40 — Docker socket forbidden
+# 33. Container hardening e CI/CD
 
-É proibido montar:
+## TB-127 — Hardening
+
+HML/PROD:
 
 ```text
-/var/run/docker.sock
+non-root containers
+minimal images
+drop unnecessary capabilities when possible
+read-only filesystem when possible
+minimal mounts
+minimal networks
 ```
 
-em `web` ou `worker`.
+Docker socket é proibido em web/worker.
 
-Controle do Docker daemon não deve ser capability implícita da aplicação.
+## TB-128 — CI/CD
 
----
-
-### D2.6-41 — CI/CD default
-
-Plataforma default:
+Default:
 
 ```text
 GitHub Actions
 ```
 
-para build/test/release automation.
+Paid CI obrigatório é proibido.
 
-Assinatura paga não é requisito.
+Self-hosted runner pode ser usado.
 
-Se necessário, runner self-hosted pode ser adotado.
+## TB-129 — Production promotion
 
----
+Inicialmente, produção exige promoção explícita.
 
-### D2.6-42 — No mandatory paid CI
-
-Regra:
-
-```text
-mandatory paid CI subscription....... FORBIDDEN
-```
-
-A pipeline deve ser executável usando recursos gratuitos/self-hosted
-compatíveis com o estágio do projeto.
+Merge não promove automaticamente para PROD.
 
 ---
 
-### D2.6-43 — Explicit production promotion initially
+# 34. Índices e access patterns
 
-Inicialmente:
+## TB-130 — Índices orientados a uso real
+
+Índices iniciais cobrem:
 
 ```text
-merge
-  ↓
-automated build/test
-  ↓
-release candidate
-  ↓
-explicit production promotion
+foreign keys
+current resource lookup
+project hierarchy
+current DeliveryTarget
+roadmap active entries
+eligible dispatch
+claim/lease expiry
+idempotency/intention
+correlation
+Activity Center queries
 ```
 
-Não promover automaticamente para PROD apenas por merge.
+## TB-131 — Partial indexes
 
-Essa regra pode ser reavaliada quando maturidade operacional justificar.
+Usar quando adequado:
+
+```text
+WHERE is_current
+WHERE status = 'ELIGIBLE'
+WHERE completed_at IS NULL
+```
+
+Não criar índice especulativo em massa.
 
 ---
 
-### D2.6-44 — HML and PROD can be deferred
+# 35. Retention
 
-Enquanto o projeto não estiver pronto:
+## TB-132 — Governed history
 
-```text
-HML infrastructure........ OPTIONAL / NOT PROVISIONED
-PROD infrastructure....... OPTIONAL / NOT PROVISIONED
-```
+History/lifecycle/decision/baseline lineage necessária para auditabilidade não é
+apagada só por idade.
 
-O importante é que os perfis e contratos já estejam definidos.
+## TB-133 — Operational telemetry
 
-O desenvolvimento pode permanecer:
+Heartbeat/telemetry de alta frequência pode ter:
 
 ```text
-DEV
-+
-PRE-HML local
+retention
+compaction
+partitioning futura
 ```
 
-sem custo de hosting.
+Sem destruir fatos governados.
+
+## TB-134 — Sem partitioning prematuro
+
+Não particionar tabelas governadas no MVP sem necessidade de volume.
 
 ---
 
-### D2.6-45 — Environment parity rule
+# 36. Testes específicos de persistência e concorrência
 
-Quanto mais próximo de PROD, menor deve ser a divergência operacional.
+## TB-135 — PostgreSQL real
 
-Regra:
+Testes de:
 
 ```text
-DEV
-optimized for development
-
-PRE-HML
-production-like packaging
-
-HML
-production-like runtime
-
-PROD
-production runtime
+locking
+SKIP LOCKED
+partial unique indexes
+foreign keys
+isolation
+fencing
+concurrent claim
 ```
 
-PRE-HML existe justamente para antecipar diferenças de empacotamento antes de
-HML.
+rodam contra PostgreSQL real em container.
 
----
+SQLite/in-memory não prova essas invariantes.
 
-## 15. Decisões ainda abertas
+## TB-136 — Destructive concurrency tests
 
-Os seguintes pontos **não estão aprovados** e não devem ser preenchidos por
-suposição.
-
-### Versões e compatibilidade
+Testar simultaneamente:
 
 ```text
-versão exata do Node.js
-versão exata do TypeScript
-versões exatas de Fastify / React / Vite / React Router
-versão exata do Kysely / pg / TypeBox
-versão exata do pnpm
-versões exatas de Vitest / Playwright
-versão exata da lib Argon2
-versão exata de Pino
-versões exatas de OpenTelemetry
-versão exata de prom-client
-versões exatas de Prometheus / Grafana / Loki / Tempo
-versão exata de Docker Engine
-versão exata de Docker Compose
-versão exata de Caddy
-policy de atualização de dependências
+dois current DeliveryTargets
+duas current PhaseCycles
+dois claims da mesma responsabilidade
+publish com stale fencing generation
+mesma intention duas vezes
+expected_version stale
 ```
 
-### Persistência e modelo físico
+Esperado:
 
 ```text
-migration strategy/tooling detalhado
-schema strategy
-transaction abstraction
-connection management
-naming conventions
-physical ownership
-projection storage strategy
-job/handoff table design
-auth table design final
-audit storage schema final
-claim token representation
-fencing generation representation
-lease duration
-heartbeat cadence
-polling cadence
-artifact storage implementation final
-workspace storage implementation final
-```
-
-### Deployment — fechado no nível arquitetural
-
-```text
-DEV profile.......................... APPROVED
-PRE-HML profile...................... APPROVED
-HML profile.......................... APPROVED
-PROD profile......................... APPROVED
-
-local-first development.............. REQUIRED
-paid hosting before readiness........ NOT REQUIRED
-mandatory cloud subscription......... FORBIDDEN
-mandatory paid deployment platform... FORBIDDEN
-
-DEV web/worker on host................ APPROVED
-DEV infrastructure via Compose........ APPROVED
-
-PRE-HML full Docker stack............. APPROVED
-PRE-HML local/CI...................... APPROVED
-PRE-HML disposable.................... PREFERRED
-
-HML containerized..................... APPROVED
-PROD containerized.................... APPROVED
-
-build once / promote.................. REQUIRED
-same immutable artifact............... REQUIRED
-environment differences = config...... REQUIRED
-
-Docker Engine......................... APPROVED
-Docker Compose v2..................... APPROVED
-Kubernetes............................ NOT REQUIRED
-single-host initial production........ APPROVED
-
-web container......................... REQUIRED OUTSIDE DEV
-worker container...................... REQUIRED OUTSIDE DEV
-Caddy................................. APPROVED
-HTTPS/TLS............................. REQUIRED REMOTELY
-
-PostgreSQL public exposure............ FORBIDDEN
-worker public exposure................ FORBIDDEN
-observability public by default....... FORBIDDEN
-
-persistent PostgreSQL................. REQUIRED
-persistent artifacts/evidence......... REQUIRED
-ephemeral container canonical state... FORBIDDEN
-
-immutable release identity............ REQUIRED
-:latest authoritative deploy.......... FORBIDDEN
-same release ID web/worker............. REQUIRED
-controlled migration step............. REQUIRED
-health validation..................... REQUIRED
-post-deploy smoke..................... REQUIRED
-
-graceful worker shutdown.............. REQUIRED
-restart policy........................ REQUIRED
-horizontal worker scale............... SUPPORTED
-
-production DB backup.................. REQUIRED WHEN PROD EXISTS
-backup integrity...................... REQUIRED
-restore test.......................... REQUIRED
-backup separate from primary storage.. REQUIRED
-
-Compose secrets....................... APPROVED INITIAL
-non-root containers................... REQUIRED
-Docker socket mount................... FORBIDDEN
-
-GitHub Actions........................ DEFAULT
-mandatory paid CI..................... FORBIDDEN
-explicit production promotion......... INITIAL DEFAULT
-```
-
-### Runtime ainda a detalhar
-
-```text
-concrete locking strategy
-concrete fencing token format
-idempotency key format
-concurrency limits
-retry limits/backoff
-reconciliation cadence
-worker shutdown grace period
-session lifetime
-session renewal policy
-credential lifetime
-login rate-limit thresholds
-health thresholds
-ALIVE_NO_PROGRESS thresholds
-alert thresholds
-```
-
-### Observability operations ainda a detalhar
-
-```text
-scrape interval
-metrics retention
-logs retention
-traces retention
-trace sampling policy
-Collector pipeline configuration
-dashboard set
-alert routing
-production storage sizing
-backup requirements for observability data
-```
-
-### Environment/deployment details ainda a detalhar
-
-```text
-Compose file layout
-environment configuration layout
-PRE-HML orchestration command
-HML host/provider
-PROD host/provider
-domain/DNS
-certificate policy details
-exact secret file layout
-backup schedule
-backup retention
-restore cadence
-persistent volume layout
-production sizing
-release naming convention
-image registry
-```
-
-### Testing ainda a detalhar
-
-```text
-database test strategy
-integration environment strategy
-fixtures/factories
-test data isolation
-architecture-rule enforcement mechanism
-E2E environment orchestration
-worker restart/recovery scenarios
-fencing/zombie-executor tests
-authentication E2E
-authorization scope tests
-revocation tests
-CSRF tests
-security regression tests
-observability instrumentation tests
-health endpoint tests
-ALIVE_NO_PROGRESS tests
-metric cardinality checks
-redaction tests
-PRE-HML full-stack tests
-migration promotion tests
-release identity tests
+uma authority vence
+demais falham de forma controlada
 ```
 
 ---
 
-## 16. Próximos brainstorms
-
-Fila aprovada após o Brainstorm 2.6:
+# 37. Proibições e decisões não adotadas
 
 ```text
-2.7 — Application Shell / UI
-2.8 — PostgreSQL / persistence / migrations / transaction details
-2.9 — Technology Baseline consolidation
-2.10 — Technical audit
-2.11 — Approval / freeze
-```
+microservices iniciais.................... NOT REQUIRED
+multiple databases per module............ NOT NOW
+full Event Sourcing....................... NOT NOW
+external broker........................... NOT NOW
+Kubernetes................................ NOT REQUIRED
+Redux/Zustand............................. NOT REQUIRED NOW
+WebSocket................................. NOT REQUIRED NOW
+Axios..................................... NOT REQUIRED NOW
+SSR/Next.js............................... NOT REQUIRED NOW
+Tailwind.................................. NOT REQUIRED NOW
+Material UI............................... NOT REQUIRED NOW
+custom full design system................. NOT REQUIRED NOW
 
-`2.7 — Application Shell / UI` permanece explicitamente reservado e passa a ser
-o próximo bloco.
-
----
-
-## 17. Critério para sair de BRAINSTORM
-
-Este documento não deve ser promovido para candidato enquanto existirem decisões
-estruturais críticas abertas.
-
-Promoção esperada:
-
-```text
-BRAINSTORM
-  ↓
-CANDIDATE FOR APPROVAL
-  ↓
-TECHNICAL AUDIT
-  ↓
-APPROVED
-  ↓
-TECHNOLOGY BASELINE IN FORCE
-```
-
-A nomenclatura final de estados será confirmada antes da ratificação técnica.
-
----
-
-## 18. Estado atual após Brainstorm 2.6
-
-```text
-Node.js........................ APPROVED
-TypeScript..................... APPROVED
-web + worker................... APPROVED
-PostgreSQL..................... APPROVED
-novo banco..................... APPROVED
-Docker local................... APPROVED
-web modular monolith........... APPROVED
-frontend + backend no web...... APPROVED
-business-capability modules.... APPROVED
-module internals private....... APPROVED
-public contracts............... APPROVED
-data ownership................. APPROVED
-no cross-module DB access...... APPROVED
-shared minimal................. APPROVED
-directional dependencies....... APPROVED
-automated boundaries........... APPROVED
-login separado................. APPROVED
-application shell.............. APPROVED
-horizontal + vertical menu..... APPROVED
-project menu by authorization.. APPROVED
-content area initially blank... APPROVED
-dashboard...................... DEFERRED
-
-Fastify........................ APPROVED
-React.......................... APPROVED
-Vite........................... APPROVED
-React Router................... APPROVED
-Kysely......................... APPROVED
-pg / node-postgres............. APPROVED
-TypeBox........................ APPROVED
-Fastify Type Provider.......... APPROVED
-pnpm........................... APPROVED
-pnpm workspaces................ APPROVED
-Nx / Turborepo................. NOT REQUIRED NOW
-tsc backend/worker............. APPROVED
-Vitest......................... APPROVED
-Playwright..................... APPROVED
-E2E from first vertical slice.. APPROVED
-core regression suite.......... REQUIRED
-CI regression gate............. REQUIRED
-architecture guardrails........ REQUIRED FROM START
-
-PostgreSQL durable dispatch..... APPROVED
-external broker................. NOT REQUIRED NOW
-worker DB polling............... APPROVED
-transactional claim............. APPROVED
-lease........................... APPROVED
-heartbeat....................... APPROVED
-fencing......................... REQUIRED
-idempotency..................... REQUIRED
-reconciliation.................. REQUIRED
-retry = new Execution........... REQUIRED
-recovery = new Execution........ REQUIRED
-expired authority resurrects?... NO
-
-human username/password......... APPROVED
-Argon2id........................ APPROVED
-opaque server session........... APPROVED
-HttpOnly cookie................. APPROVED
-browser JWT..................... NO
-localStorage auth token......... NO
-CSRF............................ REQUIRED
-server-side authorization....... REQUIRED
-canonical AuthorityService...... REQUIRED
-scoped grants................... APPROVED
-expiration...................... REQUIRED
-revocation...................... REQUIRED
-baseline-aware authority........ REQUIRED
-HUMAN/SERVICE/AGENT/EXECUTOR.... REQUIRED
-least privilege................. REQUIRED
-login rate limiting............. REQUIRED
-generic login errors............ REQUIRED
-security headers................ REQUIRED
-production secret store......... REQUIRED
-security audit.................. REQUIRED
-
-Pino............................ APPROVED
-OpenTelemetry................... APPROVED
-OTel Collector.................. APPROVED
-Prometheus...................... APPROVED
-prom-client..................... APPROVED
-Grafana......................... APPROVED
-Loki............................ APPROVED AS DEFAULT
-Tempo........................... APPROVED AS DEFAULT
-self-hosted OSS/FOSS............ REQUIRED
-paid subscription dependency.... FORBIDDEN
-mandatory SaaS.................. FORBIDDEN
-structured JSON logs............ REQUIRED
-automatic redaction............. REQUIRED
-health/live..................... REQUIRED
-health/ready.................... REQUIRED
-ALIVE != PROGRESS............... REQUIRED
-canonical audit durable......... REQUIRED
-actionable alerts............... REQUIRED
-alert → Inconsistency........... REQUIRED WHEN GOVERNED
-
-DEV............................. APPROVED
-PRE-HML......................... APPROVED
-HML............................. APPROVED
-PROD............................ APPROVED
-local-first / zero hosting cost. REQUIRED BEFORE READINESS
-PRE-HML full Docker local........ APPROVED
-build once / promote............ REQUIRED
-same immutable release artifact. REQUIRED
-Docker Engine................... APPROVED
-Docker Compose v2............... APPROVED
-Kubernetes...................... NOT REQUIRED
-Caddy........................... APPROVED
-HTTPS/TLS remote................ REQUIRED
-immutable image identity........ REQUIRED
-:latest authoritative deploy.... FORBIDDEN
-controlled migration............ REQUIRED
-health validation............... REQUIRED
-production backup............... REQUIRED WHEN PROD EXISTS
-GitHub Actions.................. DEFAULT
-mandatory paid CI............... FORBIDDEN
-
-exact versions.................. OPEN
-migration details............... OPEN
-Shell/UI detailed design........ NEXT — 2.7
+Redis as canonical truth.................. FORBIDDEN
+filesystem as canonical state............. FORBIDDEN
+browser canonical state................... FORBIDDEN
+optimistic governed state................. FORBIDDEN
+fake progress percentage.................. FORBIDDEN
+hard delete governed history.............. FORBIDDEN
+generic JSONB domain database............. FORBIDDEN
+projection as source of truth............. FORBIDDEN
+blind retry after UNKNOWN external effect. FORBIDDEN
+Docker socket in app containers........... FORBIDDEN
+:latest authoritative deploy.............. FORBIDDEN
+mandatory paid SaaS/CI/hosting............ FORBIDDEN
 ```
 
 ---
 
-## 19. Resultado consolidado dos Brainstorms 2.1–2.6
+# 38. Pontos ainda abertos
 
-A fundação técnica atual é:
-
-```text
-DEVELOPMENT / PROMOTION
-
-DEV
-├── web on host
-├── worker on host
-└── infrastructure via Docker
-     ↓
-PRE-HML
-├── full Docker stack
-├── local or CI
-├── disposable preferred
-├── migrations
-├── health
-└── complete E2E
-     ↓
-HML
-├── containerized
-├── persistent when provisioned
-└── same immutable release
-     ↓
-PROD
-├── containerized
-├── hardened
-├── persistent
-├── backup
-└── same immutable release
-
-BUILD ONCE
-PRE-HML → HML → PROD
-```
-
-Aplicação:
+A baseline estrutural está fechada o suficiente para auditoria, mas parâmetros
+operacionais concretos permanecem abertos até implementação/readiness:
 
 ```text
-Node.js + TypeScript
-        +
-PostgreSQL novo
-        +
-pnpm workspaces
-        +
-2 deployables
-├── web
-│   ├── backend
-│   │   ├── Fastify
-│   │   ├── TypeBox
-│   │   ├── Kysely + pg
-│   │   └── canonical AuthorityService
-│   ├── frontend
-│   │   ├── React
-│   │   ├── Vite
-│   │   └── React Router
-│   └── modular monolith
-│
-└── worker
-    ├── Node.js + TypeScript
-    ├── SERVICE principal
-    ├── PostgreSQL durable dispatch
-    ├── transactional claim
-    ├── lease + heartbeat
-    ├── fencing
-    ├── idempotency
-    └── reconciliation
+exact Node version
+exact TypeScript/package versions
+exact PostgreSQL major version
+exact UUIDv7 library
+exact schema names
+singular/plural table convention
+exact Compose file layout
+exact migration folder layout
+exact lease duration
+exact heartbeat cadence
+exact polling/backoff cadence
+exact session lifetime/renewal
+exact login rate limits
+exact alert thresholds
+exact retention windows
+exact backup schedule/tool
+exact HML/PROD provider/host
+exact image registry
+which projections receive physical read models first
 ```
 
-Infraestrutura containerizada:
+Esses pontos não podem ser preenchidos por suposição silenciosa.
+
+---
+
+# 39. Critério de implementation readiness
+
+Código permanece bloqueado.
+
+Sequência:
 
 ```text
-Caddy
-web
-worker
-PostgreSQL
-OpenTelemetry Collector
-Prometheus
-Loki
-Tempo
-Grafana
+2.9 Consolidation
+→ 2.10 Technical / Destructive Audit
+→ remediation if necessary
+→ 2.11 Approval / Freeze
+→ Technical Implementation Readiness
+→ First Vertical Slice
 ```
 
-Princípios consolidados:
+A Technology Baseline somente autoriza implementação após fechamento técnico
+explícito.
+
+---
+
+# 40. Estado consolidado
 
 ```text
-local first
-no paid infrastructure before product readiness
-
-DEV optimizes developer productivity
-PRE-HML proves production-like packaging
-HML validates the release
-PROD promotes the same artifact
-
-build once
-promote immutable artifact
-
-containers are disposable
-canonical state is not
-
-simple operations first
-no Kubernetes by default
-
-frameworks stay peripheral
-domain stays central
-
-observability reveals
-but does not replace canonical truth
-
-regression protection begins
-with the first vertical slice
+Normative Baseline........ NB-0002 — RATIFIED / IN FORCE
+Technology Baseline....... CANDIDATE FOR TECHNICAL AUDIT
+Brainstorms 2.1–2.8....... CONSOLIDATED
+Implementation............ NOT AUTHORIZED
+Next...................... 2.10 Technical / Destructive Audit
 ```
 
-O próximo bloco é o **Brainstorm 2.7 — Application Shell / UI**.
+---
+
+# 41. Rastreabilidade dos brainstorms
+
+```text
+2.1 Foundation / AppShell................ CONSOLIDATED
+2.2 Core Stack / Regression.............. CONSOLIDATED
+2.3 Web ↔ Worker Transport............... CONSOLIDATED
+2.4 Security Implementation.............. CONSOLIDATED
+2.5 Observability Tooling................. CONSOLIDATED
+2.6 Deployment Model...................... CONSOLIDATED
+2.7 UI Runtime / Real-Time................ CONSOLIDATED
+2.8 PostgreSQL Physical Persistence....... CONSOLIDATED
+```
+
+Os documentos de brainstorm permanecem como evidência histórica de decisão.
+
+Este arquivo passa a ser a fonte técnica consolidada para o **2.10**.
