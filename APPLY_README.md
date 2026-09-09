@@ -1,20 +1,30 @@
-# APPLY — 2.9 Continuity Fix
+# APPLY — Technology Baseline 2.10 Technical / Destructive Audit
 
-Correção somente operacional do `PROJECT_CONTINUITY.md`.
+Este pacote registra a auditoria da Technology Baseline v0.9.
 
-Motivo:
-o commit de consolidação 2.9 está correto, mas o continuity ainda continha
-trechos antigos de 2.7/2.8 e uma duplicação de 2.9.
+Resultado:
 
-Esta correção:
-- atualiza o checkpoint validado para `4424c0c9...`;
-- registra 2.9 como COMPLETE;
-- coloca 2.10 como CURRENT;
-- remove status antigo `v0.6 BRAINSTORM`;
-- remove a linha duplicada de 2.9;
-- atualiza o handoff e o status board.
+```text
+P0 = 0
+P1 = 4
+P2 = 6
+P3 = 3
+FREEZE GATE = FAIL
+```
+
+Arquivos:
+
+```text
+PROJECT_CONTINUITY.md
+audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
+technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
+```
 
 Não altera:
 - NB-0002;
-- Technology Baseline v0.9;
-- decisões técnicas 2.1..2.8.
+- technology/01_TECHNOLOGY_BASELINE.md v0.9.
+
+Não autoriza implementação.
+
+Próximo passo:
+`2.10R — Technical Remediation`.

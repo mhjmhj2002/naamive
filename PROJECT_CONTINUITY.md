@@ -4,9 +4,9 @@
 **Natureza:** documento operacional e de continuidade; não normativo  
 **Local:** raiz do repositório  
 **Arquivo:** `PROJECT_CONTINUITY.md`  
-**Última atualização:** 2026-09-08  
+**Última atualização:** 2026-09-09  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `4424c0c91f6dfc4ca2a9714192b023a0e8eed8d0`  
+**Último commit validado:** `9c9e0969967e2b4f0de17cccbdfdfe4ccc3703fb`  
 **Normative Baseline vigente:** `NB-0002`  
 **Normative Baseline anterior:** `NB-0001` — histórica e imutável
 
@@ -589,15 +589,25 @@ Decisões consolidadas:
 2.9 Consolidation — COMPLETE
 ```
 
+Auditoria técnica:
+
+```text
+2.10 Technical / Destructive Audit — COMPLETE
+P0 = 0
+P1 = 4
+FREEZE GATE = FAIL
+```
+
 Passo técnico atual:
 
 ```text
-2.10 Technical / Destructive Audit
+2.10R Technical Remediation
 ```
 
 Depois:
 
 ```text
+2.10V Focused Verification
 2.11 Technology Baseline approval / freeze
 Technical Implementation Readiness
 First vertical slice
@@ -688,14 +698,17 @@ RATIFIED / IN FORCE
 ## 17. Próximas etapas
 
 ```text
-2.7   Application Shell / UI Runtime / Real-Time — APPROVED
-2.8   PostgreSQL physical persistence details — APPROVED
-2.9   Technology Baseline consolidation — COMPLETE
-2.10  Technical / destructive audit — CURRENT
-2.11  Technology Baseline approval / freeze
-      ↓
+2.7    Application Shell / UI Runtime / Real-Time — APPROVED
+2.8    PostgreSQL physical persistence details — APPROVED
+2.9    Technology Baseline consolidation — COMPLETE
+2.10   Technical / destructive audit — COMPLETE
+       P0=0 / P1=4 / FREEZE GATE FAIL
+2.10R  Technical remediation — CURRENT
+2.10V  Focused verification
+2.11   Technology Baseline approval / freeze
+       ↓
 Technical Implementation Readiness
-      ↓
+       ↓
 First vertical slice
 ```
 
@@ -703,38 +716,46 @@ Nenhuma dessas etapas reabre `NB-0002` sem finding normativo real.
 
 ---
 
-## 18. Próxima ação — Technology Baseline 2.10
+## 18. Próxima ação — Technology Baseline 2.10R
 
-Fonte técnica consolidada:
-
-```text
-technology/01_TECHNOLOGY_BASELINE.md
-```
-
-Evidência de consolidação:
+Auditoria:
 
 ```text
-technology/04_CONSOLIDATION_2_9_RECORD.md
+audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
 ```
 
-Estado:
+Remediation backlog:
 
 ```text
-Technology Baseline v0.9
-CANDIDATE FOR TECHNICAL AUDIT
+technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
 ```
 
-Objetivo atual:
+Resultado da auditoria:
 
 ```text
-executar auditoria técnica/destrutiva
-tentar quebrar decisões 2.1..2.8
-identificar P0/P1/P2/P3
-registrar evidências
-remediar antes do freeze
+P0 = 0
+P1 = 4
+P2 = 6
+P3 = 3
+FREEZE GATE = FAIL
 ```
 
-Depois:
+P1 a fechar:
+
+```text
+TB-AUD-001 decision traceability
+TB-AUD-002 cross-module Unit of Work
+TB-AUD-003 session / authority persistence
+TB-AUD-004 Work Item governing scope FK
+```
+
+Depois da remediação:
+
+```text
+2.10V — focused verification
+```
+
+Somente com `P0=0 / P1=0`:
 
 ```text
 2.11 — Technology Baseline approval / freeze
@@ -867,33 +888,35 @@ Technology Baseline 2.1..2.6 working decisions
 Technology Baseline 2.7 — APPROVED
 Technology Baseline 2.8 — APPROVED
 Technology Baseline 2.9 — CONSOLIDATED
+Technology Baseline 2.10 — DESTRUCTIVE AUDIT COMPLETE
 ```
 
 ### DOING
 
 ```text
-Technology Baseline 2.10
-Technical / Destructive Audit
+Technology Baseline 2.10R
+close 4 P1 findings
 ```
 
 ### NEXT
 
 ```text
-2.11 Technology Baseline approval / freeze
+2.10V focused verification
+```
+
+### BLOCKED
+
+```text
+2.11 approval/freeze............... BLOCKED by P1=4
+Implementation..................... BLOCKED until technical readiness
 ```
 
 ### LATER
 
 ```text
+2.11 Technology Baseline approval / freeze
 Technical Implementation Readiness
 First vertical slice
-```
-
-### BLOCKED / HOUSEKEEPING
-
-```text
-Implementation................... BLOCKED até technical readiness
-candidate/ e ratified/ staging... housekeeping não normativa, se ainda presentes
 ```
 
 ---
@@ -901,14 +924,22 @@ candidate/ e ratified/ staging... housekeeping não normativa, se ainda presente
 ## 24. Próxima ação concreta
 
 ```text
-Executar Technology Baseline 2.10
-Technical / Destructive Audit
+Executar Technology Baseline 2.10R remediation
+```
+
+Fechar:
+
+```text
+TB-AUD-001
+TB-AUD-002
+TB-AUD-003
+TB-AUD-004
 ```
 
 Depois:
 
 ```text
-2.11 — Technology Baseline approval / freeze
+2.10V — focused verification
 ```
 
 Não iniciar código ainda.
@@ -925,8 +956,8 @@ Leia primeiro:
 2. governance/normative-baselines/NB-0002.md
 3. NB0002_RATIFIED_MEMBERSHIP.md
 4. technology/01_TECHNOLOGY_BASELINE.md
-5. technology/02_BRAINSTORM_2_7_APPLICATION_UI_RUNTIME.md
-6. technology/03_BRAINSTORM_2_8_POSTGRESQL_PHYSICAL_PERSISTENCE.md
+5. audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
+6. technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
 7. technology/04_CONSOLIDATION_2_9_RECORD.md
 
 NB-0002 está RATIFIED / IN FORCE.
@@ -939,20 +970,34 @@ Deriva de NB-0002.
 Código ainda não está autorizado.
 
 Último checkpoint validado:
-4424c0c91f6dfc4ca2a9714192b023a0e8eed8d0
+9c9e0969967e2b4f0de17cccbdfdfe4ccc3703fb
 
-Technology Baseline 2.7 está APPROVED.
-Technology Baseline 2.8 está APPROVED.
-Technology Baseline 2.9 está COMPLETE.
+2.7 APPROVED.
+2.8 APPROVED.
+2.9 COMPLETE.
+2.10 destructive audit COMPLETE.
+
+Audit result:
+P0=0
+P1=4
+P2=6
+P3=3
+FREEZE GATE=FAIL.
 
 Task atual:
-Technology Baseline 2.10 — Technical / Destructive Audit.
+2.10R — close P1 technical findings.
 
-Próximo passo:
-2.11 — Technology Baseline approval / freeze.
+P1:
+TB-AUD-001 decision traceability
+TB-AUD-002 cross-module Unit of Work
+TB-AUD-003 session / authority persistence
+TB-AUD-004 Work Item governing scope FK
 
-Não recrie decisões normativas já ratificadas.
-Não edite NB-0002 sem finding normativo real e novo processo de baseline.
+Depois:
+2.10V focused verification.
+Somente então 2.11 approval/freeze.
+
+Não edite NB-0002 sem finding normativo real.
 Não inicie código.
 ```
 
@@ -992,7 +1037,7 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-LAST VALIDATED HEAD....... 4424c0c91f6dfc4ca2a9714192b023a0e8eed8d0
+LAST VALIDATED HEAD....... 9c9e0969967e2b4f0de17cccbdfdfe4ccc3703fb
 
 NORMATIVE BASELINE........ NB-0002
 NB-0002 STATUS............ RATIFIED / IN FORCE
@@ -1001,16 +1046,22 @@ PREVIOUS BASELINE......... NB-0001 — historical / immutable
 NORMATIVE ROUND........... CLOSED
 R2-01..R2-17.............. COMPLETE
 
-TECH 2.1..2.6............. CONSOLIDATED
 TECH 2.7.................. APPROVED
 TECH 2.8.................. APPROVED
 TECH 2.9.................. COMPLETE
-TECH BASELINE............. v0.9 CANDIDATE FOR TECHNICAL AUDIT
-CURRENT TECH STEP......... 2.10 TECHNICAL / DESTRUCTIVE AUDIT
-NEXT...................... 2.11 APPROVAL / FREEZE
+TECH 2.10 AUDIT........... COMPLETE
+AUDIT P0.................. 0
+AUDIT P1.................. 4
+AUDIT P2.................. 6
+AUDIT P3.................. 3
+FREEZE GATE............... FAIL
+
+CURRENT TECH STEP......... 2.10R REMEDIATION
+NEXT...................... 2.10V VERIFICATION
+AFTER..................... 2.11 APPROVAL / FREEZE
 
 CODE AUTHORIZED?.......... NO
 IMPLEMENTATION............ BLOCKED UNTIL TECHNICAL READINESS
 
-NEXT ACTION............... execute Technology Baseline 2.10 audit
+NEXT ACTION............... close four P1 technical findings
 ```
