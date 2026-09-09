@@ -6,7 +6,7 @@
 **Arquivo:** `PROJECT_CONTINUITY.md`  
 **Última atualização:** 2026-09-08  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `fd3feadf0f6761cc5b847815b65c70e5e4354c6d`  
+**Último commit validado:** `4424c0c91f6dfc4ca2a9714192b023a0e8eed8d0`  
 **Normative Baseline vigente:** `NB-0002`  
 **Normative Baseline anterior:** `NB-0001` — histórica e imutável
 
@@ -560,7 +560,6 @@ Technology Baseline permanece artefato arquitetural separado.
 
 ## 14. Technology Baseline
 
-
 Arquivo principal:
 
 ```text
@@ -570,12 +569,13 @@ technology/01_TECHNOLOGY_BASELINE.md
 Estado atual:
 
 ```text
-BRAINSTORM
-v0.6
-NOT APPROVED FOR IMPLEMENTATION
+CANDIDATE FOR TECHNICAL AUDIT
+v0.9
+Deriva de: NB-0002
+Implementation: NOT AUTHORIZED
 ```
 
-Decisões trabalhadas:
+Decisões consolidadas:
 
 ```text
 2.1 Foundation / App Shell
@@ -584,42 +584,33 @@ Decisões trabalhadas:
 2.4 Security implementation
 2.5 Observability tooling
 2.6 Deployment model
-```
-
-A pausa normativa terminou com a ratificação de `NB-0002`.
-
-Brainstorm técnico concluído:
-
-```text
-2.7 Application Shell / UI Runtime / Real-Time
-Status: APPROVED
+2.7 Application Shell / UI Runtime / Real-Time — APPROVED
+2.8 PostgreSQL physical persistence — APPROVED
+2.9 Consolidation — COMPLETE
 ```
 
 Passo técnico atual:
 
 ```text
-2.8 PostgreSQL physical persistence details
+2.10 Technical / Destructive Audit
 ```
 
 Depois:
 
 ```text
-2.9 Technology Baseline consolidation
-2.9 Technology Baseline consolidation
-2.10 technical/destructive audit
-2.11 approval/freeze
+2.11 Technology Baseline approval / freeze
 Technical Implementation Readiness
 First vertical slice
 ```
 
-Correção terminológica obrigatória na consolidação:
+Terminologia:
 
 ```text
-não usar "Technology Baseline IN FORCE"
-usar "Technology Baseline APPROVED" ou equivalente
+Technology Baseline = APPROVED / CANDIDATE / AUDITED
+Normative Baseline = IN FORCE
 ```
 
-`IN FORCE` pertence à lei normativa. Technology Baseline é artefato técnico.
+`IN FORCE` pertence à baseline normativa, não à Technology Baseline.
 
 ---
 
@@ -696,12 +687,11 @@ RATIFIED / IN FORCE
 
 ## 17. Próximas etapas
 
-
 ```text
 2.7   Application Shell / UI Runtime / Real-Time — APPROVED
 2.8   PostgreSQL physical persistence details — APPROVED
-2.9   Technology Baseline consolidation — CURRENT
-2.10  Technical / destructive audit
+2.9   Technology Baseline consolidation — COMPLETE
+2.10  Technical / destructive audit — CURRENT
 2.11  Technology Baseline approval / freeze
       ↓
 Technical Implementation Readiness
@@ -713,37 +703,44 @@ Nenhuma dessas etapas reabre `NB-0002` sem finding normativo real.
 
 ---
 
-## 18. Próxima ação — Technology Baseline 2.9
+## 18. Próxima ação — Technology Baseline 2.10
 
-Artefatos:
+Fonte técnica consolidada:
 
 ```text
 technology/01_TECHNOLOGY_BASELINE.md
+```
+
+Evidência de consolidação:
+
+```text
 technology/04_CONSOLIDATION_2_9_RECORD.md
 ```
 
-Resultado esperado:
+Estado:
 
 ```text
-2.1..2.8 consolidated
 Technology Baseline v0.9
 CANDIDATE FOR TECHNICAL AUDIT
 ```
 
-2.8 está fechado:
+Objetivo atual:
 
 ```text
-PostgreSQL Physical Persistence
-APPROVED
+executar auditoria técnica/destrutiva
+tentar quebrar decisões 2.1..2.8
+identificar P0/P1/P2/P3
+registrar evidências
+remediar antes do freeze
 ```
-
-2.9 não autoriza código.
 
 Depois:
 
 ```text
-2.10 — Technical / Destructive Audit
+2.11 — Technology Baseline approval / freeze
 ```
+
+Código continua não autorizado.
 
 ---
 
@@ -832,12 +829,12 @@ history
 ### Não fazer agora
 
 ```text
-não retomar Technology Baseline 2.7
 não iniciar implementação
 não restaurar runtime legado
 não editar NB-0001
-não ratificar NB-0002 antes de R2-12..R2-16
-não deixar working reconciliation como norma concorrente final
+não editar NB-0002 sem novo processo normativo
+não pular 2.10 Technical / Destructive Audit
+não aprovar/freeze a Technology Baseline antes da auditoria
 ```
 
 ---
@@ -855,7 +852,6 @@ Backup pré-reboot continua preservado até decisão explícita futura.
 
 ## 23. Status board
 
-
 ### DONE
 
 ```text
@@ -863,46 +859,32 @@ Legacy archive
 Lifecycle reboot
 NB-0001 audit/remediation/verification
 NB-0001 ratification/freeze
-Technology Baseline brainstorm 2.1..2.6
 VD-01..VD-05
 R2-01..R2-17
 NB-0002 human ratification
 NB-0002 root application
-```
-
-### DONE — TECHNICAL
-
-```text
-Technology Baseline 2.7
-Application Shell / UI Runtime / Real-Time — APPROVED
-```
-
-### DONE — TECHNICAL
-
-```text
+Technology Baseline 2.1..2.6 working decisions
 Technology Baseline 2.7 — APPROVED
 Technology Baseline 2.8 — APPROVED
+Technology Baseline 2.9 — CONSOLIDATED
 ```
 
 ### DOING
 
 ```text
-Technology Baseline 2.9
-Consolidation 2.1..2.8
+Technology Baseline 2.10
+Technical / Destructive Audit
 ```
 
 ### NEXT
 
 ```text
-2.10 Technical / Destructive Audit
+2.11 Technology Baseline approval / freeze
 ```
 
 ### LATER
 
 ```text
-2.9 Technology Baseline consolidation
-2.10 technical/destructive audit
-2.11 Technology Baseline approval/freeze
 Technical Implementation Readiness
 First vertical slice
 ```
@@ -919,13 +901,14 @@ candidate/ e ratified/ staging... housekeeping não normativa, se ainda presente
 ## 24. Próxima ação concreta
 
 ```text
-Aplicar/revisar Technology Baseline 2.9 consolidated candidate
+Executar Technology Baseline 2.10
+Technical / Destructive Audit
 ```
 
 Depois:
 
 ```text
-2.10 — Technical / Destructive Audit
+2.11 — Technology Baseline approval / freeze
 ```
 
 Não iniciar código ainda.
@@ -933,7 +916,6 @@ Não iniciar código ainda.
 ---
 
 ## 25. Handoff para novo chat/agente
-
 
 ```text
 Estamos continuando o projeto NAAMIVE na branch lifecycle-reboot.
@@ -949,20 +931,25 @@ Leia primeiro:
 
 NB-0002 está RATIFIED / IN FORCE.
 NB-0001 é histórica e imutável.
-Technology Baseline continua BRAINSTORM.
+
+Technology Baseline:
+v0.9
+CANDIDATE FOR TECHNICAL AUDIT
+Deriva de NB-0002.
 Código ainda não está autorizado.
 
 Último checkpoint validado:
-fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
+4424c0c91f6dfc4ca2a9714192b023a0e8eed8d0
 
 Technology Baseline 2.7 está APPROVED.
 Technology Baseline 2.8 está APPROVED.
+Technology Baseline 2.9 está COMPLETE.
 
 Task atual:
-Technology Baseline 2.9 — consolidation 2.1..2.8.
+Technology Baseline 2.10 — Technical / Destructive Audit.
 
-Próximo passo após 2.9:
-2.10 — Technical / Destructive Audit.
+Próximo passo:
+2.11 — Technology Baseline approval / freeze.
 
 Não recrie decisões normativas já ratificadas.
 Não edite NB-0002 sem finding normativo real e novo processo de baseline.
@@ -1005,7 +992,7 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-LAST VALIDATED HEAD....... fd3feadf0f6761cc5b847815b65c70e5e4354c6d
+LAST VALIDATED HEAD....... 4424c0c91f6dfc4ca2a9714192b023a0e8eed8d0
 
 NORMATIVE BASELINE........ NB-0002
 NB-0002 STATUS............ RATIFIED / IN FORCE
@@ -1014,15 +1001,16 @@ PREVIOUS BASELINE......... NB-0001 — historical / immutable
 NORMATIVE ROUND........... CLOSED
 R2-01..R2-17.............. COMPLETE
 
-TECH 2.1..2.6............. CONSOLIDATED WORKING DECISIONS
+TECH 2.1..2.6............. CONSOLIDATED
 TECH 2.7.................. APPROVED
 TECH 2.8.................. APPROVED
-CURRENT TECH STEP......... 2.9 CONSOLIDATION
-TARGET STATUS............. CANDIDATE FOR TECHNICAL AUDIT
-NEXT...................... 2.10 TECHNICAL / DESTRUCTIVE AUDIT
+TECH 2.9.................. COMPLETE
+TECH BASELINE............. v0.9 CANDIDATE FOR TECHNICAL AUDIT
+CURRENT TECH STEP......... 2.10 TECHNICAL / DESTRUCTIVE AUDIT
+NEXT...................... 2.11 APPROVAL / FREEZE
 
 CODE AUTHORIZED?.......... NO
 IMPLEMENTATION............ BLOCKED UNTIL TECHNICAL READINESS
 
-NEXT ACTION............... apply/review consolidated Technology Baseline
+NEXT ACTION............... execute Technology Baseline 2.10 audit
 ```
