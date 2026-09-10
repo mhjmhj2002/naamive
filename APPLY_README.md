@@ -1,30 +1,46 @@
-# APPLY — Technology Baseline 2.10 Technical / Destructive Audit
+# APPLY — Technology Baseline “2” Complete — Stop Before TIR
 
-Este pacote registra a auditoria da Technology Baseline v0.9.
+Este pacote fecha toda a cadeia documental técnica possível antes do gate humano
+2.11, sem iniciar TIR.
 
-Resultado:
+Resultado preparado:
 
 ```text
-P0 = 0
-P1 = 4
-P2 = 6
-P3 = 3
-FREEZE GATE = FAIL
+2.10R Remediation........ COMPLETE
+2.10V Verification....... PASS
+P0....................... 0
+P1....................... 0
+Freeze gate.............. PASS
+2.11..................... PENDING HUMAN APPROVAL
+TIR...................... NOT STARTED
+Implementation........... NOT AUTHORIZED
 ```
 
-Arquivos:
+Arquivos para aplicar:
 
 ```text
 PROJECT_CONTINUITY.md
-audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
+technology/01_TECHNOLOGY_BASELINE.md
 technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
+technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
+technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
+audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
+technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
 ```
 
-Não altera:
-- NB-0002;
-- technology/01_TECHNOLOGY_BASELINE.md v0.9.
+Não modificar:
 
-Não autoriza implementação.
+```text
+NB-0002
+AUD-014
+2.7 approved source
+2.8 approved source
+```
 
-Próximo passo:
-`2.10R — Technical Remediation`.
+O `2.11` NÃO é marcado como aprovado neste pacote.
+
+Commit/push também NÃO conta como aprovação humana.
+
+O próximo ato, depois de validar o remoto, é a decisão humana do 2.11.
+
+**Não começar TIR.**

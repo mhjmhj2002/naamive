@@ -6,7 +6,7 @@
 **Arquivo:** `PROJECT_CONTINUITY.md`  
 **Última atualização:** 2026-09-09  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `9c9e0969967e2b4f0de17cccbdfdfe4ccc3703fb`  
+**Último commit validado:** `8519a2a7ba9e43f9e75976abd0baebd663e246d2`  
 **Normative Baseline vigente:** `NB-0002`  
 **Normative Baseline anterior:** `NB-0001` — histórica e imutável
 
@@ -566,61 +566,50 @@ Arquivo principal:
 technology/01_TECHNOLOGY_BASELINE.md
 ```
 
-Estado atual:
+Estado preparado por este pacote:
 
 ```text
-CANDIDATE FOR TECHNICAL AUDIT
-v0.9
+v0.10
+READY FOR HUMAN APPROVAL
 Deriva de: NB-0002
 Implementation: NOT AUTHORIZED
 ```
 
-Decisões consolidadas:
+Fechamentos:
 
 ```text
-2.1 Foundation / App Shell
-2.2 Core stack / regression
-2.3 PostgreSQL durable dispatch web↔worker
-2.4 Security implementation
-2.5 Observability tooling
-2.6 Deployment model
-2.7 Application Shell / UI Runtime / Real-Time — APPROVED
-2.8 PostgreSQL physical persistence — APPROVED
-2.9 Consolidation — COMPLETE
+2.7   APPROVED
+2.8   APPROVED
+2.9   CONSOLIDATION COMPLETE
+2.10  DESTRUCTIVE AUDIT COMPLETE
+2.10R REMEDIATION COMPLETE
+2.10V VERIFICATION PASS
 ```
 
-Auditoria técnica:
+Gate atual:
 
 ```text
-2.10 Technical / Destructive Audit — COMPLETE
+2.11 HUMAN APPROVAL / FREEZE
+PENDING HUMAN APPROVAL
+```
+
+Resultado da verificação:
+
+```text
 P0 = 0
-P1 = 4
-FREEZE GATE = FAIL
-```
-
-Passo técnico atual:
-
-```text
-2.10R Technical Remediation
-```
-
-Depois:
-
-```text
-2.10V Focused Verification
-2.11 Technology Baseline approval / freeze
-Technical Implementation Readiness
-First vertical slice
+P1 = 0
+FREEZE GATE = PASS
+TRACEABILITY = 290/290
 ```
 
 Terminologia:
 
 ```text
-Technology Baseline = APPROVED / CANDIDATE / AUDITED
 Normative Baseline = IN FORCE
+Technology Baseline = APPROVED / FROZEN after explicit human approval
 ```
 
-`IN FORCE` pertence à baseline normativa, não à Technology Baseline.
+Este pacote **não inicia TIR**.
 
 ---
 
@@ -698,70 +687,69 @@ RATIFIED / IN FORCE
 ## 17. Próximas etapas
 
 ```text
-2.7    Application Shell / UI Runtime / Real-Time — APPROVED
-2.8    PostgreSQL physical persistence details — APPROVED
-2.9    Technology Baseline consolidation — COMPLETE
-2.10   Technical / destructive audit — COMPLETE
-       P0=0 / P1=4 / FREEZE GATE FAIL
-2.10R  Technical remediation — CURRENT
-2.10V  Focused verification
-2.11   Technology Baseline approval / freeze
-       ↓
-Technical Implementation Readiness
-       ↓
-First vertical slice
+2.7    APPROVED
+2.8    APPROVED
+2.9    COMPLETE
+2.10   AUDIT COMPLETE
+2.10R  REMEDIATION COMPLETE
+2.10V  VERIFICATION PASS
+2.11   HUMAN APPROVAL / FREEZE — CURRENT
 ```
 
-Nenhuma dessas etapas reabre `NB-0002` sem finding normativo real.
-
----
-
-## 18. Próxima ação — Technology Baseline 2.10R
-
-Auditoria:
-
-```text
-audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
-```
-
-Remediation backlog:
-
-```text
-technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
-```
-
-Resultado da auditoria:
+Gate:
 
 ```text
 P0 = 0
-P1 = 4
-P2 = 6
-P3 = 3
-FREEZE GATE = FAIL
+P1 = 0
+FREEZE GATE = PASS
 ```
 
-P1 a fechar:
+Depois do 2.11 existe uma etapa posterior de readiness, mas ela **não foi
+iniciada** e não faz parte deste pacote.
+
+---
+
+## 18. Próxima ação — Technology Baseline 2.11
+
+Human gate candidate:
 
 ```text
-TB-AUD-001 decision traceability
-TB-AUD-002 cross-module Unit of Work
-TB-AUD-003 session / authority persistence
-TB-AUD-004 Work Item governing scope FK
+technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
 ```
 
-Depois da remediação:
+Evidence:
 
 ```text
-2.10V — focused verification
+technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
+technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
+audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
+audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
 ```
 
-Somente com `P0=0 / P1=0`:
+Estado:
 
 ```text
-2.11 — Technology Baseline approval / freeze
+Technology Baseline v0.10
+READY FOR HUMAN APPROVAL
+
+P0 = 0
+P1 = 0
+FREEZE GATE = PASS
 ```
+
+A próxima ação é exclusivamente:
+
+```text
+human APPROVE
+or
+human REJECT / RETURN WITH FINDINGS
+```
+
+Aplicar/commit/push este pacote não equivale a aprovação humana.
 
 Código continua não autorizado.
+
+TIR não foi iniciado.
 
 ---
 
@@ -878,45 +866,38 @@ Backup pré-reboot continua preservado até decisão explícita futura.
 ```text
 Legacy archive
 Lifecycle reboot
-NB-0001 audit/remediation/verification
-NB-0001 ratification/freeze
-VD-01..VD-05
-R2-01..R2-17
+NB-0001 closure
+NB-0002 R2-01..R2-17
 NB-0002 human ratification
 NB-0002 root application
-Technology Baseline 2.1..2.6 working decisions
-Technology Baseline 2.7 — APPROVED
-Technology Baseline 2.8 — APPROVED
-Technology Baseline 2.9 — CONSOLIDATED
-Technology Baseline 2.10 — DESTRUCTIVE AUDIT COMPLETE
-```
-
-### DOING
-
-```text
-Technology Baseline 2.10R
-close 4 P1 findings
-```
-
-### NEXT
-
-```text
+Technology Baseline 2.1..2.8 decisions
+2.9 consolidation
+2.10 destructive audit
+2.10R remediation
 2.10V focused verification
 ```
 
-### BLOCKED
+### CURRENT
 
 ```text
-2.11 approval/freeze............... BLOCKED by P1=4
-Implementation..................... BLOCKED until technical readiness
+2.11 Technology Baseline Human Approval / Freeze
 ```
 
-### LATER
+### GATE STATUS
 
 ```text
-2.11 Technology Baseline approval / freeze
+P0........................ 0
+P1........................ 0
+freeze gate............... PASS
+human approval............ PENDING
+implementation............ NOT AUTHORIZED
+```
+
+### NOT STARTED
+
+```text
 Technical Implementation Readiness
-First vertical slice
+Implementation
 ```
 
 ---
@@ -924,25 +905,17 @@ First vertical slice
 ## 24. Próxima ação concreta
 
 ```text
-Executar Technology Baseline 2.10R remediation
+2.11 — Human Approval / Freeze
 ```
 
-Fechar:
+Candidate:
 
 ```text
-TB-AUD-001
-TB-AUD-002
-TB-AUD-003
-TB-AUD-004
+technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
 ```
 
-Depois:
-
-```text
-2.10V — focused verification
-```
-
-Não iniciar código ainda.
+Não iniciar TIR.
+Não iniciar código.
 
 ---
 
@@ -954,51 +927,41 @@ Estamos continuando o projeto NAAMIVE na branch lifecycle-reboot.
 Leia primeiro:
 1. PROJECT_CONTINUITY.md
 2. governance/normative-baselines/NB-0002.md
-3. NB0002_RATIFIED_MEMBERSHIP.md
-4. technology/01_TECHNOLOGY_BASELINE.md
+3. technology/01_TECHNOLOGY_BASELINE.md
+4. technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
 5. audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
-6. technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
-7. technology/04_CONSOLIDATION_2_9_RECORD.md
+6. technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
+7. audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
+8. technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
 
-NB-0002 está RATIFIED / IN FORCE.
-NB-0001 é histórica e imutável.
+NB-0002 = RATIFIED / IN FORCE.
+
+Last validated remote checkpoint before this package:
+8519a2a7ba9e43f9e75976abd0baebd663e246d2
 
 Technology Baseline:
-v0.9
-CANDIDATE FOR TECHNICAL AUDIT
-Deriva de NB-0002.
-Código ainda não está autorizado.
+v0.10
+READY FOR HUMAN APPROVAL
 
-Último checkpoint validado:
-9c9e0969967e2b4f0de17cccbdfdfe4ccc3703fb
+2.10R = COMPLETE
+2.10V = PASS
 
-2.7 APPROVED.
-2.8 APPROVED.
-2.9 COMPLETE.
-2.10 destructive audit COMPLETE.
-
-Audit result:
+Verification:
 P0=0
-P1=4
-P2=6
-P3=3
-FREEZE GATE=FAIL.
+P1=0
+FREEZE GATE=PASS
+TRACEABILITY=290/290
 
-Task atual:
-2.10R — close P1 technical findings.
+Current task:
+2.11 Human Approval / Freeze.
 
-P1:
-TB-AUD-001 decision traceability
-TB-AUD-002 cross-module Unit of Work
-TB-AUD-003 session / authority persistence
-TB-AUD-004 Work Item governing scope FK
+Human approval is still pending.
+Applying or pushing the package is not approval.
 
-Depois:
-2.10V focused verification.
-Somente então 2.11 approval/freeze.
+Implementation is NOT AUTHORIZED.
 
-Não edite NB-0002 sem finding normativo real.
-Não inicie código.
+DO NOT START TIR.
+DO NOT START CODE.
 ```
 
 ---
@@ -1037,31 +1000,29 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-LAST VALIDATED HEAD....... 9c9e0969967e2b4f0de17cccbdfdfe4ccc3703fb
+LAST VALIDATED HEAD....... 8519a2a7ba9e43f9e75976abd0baebd663e246d2
 
 NORMATIVE BASELINE........ NB-0002
 NB-0002 STATUS............ RATIFIED / IN FORCE
-PREVIOUS BASELINE......... NB-0001 — historical / immutable
-
-NORMATIVE ROUND........... CLOSED
-R2-01..R2-17.............. COMPLETE
 
 TECH 2.7.................. APPROVED
 TECH 2.8.................. APPROVED
 TECH 2.9.................. COMPLETE
 TECH 2.10 AUDIT........... COMPLETE
-AUDIT P0.................. 0
-AUDIT P1.................. 4
-AUDIT P2.................. 6
-AUDIT P3.................. 3
-FREEZE GATE............... FAIL
+TECH 2.10R................ COMPLETE
+TECH 2.10V................ PASS
 
-CURRENT TECH STEP......... 2.10R REMEDIATION
-NEXT...................... 2.10V VERIFICATION
-AFTER..................... 2.11 APPROVAL / FREEZE
+TECH BASELINE............. v0.10 READY FOR HUMAN APPROVAL
+TRACEABILITY.............. 290/290
+P0........................ 0
+P1........................ 0
+FREEZE GATE............... PASS
 
+CURRENT TECH STEP......... 2.11 HUMAN APPROVAL / FREEZE
+HUMAN APPROVAL............ PENDING
+
+TIR STARTED?.............. NO
 CODE AUTHORIZED?.......... NO
-IMPLEMENTATION............ BLOCKED UNTIL TECHNICAL READINESS
 
-NEXT ACTION............... close four P1 technical findings
+NEXT ACTION............... human decision on 2.11
 ```

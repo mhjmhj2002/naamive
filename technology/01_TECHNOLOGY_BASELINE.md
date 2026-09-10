@@ -1,14 +1,15 @@
 # NAAMIVE — Technology Baseline
 
-**Status:** CANDIDATE FOR TECHNICAL AUDIT  
-**Versão:** 0.9  
+**Status:** READY FOR HUMAN APPROVAL  
+**Versão:** 0.10  
 **Natureza:** baseline técnica derivada; não normativa  
 **Deriva de:** `NB-0002`  
 **Normative Baseline vigente:** `NB-0002` — RATIFIED / IN FORCE  
 **Brainstorms consolidados:** 2.1–2.8  
 **Implementação:** NOT AUTHORIZED  
-**Próxima etapa:** 2.10 — Technical / Destructive Audit  
-**Última atualização:** 2026-09-08
+**Auditoria:** 2.10 COMPLETE; 2.10R COMPLETE; 2.10V PASS  
+**Próxima etapa:** 2.11 — Human Approval / Freeze  
+**Última atualização:** 2026-09-09
 
 ---
 
@@ -1922,23 +1923,32 @@ Esses pontos não podem ser preenchidos por suposição silenciosa.
 
 ---
 
-# 39. Critério de implementation readiness
+# 39. Gate antes de implementação
 
 Código permanece bloqueado.
 
-Sequência:
+Estado deste pacote:
 
 ```text
-2.9 Consolidation
-→ 2.10 Technical / Destructive Audit
-→ remediation if necessary
-→ 2.11 Approval / Freeze
-→ Technical Implementation Readiness
-→ First Vertical Slice
+2.9 Consolidation....................... COMPLETE
+2.10 Technical / Destructive Audit...... COMPLETE
+2.10R Remediation....................... COMPLETE
+2.10V Focused Verification.............. PASS
+2.11 Human Approval / Freeze............ PENDING HUMAN APPROVAL
 ```
 
-A Technology Baseline somente autoriza implementação após fechamento técnico
-explícito.
+Este pacote **não inicia** Technical Implementation Readiness.
+
+Mesmo após eventual aprovação humana do 2.11:
+
+```text
+Technology Baseline APPROVED
+!=
+implementation automatically authorized
+```
+
+Qualquer readiness posterior pertence a uma etapa separada e não faz parte deste
+pacote.
 
 ---
 
@@ -1946,10 +1956,16 @@ explícito.
 
 ```text
 Normative Baseline........ NB-0002 — RATIFIED / IN FORCE
-Technology Baseline....... CANDIDATE FOR TECHNICAL AUDIT
-Brainstorms 2.1–2.8....... CONSOLIDATED
+Technology Baseline....... v0.10 READY FOR HUMAN APPROVAL
+Brainstorms 2.1–2.8....... CONSOLIDATED / TRACEABLE
+2.10 Audit................ COMPLETE
+2.10R Remediation......... COMPLETE
+2.10V Verification........ PASS
+P0........................ 0
+P1........................ 0
+Freeze gate............... PASS
+2.11...................... PENDING HUMAN APPROVAL
 Implementation............ NOT AUTHORIZED
-Next...................... 2.10 Technical / Destructive Audit
 ```
 
 ---
@@ -1963,10 +1979,503 @@ Next...................... 2.10 Technical / Destructive Audit
 2.4 Security Implementation.............. CONSOLIDATED
 2.5 Observability Tooling................. CONSOLIDATED
 2.6 Deployment Model...................... CONSOLIDATED
-2.7 UI Runtime / Real-Time................ CONSOLIDATED
-2.8 PostgreSQL Physical Persistence....... CONSOLIDATED
+2.7 UI Runtime / Real-Time................ APPROVED / INCORPORATED
+2.8 PostgreSQL Physical Persistence....... APPROVED / INCORPORATED
 ```
 
-Os documentos de brainstorm permanecem como evidência histórica de decisão.
+A matriz completa está em:
 
-Este arquivo passa a ser a fonte técnica consolidada para o **2.10**.
+```text
+technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
+```
+
+Ela é membro controlador da Technology Baseline v0.10 para rastreabilidade de
+decisões.
+
+A compressão editorial do arquivo principal não revoga silenciosamente decisão
+aprovada.
+
+---
+
+# 42. TB-137 — Decision traceability e incorporação
+
+A Technology Baseline v0.10 é um **document set**.
+
+Membros técnicos controladores para o freeze:
+
+```text
+technology/01_TECHNOLOGY_BASELINE.md
+technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
+technology/02_BRAINSTORM_2_7_APPLICATION_UI_RUNTIME.md
+technology/03_BRAINSTORM_2_8_POSTGRESQL_PHYSICAL_PERSISTENCE.md
+```
+
+Para 2.1–2.6, a matriz referencia a fonte histórica imutável:
+
+```text
+commit: fd3feadf0f6761cc5b847815b65c70e5e4354c6d
+file:   technology/01_TECHNOLOGY_BASELINE.md
+```
+
+Somente a **semântica técnica das decisões D2.1..D2.6** é incorporada.
+
+Metadados antigos, referências antigas a `NB-0001` e qualquer texto incompatível
+com `NB-0002` não são incorporados.
+
+Regra de precedência:
+
+```text
+NB-0002
+>
+Technology Baseline v0.10 main document
+>
+explicit remediation decisions 2.10R
+>
+approved source decision semantics referenced by traceability
+>
+historical explanatory text
+```
+
+Toda decisão D2.1..D2.8 possui uma disposition explícita:
+
+```text
+PRESERVED
+REFINED
+SUPERSEDED_WITH_REASON
+```
+
+Nenhuma decisão pode desaparecer por simples redução editorial.
+
+---
+
+# 43. TB-138 — Cross-module Unit of Work
+
+Commands materiais que exigem atualização coerente de mais de um module
+participam de uma **única transaction PostgreSQL** quando todas as mudanças são
+locais ao mesmo database.
+
+Fluxo:
+
+```text
+Application Coordinator
+→ opens UnitOfWork / transaction
+→ calls module public/application ports
+→ each module adapter writes only module-owned tables
+→ all participating adapters receive the same transaction context
+→ history / continuity / durable handoff are written in the same transaction
+→ one commit at the application boundary
+```
+
+Proibições:
+
+```text
+repository commits internally............... FORBIDDEN
+module A writes module B private table...... FORBIDDEN
+separate commits for one atomic command..... FORBIDDEN
+hidden transaction inside repository........ FORBIDDEN
+```
+
+Se uma operação não puder permanecer fisicamente numa única transaction, ela
+deixa de ser tratada como command local atômico e exige completion/recovery
+durável explícito.
+
+---
+
+# 44. TB-139 — Session e authority persistence física
+
+Security state necessário após restart é durável no PostgreSQL.
+
+Estrutura conceitual mínima:
+
+```text
+authority.principal
+authority.principal_history
+authority.grant
+authority.grant_history
+authority.delegation
+authority.delegation_history
+authority.revocation
+
+security.human_session
+security.session_history
+```
+
+`human_session` preserva, conforme aplicável:
+
+```text
+session_id
+opaque_token_hash
+principal_id
+created_at
+expires_at
+last_seen_at
+rotated_from_session_id
+revoked_at
+revocation_reason
+version
+```
+
+Nunca persistir o token opaco bruto como credencial reutilizável.
+
+Grant/delegation preserva, conforme aplicável:
+
+```text
+principal
+action/capability
+scope type + scope identity
+authority source
+valid_from
+expires_at
+revoked_at
+business baseline binding
+normative_baseline_ref
+decision/causation/correlation
+version
+```
+
+Mudança de grant/delegation/revocation produz history append-only.
+
+Todo request protegido, após restart ou não, revalida:
+
+```text
+session exists and is active
+principal active
+grant/delegation active
+scope valid
+time valid
+baseline binding compatible
+normative baseline applicable
+```
+
+Cookie existente no browser não prova authority.
+
+Índices devem suportar:
+
+```text
+opaque_token_hash lookup
+active session + expiry
+active grants by principal/scope
+revocation lookup
+expiry/revalidation
+```
+
+---
+
+# 45. TB-140 — Work Item governing scope com FK física
+
+Não usar apenas:
+
+```text
+scope_type
+scope_id
+```
+
+como referência polimórfica sem FK.
+
+Modelo físico inicial:
+
+```text
+work_item.governing_scope_type
+work_item.value_increment_id NULL
+work_item.project_id NULL
+```
+
+Valores:
+
+```text
+VALUE_INCREMENT
+PROJECT_TRANSVERSAL
+```
+
+Constraints equivalentes:
+
+```text
+VALUE_INCREMENT
+→ value_increment_id IS NOT NULL
+→ project_id IS NULL
+→ FK real para ValueIncrement
+
+PROJECT_TRANSVERSAL
+→ project_id IS NOT NULL
+→ value_increment_id IS NULL
+→ FK real para Project
+```
+
+CHECK garante exatamente um governing scope compatível com o tipo.
+
+Resultado:
+
+```text
+no ambiguous governing scope
+no polymorphic orphan
+real PostgreSQL referential integrity
+```
+
+---
+
+# 46. TB-141 — DeliveryTargetVersion currentness e membership uniqueness
+
+Além de um DeliveryTarget current por Project, o schema deve impedir:
+
+```text
+duas current versions do mesmo DeliveryTarget
+membership duplicada na mesma target version
+```
+
+Constraints equivalentes:
+
+```text
+UNIQUE (delivery_target_id) WHERE is_current = true
+
+UNIQUE (
+  delivery_target_version_id,
+  value_increment_id
+)
+```
+
+A criação/ativação de versão continua transacional.
+
+---
+
+# 47. TB-142 — Durable invalidation lifecycle
+
+`projection invalidation / outbox` é durável e reconstruível.
+
+Cada item possui, conforme aplicável:
+
+```text
+id
+kind
+aggregate/resource ref
+source version/watermark
+created_at
+available_at
+claimed_at
+claim_generation
+processed_at
+attempt_count
+last_error
+```
+
+Consumo usa claim concorrente seguro.
+
+Reprocessamento é permitido porque a consequência é:
+
+```text
+invalidate
+→ canonical refetch
+```
+
+e não mutação canônica duplicada.
+
+Regras:
+
+```text
+NOTIFY may wake................ OPTIONAL
+outbox row is durable.......... REQUIRED
+duplicate invalidation......... SAFE
+lost NOTIFY.................... SAFE
+processed retention............ CONFIGURABLE
+unprocessed item age........... OBSERVABLE
+```
+
+Multi-instance web futura não depende de uma notification única.
+
+---
+
+# 48. TB-143 — Database role defense-in-depth
+
+Roles mínimas permanecem:
+
+```text
+naamive_migrator
+naamive_app
+```
+
+Para DEV/PRE-HML inicial, `web` e `worker` podem compartilhar `naamive_app`.
+
+Isso é uma simplificação operacional explícita, não equivalência de authority.
+
+Antes de produção, a readiness deverá decidir e provar uma das opções:
+
+```text
+A. separate web/worker runtime roles + schema grants
+B. shared runtime role com risco explicitamente aceito +
+   architecture guardrails + restricted application paths
+```
+
+Independentemente da opção:
+
+```text
+PostgreSQL role != AuthorityService
+```
+
+---
+
+# 49. TB-144 — Intention / idempotency contract
+
+Quem inicia um command material fornece ou recebe uma `intention_id` estável no
+boundary.
+
+O registry usa namespace suficiente para impedir colisão sem transformar uma
+intenção em autorização eterna.
+
+Chave conceitual:
+
+```text
+principal/initiator scope
+command kind
+intention_id
+```
+
+O registro preserva:
+
+```text
+request fingerprint/digest
+accepted_at
+governing resource/version
+authoritative outcome ref
+final status
+authority context ref
+normative_baseline_ref
+```
+
+Regras:
+
+```text
+same intention + same material payload
+→ return/reconstruct same authoritative outcome
+
+same intention + materially different payload
+→ reject as idempotency conflict
+
+authority revoked after accepted outcome
+→ does not erase historical valid outcome
+
+authority revoked before first acceptance
+→ command fails authorization
+
+expired browser/network retry
+→ cannot create second authoritative outcome
+```
+
+Idempotency record de command governado não é cache descartável de poucos
+minutos.
+
+Retenção exata pode ser refinada posteriormente sem perder a capacidade de provar
+um outcome autoritativo já materializado.
+
+---
+
+# 50. TB-145 — Physical naming
+
+Database usa:
+
+```text
+snake_case
+```
+
+Convenção inicial:
+
+```text
+tables........ singular snake_case
+columns....... snake_case
+PK............ id
+FK............ <resource>_id
+unique........ uq_<table>__<purpose>
+check......... ck_<table>__<purpose>
+index......... ix_<table>__<purpose>
+FK constraint. fk_<table>__<resource>
+```
+
+Abreviações obscuras devem ser evitadas.
+
+---
+
+# 51. 2.10R — Remediation result
+
+Findings P1 da `AUD-014`:
+
+```text
+TB-AUD-001 decision traceability........ CLOSED by TB-137 + traceability matrix
+TB-AUD-002 cross-module Unit of Work.... CLOSED by TB-138
+TB-AUD-003 session/authority persistence. CLOSED by TB-139
+TB-AUD-004 governing scope FK........... CLOSED by TB-140
+```
+
+P2 adicionais fechados durante a remediação:
+
+```text
+TB-AUD-005 current target version........ CLOSED by TB-141
+TB-AUD-006 invalidation lifecycle........ CLOSED by TB-142
+TB-AUD-010 idempotency contract.......... CLOSED by TB-144
+```
+
+P3 fechado:
+
+```text
+TB-AUD-011 physical naming............... CLOSED by TB-145
+```
+
+Explicitamente não fechados neste pacote:
+
+```text
+TB-AUD-007 DB-role defense-in-depth....... DEFERRED
+TB-AUD-008 compatibility/major floors..... DEFERRED
+TB-AUD-009 external evidence protocol..... CONDITIONAL / DEFERRED
+TB-AUD-012 operational cadences........... DEFERRED
+TB-AUD-013 search/read-model threshold.... DEFERRED
+```
+
+Esses itens não são P0/P1 e não impedem o freeze gate definido pela auditoria.
+
+---
+
+# 52. 2.10V — Focused verification
+
+Verification evidence:
+
+```text
+audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
+```
+
+Resultado:
+
+```text
+P0 = 0
+P1 = 0
+freeze gate = PASS
+```
+
+Technology Baseline v0.10 está pronta para o gate humano do 2.11.
+
+---
+
+# 53. 2.11 — Human Approval / Freeze gate
+
+Estado:
+
+```text
+PENDING HUMAN APPROVAL
+```
+
+A aprovação humana deve ser explícita.
+
+Ela não é inferida pela geração, aplicação, commit ou push deste pacote.
+
+Candidate:
+
+```text
+technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
+```
+
+Até aprovação:
+
+```text
+Technology Baseline......... NOT APPROVED
+Implementation.............. NOT AUTHORIZED
+```
+
+Este pacote termina aqui.
+
+**Technical Implementation Readiness não foi iniciado.**

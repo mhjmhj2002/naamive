@@ -1,6 +1,6 @@
 # NAAMIVE — Technology Baseline 2.10 Remediation Backlog
 
-**Status:** OPEN  
+**Status:** CLOSED — VERIFIED  
 **Source:** `audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md`  
 **Target:** close all P1 before 2.11  
 **Implementation:** NOT AUTHORIZED
@@ -105,4 +105,25 @@ Then proceed to:
 
 ```text
 2.11 — Technology Baseline approval / freeze
+```
+
+
+---
+
+# Closure
+
+```text
+R-TB-01 Decision traceability........ CLOSED
+R-TB-02 Cross-module Unit of Work.... CLOSED
+R-TB-03 Session / authority storage.. CLOSED
+R-TB-04 Governing scope FK........... CLOSED
+```
+
+Evidence:
+
+```text
+technology/01_TECHNOLOGY_BASELINE.md v0.10
+technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
+technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
+audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
 ```
