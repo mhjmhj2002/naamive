@@ -1,6 +1,6 @@
 # NAAMIVE — Technology Baseline
 
-**Status:** READY FOR HUMAN APPROVAL  
+**Status:** APPROVED / FROZEN  
 **Versão:** 0.10  
 **Natureza:** baseline técnica derivada; não normativa  
 **Deriva de:** `NB-0002`  
@@ -8,8 +8,9 @@
 **Brainstorms consolidados:** 2.1–2.8  
 **Implementação:** NOT AUTHORIZED  
 **Auditoria:** 2.10 COMPLETE; 2.10R COMPLETE; 2.10V PASS  
-**Próxima etapa:** 2.11 — Human Approval / Freeze  
-**Última atualização:** 2026-09-09
+**2.11:** HUMAN APPROVAL COMPLETE — FROZEN  
+**Próxima etapa:** NONE STARTED — TIR NOT STARTED  
+**Última atualização:** 2026-09-10
 
 ---
 
@@ -1927,28 +1928,30 @@ Esses pontos não podem ser preenchidos por suposição silenciosa.
 
 Código permanece bloqueado.
 
-Estado deste pacote:
+Estado:
 
 ```text
 2.9 Consolidation....................... COMPLETE
 2.10 Technical / Destructive Audit...... COMPLETE
 2.10R Remediation....................... COMPLETE
 2.10V Focused Verification.............. PASS
-2.11 Human Approval / Freeze............ PENDING HUMAN APPROVAL
+2.11 Human Approval / Freeze............ COMPLETE
+Technology Baseline v0.10............... APPROVED / FROZEN
 ```
 
-Este pacote **não inicia** Technical Implementation Readiness.
-
-Mesmo após eventual aprovação humana do 2.11:
+A aprovação do 2.11 não autoriza implementação.
 
 ```text
 Technology Baseline APPROVED
 !=
-implementation automatically authorized
+implementation authorized
 ```
 
-Qualquer readiness posterior pertence a uma etapa separada e não faz parte deste
-pacote.
+Technical Implementation Readiness é uma etapa posterior e separada.
+
+```text
+TIR STARTED? NO
+```
 
 ---
 
@@ -1956,15 +1959,16 @@ pacote.
 
 ```text
 Normative Baseline........ NB-0002 — RATIFIED / IN FORCE
-Technology Baseline....... v0.10 READY FOR HUMAN APPROVAL
+Technology Baseline....... v0.10 APPROVED / FROZEN
 Brainstorms 2.1–2.8....... CONSOLIDATED / TRACEABLE
 2.10 Audit................ COMPLETE
 2.10R Remediation......... COMPLETE
 2.10V Verification........ PASS
+2.11 Human Approval....... COMPLETE
 P0........................ 0
 P1........................ 0
 Freeze gate............... PASS
-2.11...................... PENDING HUMAN APPROVAL
+TIR....................... NOT STARTED
 Implementation............ NOT AUTHORIZED
 ```
 
@@ -2447,35 +2451,88 @@ P1 = 0
 freeze gate = PASS
 ```
 
-Technology Baseline v0.10 está pronta para o gate humano do 2.11.
+Technology Baseline v0.10 passou no gate técnico e foi posteriormente submetida
+ao gate humano do 2.11.
 
 ---
 
-# 53. 2.11 — Human Approval / Freeze gate
+# 53. 2.11 — Human Approval / Freeze
 
-Estado:
-
-```text
-PENDING HUMAN APPROVAL
-```
-
-A aprovação humana deve ser explícita.
-
-Ela não é inferida pela geração, aplicação, commit ou push deste pacote.
-
-Candidate:
+Human decision:
 
 ```text
-technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
+APPROVED
 ```
 
-Até aprovação:
+Approved by:
 
 ```text
-Technology Baseline......... NOT APPROVED
-Implementation.............. NOT AUTHORIZED
+Manuel Hinojosa
+NAAMIVE Project Owner
+2026-09-10
 ```
 
-Este pacote termina aqui.
+Approved candidate:
 
-**Technical Implementation Readiness não foi iniciado.**
+```text
+technology/01_TECHNOLOGY_BASELINE.md
+version 0.10
+candidate source checkpoint:
+4197b566877fcff4e6bb103dc16af9c1ab2e7c9b
+```
+
+Gate evidence at approval:
+
+```text
+P0 = 0
+P1 = 0
+freeze gate = PASS
+traceability = 290/290
+```
+
+Result:
+
+```text
+Technology Baseline v0.10
+APPROVED / FROZEN
+```
+
+Approval evidence:
+
+```text
+technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
+technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
+```
+
+This approval does not:
+
+```text
+change NB-0002
+authorize implementation
+complete or start TIR
+```
+
+---
+
+# 54. Freeze rule
+
+The frozen technical decision set is identified by the freeze manifest.
+
+Changes to a frozen technical decision require explicit technical change
+governance and cannot be introduced silently by implementation.
+
+Operational/editorial documents may evolve without silently changing the frozen
+technical meaning.
+
+Current terminal state of this documentation round:
+
+```text
+TECHNOLOGY BASELINE DOCUMENTATION ROUND 2
+COMPLETE
+
+Technology Baseline........ APPROVED / FROZEN
+TIR........................ NOT STARTED
+Implementation............. NOT AUTHORIZED
+```
+
+This package stops here.

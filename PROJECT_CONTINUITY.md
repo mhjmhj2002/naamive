@@ -4,9 +4,9 @@
 **Natureza:** documento operacional e de continuidade; não normativo  
 **Local:** raiz do repositório  
 **Arquivo:** `PROJECT_CONTINUITY.md`  
-**Última atualização:** 2026-09-09  
+**Última atualização:** 2026-09-10  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `8519a2a7ba9e43f9e75976abd0baebd663e246d2`  
+**Último commit validado:** `4197b566877fcff4e6bb103dc16af9c1ab2e7c9b`  
 **Normative Baseline vigente:** `NB-0002`  
 **Normative Baseline anterior:** `NB-0001` — histórica e imutável
 
@@ -566,11 +566,11 @@ Arquivo principal:
 technology/01_TECHNOLOGY_BASELINE.md
 ```
 
-Estado preparado por este pacote:
+Estado:
 
 ```text
 v0.10
-READY FOR HUMAN APPROVAL
+APPROVED / FROZEN
 Deriva de: NB-0002
 Implementation: NOT AUTHORIZED
 ```
@@ -584,16 +584,10 @@ Fechamentos:
 2.10  DESTRUCTIVE AUDIT COMPLETE
 2.10R REMEDIATION COMPLETE
 2.10V VERIFICATION PASS
+2.11  HUMAN APPROVAL / FREEZE COMPLETE
 ```
 
-Gate atual:
-
-```text
-2.11 HUMAN APPROVAL / FREEZE
-PENDING HUMAN APPROVAL
-```
-
-Resultado da verificação:
+Gate final da rodada:
 
 ```text
 P0 = 0
@@ -602,14 +596,22 @@ FREEZE GATE = PASS
 TRACEABILITY = 290/290
 ```
 
+Aprovação humana:
+
+```text
+Manuel Hinojosa
+NAAMIVE Project Owner
+2026-09-10
+```
+
 Terminologia:
 
 ```text
 Normative Baseline = IN FORCE
-Technology Baseline = APPROVED / FROZEN after explicit human approval
+Technology Baseline = APPROVED / FROZEN
 ```
 
-Este pacote **não inicia TIR**.
+TIR não foi iniciado.
 
 ---
 
@@ -684,7 +686,7 @@ RATIFIED / IN FORCE
 
 ---
 
-## 17. Próximas etapas
+## 17. Fechamento da rodada técnica 2
 
 ```text
 2.7    APPROVED
@@ -693,63 +695,62 @@ RATIFIED / IN FORCE
 2.10   AUDIT COMPLETE
 2.10R  REMEDIATION COMPLETE
 2.10V  VERIFICATION PASS
-2.11   HUMAN APPROVAL / FREEZE — CURRENT
+2.11   HUMAN APPROVAL / FREEZE COMPLETE
 ```
 
-Gate:
+Resultado:
 
 ```text
+Technology Baseline v0.10 = APPROVED / FROZEN
 P0 = 0
 P1 = 0
 FREEZE GATE = PASS
 ```
 
-Depois do 2.11 existe uma etapa posterior de readiness, mas ela **não foi
-iniciada** e não faz parte deste pacote.
+Nenhuma etapa posterior foi iniciada.
+
+```text
+TIR STARTED? NO
+IMPLEMENTATION AUTHORIZED? NO
+```
 
 ---
 
-## 18. Próxima ação — Technology Baseline 2.11
+## 18. Estado após 2.11
 
-Human gate candidate:
+Approval record:
 
 ```text
-technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
+technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
 ```
 
-Evidence:
+Freeze manifest:
 
 ```text
-technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
-technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
-audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
-audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
+technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
 ```
 
 Estado:
 
 ```text
 Technology Baseline v0.10
-READY FOR HUMAN APPROVAL
+APPROVED / FROZEN
 
 P0 = 0
 P1 = 0
 FREEZE GATE = PASS
+TRACEABILITY = 290/290
 ```
 
-A próxima ação é exclusivamente:
+Nenhuma próxima etapa foi iniciada por este fechamento.
 
 ```text
-human APPROVE
-or
-human REJECT / RETURN WITH FINDINGS
+STOP
+TIR NOT STARTED
+CODE NOT AUTHORIZED
 ```
 
-Aplicar/commit/push este pacote não equivale a aprovação humana.
-
-Código continua não autorizado.
-
-TIR não foi iniciado.
+A continuidade só deve avançar para TIR após instrução explícita futura.
 
 ---
 
@@ -875,22 +876,17 @@ Technology Baseline 2.1..2.8 decisions
 2.10 destructive audit
 2.10R remediation
 2.10V focused verification
+2.11 human approval / freeze
 ```
 
-### CURRENT
+### FINAL STATE — DOCUMENTATION ROUND 2
 
 ```text
-2.11 Technology Baseline Human Approval / Freeze
-```
-
-### GATE STATUS
-
-```text
+Technology Baseline........ v0.10 APPROVED / FROZEN
 P0........................ 0
 P1........................ 0
 freeze gate............... PASS
-human approval............ PENDING
-implementation............ NOT AUTHORIZED
+human approval............ COMPLETE
 ```
 
 ### NOT STARTED
@@ -905,17 +901,17 @@ Implementation
 ## 24. Próxima ação concreta
 
 ```text
-2.11 — Human Approval / Freeze
+NONE STARTED
 ```
 
-Candidate:
+A rodada documental da Technology Baseline está fechada.
 
 ```text
-technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
+DO NOT START TIR
+DO NOT START CODE
 ```
 
-Não iniciar TIR.
-Não iniciar código.
+Aguardar instrução explícita futura.
 
 ---
 
@@ -932,19 +928,21 @@ Leia primeiro:
 5. audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
 6. technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
 7. audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
-8. technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
+8. technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
+9. technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
 
 NB-0002 = RATIFIED / IN FORCE.
 
-Last validated remote checkpoint before this package:
-8519a2a7ba9e43f9e75976abd0baebd663e246d2
+Last validated remote checkpoint before this approval package:
+4197b566877fcff4e6bb103dc16af9c1ab2e7c9b
 
 Technology Baseline:
 v0.10
-READY FOR HUMAN APPROVAL
+APPROVED / FROZEN
 
 2.10R = COMPLETE
 2.10V = PASS
+2.11 = HUMAN APPROVAL COMPLETE
 
 Verification:
 P0=0
@@ -952,14 +950,14 @@ P1=0
 FREEZE GATE=PASS
 TRACEABILITY=290/290
 
-Current task:
-2.11 Human Approval / Freeze.
+Approved by:
+Manuel Hinojosa — NAAMIVE Project Owner — 2026-09-10
 
-Human approval is still pending.
-Applying or pushing the package is not approval.
+Technical Implementation Readiness has NOT started.
+Implementation is NOT authorized.
 
-Implementation is NOT AUTHORIZED.
-
+Do not change NB-0002 without a normative process.
+Do not silently change the frozen Technology Baseline.
 DO NOT START TIR.
 DO NOT START CODE.
 ```
@@ -1000,7 +998,7 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-LAST VALIDATED HEAD....... 8519a2a7ba9e43f9e75976abd0baebd663e246d2
+LAST VALIDATED HEAD....... 4197b566877fcff4e6bb103dc16af9c1ab2e7c9b
 
 NORMATIVE BASELINE........ NB-0002
 NB-0002 STATUS............ RATIFIED / IN FORCE
@@ -1011,18 +1009,18 @@ TECH 2.9.................. COMPLETE
 TECH 2.10 AUDIT........... COMPLETE
 TECH 2.10R................ COMPLETE
 TECH 2.10V................ PASS
+TECH 2.11................. APPROVED / FROZEN
 
-TECH BASELINE............. v0.10 READY FOR HUMAN APPROVAL
+TECH BASELINE............. v0.10 APPROVED / FROZEN
 TRACEABILITY.............. 290/290
 P0........................ 0
 P1........................ 0
 FREEZE GATE............... PASS
 
-CURRENT TECH STEP......... 2.11 HUMAN APPROVAL / FREEZE
-HUMAN APPROVAL............ PENDING
+DOCUMENTATION ROUND 2..... COMPLETE
 
 TIR STARTED?.............. NO
 CODE AUTHORIZED?.......... NO
 
-NEXT ACTION............... human decision on 2.11
+NEXT ACTION............... NONE — WAIT FOR EXPLICIT INSTRUCTION
 ```

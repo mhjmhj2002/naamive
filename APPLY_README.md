@@ -1,19 +1,17 @@
-# APPLY — Technology Baseline “2” Complete — Stop Before TIR
+# APPLY — Technology Baseline 2.11 Human Approval / Freeze
 
-Este pacote fecha toda a cadeia documental técnica possível antes do gate humano
-2.11, sem iniciar TIR.
+Este pacote registra a aprovação humana explícita do 2.11.
 
-Resultado preparado:
+Resultado:
 
 ```text
-2.10R Remediation........ COMPLETE
-2.10V Verification....... PASS
-P0....................... 0
-P1....................... 0
-Freeze gate.............. PASS
-2.11..................... PENDING HUMAN APPROVAL
-TIR...................... NOT STARTED
-Implementation........... NOT AUTHORIZED
+Technology Baseline........ v0.10 APPROVED / FROZEN
+2.11....................... COMPLETE
+P0......................... 0
+P1......................... 0
+freeze gate................ PASS
+TIR........................ NOT STARTED
+Implementation............. NOT AUTHORIZED
 ```
 
 Arquivos para aplicar:
@@ -21,26 +19,29 @@ Arquivos para aplicar:
 ```text
 PROJECT_CONTINUITY.md
 technology/01_TECHNOLOGY_BASELINE.md
-technology/05_TECHNOLOGY_BASELINE_2_10_REMEDIATION_BACKLOG.md
-technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
-technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
-audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
-technology/08_TECHNOLOGY_BASELINE_2_11_APPROVAL_CANDIDATE.md
+technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
+technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
 ```
 
-Não modificar:
+Não alterar neste pacote:
 
 ```text
 NB-0002
 AUD-014
+AUD-015
 2.7 approved source
 2.8 approved source
+decision traceability
+2.10R remediation evidence
 ```
 
-O `2.11` NÃO é marcado como aprovado neste pacote.
+Aprovação humana registrada:
 
-Commit/push também NÃO conta como aprovação humana.
+```text
+Manuel Hinojosa — NAAMIVE Project Owner — 2026-09-10
+```
 
-O próximo ato, depois de validar o remoto, é a decisão humana do 2.11.
+Este pacote encerra a rodada documental “2”.
 
-**Não começar TIR.**
+**Não inicia TIR.**
+**Não autoriza código.**
