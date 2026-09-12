@@ -11,6 +11,47 @@ O software é consequência.
 
 ---
 
+## 0. Origem e significado do nome
+
+O nome **NAAMIVE** representa a jornada central da plataforma:
+
+```text
+N — Need
+A — Analysis
+A — Architecture
+M — Module
+I — Implementation
+V — Validation
+E — Evolution
+```
+
+Em português:
+
+```text
+Necessidade
+→ Análise
+→ Arquitetura
+→ Módulo
+→ Implementação
+→ Validação
+→ Evolução
+```
+
+Essa expansão faz parte da identidade conceitual do projeto e deve ser
+preservada.
+
+Ela resume a proposta do NAAMIVE: partir de uma necessidade real de negócio,
+compreendê-la e estruturá-la, definir arquitetura e capacidades de negócio,
+implementar, validar e permitir evolução governada.
+
+O significado permanece alinhado ao lema do projeto:
+
+```text
+Transforming Business Needs into Delivered Software
+```
+
+---
+
 ## 1. Onde começar
 
 Se você está chegando agora:

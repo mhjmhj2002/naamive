@@ -6,7 +6,7 @@
 **Arquivo:** `PROJECT_CONTINUITY.md`  
 **Última atualização:** 2026-09-10  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `4197b566877fcff4e6bb103dc16af9c1ab2e7c9b`  
+**Último commit validado:** `300b965a056c40bdfafe4833584abd74a28decc0`  
 **Normative Baseline vigente:** `NB-0002`  
 **Normative Baseline anterior:** `NB-0001` — histórica e imutável
 
@@ -558,24 +558,18 @@ Technology Baseline permanece artefato arquitetural separado.
 
 ---
 
-## 14. Technology Baseline
+## 14. Technology Baseline e TIR
 
-Arquivo principal:
+Technology Baseline:
 
 ```text
 technology/01_TECHNOLOGY_BASELINE.md
-```
-
-Estado:
-
-```text
 v0.10
 APPROVED / FROZEN
 Deriva de: NB-0002
-Implementation: NOT AUTHORIZED
 ```
 
-Fechamentos:
+Fechamentos da rodada técnica 2:
 
 ```text
 2.7   APPROVED
@@ -587,31 +581,30 @@ Fechamentos:
 2.11  HUMAN APPROVAL / FREEZE COMPLETE
 ```
 
-Gate final da rodada:
+TIR atual:
 
 ```text
-P0 = 0
-P1 = 0
-FREEZE GATE = PASS
-TRACEABILITY = 290/290
+readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
+v1.0
+APPROVED
+AUD-016 = PASS
 ```
 
 Aprovação humana:
 
 ```text
-Manuel Hinojosa
-NAAMIVE Project Owner
+Manuel Hinojosa — NAAMIVE Project Owner
 2026-09-10
 ```
 
-Terminologia:
+Estado:
 
 ```text
-Normative Baseline = IN FORCE
-Technology Baseline = APPROVED / FROZEN
+TIR human approval......... APPROVED
+Implementation............. AUTHORIZED FOR VS-01
 ```
 
-TIR não foi iniciado.
+TIR não altera a Technology Baseline congelada.
 
 ---
 
@@ -686,71 +679,88 @@ RATIFIED / IN FORCE
 
 ---
 
-## 17. Fechamento da rodada técnica 2
+## 17. Fechamento da rodada técnica 2 e readiness
 
 ```text
-2.7    APPROVED
-2.8    APPROVED
-2.9    COMPLETE
-2.10   AUDIT COMPLETE
-2.10R  REMEDIATION COMPLETE
-2.10V  VERIFICATION PASS
-2.11   HUMAN APPROVAL / FREEZE COMPLETE
+Technology Baseline 2.7..2.11..... COMPLETE
+Technology Baseline v0.10......... APPROVED / FROZEN
 ```
 
-Resultado:
+TIR:
 
 ```text
-Technology Baseline v0.10 = APPROVED / FROZEN
-P0 = 0
-P1 = 0
-FREEZE GATE = PASS
+documentation..................... COMPLETE
+technical verification............ PASS
+human approval.................... APPROVED
+TIR v1.0.......................... APPROVED
 ```
 
-Nenhuma etapa posterior foi iniciada.
+Primeira vertical slice:
 
 ```text
-TIR STARTED? NO
-IMPLEMENTATION AUTHORIZED? NO
+VS-01 — Authenticated Project Context
+AUTHORIZED / NOT STARTED
+```
+
+Estado de código:
+
+```text
+CODE AUTHORIZED? YES — VS-01 ONLY
 ```
 
 ---
 
-## 18. Estado após 2.11
+## 18. Technical Implementation Readiness
 
-Approval record:
-
-```text
-technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
-```
-
-Freeze manifest:
+Main TIR:
 
 ```text
-technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
+readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
+v1.0 APPROVED
 ```
 
-Estado:
+Foundation contract:
 
 ```text
-Technology Baseline v0.10
-APPROVED / FROZEN
-
-P0 = 0
-P1 = 0
-FREEZE GATE = PASS
-TRACEABILITY = 290/290
+readiness/02_IMPLEMENTATION_FOUNDATION_CONTRACT.md
 ```
 
-Nenhuma próxima etapa foi iniciada por este fechamento.
+First slice:
 
 ```text
-STOP
-TIR NOT STARTED
-CODE NOT AUTHORIZED
+readiness/03_FIRST_VERTICAL_SLICE_PLAN.md
+VS-01 AUTHORIZED / NOT STARTED
 ```
 
-A continuidade só deve avançar para TIR após instrução explícita futura.
+Version snapshot:
+
+```text
+readiness/04_VERSION_SNAPSHOT.md
+```
+
+Verification:
+
+```text
+audits/AUD-016_TIR_READINESS_VERIFICATION.md
+PASS
+```
+
+Human approval:
+
+```text
+readiness/06_TIR_APPROVAL_RECORD.md
+APPROVED
+Manuel Hinojosa — NAAMIVE Project Owner
+2026-09-10
+```
+
+Current rule:
+
+```text
+VS-01 may start
+frozen architecture may not be silently changed
+scope outside approved TIR/VS-01 requires explicit decision
+```
 
 ---
 
@@ -871,29 +881,27 @@ NB-0001 closure
 NB-0002 R2-01..R2-17
 NB-0002 human ratification
 NB-0002 root application
-Technology Baseline 2.1..2.8 decisions
-2.9 consolidation
-2.10 destructive audit
-2.10R remediation
-2.10V focused verification
-2.11 human approval / freeze
+Technology Baseline 2.1..2.11
+Technology Baseline v0.10 approval/freeze
+TIR documentation
+TIR technical verification AUD-016
+TIR human approval
 ```
 
-### FINAL STATE — DOCUMENTATION ROUND 2
+### CURRENT
 
 ```text
-Technology Baseline........ v0.10 APPROVED / FROZEN
-P0........................ 0
-P1........................ 0
-freeze gate............... PASS
-human approval............ COMPLETE
+VS-01 — Authenticated Project Context
+AUTHORIZED / NOT STARTED
 ```
 
-### NOT STARTED
+### GATE
 
 ```text
-Technical Implementation Readiness
-Implementation
+TIR verification............ PASS
+TIR blockers................ 0
+human approval.............. APPROVED
+code authorized............. YES — VS-01 ONLY
 ```
 
 ---
@@ -901,17 +909,21 @@ Implementation
 ## 24. Próxima ação concreta
 
 ```text
-NONE STARTED
+START VS-01 — Authenticated Project Context
 ```
 
-A rodada documental da Technology Baseline está fechada.
+Scope authority:
 
 ```text
-DO NOT START TIR
-DO NOT START CODE
+readiness/03_FIRST_VERTICAL_SLICE_PLAN.md
 ```
 
-Aguardar instrução explícita futura.
+Rules:
+
+```text
+do not reopen frozen architecture
+do not expand beyond approved VS-01 without explicit decision
+```
 
 ---
 
@@ -924,42 +936,39 @@ Leia primeiro:
 1. PROJECT_CONTINUITY.md
 2. governance/normative-baselines/NB-0002.md
 3. technology/01_TECHNOLOGY_BASELINE.md
-4. technology/06_TECHNOLOGY_BASELINE_DECISION_TRACEABILITY.md
-5. audits/AUD-014_TECHNOLOGY_BASELINE_DESTRUCTIVE_AUDIT.md
-6. technology/07_TECHNOLOGY_BASELINE_2_10R_REMEDIATION_RECORD.md
-7. audits/AUD-015_TECHNOLOGY_BASELINE_2_10V_VERIFICATION.md
-8. technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
-9. technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
+4. technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
+5. readiness/00_TIR_INDEX.md
+6. readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
+7. readiness/02_IMPLEMENTATION_FOUNDATION_CONTRACT.md
+8. readiness/03_FIRST_VERTICAL_SLICE_PLAN.md
+9. readiness/04_VERSION_SNAPSHOT.md
+10. audits/AUD-016_TIR_READINESS_VERIFICATION.md
+11. readiness/06_TIR_APPROVAL_RECORD.md
 
 NB-0002 = RATIFIED / IN FORCE.
+Technology Baseline v0.10 = APPROVED / FROZEN.
 
-Last validated remote checkpoint before this approval package:
-4197b566877fcff4e6bb103dc16af9c1ab2e7c9b
+Last validated remote checkpoint before TIR package:
+300b965a056c40bdfafe4833584abd74a28decc0
 
-Technology Baseline:
-v0.10
-APPROVED / FROZEN
+TIR:
+v1.0 APPROVED
+documentation COMPLETE
+AUD-016 PASS
+blockers 0
+human approval APPROVED
+approver Manuel Hinojosa — NAAMIVE Project Owner
+date 2026-09-10
 
-2.10R = COMPLETE
-2.10V = PASS
-2.11 = HUMAN APPROVAL COMPLETE
+First slice:
+VS-01 — Authenticated Project Context
+AUTHORIZED / NOT STARTED
 
-Verification:
-P0=0
-P1=0
-FREEZE GATE=PASS
-TRACEABILITY=290/290
+Code is authorized only for VS-01 within the approved TIR and frozen Technology Baseline.
 
-Approved by:
-Manuel Hinojosa — NAAMIVE Project Owner — 2026-09-10
-
-Technical Implementation Readiness has NOT started.
-Implementation is NOT authorized.
-
-Do not change NB-0002 without a normative process.
-Do not silently change the frozen Technology Baseline.
-DO NOT START TIR.
-DO NOT START CODE.
+Do not reinterpret NB-0002.
+Do not silently mutate frozen Technology Baseline.
+Do not expand implementation beyond approved TIR/VS-01 without explicit decision.
 ```
 
 ---
@@ -998,29 +1007,23 @@ próximo caminho
 ```text
 PROJECT.................. NAAMIVE
 BRANCH................... lifecycle-reboot
-LAST VALIDATED HEAD....... 4197b566877fcff4e6bb103dc16af9c1ab2e7c9b
+LAST VALIDATED HEAD....... 300b965a056c40bdfafe4833584abd74a28decc0
 
 NORMATIVE BASELINE........ NB-0002
 NB-0002 STATUS............ RATIFIED / IN FORCE
 
-TECH 2.7.................. APPROVED
-TECH 2.8.................. APPROVED
-TECH 2.9.................. COMPLETE
-TECH 2.10 AUDIT........... COMPLETE
-TECH 2.10R................ COMPLETE
-TECH 2.10V................ PASS
-TECH 2.11................. APPROVED / FROZEN
-
 TECH BASELINE............. v0.10 APPROVED / FROZEN
-TRACEABILITY.............. 290/290
-P0........................ 0
-P1........................ 0
-FREEZE GATE............... PASS
-
 DOCUMENTATION ROUND 2..... COMPLETE
 
-TIR STARTED?.............. NO
-CODE AUTHORIZED?.......... NO
+TIR....................... v1.0 APPROVED
+TIR DOCUMENTATION......... COMPLETE
+TIR VERIFICATION.......... PASS
+TIR BLOCKERS.............. 0
+TIR HUMAN APPROVAL........ APPROVED
 
-NEXT ACTION............... NONE — WAIT FOR EXPLICIT INSTRUCTION
+FIRST SLICE............... VS-01 AUTHORIZED / NOT STARTED
+
+CODE AUTHORIZED?.......... YES — VS-01 ONLY
+
+NEXT ACTION............... START VS-01
 ```

@@ -1,47 +1,57 @@
-# APPLY — Technology Baseline 2.11 Human Approval / Freeze
+# APPLY — NAAMIVE self-hosted project bootstrap — Part 1
 
-Este pacote registra a aprovação humana explícita do 2.11.
+Este pacote inicia o desenvolvimento do próprio NAAMIVE usando, manualmente,
+o processo definido pelo NAAMIVE.
 
-Resultado:
-
-```text
-Technology Baseline........ v0.10 APPROVED / FROZEN
-2.11....................... COMPLETE
-P0......................... 0
-P1......................... 0
-freeze gate................ PASS
-TIR........................ NOT STARTED
-Implementation............. NOT AUTHORIZED
-```
-
-Arquivos para aplicar:
+Objetivo:
 
 ```text
-PROJECT_CONTINUITY.md
-technology/01_TECHNOLOGY_BASELINE.md
-technology/09_TECHNOLOGY_BASELINE_2_11_APPROVAL_RECORD.md
-technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
+usar o método NAAMIVE
+para planejar e construir o NAAMIVE
+antes que a automação do próprio NAAMIVE exista
 ```
 
-Não alterar neste pacote:
+Este pacote cria apenas planejamento e registros operacionais.
 
 ```text
-NB-0002
-AUD-014
-AUD-015
-2.7 approved source
-2.8 approved source
-decision traceability
-2.10R remediation evidence
+CODE................................ NOT STARTED
+PROJECT PHASE....................... PLANNING
+VI-001.............................. DEFINED
+WORK ITEMS.......................... PROPOSED
+EXECUTIONS.......................... NONE
+DELIVERY............................ NONE
 ```
 
-Aprovação humana registrada:
+Nada neste pacote promove Work Item para READY, cria Development Cycle ou
+autoriza uma Execution automaticamente.
+
+A regra de operação é estrita:
 
 ```text
-Manuel Hinojosa — NAAMIVE Project Owner — 2026-09-10
+se aparecer um gap no processo/modelo
+→ registrar Finding
+→ parar o escopo afetado
+→ corrigir a regra pela autoridade correta
+→ validar
+→ só então continuar
 ```
 
-Este pacote encerra a rodada documental “2”.
+Diretório criado:
 
-**Não inicia TIR.**
-**Não autoriza código.**
+```text
+project/naamive/
+```
+
+Primeira capacidade planejada:
+
+```text
+MOD-001 — Project Context
+```
+
+Primeira Entrega de Valor:
+
+```text
+VI-001 — Authenticated Project Context
+```
+
+O login é tratado como parte da Entrega de Valor, não como Module técnico.
