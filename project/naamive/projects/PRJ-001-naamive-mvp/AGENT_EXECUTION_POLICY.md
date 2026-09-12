@@ -56,7 +56,6 @@ record Finding
 
 ## Review, audit and authority before governed promotion
 
-```text
 For future MATERIAL/CRITICAL advances, `NB-0002` and
 `governance/04_AUDIT_AND_REVIEW_POLICY.md` remain controlling: evidence does
 not substitute for audit when the policy requires audit.

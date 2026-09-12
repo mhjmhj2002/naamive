@@ -3,7 +3,7 @@
 **baseline_id:** PBL-PRJ001-R1-v1.0  
 **status:** FINAL FOR PLANNING ROUND 1 — DOCUMENTATION STABILIZED BY HUMAN DECISION
 **normative_baseline_ref:** NB-0002  
-**manifest_sha256:** `02d33ab935e3fb52dea1ff6ea658184852b7c0c6f46e00efbe5aaaf1aadaa14a`
+**manifest_sha256:** `2bdbdfbea7767b463bee11d9c9d835559bace75466a2eb6b042c9ad507f5633b`
 **member_count:** 66
 **created_at:** 2026-09-12T11:18:00-03:00  
 **supersedes_ref:** PBL-PRJ001-R1-v0.9  
