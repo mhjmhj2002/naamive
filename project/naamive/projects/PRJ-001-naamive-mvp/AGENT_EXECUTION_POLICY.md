@@ -23,13 +23,14 @@ NB-0002/TB/TIR silently, or continue through a material gap.
 Sob `PBL-PRJ001-R1-v1.0`:
 
 ```text
-13 WIs = PROPOSED
-0 WIs = READY
-0 Development Cycles
+12 WIs = PROPOSED
+1 WI = READY
+1 Development Cycle (DC-001)
 0 Executions
 ```
 
-No implementation agent may be dispatched yet.
+Nenhum implementation agent pode ser despachado até existir Execution
+válida/autorizada.
 
 ## Planning Round 1 closure
 

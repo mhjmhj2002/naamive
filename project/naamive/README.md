@@ -24,7 +24,7 @@ Roadmap v2.............. CURRENT
 Work Items.............. 12 PROPOSED / 1 READY
 WI-001................... READY
 Readiness authority...... GRANTED / EXERCISED
-Development Cycles...... 0
+Development Cycles...... 1 (DC-001)
 Executions.............. 0
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
@@ -123,17 +123,18 @@ para Work Items, Cycles ou Executions.
 O fato de Module, Value Increment, DeliveryTarget e Roadmap estarem aprovados ou
 correntes não significa que desenvolvimento possa começar.
 
-O próximo avanço governado para WI-001 é criar o Development Cycle aplicável.
+O próximo avanço governado para WI-001 é avaliar/criar uma Execution válida
+para DC-001 / WI-001.
 
 Fluxo mínimo:
 
 ```text
 Work Item READY
-→ Development Cycle governado
-→ Execution autorizada
+→ Development Cycle DC-001 CREATED
+→ avaliar/criar Execution autorizada
 ```
 
-Enquanto não houver Development Cycle e Execution autorizada:
+Enquanto não houver Execution válida/autorizada:
 
 ```text
 Implementation = NOT AUTHORIZED

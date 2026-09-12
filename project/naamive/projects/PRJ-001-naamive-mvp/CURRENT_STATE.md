@@ -11,7 +11,7 @@ VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
 Work Items................. 12 PROPOSED / 1 READY
-Development Cycles......... 0
+Development Cycles......... 1
 Executions................. 0
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
@@ -47,7 +47,7 @@ WI-001..................... READY
 readiness gate............. APPROVED / EXERCISED
 readiness authority........ GRANTED / EXERCISED
 human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
-Development Cycle.......... NOT CREATED
+Development Cycle.......... DC-001
 Execution.................. NONE
 Implementation............. NOT AUTHORIZED
 ```

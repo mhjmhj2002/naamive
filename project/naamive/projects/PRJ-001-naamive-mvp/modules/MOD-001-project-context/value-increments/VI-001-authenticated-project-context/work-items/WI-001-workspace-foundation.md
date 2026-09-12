@@ -10,7 +10,7 @@
 **normative_baseline_ref:** NB-0002  
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** none  
-**Development Cycle:** NOT CREATED  
+**Development Cycle:** DC-001 (`development-cycles/DC-001-WI001.md`)
 **Execution:** NONE  
 **Readiness authority:** GRANTED / EXERCISED
 **Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`

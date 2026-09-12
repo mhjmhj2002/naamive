@@ -314,7 +314,7 @@ VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 12 PROPOSED / 1 READY
-Development Cycles...... 0
+Development Cycles...... 1 (DC-001)
 Executions.............. 0
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
@@ -378,15 +378,15 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é criar o Development Cycle aplicável para `WI-001`,
-conforme lifecycle e governança aplicáveis.
+O próximo avanço real é avaliar/criar uma Execution válida para `WI-001` /
+`DC-001`, conforme lifecycle e governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
 WI-001 READY
-→ criar Development Cycle governado
-→ criar Execution autorizada
+→ Development Cycle DC-001 CREATED
+→ avaliar/criar Execution autorizada
 → implementação
 ```
 
@@ -397,7 +397,7 @@ Nenhuma dessas etapas deve ser pulada.
 Após a revisão e publicação humana deste checkpoint:
 
 ```text
-abrir task governada para criar o Development Cycle aplicável a WI-001
+abrir task governada para avaliar/criar Execution válida para WI-001 / DC-001
 ```
 
 Não iniciar código diretamente.
@@ -642,9 +642,9 @@ MOD-001 = PLANNED
 VI-001 = PLANNED
 DT-001 v1 = CURRENT
 Roadmap v2 = CURRENT
-13 Work Items = PROPOSED
-0 READY
-0 Development Cycles
+12 Work Items = PROPOSED
+1 READY (WI-001)
+1 Development Cycle (DC-001)
 0 Executions
 Implementation = NOT AUTHORIZED
 
@@ -658,11 +658,11 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado:
-readiness do WI-001.
+avaliar/criar Execution válida para WI-001 / DC-001.
 
 Não promova WI-001 automaticamente.
 Não inicie código.
-Não crie Cycle/Execution antes do WI estar READY.
+Não crie Execution antes de ela ser válida/autorizada.
 Não reabra auditoria encerrada.
 Não crie subagentes sem autorização explícita.
 Humano controla commit/push/merge/rebase/reset/clean.
