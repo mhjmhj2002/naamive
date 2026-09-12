@@ -7,7 +7,7 @@
 **Technical correspondence:** VS-01 — Authenticated Project Context  
 **Impact:** MATERIAL  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Implementation:** NOT STARTED / NOT AUTHORIZED
 
 ## State reconciliation
@@ -63,7 +63,7 @@ external evidence/blob storage
 | Dependency | Satisfaction condition | Fallback |
 |---|---|---|
 | MOD-001 definition | MOD-001 transition to DEFINED approved on same baseline | stop VI transition |
-| PRJ-001 | Project remains PLANNING on `PBL-PRJ001-R1-v0.5` | revalidate candidate |
+| PRJ-001 | Project remains PLANNING on `PBL-PRJ001-R1-v1.0` | revalidate candidate |
 | NB-0002 | current normative baseline compatible | stop affected scope |
 | TB v0.10 | frozen technical baseline unchanged or explicitly revalidated | technical governance |
 | TIR v1.0 | technical readiness valid; no lifecycle authority inferred | reopen TIR if invalid |

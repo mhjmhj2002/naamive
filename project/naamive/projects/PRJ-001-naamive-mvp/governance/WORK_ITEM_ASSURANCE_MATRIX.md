@@ -1,6 +1,6 @@
 # Work Item Assurance Matrix — VI-001
 
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002
 
 This matrix is an index. The individual WI file is authoritative for its full

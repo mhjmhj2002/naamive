@@ -108,3 +108,100 @@ A-017
  canonical_next_action: AUD-005
  approval: NOT GRANTED
  implementation: NOT AUTHORIZED
+
+A-018
+ type: INDEPENDENT_AUDIT
+ audit: AUD-005
+ baseline: PBL-PRJ001-R1-v0.5
+ result: FAIL
+ blockers: 2
+ findings: AUD5-001, AUD5-002
+ note: AUD3-001 / DEC-005 remains resolved
+
+A-019
+ type: REMEDIATION_BASELINE_CREATED
+ baseline: PBL-PRJ001-R1-v0.6
+ supersedes: PBL-PRJ001-R1-v0.5
+ fact: reconciled continuity projections and corrected baseline lineage candidate prepared
+ refs: FND-004, FND-005, CONT-PRJ001-006
+ approval: NOT GRANTED
+ implementation: NOT AUTHORIZED
+ canonical_next_action: AUD-006
+
+A-020
+ type: INDEPENDENT_AUDIT
+ audit: AUD-006
+ baseline: PBL-PRJ001-R1-v0.6
+ result: FAIL
+ blockers: 2
+ findings: AUD6-001, AUD6-002
+
+A-021
+ type: REMEDIATION_BASELINE_CREATED
+ baseline: PBL-PRJ001-R1-v0.7
+ supersedes: PBL-PRJ001-R1-v0.6
+ fact: full deterministic evidence snapshot and FND-003 causal disposition prepared
+ refs: FND-006, FND-007, CONT-PRJ001-007
+ approval: NOT GRANTED
+ implementation: NOT AUTHORIZED
+ canonical_next_action: AUD-007
+
+A-022
+ type: INDEPENDENT_AUDIT
+ audit: AUD-007
+ baseline: PBL-PRJ001-R1-v0.7
+ result: FAIL
+ blockers: AUD7-001, AUD7-002, AUD7-003
+ timestamp: 2026-09-12T10:13:39-03:00
+ note: AUD-007 remains immutable historical evidence; it did not promote state
+
+A-023
+ type: REMEDIATION_BASELINE_CREATED
+ baseline: PBL-PRJ001-R1-v0.8
+ supersedes: PBL-PRJ001-R1-v0.7
+ created_at: 2026-09-12T10:23:00-03:00
+ fact: successor package prepared to remediate manifest integrity, approval-baseline binding and temporal provenance
+ refs: FND-008, FND-009, FND-010, CONT-PRJ001-008
+ approval: NOT GRANTED
+ implementation: NOT AUTHORIZED
+ canonical_next_action: AUD-008
+
+A-024
+ type: INDEPENDENT_AUDIT
+ audit: AUD-008
+ baseline: PBL-PRJ001-R1-v0.8
+ result: FAIL
+ blocker: AUD8-001
+ timestamp: 2026-09-12T10:36:04-03:00
+ note: AUD-008 remains immutable historical evidence; it did not promote state
+
+A-025
+ type: REMEDIATION_BASELINE_CREATED
+ baseline: PBL-PRJ001-R1-v0.9
+ supersedes: PBL-PRJ001-R1-v0.8
+ created_at: 2026-09-12T10:43:00-03:00
+ fact: active operating instructions reconciled to the sole candidate baseline and remediation author
+ refs: FND-011, CONT-PRJ001-009
+ approval: NOT GRANTED
+ implementation: NOT AUTHORIZED
+ canonical_next_action: AUD-009
+
+A-026
+ type: INDEPENDENT_AUDIT
+ audit: AUD-009
+ baseline: PBL-PRJ001-R1-v0.9
+ result: FAIL
+ blocker: AUD9-001 / FND-011
+ timestamp: 2026-09-12T10:56:36-03:00
+ note: AUD-009 remains immutable historical evidence; it did not promote state
+
+A-027
+ type: REMEDIATION_BASELINE_CREATED
+ baseline: PBL-PRJ001-R1-v1.0
+ supersedes: PBL-PRJ001-R1-v0.9
+ created_at: 2026-09-12T11:18:00-03:00
+ fact: candidate revalidation record created per active object that remained bound to v0.5
+ refs: AUD9-001, FND-011, BRR-PRJ001-010, CONT-PRJ001-010
+ approval: NOT GRANTED
+ implementation: NOT AUTHORIZED
+ canonical_next_action: AUD-010

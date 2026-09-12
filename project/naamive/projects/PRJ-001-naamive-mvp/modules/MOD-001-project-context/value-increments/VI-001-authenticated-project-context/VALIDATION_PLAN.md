@@ -1,7 +1,7 @@
 # VI-001 — Validation Plan Candidate
 
 **State:** PLANNED AS CANDIDATE / NOT EXECUTED  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002
 
 Validation is separate from implementation completion and from human acceptance.

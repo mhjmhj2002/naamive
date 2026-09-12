@@ -8,7 +8,7 @@
 **Value Increment reference:** VI-001 — Authenticated Project Context  
 **Impact:** MATERIAL  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** WI-009, WI-010  
 **Development Cycle:** NOT CREATED  
 **Execution:** NONE  

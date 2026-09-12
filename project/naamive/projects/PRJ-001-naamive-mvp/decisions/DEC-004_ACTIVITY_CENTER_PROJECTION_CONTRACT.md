@@ -2,7 +2,7 @@
 
 **Status:** PLANNING DECISION CANDIDATE — covered by round audit before approval  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Implementation owner:** WI-010
 
 ## Projection identity

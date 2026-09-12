@@ -196,16 +196,21 @@ Every material planning audit must name the exact planning baseline and the
 author/auditor principals. For the current remediation candidate:
 
 ```text
-baseline........ PBL-PRJ001-R1-v0.5
-author.......... agent:chatgpt:naamive-planning-r1-v0.5
+baseline........ PBL-PRJ001-R1-v1.0
+author.......... agent:codex:naamive-aud9-remediation
 next auditor.... agent:codex:naamive-independent-audit
 human authority. human:manuel-hinojosa:project-owner
 ```
 
-A new Codex chat with the same Codex principal is not used to pretend that the
-auditor differs from itself. Independence here is between the planning producer
-principal (ChatGPT) and the audit principal (Codex). The manual phase records
-this segregation and its local-attestation limitation explicitly.
+A baseline indicada nesta seção deve sempre ser a candidata corrente; para a
+remediação após AUD-009 ela é `PBL-PRJ001-R1-v1.0`. Baselines anteriores são
+evidência histórica e não podem ser usadas como rota alternativa de audit ou
+aprovação.
+
+Uma nova conversa Codex com o mesmo principal não é usada para fingir que o
+auditor difere de si. A independência exige principal de auditoria distinto do
+produtor da candidata. A fase manual registra essa segregação e sua limitação
+de atestação local explicitamente.
 
 # 13. No state repair by silent edit
 

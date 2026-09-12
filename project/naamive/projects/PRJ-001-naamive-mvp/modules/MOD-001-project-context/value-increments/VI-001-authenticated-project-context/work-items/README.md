@@ -1,6 +1,6 @@
 # VI-001 — Work Item Proposal Set
 
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
 **Status:** 13 PROPOSED / 0 READY / NO EXECUTION AUTHORITY
 

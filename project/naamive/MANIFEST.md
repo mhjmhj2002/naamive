@@ -1,62 +1,77 @@
 # Planning Baseline Manifest
 
-baseline_id: PBL-PRJ001-R1-v0.5
+baseline_id: PBL-PRJ001-R1-v1.0
 normative_baseline_ref: NB-0002
-created_at: 2026-09-11T22:33:18-03:00
-member_count: 52
+created_at: 2026-09-12T11:18:00-03:00
+member_count: 67
 format: SHA-256 size path
 
 ```text
+5df96ececc4eff7b60e19fb68123eb5ca019f44065889b7337f9f25533eb3e0e 1381 APPLY_README.md
 dda095cf9bf2eb64e598191d1d468710f32a1311d06327b64afbb2c325ff3eea 1439 BOOTSTRAP_DECISION.md
 5054b2c5feeca060e242351199059a69128aff20a0a1d6f5dfba9977b7d51a08 654 GAP_PROTOCOL.md
-cec1d8245a362372c49e56b45913beee14c4533ea1d9acd10ef7d1d5166f14fb 4267 MANUAL_OPERATING_MODEL.md
-076c71097cb945a176940277975cf33028e2cb13833e11a497db811ae33ad982 2246 README.md
+84712e92b8d043d4c9f136c429a8ae13211bbf0d287830032ea7af87683f6b48 4494 MANUAL_OPERATING_MODEL.md
+33ca969787b266c96d5cdebbd4d9e5b6102f1e6d02d0b3aa53e6e653a09b1f58 1175 README.md
 2d240adb34c1b7d85cc19ab98672571f5c2d99b84f361b16fa2fcd08701510be 935 need/NEED-001.md
-e7c854e3b93e261d0de87b16f66e7d6cb560ecac968fcbf36fc372c021d1b994 1480 projects/PRJ-001-naamive-mvp/AGENT_EXECUTION_POLICY.md
-098a4f7b92babf32cdd1dc7b41776a225f928d180a2f65d1d18821e9922f99e0 2486 projects/PRJ-001-naamive-mvp/AUDIT_REQUEST_CODEX.md
-23e282af16637a5b8a607ec92e3e9db215786da9a6cde76f99ef81425e00c260 2206 projects/PRJ-001-naamive-mvp/CURRENT_STATE.md
-58e74dc7103d8711a8cc00b46e9d6d355d0e924820501df0506f9753d055ea5a 2095 projects/PRJ-001-naamive-mvp/DELIVERY_TARGET.md
-3c12e2683c20e29a24f6e312739196a94db8c7b2a5a239ead49785500953c68c 3921 projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md
-1d47a55909cd914e6c56903077276b0bb1d698d76887ea0ac49cdbb9e6dcbd0b 2414 projects/PRJ-001-naamive-mvp/PROJECT.md
-0014a9b13e51e437ed9daa9eb047b190b837a3d741e305ed9c217a3b5588a09f 3325 projects/PRJ-001-naamive-mvp/ROADMAP.md
-1a64b5dd8640b5ab0fb13bfe3252a99d5583eb184757bdd3ae3e66b22335b803 2775 projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
+7b7532b1b644fc0523e5d034b493f98492355bfa3c568f917288056050a7c00d 1516 projects/PRJ-001-naamive-mvp/AGENT_EXECUTION_POLICY.md
+453237247c41b9bdde9918f8d4195a8eaf4704481f4c6b19ae004d59ee04c92b 1871 projects/PRJ-001-naamive-mvp/AUDIT_REQUEST_CODEX.md
+94841088da51e5873f5c012c5f37fce9cad97b38457c0b184da693f52208b9fb 1697 projects/PRJ-001-naamive-mvp/CURRENT_STATE.md
+a8807838443fd2aa4f9bf474e0b291820f0315440e0eda83bf39a8de55244401 1084 projects/PRJ-001-naamive-mvp/DELIVERY_TARGET.md
+e88dc4a0f0c666bde9249702aa4c2cebcacda3ee3e2ced7407ef6ddb92af5bda 1124 projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md
+af06b23aa9c3b9c00932dd7ff0c5263dabc8e617a23d2cb63d3ebdeaae241d79 1034 projects/PRJ-001-naamive-mvp/PROJECT.md
+2a4cf59ba9e9262e491d22869c55f246151f87f9757c0e90003e16cb330318f7 1270 projects/PRJ-001-naamive-mvp/ROADMAP.md
+41422fa5d4d6559b68f9c0ea0d4439b216cfff439e28da1839d26890dce7b67a 5587 projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
 df91b6480356bb49ed88fb37ebeaaf4e9a80aa5dedd3fffc73b683c5abfac397 22208 projects/PRJ-001-naamive-mvp/audits/AUD-001_PLANNING_ROUND_1_CODEX.md
 39d6f429bfbef51c8ae3ea4089b7ad7eb0353ea808f91c7c7153954b0c06e98a 14570 projects/PRJ-001-naamive-mvp/audits/AUD-002_PLANNING_ROUND_1_CODEX.md
 12e091807e1bca752d66549814d27844704662543139f410380b781f5577bde4 10194 projects/PRJ-001-naamive-mvp/audits/AUD-003_PLANNING_ROUND_1_CODEX.md
 ca56495f7d723571f5d898f32921eaf159f2947874ac795f0fa1360617562e12 9354 projects/PRJ-001-naamive-mvp/audits/AUD-004_PLANNING_ROUND_1_CODEX.md
-d3c667eceb97d57f9374a7b1b7908359862d19250cd1ce595039771ca5465e68 921 projects/PRJ-001-naamive-mvp/decisions/DEC-001_BOOTSTRAP_STATE_RECONCILIATION.md
-01f2b40abdef8f6eb546a71167c836f4e963945a5f022fd1a2c959143a1ffa1b 1156 projects/PRJ-001-naamive-mvp/decisions/DEC-002_TIR_LIFECYCLE_PRECEDENCE.md
-924153c0dd68b058a9ccec1d743b1da7fde22c73fe09ad414b79245cf0f9bb3d 1308 projects/PRJ-001-naamive-mvp/decisions/DEC-003_PROJECT_READ_SOURCE.md
-fc057fef28bd4bc5f988fccdd127d5b27aca39bf950cca29de4503629c3ba699 1995 projects/PRJ-001-naamive-mvp/decisions/DEC-004_ACTIVITY_CENTER_PROJECTION_CONTRACT.md
-199ffc806587033754e81d94c1aa622595652d35beb186f833807a434cbb77dd 5453 projects/PRJ-001-naamive-mvp/decisions/DEC-005_TB140_WORK_ITEM_OWNER_MAPPING.md
+6471922fecf19670c9f180698b98e06a08a701e060d2cad38bfa48ebf19a5cee 8345 projects/PRJ-001-naamive-mvp/audits/AUD-005_PLANNING_ROUND_1_CODEX.md
+9caee13055371ab5d67f26f03026ecefee222fa4e60157b04a79ccafb65715d2 10211 projects/PRJ-001-naamive-mvp/audits/AUD-006_PLANNING_ROUND_1_CODEX.md
+61f647dc54ce3e1e93e0d6d67a804dcbd1545d55a5766bfe3e064ce629b1cd06 7938 projects/PRJ-001-naamive-mvp/audits/AUD-007_PLANNING_ROUND_1_CODEX.md
+1a4bf2cee61c3ee93fa4aa16fac9b9d25603cca8b53a1f805caaf19de97fd253 11071 projects/PRJ-001-naamive-mvp/audits/AUD-008_PLANNING_ROUND_1_CODEX.md
+f2ca616cb48139a42ea92810b42866e410010e1542bbaa71d77a770734c8b49a 11578 projects/PRJ-001-naamive-mvp/audits/AUD-009_PLANNING_ROUND_1_CODEX.md
+a2d35b94818d9bf7994747305c6efcfbf525bc7a77d32a8d669603fab3e2f380 921 projects/PRJ-001-naamive-mvp/decisions/DEC-001_BOOTSTRAP_STATE_RECONCILIATION.md
+c951207b0e3bc6b10d1b78df29ae715d82c096534614d2ed139587021dd71839 1156 projects/PRJ-001-naamive-mvp/decisions/DEC-002_TIR_LIFECYCLE_PRECEDENCE.md
+0a49b3340de7a471cc5247a6e8de2cba94ba316620439703c319dd06accce8db 1306 projects/PRJ-001-naamive-mvp/decisions/DEC-003_PROJECT_READ_SOURCE.md
+80100233e290dfbc54934e6830d84db9b89ead3b24aa08632b4b4250ed34427a 1995 projects/PRJ-001-naamive-mvp/decisions/DEC-004_ACTIVITY_CENTER_PROJECTION_CONTRACT.md
+37904f7447b67adead354d1e21e2169d84141ecc0718ec3323ac1f577c58f638 5453 projects/PRJ-001-naamive-mvp/decisions/DEC-005_TB140_WORK_ITEM_OWNER_MAPPING.md
 dd28db08a39fb40dcdb791ec7030e37a869981823b580a737f37d7d3f48130fa 768 projects/PRJ-001-naamive-mvp/decisions/README.md
 2021d76d503387d144ed2b3e388f0d461e43b7089b3fd82fa3e9e7f0bab969ae 604 projects/PRJ-001-naamive-mvp/findings/FINDING_TEMPLATE.md
 1f498f2fcf11f0e03dfc732583ac3fd40ff338304336876d456e7d9c19d82222 1744 projects/PRJ-001-naamive-mvp/findings/FND-001_AUD002_REMEDIATION.md
-8bb3365ea628a00934698f1958a3b0bfec3bccd44bef73331b852a1d10168194 1621 projects/PRJ-001-naamive-mvp/findings/FND-002_AUD003_TB140_OWNER_MAPPING.md
-7ba63b0d7436fddff8dccdae5935eb653bd81c97661dc6461070b73fd232971d 1039 projects/PRJ-001-naamive-mvp/findings/FND-003_AUD004_CONTINUITY_CURRENTNESS.md
-1f1045755d68765b976779b1927c1c72b92f11e70fcbb86c236ec328f31f0427 923 projects/PRJ-001-naamive-mvp/governance/AUTHORITY_CONTEXT.md
-e7766626df15621b051b9531ff1b4032c20c7090d315c89c045be09944f049cf 2788 projects/PRJ-001-naamive-mvp/governance/CURRENT_CONTINUITY.md
-4f53f86711211a03e8856a7ad170359151713b406f4e0161068d549978f7e548 1087 projects/PRJ-001-naamive-mvp/governance/PLANNING_BASELINE.md
-08c72f370f0fee3b86d65009b63793fe40732ae34fca608e26df8b7638ad3377 2641 projects/PRJ-001-naamive-mvp/governance/ROUND_1_APPROVAL_CANDIDATE.md
-eafa45f9c70c2a3eff8e3ada89e17e477507325704e2be240932cc58ffe0564d 1674 projects/PRJ-001-naamive-mvp/governance/ROUND_1_AUTHORSHIP_AND_SEGREGATION.md
-189002c4591c47027d8afc274753600a03600b0615bafde202951b23dc9066a9 4265 projects/PRJ-001-naamive-mvp/governance/WORK_ITEM_ASSURANCE_MATRIX.md
-ae06591b3037569f25acd6ae781daeb9cb9509a8b0c30da54624a5211e957a9b 3781 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/MODULE.md
+8c21c4fd74f59db07b2cb3091f8a2eaf2a9db35d09a84e3d6f1b0888f373ccf6 1618 projects/PRJ-001-naamive-mvp/findings/FND-002_AUD003_TB140_OWNER_MAPPING.md
+e9060e434f4a25af0d5605ba8af0070b429b506535d98469f198d99dafb08516 1028 projects/PRJ-001-naamive-mvp/findings/FND-003_AUD004_CONTINUITY_CURRENTNESS.md
+f8b82cf9564294a2427cf2a333aa9f2e9340f5870413a17c60d4303c1a4a847d 1182 projects/PRJ-001-naamive-mvp/findings/FND-004_AUD005_PROJECTION_RECONCILIATION.md
+a1e19a366fc1bffbd8bd04122251b567e0165a06655bec023a67ff6ee85f9251 1157 projects/PRJ-001-naamive-mvp/findings/FND-005_AUD005_BASELINE_LINEAGE.md
+401e61ace42256fdcbc8efe84fce07ecb08ae063ea40e29e5bcb29b3b6d56e54 838 projects/PRJ-001-naamive-mvp/findings/FND-006_AUD006_DETERMINISTIC_COVERAGE.md
+26442cfe720dab06ec54fbd14dfce2d678715eb1af9b2ee05ec6051dc38ec35b 705 projects/PRJ-001-naamive-mvp/findings/FND-007_AUD006_FND003_DISPOSITION.md
+002f83393cdd5bf9fbfdcc8c3d2b92b622fe10db973ce7a951c499f068df0e19 930 projects/PRJ-001-naamive-mvp/findings/FND-008_AUD007_MANIFEST_INTEGRITY.md
+cc205374d8453b643e8658914633d2bd0a6d7bd76e611981a07e0833bf59a51f 1040 projects/PRJ-001-naamive-mvp/findings/FND-009_AUD007_APPROVAL_BASELINE_BINDING.md
+8fcefdf7ab5d639a1888aaf6f54802553bd2a1abb3243a4ec7b229fa440118a4 903 projects/PRJ-001-naamive-mvp/findings/FND-010_AUD007_TEMPORAL_PROVENANCE.md
+137959926adac9d43317bc181cc99cc127af3b5c24ab114da0ad77e2e007bbcc 1448 projects/PRJ-001-naamive-mvp/findings/FND-011_AUD008_ACTIVE_GATE_RECONCILIATION.md
+e5eafc1b1886a93cf5340eed963fd6dad563f11bdc9bafb3b87bdf40d06d2861 923 projects/PRJ-001-naamive-mvp/governance/AUTHORITY_CONTEXT.md
+1b53d9f72023b8177fa5f74fedb7e2fa5007551b76aa0538fdc58084674800c6 5430 projects/PRJ-001-naamive-mvp/governance/BASELINE_REVALIDATION_AUD009.md
+d300769f965dce9a739471f06cd7f3833ca9568c8cd6258ebaf6f957fbd0cd8a 2060 projects/PRJ-001-naamive-mvp/governance/CURRENT_CONTINUITY.md
+509bfc14eed494f0acd2e1078c8ccfbf18be22036c497cfd59cfb43802b12baa 1989 projects/PRJ-001-naamive-mvp/governance/PLANNING_BASELINE.md
+61e0a8e874de6463d8b808191a039547da0f29e61203572278cd9af25a04766d 1214 projects/PRJ-001-naamive-mvp/governance/ROUND_1_APPROVAL_CANDIDATE.md
+2f28d91b0152a460441300c58f64a3eb1b7ab487b15d94c1c80b008aa11a7aaf 1748 projects/PRJ-001-naamive-mvp/governance/ROUND_1_AUTHORSHIP_AND_SEGREGATION.md
+cd766cd417183709c83e6edc365e0c37dd173d763b11b543e7985b285cb33c57 4265 projects/PRJ-001-naamive-mvp/governance/WORK_ITEM_ASSURANCE_MATRIX.md
+f059248e800173b8b8405364958e593f295b2ced701ac82c12cc55e127d07481 3781 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/MODULE.md
 cc29f8f31c73b33bcbaada6c6c0f8d3ac85d481f8e483827ced2db33956b892c 311 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/DELIVERY.md
-235ad207c7e75995073f1a9b24ea19a7acd4f308ef7f199f6eca642a7010ec07 1520 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/VALIDATION_PLAN.md
-3145cabef69820bde964d90979555b08f8baf7d14f56495f9df82f9a451f30bd 3750 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/VALUE_INCREMENT.md
-e0a5b2af03d2de4d9710b23011ddc2cdadb85a888ff4201bb91b4f15d2957286 1969 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/README.md
-8c2c7cb412e92055299839e68e77e696e8efb797eef7e0c60f2617aa9b17bfb2 3396 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-001-workspace-foundation.md
-7e6f8e94b86cd0ac64f4cd2c9c7f042d90bf3d28622bd66d4bb83deae997da6d 3422 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-002-principal-persistence.md
-a9afaf2c5b3840eddf1ca700885bf10c466d36fa009c7206da0ed20965917fed 3494 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-003-login.md
-969603cb10e03d69bb13186f4fd78c33873a3c2284cc0f9c33c5f56db8aec6ef 3526 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-004-server-side-session.md
-9f7a85991da882c600c8b6c8c323df1aca88be93f2278d16bf9c789848093810 3444 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-005-authority-grants.md
-c6f902f8301be8bdb3563d6fac737ef1ba9b5d09bf54b9199b31d11fbd879914 3361 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-006-session-bootstrap.md
-55b053b665b9c1a48677e4d7f3952718b83b92d7ce722f218dd024e9c7d875b9 3446 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-007-authorized-project-list.md
-a891485a6d12653af8f338c215e00216a86a2baffae06ccc1ecf0ce164662760 3423 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-008-project-selection.md
-f3e4ab2079c77a3e6fd7ec0f60888b10da0ff310c6e0fdd1489ee671dccbe122 3513 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-009-appshell.md
-227ddad253991bdce2226e321d7e8a05dca089630dfc9ebd6b346086a9036433 3598 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-010-activity-center.md
-9bd950caf050205413aea6f15860af0f42e4a5b391abfbd1bce64ae2a723b514 3492 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-011-sse-refetch.md
-38a15810cada310c64444620c8fade5ef871c6b2f85de0b8945118054a8cebe4 3587 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-012-e2e-validation-evidence.md
-04cefd1a755d9e8d4a47c90178e0bda051124fd5bd35b5bf9c3eb1f411dbe5d5 3692 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-013-canonical-project-read-source.md
-0763bd277f091aa563969f19469548415436b812c8f67aca7b3bba49c870fe2a 2927 projects/PRJ-001-naamive-mvp/risks/RISK_REGISTER.md
+b943119db896c586a9ce2b10f912a26a20239f4c734347c3f7309a7a41bb245b 1520 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/VALIDATION_PLAN.md
+ff54a6ac3183a18f0304a0a43ff1623fba69235ab6298854b258b10ce386dfa1 3750 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/VALUE_INCREMENT.md
+44036d1653f1489ed7bc458e2c109db8a6af149f32f6aa494842d7acaed87d21 1969 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/README.md
+04516d3ad8ab25ded15103644141efe7595497d9804a6f1dbdbc648bedfed167 3396 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-001-workspace-foundation.md
+9a40f084115cba8f45df300467fd09485e6eb15bf745cace912e645d18900602 3422 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-002-principal-persistence.md
+f53e8928a87bae2942acdffa730b7825853cf832bcd31027560c5208bca011a7 3494 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-003-login.md
+4bbb0f887e33ab2bf6655a892a02f55a7075808d7a79dc30eafe2508a811e033 3526 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-004-server-side-session.md
+241e64f6502a1eeb2c833cea70b50c3318d97d7615a7bfd82b25c3efe4124eff 3444 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-005-authority-grants.md
+9d1b30fa1654d8f87e6364e1755174dde37ceb02449218e402907705db17e620 3361 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-006-session-bootstrap.md
+669036da7a5d8c1dbfba06d37f002d9cf9563ec670909a45c22d2f4f75037857 3446 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-007-authorized-project-list.md
+50f6337c947ec63eb141cc36313bdd70ecf61367238bcf46d752cc643056ca54 3423 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-008-project-selection.md
+e138c8da6de7b4f8a9f117fd0d50806e3aef24fbc2fcb30fc690e088c92d0e90 3513 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-009-appshell.md
+debca4e8f951fff651240d0958d8f60f135b4a781ef5ddfb4a139ae806b63788 3598 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-010-activity-center.md
+850f0d1300474a98d788e3e709ceedc5c9eef55664d8318d90b0d647069252d4 3492 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-011-sse-refetch.md
+22866d3fa5a7841d945e4f05a87e9c881ddf04bdf3f9a60b6ce4957c4d8ace08 3587 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-012-e2e-validation-evidence.md
+d2f303c4626ca7f3f02e15f1c294116ca87ccac6f064c76b350fcf073f6ad795 3692 projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/work-items/WI-013-canonical-project-read-source.md
+51505276e0f0564e438af7cdd3711c8dacbd5718bb5c17b6064e5467c6d3aa6c 2927 projects/PRJ-001-naamive-mvp/risks/RISK_REGISTER.md
 ```

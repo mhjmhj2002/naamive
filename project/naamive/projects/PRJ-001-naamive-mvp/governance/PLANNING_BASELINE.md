@@ -1,36 +1,38 @@
-# Planning Baseline — PBL-PRJ001-R1-v0.5
+# Planning Baseline — PBL-PRJ001-R1-v1.0
 
-**baseline_id:** PBL-PRJ001-R1-v0.5  
+**baseline_id:** PBL-PRJ001-R1-v1.0  
 **status:** CANDIDATE FOR INDEPENDENT REAUDIT  
-**created_at:** 2026-09-11T22:33:18-03:00  
+**created_at:** 2026-09-12T11:18:00-03:00  
 **normative_baseline_ref:** NB-0002  
-**supersedes_ref:** PBL-PRJ001-R1-v0.5  
-**primary_remediation:** AUD4-001 continuity/currentness reconciliation  
+**supersedes_ref:** PBL-PRJ001-R1-v0.9  
+**primary_remediation:** AUD9-001 / FND-011 — revalidação explícita do material ativo v0.5  
 **manifest:** `../../../MANIFEST.md`  
 **certificate:** `../../../BASELINE_CERTIFICATE.md`
 
-## Change from v0.4
+## Escopo fixado
 
-This baseline is intentionally narrow.
+O manifesto v1.0 fixa, por hash e tamanho, toda a evidência material submetida
+ao gate, inclusive AUD-009 e o registro por objeto
+`BASELINE_REVALIDATION_AUD009.md`. Não há evidence herdada ou revalidada fora
+do manifesto.
 
-It preserves the independently verified DEC-005/TB-140 mapping and changes only
-the planning records necessary to remove AUD4-001:
+| Objeto | Classificação | Disposição |
+|---|---|---|
+| PBL-PRJ001-R1-v0.9 | SUPERSEDE | preservada como evidência histórica do AUD-009 FAIL |
+| Material ativo listado no registro AUD9 | REVALIDATE | revalidação candidata por objeto v0.5 → v1.0, sem aprovação implícita |
+| Instruções, projeções e contexto de autoridade | RECONCILE | uma única candidata, continuidade e auditoria corrente v1.0/AUD-010 |
+| FND-003 | SUPERSEDE | sucedido por FND-004; sem blocker ou próxima ação ativa |
+| FND-004 e FND-005 | SUPERSEDE | sucedidos pelos findings de AUD-006 e preservados como história |
+| FND-006 e FND-007 | SUPERSEDE | sucedidos por FND-008..FND-010, abertos por AUD-007 |
+| FND-008 e FND-010 | KEEP | verificados por AUD-008; preservados como evidence de resolução |
+| FND-009 | SUPERSEDE | sucedido por FND-011 / AUD8-001 |
+| AUD-001..AUD-009 | KEEP | evidência histórica terminal, nunca ação corrente |
+| DEC-005 / AUD3-001 | KEEP | resolução preservada e pinada no snapshot v0.9 |
 
-```text
-canonical continuity now contains cause_ref
-current action is AUD-005
-AUD-003 is historical
-AUD-004 is historical
-ROADMAP/CURRENT_STATE/EXECUTION_BOARD/DELIVERY_TARGET agree with continuity
-FND-003 tracks the blocker until independent verification
-```
-
-No lifecycle state is promoted.
-
-No Technology Baseline field, enum, FK or constraint is changed.
+Não há promoção de lifecycle, aprovação humana, WI `READY`, Cycle, Execution,
+Validation ou Delivery.
 
 ## Currentness
 
-This is the only candidate for AUD-005.
-
-It is not approved and does not authorize implementation.
+Esta é a única candidata para AUD-010. A ação canônica é exclusivamente a
+definida em `CURRENT_CONTINUITY.md`; a baseline não autoriza implementação.

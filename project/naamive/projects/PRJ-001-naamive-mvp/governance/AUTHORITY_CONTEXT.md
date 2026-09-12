@@ -2,7 +2,7 @@
 
 **Status:** REFERENCE / DOES NOT CREATE NEW AUTHORITY  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
 
 ## Human authority principal
 
@@ -25,7 +25,7 @@ Required approval proof when/if exercised:
 ```text
 authority/principal
 object(s)
-PBL-PRJ001-R1-v0.5
+PBL-PRJ001-R1-v1.0
 decision for each proposed transition/currentness change
 timestamp
 normative_baseline_ref = NB-0002

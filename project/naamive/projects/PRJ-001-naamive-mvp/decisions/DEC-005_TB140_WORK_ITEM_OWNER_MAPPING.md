@@ -2,7 +2,7 @@
 
 **Status:** CANDIDATE FOR INDEPENDENT AUDIT  
 **Impact:** MATERIAL  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
 **technology_baseline_ref:** Technology Baseline v0.10 APPROVED / FROZEN — TB-140  
 **source_finding:** AUD3-001  

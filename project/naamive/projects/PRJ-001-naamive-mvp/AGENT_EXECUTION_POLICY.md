@@ -2,6 +2,7 @@
 
 **State:** ACTIVE FOR MANUAL SELF-HOSTING  
 **normative_baseline_ref:** NB-0002
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
 
 ## Implementation isolation
 
@@ -19,7 +20,7 @@ NB-0002/TB/TIR silently, or continue through a material gap.
 
 ## Current prohibition
 
-Under `PBL-PRJ001-R1-v0.5`:
+Sob `PBL-PRJ001-R1-v1.0`:
 
 ```text
 13 WIs = PROPOSED
@@ -32,17 +33,17 @@ No implementation agent may be dispatched yet.
 
 ## Planning author/auditor segregation
 
-Planning author principal:
+Autor da remediação corrente:
 
-`agent:chatgpt:naamive-planning-r1-v0.5`
+`agent:codex:naamive-aud9-remediation`
 
 Independent auditor principal:
 
 `agent:codex:naamive-independent-audit`
 
-A different chat window is not by itself enough if it is the same principal.
-The current workflow uses a different producer principal (ChatGPT) and audit
-principal (Codex); the audit report must record identity/independence/limitation.
+Uma janela de chat diferente não é suficiente se o principal for o mesmo. O
+fluxo corrente usa produtor e auditor declaradamente distintos; o relatório de
+auditoria deve registrar identidade, independência e limitação.
 
 ## Gap rule
 

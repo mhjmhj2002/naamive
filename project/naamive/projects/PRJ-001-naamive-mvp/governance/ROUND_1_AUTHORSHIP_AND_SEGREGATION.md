@@ -1,15 +1,15 @@
 # Round 1 — Authorship and Audit Segregation
 
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002
 
-## Planning producer
+## Produtor da candidata sucessora
 
 ```text
-principal_id: agent:chatgpt:naamive-planning-r1-v0.5
+principal_id: agent:codex:naamive-aud9-remediation
 principal_type: AGENT
-role: planning/remediation author
-provider/context: ChatGPT planning conversation
+role: remediation author
+provider/context: Codex remediation conversation
 approval authority: NONE
 independent audit authority: NONE for its own output
 ```
@@ -20,14 +20,15 @@ independent audit authority: NONE for its own output
 principal_id: agent:codex:naamive-independent-audit
 principal_type: AGENT
 role: independent destructive auditor
-provider/context: Codex Agent chat, separate from ChatGPT planning producer
+provider/context: Codex Agent chat, separado do contexto de remediação
 write scope: audit report only
 approval authority: NONE
 ```
 
 AUD-001, AUD-002 and AUD-003 were produced by Codex contexts and are retained as evidence.
-AUD-005 must be produced through the Codex audit principal/context, not by
-the planning producer.
+AUD-007, AUD-008 e AUD-009 são evidência histórica independente. AUD-010 deve ser
+produzido por `agent:codex:naamive-independent-audit`, distinto do produtor da
+v1.0.
 
 ## Human authority
 
@@ -47,11 +48,12 @@ PASS != approval
 
 ## Verification and limitation
 
-The manual local phase can record principal identities and the operator-observed
-separate ChatGPT/Codex contexts, but does not provide cryptographic attestation
-of SaaS account identity. The auditor must record this limitation explicitly.
+O processo local manual pode registrar identidades de principal e contextos de
+remediação/auditoria observados pelo operador, mas não fornece atestação
+criptográfica da identidade SaaS. O auditor deve registrar essa limitação.
 
-That limitation does not authorize self-audit: if the auditor cannot establish a
-principal distinct from `agent:chatgpt:naamive-planning-r1-v0.5`, it must FAIL closed.
+Essa limitação não autoriza autoauditoria: se o auditor não puder estabelecer
+principal distinto de `agent:codex:naamive-aud9-remediation`, deve falhar em
+modo fechado.
 
 AUD-004 is retained as independent historical evidence.

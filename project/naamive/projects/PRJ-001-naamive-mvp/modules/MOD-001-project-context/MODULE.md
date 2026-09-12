@@ -6,7 +6,7 @@
 **Nature:** business capability  
 **Impact:** MATERIAL  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
 
 ## Responsibility
 
@@ -81,7 +81,7 @@ SSE invalidation hint contract
 | NB-0002 | valid lifecycle/governance law | RATIFIED / IN FORCE and compatible baseline ref | stop planning | Project Owner | return to normative governance |
 | Technology Baseline v0.10 | frozen technical boundaries | APPROVED / FROZEN | stop technical planning | Project Owner | technical change governance |
 | TIR v1.0 | concrete implementation envelope | APPROVED and interpreted only as technical readiness | stop implementation preparation | Project Owner | reopen TIR through governance |
-| PRJ-001 | owning Project in PLANNING | current Project baseline matches `PBL-PRJ001-R1-v0.5` | stop Module gate | Project Owner | reconcile Project baseline |
+| PRJ-001 | owning Project in PLANNING | current Project baseline matches `PBL-PRJ001-R1-v1.0` | stop Module gate | Project Owner | reconcile Project baseline |
 
 ## Success criteria
 

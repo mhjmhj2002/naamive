@@ -4,7 +4,7 @@
 **Nature:** correction of invalid manual projection; not a lifecycle transition  
 **Recorded at:** 2026-09-11T20:43:24-03:00  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
 
 ## Problem
 

@@ -2,7 +2,7 @@
 
 **Status:** DETERMINISTIC INTERPRETATION OF EXISTING AUTHORITY HIERARCHY  
 **normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v0.5
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
 
 ## Conflict clarified
 

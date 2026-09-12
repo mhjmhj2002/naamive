@@ -1,8 +1,8 @@
 # FND-002 — AUD3-001 TB-140 owner / physical scope mapping
 
-**Status:** READY_FOR_VERIFICATION  
+**Status:** RESOLVED — verified by AUD-004  
 **Severity:** MATERIAL  
-**Blocking:** YES until independent verification  
+**Blocking:** NO — historical resolution retained  
 **Affected scope:** PRJ-001 planning round 1 / Work Item ownership mapping  
 **business_baseline_ref:** PBL-PRJ001-R1-v0.5  
 **normative_baseline_ref:** NB-0002  
@@ -44,12 +44,9 @@ MODULE owner
 It also defines readiness revalidation, baseline propagation and fail-closed
 behavior.
 
-## Verification required
+## Historical verification
 
-Independent AUD-004 must determine whether DEC-005 is a valid correspondence
-under NB-0002 precedence while preserving TB-140 unchanged.
-
-The planning author does not mark AUD3-001 RESOLVED.
-
-If AUD-004 finds that TB-140 itself must change, this Finding remains blocking
-and a successor Technology Baseline must be opened.
+AUD-004 determinou que DEC-005 é uma correspondência válida sob NB-0002,
+preserva TB-140 sem alteração física e não exige Technology Baseline sucessora.
+Essa resolução é histórica e só pode ser reaberta por evidência contraditória
+nova, não pela criação da baseline de planejamento v0.6.
