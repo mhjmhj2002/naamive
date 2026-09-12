@@ -218,3 +218,26 @@ A-028
  result: audit phase CLOSED; known blocking findings 0; further audit required NO
  approval: NOT GRANTED
  implementation: NOT AUTHORIZED
+
+A-029
+ type: HUMAN_DECISION / LIFECYCLE_TRANSITIONS_T1_T6
+ recorded_at: 2026-09-12T15:04:21-03:00
+ baseline: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ authority_principal: human:manuel-hinojosa:project-owner
+ authority_role: NAAMIVE Project Owner
+ decision_ref: governance/HUMAN_APPROVAL_T1_T6.md
+ decision_input_commit: cf4f2c032d61835329db820d9490250927b6bfeb
+ fact: human decision T1–T6 exercised by explicit human authority instruction
+ T1: MOD-001 IDENTIFIED -> DEFINED EXERCISED
+ T2: VI-001 IDENTIFIED -> DEFINED EXERCISED
+ T3: VI-001 DEFINED -> PLANNED EXERCISED
+ T4: MOD-001 DEFINED -> PLANNED EXERCISED
+ T5: DT-001 v1 CANDIDATE / NOT CURRENT -> CURRENT EXERCISED
+ T6: DevelopmentRoadmap v2 CANDIDATE / NOT CURRENT -> CURRENT EXERCISED
+ result: MOD-001 PLANNED; VI-001 PLANNED; DT-001 v1 CURRENT; DevelopmentRoadmap v2 CURRENT
+ work_items: 13 PROPOSED / 0 READY
+ development_cycles: 0
+ executions: 0
+ approval: GRANTED — T1–T6
+ implementation: NOT AUTHORIZED

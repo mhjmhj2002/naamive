@@ -16,7 +16,8 @@ active blockers........... 0 known
 audit phase............... CLOSED
 current audit continuity.. NONE
 further audit required.... NO
-human approval............ NOT GRANTED
+human approval............ GRANTED — T1–T6
+human decision ref........ governance/HUMAN_APPROVAL_T1_T6.md
 ```
 
 `governance/CURRENT_CONTINUITY.md` é canônico. Esta projeção não cria
@@ -26,7 +27,7 @@ autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001..WI-013 | PROPOSED | somente após decisão humana própria e readiness governado |
+| WI-001..WI-013 | PROPOSED | somente após readiness governado próprio (a decisão humana T1–T6 não promoveu nenhuma WI) |
 
 ```text
 PROPOSED............. 13

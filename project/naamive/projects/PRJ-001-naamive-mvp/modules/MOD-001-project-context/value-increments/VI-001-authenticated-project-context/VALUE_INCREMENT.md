@@ -1,7 +1,8 @@
 # VI-001 — Authenticated Project Context
 
-**Lifecycle state:** IDENTIFIED  
-**Definition/planning candidate:** COMPLETE / NOT APPROVED  
+**Lifecycle state:** PLANNED  
+**Definition/planning candidate:** APPROVED / EXERCISED — T1–T6  
+**Decision reference:** `../../../../governance/HUMAN_APPROVAL_T1_T6.md`  
 **Module owner:** MOD-001 — Project Context  
 **Candidate DeliveryTarget:** DT-001 v1 — REQUIRED_FOR_TARGET  
 **Technical correspondence:** VS-01 — Authenticated Project Context  
@@ -13,11 +14,15 @@
 ## State reconciliation
 
 The earlier bootstrap label `VI-001 = DEFINED` had no valid parent transition and
-no governed approval proof. It is therefore superseded as an invalid projection,
+no governed approval proof. It was therefore superseded as an invalid projection,
 not treated as a valid `DEFINED → IDENTIFIED` lifecycle transition.
 
-Current provable state is `IDENTIFIED` until an explicit human authority
-decision accepts the proposed transition set.
+At the time of that reconciliation, the provable state was `IDENTIFIED` until an
+explicit human authority decision accepted the proposed transition set. That
+explicit human decision was subsequently exercised and recorded in
+`../../../../governance/HUMAN_APPROVAL_T1_T6.md` (gate_result APPROVED,
+decision_input_commit cf4f2c032d61835329db820d9490250927b6bfeb). Current
+provable state is therefore `PLANNED`.
 
 ## Beneficiary
 
@@ -112,15 +117,30 @@ none currently known that require a new material decision for this closed planni
 The proposal set is evidence for planning. It does not make `VI-001` `PLANNED`
 and cannot authorize any Execution.
 
-## Proposed transition set
+## Lifecycle progression exercised
 
-After MOD-001 is validly DEFINED, the retained candidate proposes:
+After MOD-001 was validly DEFINED, the ordered transitions T2 and T3 were
+exercised by explicit human authority decision recorded in
+`../../../../governance/HUMAN_APPROVAL_T1_T6.md`:
 
 ```text
-VI-001 IDENTIFIED → DEFINED
-VI-001 DEFINED → PLANNED
+T2 — VI-001 IDENTIFIED → DEFINED    EXERCISED
+T3 — VI-001 DEFINED → PLANNED       EXERCISED
+result: VI-001 PLANNED
 ```
 
-Neither transition occurs until the human Project Owner explicitly approves the
-ordered transition set. The Round 1 audit phase is closed and did not execute
-either transition.
+`ROUND_1_APPROVAL_CANDIDATE.md` remains historical evidence of the Round 1
+proposal, closed without promotion. It is not the approval.
+
+Work Items remain:
+
+```text
+13 Work Items = PROPOSED
+0 READY
+0 IN_PROGRESS
+0 DONE
+0 Development Cycles
+0 Executions
+```
+
+Implementation remains NOT AUTHORIZED.

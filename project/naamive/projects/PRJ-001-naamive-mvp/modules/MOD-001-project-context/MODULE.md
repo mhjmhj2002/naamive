@@ -1,7 +1,8 @@
 # MOD-001 — Project Context
 
-**Lifecycle state:** IDENTIFIED  
-**Definition candidate:** COMPLETE / NOT APPROVED  
+**Lifecycle state:** PLANNED  
+**Definition candidate:** APPROVED / EXERCISED — T1–T6  
+**Decision reference:** `../../governance/HUMAN_APPROVAL_T1_T6.md`  
 **Project:** PRJ-001  
 **Nature:** business capability  
 **Impact:** MATERIAL  
@@ -123,12 +124,25 @@ The candidate `DT-001 v1` assigns `REQUIRED_FOR_TARGET` to `VI-001`. Any Module
 summary shown by UI is only a derivation from the memberships of its
 ValueIncrements.
 
-## Proposed next transition
+## Lifecycle progression exercised
+
+The ordered transitions T1 and T4 were exercised by explicit human authority
+decision recorded in `../../governance/HUMAN_APPROVAL_T1_T6.md`:
 
 ```text
-MOD-001 IDENTIFIED → DEFINED
+T1 — MOD-001 IDENTIFIED → DEFINED    EXERCISED
+T4 — MOD-001 DEFINED → PLANNED       EXERCISED
+result: MOD-001 PLANNED
 ```
 
-This transition is **not executed by this file**. It is part of
-`ROUND_1_APPROVAL_CANDIDATE.md` and requires its own explicit human approval.
-The Round 1 audit phase is closed and did not execute this transition.
+The previous section stating that this transition awaited human approval is
+reconciled here: the approval was granted and the decision was exercised via
+`governance/HUMAN_APPROVAL_T1_T6.md` (gate_result APPROVED, decision_input_commit
+cf4f2c032d61835329db820d9490250927b6bfeb).
+
+`ROUND_1_APPROVAL_CANDIDATE.md` remains historical evidence of the Round 1
+proposal, closed without promotion. It is not the approval.
+
+MOD-001 does **not** advance to IMPLEMENTING. Implementation remains
+NOT AUTHORIZED; Work Items remain PROPOSED / 0 READY; 0 Development Cycles;
+0 Executions.

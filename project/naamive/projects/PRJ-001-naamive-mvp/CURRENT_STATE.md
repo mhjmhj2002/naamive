@@ -6,10 +6,10 @@
 ```text
 Need....................... NEED-001 ACCEPTED
 Project.................... PRJ-001 PLANNING
-Module..................... MOD-001 IDENTIFIED
-VI-001..................... IDENTIFIED
-DT-001 v1.................. CANDIDATE / NOT CURRENT
-Roadmap v2................. CANDIDATE / NOT CURRENT
+Module..................... MOD-001 PLANNED
+VI-001..................... PLANNED
+DT-001 v1.................. CURRENT
+Roadmap v2................. CURRENT
 Work Items................. 13 PROPOSED / 0 READY
 Development Cycles......... 0
 Executions................. 0
@@ -35,7 +35,9 @@ audit phase................ CLOSED BY HUMAN DECISION
 current audit continuity... NONE
 known blocking findings.... 0
 further audit required..... NO
-human approval............. NOT GRANTED
+human approval............. GRANTED — T1–T6
+human decision ref......... governance/HUMAN_APPROVAL_T1_T6.md
+decision_input_commit...... cf4f2c032d61835329db820d9490250927b6bfeb
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
