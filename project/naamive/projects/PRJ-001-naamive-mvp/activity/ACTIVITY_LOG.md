@@ -343,3 +343,37 @@ A-035
  execution_state: SUCCEEDED
  acceptance: NOT GRANTED
  recorded_at: 2026-09-12T20:07:40-03:00
+
+A-036
+ type: REWORK_EXECUTION_STARTED
+ execution: EX-002
+ previous_execution: EX-001
+ review: CR-WI001-01
+ work_item: WI-001
+ execution_transition: CREATED -> ELIGIBLE -> RUNNING
+ work_item_transition: IN_REVIEW -> IN_PROGRESS
+ implementation_principal: agent:codex:implementation:EX-002
+ runtime_identity: agent:codex:/root
+ input_commit: 52ba9221bc4a945b9c8507df323826484a0d8bb8
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ claim_status: ACTIVE
+ baseline_revalidated: YES
+ authority_revalidated: YES
+ recorded_at: 2026-09-12T20:21:05-03:00
+
+A-037
+ type: REWORK_EXECUTION_SUCCEEDED / WORK_ITEM_READY_FOR_REVIEW
+ execution: EX-002
+ previous_execution: EX-001
+ review_source: CR-WI001-01
+ work_item: WI-001
+ execution_transition: RUNNING -> SUCCEEDED
+ work_item_transition: IN_PROGRESS -> IN_REVIEW
+ findings_addressed: CR-WI001-F001..F005
+ finding_status: REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT REVIEW
+ evidence_ref: executions/evidence/EX-002-WI001.md
+ claim_status: RELEASED / COMPLETED
+ acceptance: NOT GRANTED
+ code_review: CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 REQUIRED
+ recorded_at: 2026-09-12T20:25:56-03:00

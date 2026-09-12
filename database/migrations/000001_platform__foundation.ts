@@ -1,7 +1,6 @@
 import { sql, type Kysely } from 'kysely';
 
 export async function up(db: Kysely<unknown>): Promise<void> {
-  await sql`CREATE SCHEMA IF NOT EXISTS platform`.execute(db);
   await sql`CREATE TABLE IF NOT EXISTS platform.foundation_migration_probe (id integer PRIMARY KEY)`.execute(db);
 }
 

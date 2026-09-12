@@ -9,7 +9,7 @@
 **Last valid audit:** AUD-009 — historical FAIL  
 **Audit phase:** CLOSED  
 **Implementation authority:** GRANTED
-**Implementation:** TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+**Implementation:** REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 
 ---
 
@@ -26,12 +26,13 @@ Work Items.............. 12 PROPOSED / 1 IN_REVIEW
 WI-001................... IN_REVIEW
 Readiness authority...... GRANTED / EXERCISED
 Development Cycles...... 1 (DC-001)
-Executions.............. 1
-EX-001................... SUCCEEDED
+Executions.............. 2
+EX-001................... SUCCEEDED / HISTORICAL
+EX-002................... SUCCEEDED
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED
-Implementation.......... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Implementation.......... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 ```
 
 A verdade operacional detalhada deve ser consultada em:
@@ -126,8 +127,8 @@ para Work Items, Cycles ou Executions.
 O fato de Module, Value Increment, DeliveryTarget e Roadmap estarem aprovados ou
 correntes não significa que desenvolvimento possa começar.
 
-O próximo avanço governado para WI-001 é a revisão/auditoria independente do
-resultado técnico de `EX-001`.
+O próximo avanço governado para WI-001 é `CR-WI001-02`, revisão independente
+da remediação técnica de `EX-002`.
 
 Fluxo mínimo:
 
@@ -137,10 +138,10 @@ Work Item IN_REVIEW
 → decisão de aceite separada
 ```
 
-`EX-001 SUCCEEDED` não equivale a `WI-001 DONE`:
+`EX-002 SUCCEEDED` não equivale a `WI-001 DONE`:
 
 ```text
-Implementation = TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Implementation = REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 ```
 
 Nenhum agente, commit, teste ou sucesso técnico pode substituir review, auditoria

@@ -1,5 +1,5 @@
-import { readdirSync, readFileSync, statSync } from 'node:fs';
-import { resolve, relative, sep } from 'node:path';
+import { readdirSync, readFileSync } from 'node:fs';
+import { dirname, resolve, relative, sep } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const importPattern = /(?:import|export)\s+(?:[^'";]+?\s+from\s+)?['"]([^'"]+)['"]/g;
@@ -36,21 +36,44 @@ function workspacePackageCycles() {
   return cycles;
 }
 
+function packageBoundary(file) {
+  const parts = resolve(file).split(sep);
+  const packagesIndex = parts.lastIndexOf('packages');
+  return packagesIndex === -1 ? undefined : parts[packagesIndex + 1];
+}
+
+function isWebClient(file) {
+  return resolve(file).includes(`${sep}apps${sep}web${sep}src${sep}client${sep}`);
+}
+
+function resolvedSpecifier(file, specifier) {
+  return specifier.startsWith('.') ? resolve(dirname(file), specifier) : undefined;
+}
+
 export function violationsFor(file) {
   const source = readFileSync(file, 'utf8');
   const violations = [];
   for (const match of source.matchAll(importPattern)) {
     const specifier = match[1];
+    const target = resolvedSpecifier(file, specifier);
+    const sourcePackage = packageBoundary(file);
+    const targetPackage = target && packageBoundary(target);
     if (specifier.includes('/internal/') || /@naamive\/[^/]+\/.+/.test(specifier)) {
       violations.push('private module/internal import');
     }
-    if (file.includes(`${sep}apps${sep}web${sep}src${sep}client${sep}`) && /(?:@naamive\/database|packages\/database)/.test(specifier)) {
+    if (target?.includes(`${sep}internal${sep}`) && !violations.includes('private module/internal import')) {
+      violations.push('private module/internal import');
+    }
+    if (sourcePackage && targetPackage && sourcePackage !== targetPackage) {
+      violations.push('cross-package source access via relative import');
+    }
+    if (isWebClient(file) && (/(?:@naamive\/database|packages\/database)/.test(specifier) || targetPackage === 'database')) {
       violations.push('frontend persistence access');
     }
     if (file.includes(`${sep}packages${sep}modules${sep}`) && /(?:fastify|kysely|pg|react|vite|docker)/.test(specifier)) {
       violations.push('forbidden domain-layer dependency');
     }
-    if (file.includes(`${sep}packages${sep}`) && specifier.includes(`${sep}apps${sep}`)) {
+    if (file.includes(`${sep}packages${sep}`) && (specifier.includes(`${sep}apps${sep}`) || target?.includes(`${sep}apps${sep}`))) {
       violations.push('package-to-composition-root dependency');
     }
   }

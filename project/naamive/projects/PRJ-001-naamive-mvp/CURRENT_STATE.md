@@ -12,11 +12,11 @@ DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
 Work Items................. 12 PROPOSED / 1 IN_REVIEW
 Development Cycles......... 1
-Executions................. 1
+Executions................. 2
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED
-Implementation............. CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+Implementation............. REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 ```
 
 ## Fechamento da Planning Round 1
@@ -49,12 +49,11 @@ readiness gate............. APPROVED / EXERCISED
 readiness authority........ GRANTED / EXERCISED
 human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
 Development Cycle.......... DC-001
-Execution.................. EX-001
-Execution state............ SUCCEEDED
+Executions................. EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED
 Implementation authority... GRANTED
-Code Review................ FAIL — CR-WI001-01 (4 BLOCKING / 1 NON_BLOCKING)
+Code Review................ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 REQUIRED
 Acceptance................. NOT GRANTED / BLOCKED
-Implementation............. CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+Implementation............. REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são

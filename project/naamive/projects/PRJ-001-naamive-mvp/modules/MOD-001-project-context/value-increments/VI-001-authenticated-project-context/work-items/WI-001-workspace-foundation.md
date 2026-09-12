@@ -11,7 +11,7 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** none  
 **Development Cycle:** DC-001 (`development-cycles/DC-001-WI001.md`)
-**Execution:** EX-001 (`executions/EX-001-WI001.md`) — SUCCEEDED
+**Executions:** EX-001 (`executions/EX-001-WI001.md`) — SUCCEEDED / HISTORICAL; EX-002 (`executions/EX-002-WI001.md`) — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED
 **Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`
 
@@ -24,8 +24,8 @@ material product/architecture decision.
 ## Relation to plan
 
 Canonical proposed entry in DevelopmentRoadmap v2. Its readiness gate was
-approved and exercised; a Development Cycle remains required before any
-Execution or implementation.
+approved and exercised; `DC-001` já existe, `EX-001` ocorreu e permanece
+histórica, e `EX-002` materializou o rework governado após `CR-WI001-01`.
 
 ## Outcome
 
@@ -169,12 +169,13 @@ Execution has now started under its recorded operational claim:
 READY → IN_PROGRESS
 ```
 
-`EX-001` produced the technical result and the Work Item now awaits its
-separate review/audit and acceptance decisions:
+`EX-001` produced a technical result que falhou em `CR-WI001-01`. `EX-002`
+materializou a remediação no mesmo compromisso; o Work Item agora aguarda novo
+Code Review independente e as decisões separadas aplicáveis:
 
 ```text
 IN_PROGRESS → IN_REVIEW
-review........ NOT EXECUTED
+review........ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 REQUIRED
 acceptance.... NOT GRANTED
 audit......... PENDING AS APPLICABLE
 ```

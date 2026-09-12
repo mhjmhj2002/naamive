@@ -9,9 +9,19 @@ describe('structured logging foundation', () => {
       { timestamp: false },
       { write: (value: string) => writes.push(value) } as never,
     );
-    logger.info({ password: 'do-not-log' }, 'foundation');
-    expect(writes.join('')).toContain('[REDACTED]');
-    expect(writes.join('')).not.toContain('do-not-log');
-    expect(writes.join('')).toContain('"service":"worker"');
+    const secrets = ['top-level-password', 'request-password', 'body-password', 'authorization-value', 'cookie-value', 'token-value', 'access-token-value', 'refresh-token-value'];
+    logger.info({
+      password: secrets[0],
+      request: { password: secrets[1] },
+      body: { password: secrets[2] },
+      headers: { authorization: secrets[3], cookie: secrets[4] },
+      token: secrets[5],
+      access_token: secrets[6],
+      refresh_token: secrets[7]
+    }, 'foundation');
+    const output = writes.join('');
+    expect(output).toContain('[REDACTED]');
+    for (const secret of secrets) expect(output).not.toContain(secret);
+    expect(output).toContain('"service":"worker"');
   });
 });

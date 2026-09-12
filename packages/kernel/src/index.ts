@@ -20,7 +20,17 @@ export function createLogger(context: LogContext, options: LoggerOptions = {}, d
       environment: context.environment,
       release_id: context.release_id
     },
-    redact: { paths: ['password', 'password.*', 'authorization', 'cookie', 'token'], censor: '[REDACTED]' },
+    redact: {
+      paths: [
+        'password', '*.password', '*.*.password',
+        'authorization', '*.authorization', '*.*.authorization',
+        'cookie', '*.cookie', '*.*.cookie',
+        'token', '*.token', '*.*.token',
+        'access_token', '*.access_token', '*.*.access_token',
+        'refresh_token', '*.refresh_token', '*.*.refresh_token'
+      ],
+      censor: '[REDACTED]'
+    },
     ...options
   }, destination).child({
     correlation_id: context.correlation_id ?? null,

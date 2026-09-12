@@ -26,17 +26,18 @@ Sob `PBL-PRJ001-R1-v1.0`:
 12 WIs = PROPOSED
 1 WI = IN_REVIEW
 1 Development Cycle (DC-001)
-1 Execution SUCCEEDED (EX-001)
+2 Executions SUCCEEDED (EX-001 historical; EX-002 rework)
 ```
 
 ```text
 Implementation authority = GRANTED
-Implementation = TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Implementation = REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 ```
 
-`EX-001` teve claim operacional exclusivo, produziu o resultado técnico e
-liberou o claim. O próximo worker, se houver, deve ser independente para review
-ou audit e não pode reexecutar esta tentativa terminal.
+`EX-001` e `EX-002` tiveram claims operacionais exclusivos e liberados.
+`EX-001` permanece terminal/histórica; `EX-002` produziu remediação técnica. O
+próximo worker deve ser independente para `CR-WI001-02` e não pode reexecutar
+nenhuma tentativa terminal.
 
 ## Planning Round 1 closure
 
