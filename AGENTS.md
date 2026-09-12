@@ -36,13 +36,43 @@ Antes de alterar documentação ou código:
 1. leia a task inteira;
 2. identifique o escopo exato;
 3. leia este `AGENTS.md`;
-4. leia a documentação normativa aplicável;
-5. identifique a Normative Baseline efetiva, quando existir;
-6. identifique lifecycle, authority, gates, contracts, baseline, continuity e
-   recovery afetados;
-7. só então proponha ou realize mudanças.
+4. classifique a task como **mecânica/local** ou **governada/material**;
+5. leia somente a documentação necessária para executar o escopo com segurança;
+6. só então proponha ou realize mudanças.
 
-Para leitura rápida do sistema, use:
+### 2.1 Task mecânica/local
+
+Considere mecânica/local quando a task:
+
+- possui arquivos-alvo conhecidos e escopo explícito;
+- não altera comportamento normativo;
+- não realiza transição de lifecycle;
+- não muda authority, baseline, contracts ou intenção de negócio;
+- não exige auditoria ou investigação ampla.
+
+Nesse caso:
+
+- abra diretamente os arquivos-alvo;
+- leia apenas regras explicitamente referenciadas ou materialmente necessárias;
+- **não faça crawl, indexação ou busca pelo repositório inteiro**;
+- **não inventarie lifecycle, authority, gates, contracts, continuity ou recovery**
+  se eles não forem afetados;
+- **não abra diagramas ou documentação auxiliar por padrão**;
+- execute apenas os checks proporcionais à mudança;
+- para mudança somente documental, não execute suíte ampla de testes salvo pedido
+  explícito ou necessidade concreta.
+
+### 2.2 Task governada/material
+
+Quando a task alterar lifecycle, authority, baseline, contrato, comportamento
+normativo, arquitetura material ou autorização de execução:
+
+1. leia a documentação normativa aplicável;
+2. identifique a Normative Baseline efetiva, quando existir;
+3. identifique somente os lifecycle, authority, gates, contracts, baseline,
+   continuity e recovery realmente afetados.
+
+Para leitura rápida do sistema, quando ela for necessária, use:
 
 - `lifecycle/diagrams/00_LIFECYCLE_VISUAL_GUIDE.md`
 
@@ -126,10 +156,71 @@ Não invente tecnologia em silêncio.
 
 Use **um novo agente por task**.
 
-Não reutilize indefinidamente o mesmo contexto para tarefas independentes.
+Esta regra é uma responsabilidade do **operador/orquestrador humano**. Ela
+**não autoriza o agente da task a criar, delegar ou coordenar outros agentes**.
+
+O agente é um worker, não um orquestrador.
+
+Por padrão, o agente da task deve:
+
+```text
+receber a task
+→ executar o escopo
+→ validar proporcionalmente
+→ reportar o resultado
+→ encerrar
+```
+
+Sem instrução explícita na própria task, o agente **não deve**:
+
+- criar subagente;
+- delegar parte da task a outro worker;
+- criar reviewer, auditor ou verifier independente;
+- solicitar a outro agente que tente falsificar suas conclusões;
+- executar revisão independente recursiva;
+- criar nova task para si mesmo ou para outro agente;
+- transformar validação local em uma nova auditoria;
+- continuar trabalhando depois que os critérios de conclusão forem satisfeitos.
+
+Quando revisão ou auditoria independente for desejada, ela deve ser uma
+**task separada**, iniciada pelo operador/orquestrador depois que o worker
+anterior terminar.
+
+Exceção: subagentes só podem ser usados quando a task recebida disser
+explicitamente que delegação é necessária ou autorizada e definir seu escopo.
+
+Mesmo quando autorizados:
+
+- subagentes não podem criar outros subagentes;
+- a delegação deve permanecer limitada ao escopo original;
+- o agente principal não deve iniciar ciclos recursivos de verificação.
+
+Não reutilize indefinidamente o mesmo contexto para tasks independentes.
 
 Isso reduz contaminação de contexto, facilita auditoria e deixa causa e
 responsabilidade da mudança mais claras.
+
+### 7.1 Execução enxuta
+
+Prefira o caminho mais curto que prove a conclusão da task.
+
+Para tasks mecânicas/locais:
+
+- abra diretamente arquivos conhecidos em vez de pesquisar o repositório;
+- faça no máximo **uma passada de validação final**;
+- não faça "independent verification" automática;
+- não faça "falsification pass" automática;
+- não releia o corpus inteiro depois de editar;
+- não execute testes não relacionados;
+- não crie fases artificiais de planejamento, revisão e pós-revisão.
+
+Como orçamento operacional padrão, uma task mecânica deve normalmente terminar
+em até **10–15 tool calls**. Se esse orçamento for excedido porque surgiu um
+bloqueio real, pare a expansão automática e reporte objetivamente o motivo.
+
+Comandos de terminal devem ser não interativos sempre que possível. Se um
+comando ficar aguardando input, serviço externo ou processo sem progresso,
+interrompa-o e reporte em vez de esperar indefinidamente.
 
 ---
 
@@ -333,7 +424,7 @@ Se a norma exige humano, preserve essa exigência.
 
 ## 19. Auditoria
 
-Quando a task for de auditoria:
+Quando a **task recebida** for de auditoria:
 
 - não corrija enquanto audita, salvo autorização explícita;
 - cite evidência concreta;
@@ -342,6 +433,13 @@ Quando a task for de auditoria:
 - procure contradições e dead-ends, não apenas happy path;
 - verifique regressões;
 - mantenha independência proporcional à materialidade.
+
+"Independência" aqui significa separação adequada entre implementação e a task
+de auditoria. **Não significa que um agente deve criar outro agente para
+auditá-lo.**
+
+Se a auditoria independente exigir um worker diferente, o operador/orquestrador
+deve iniciar essa task separadamente.
 
 Auditoria positiva não equivale a ratificação humana.
 
@@ -452,16 +550,25 @@ protocolo que deliberadamente usem inglês.
 
 ## 26. Ao terminar uma task
 
-Antes de declarar concluído:
+Antes de declarar concluído, faça **uma validação proporcional ao escopo**:
 
 1. confira o escopo;
 2. verifique arquivos alterados;
-3. valide invariantes;
-4. execute checks aplicáveis;
-5. procure regressão direta;
+3. valide apenas as invariantes afetadas;
+4. execute os checks aplicáveis;
+5. procure regressão direta relacionada à mudança;
 6. reporte o que mudou;
 7. reporte o que não foi possível validar;
-8. não publique nem faça commit sem autorização.
+8. não publique nem faça commit sem autorização;
+9. **encerre a task**.
+
+Não crie subagente para verificar a conclusão.
+
+Não faça segunda auditoria, falsification pass, review recursivo ou nova rodada
+de investigação por padrão depois que os checks aplicáveis passarem.
+
+Se um check falhar, trate apenas a causa dentro do escopo ou reporte o bloqueio.
+Não expanda silenciosamente a task.
 
 ---
 
