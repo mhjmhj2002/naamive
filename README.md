@@ -98,12 +98,12 @@ Module MOD-001............. PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 12 PROPOSED / 1 READY
+Work Items................. 12 PROPOSED / 1 IN_REVIEW
 Development Cycles......... 1
 Executions................. 1
-EX-001...................... ELIGIBLE
+EX-001...................... SUCCEEDED
 Implementation authority... GRANTED
-Implementation............. NOT STARTED
+Implementation............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
 A decisão humana T1–T6 já foi exercida e materializou o avanço de MOD-001,
@@ -121,12 +121,12 @@ Seu readiness candidate foi preparado e passou por auditoria independente com:
 AUD-WI001-READINESS-01
 Result..................... PASS_WITH_FINDINGS
 Findings F-001 / F-002...... RESOLVED
-WI-001..................... READY
+WI-001..................... IN_REVIEW
 Readiness authority........ GRANTED / EXERCISED
 Development Cycles......... 1 (DC-001)
-Executions................. 1 (EX-001 ELIGIBLE)
+Executions................. 1 (EX-001 SUCCEEDED)
 Implementation authority... GRANTED
-Implementation............. NOT STARTED
+Implementation............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
 Os dois findings não bloqueadores identificados pela auditoria foram tratados:
@@ -141,8 +141,9 @@ não reescreve retroativamente o relatório de auditoria.
 
 A decisão humana de readiness está registrada em
 `project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_WI001_READINESS.md`.
-A próxima ação legítima é iniciar `EX-001` governadamente, adquirindo claim
-operacional válido; ela não é implementação direta.
+`EX-001` produziu o resultado técnico da foundation e `WI-001` está
+`IN_REVIEW`. A próxima ação legítima é review/audit independente e aceite
+separado; ela não promove `WI-001` automaticamente para `DONE`.
 
 A documentação operacional corrente do self-hosting está em:
 

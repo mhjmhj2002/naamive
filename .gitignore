@@ -72,6 +72,8 @@ dist/
 .vite/
 *.tsbuildinfo
 .eslintcache
+playwright-report/
+test-results/
 
 # Angular
 .angular/

@@ -292,3 +292,37 @@ A-032
  development_cycles: 1
  executions: 1
  recorded_at: 2026-09-12T19:11:42-03:00
+
+A-033
+ type: EXECUTION_STARTED
+ execution: EX-001
+ cycle: DC-001
+ work_item: WI-001
+ execution_transition: ELIGIBLE -> RUNNING
+ work_item_transition: READY -> IN_PROGRESS
+ authority: EXECUTE_WORK
+ authority_ref: governance/HUMAN_AUTHORIZATION_WI001_EXECUTION.md
+ claim_principal: agent:codex:/root
+ claim_runtime_user: mhj
+ input_commit: 9a971bab662ec1a5ba8d8c37d3007ab5ba135724
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ baseline_revalidated: YES
+ recorded_at: 2026-09-12T19:22:17-03:00
+
+A-034
+ type: EXECUTION_SUCCEEDED / WORK_ITEM_READY_FOR_REVIEW
+ execution: EX-001
+ execution_transition: RUNNING -> SUCCEEDED
+ work_item: WI-001
+ work_item_transition: IN_PROGRESS -> IN_REVIEW
+ cycle: DC-001
+ evidence_ref: executions/evidence/EX-001-WI001.md
+ authoritative_result: technical result in current worktree; awaiting review
+ review: NOT EXECUTED
+ acceptance: NOT GRANTED
+ audit: PENDING AS APPLICABLE
+ claim_status: RELEASED / COMPLETED
+ authority_revalidated: YES
+ baseline_revalidated: YES
+ recorded_at: 2026-09-12T19:33:55-03:00

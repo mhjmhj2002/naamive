@@ -1,0 +1,30 @@
+{
+  "name": "naamive",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "packageManager": "pnpm@12.3.4",
+  "engines": {
+    "node": ">=24.21.0 <25",
+    "pnpm": "12.3.4"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "build": "pnpm -r --if-present run build",
+    "test": "pnpm -r --if-present run test",
+    "architecture": "node scripts/architecture-guardrails.mjs",
+    "test:architecture": "node --test scripts/architecture-guardrails.test.mjs",
+    "test:e2e": "playwright test",
+    "db:bootstrap": "pnpm --filter @naamive/database bootstrap",
+    "db:migrate": "pnpm --filter @naamive/database migrate",
+    "db:integration": "pnpm --filter @naamive/database integration"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "24.10.0",
+    "kysely": "0.29.5",
+    "tsx": "4.21.0",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}

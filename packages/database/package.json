@@ -1,0 +1,16 @@
+{
+  "name": "@naamive/database",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": { ".": "./src/index.ts" },
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
+    "bootstrap": "tsx src/bootstrap.ts",
+    "migrate": "tsx src/migrate.ts",
+    "integration": "tsx src/integration.ts"
+  },
+  "dependencies": { "kysely": "0.29.5", "pg": "8.23.0" },
+  "devDependencies": { "@types/pg": "8.15.6" }
+}

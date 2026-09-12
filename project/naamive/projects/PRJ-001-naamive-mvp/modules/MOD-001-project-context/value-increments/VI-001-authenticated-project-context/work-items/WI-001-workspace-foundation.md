@@ -1,6 +1,6 @@
 # WI-001 — Repository / Workspace Foundation
 
-**State:** READY
+**State:** IN_REVIEW
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** PRJ-001 — NAAMIVE MVP  
@@ -11,7 +11,7 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** none  
 **Development Cycle:** DC-001 (`development-cycles/DC-001-WI001.md`)
-**Execution:** EX-001 (`executions/EX-001-WI001.md`) — ELIGIBLE
+**Execution:** EX-001 (`executions/EX-001-WI001.md`) — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED
 **Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`
 
@@ -162,8 +162,22 @@ PROPOSED
 → IN_PROGRESS
 ```
 
-`READY` does not authorize code, Execution or implementation. The next required
-governed action is creating the applicable Development Cycle.
+`READY` does not authorize code, Execution or implementation. The first valid
+Execution has now started under its recorded operational claim:
+
+```text
+READY → IN_PROGRESS
+```
+
+`EX-001` produced the technical result and the Work Item now awaits its
+separate review/audit and acceptance decisions:
+
+```text
+IN_PROGRESS → IN_REVIEW
+review........ NOT EXECUTED
+acceptance.... NOT GRANTED
+audit......... PENDING AS APPLICABLE
+```
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

@@ -17,7 +17,7 @@
 |---|---|---|---|
 | RM-001 | FINDING_REMEDIATION | FND-011 | CLOSED — remediação materializada na v1.0 e encerrada por decisão humana |
 | RM-002 | HUMAN_DECISION | HUMAN_APPROVAL_T1_T6 | EXERCISED — decisão humana T1–T6 registrada em `governance/HUMAN_APPROVAL_T1_T6.md` |
-| RM-003 | WORK_ITEM | WI-001 | readiness gate SATISFIED; WI-001 READY; Development Cycle DC-001 CREATED; EX-001 ELIGIBLE; próxima ação: iniciar Execution governadamente |
+| RM-003 | WORK_ITEM | WI-001 | technical result produced by EX-001; WI-001 IN_REVIEW; próxima ação: review/audit independente e aceite separado |
 | RM-004..RM-015 | WORK_ITEM | WI-002..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
@@ -54,7 +54,7 @@ decision_input_commit cf4f2c032d61835329db820d9490250927b6bfeb).
 A currentness do Roadmap v2 **não** satisfez automaticamente o readiness de
 WI-001. O gate de RM-003 foi posteriormente aprovado e exercido por
 `governance/HUMAN_APPROVAL_WI001_READINESS.md`: WI-001 está `READY`.
-Permanecem 12 PROPOSED / 1 READY; 1 Development Cycle; `EX-001 ELIGIBLE`;
-Implementation authority GRANTED e Implementation NOT STARTED. A próxima ação
-legítima é iniciar `EX-001` governadamente, adquirindo claim operacional antes
-da transição para `RUNNING`.
+Permanecem 12 PROPOSED / 1 IN_REVIEW; 1 Development Cycle; `EX-001 SUCCEEDED`;
+Implementation TECHNICAL RESULT PRODUCED / AWAITING REVIEW. A próxima ação
+legítima é uma task independente de review/audit e aceite, sem promover
+automaticamente `WI-001` para `DONE`.

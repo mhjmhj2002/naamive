@@ -10,13 +10,13 @@ Module..................... MOD-001 PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 12 PROPOSED / 1 READY
+Work Items................. 12 PROPOSED / 1 IN_REVIEW
 Development Cycles......... 1
 Executions................. 1
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED
-Implementation............. NOT STARTED
+Implementation............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
 ## Fechamento da Planning Round 1
@@ -44,15 +44,15 @@ decision_input_commit...... cf4f2c032d61835329db820d9490250927b6bfeb
 ## Readiness de WI-001
 
 ```text
-WI-001..................... READY
+WI-001..................... IN_REVIEW
 readiness gate............. APPROVED / EXERCISED
 readiness authority........ GRANTED / EXERCISED
 human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
 Development Cycle.......... DC-001
 Execution.................. EX-001
-Execution state............ ELIGIBLE
+Execution state............ SUCCEEDED
 Implementation authority... GRANTED
-Implementation............. NOT STARTED
+Implementation............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são

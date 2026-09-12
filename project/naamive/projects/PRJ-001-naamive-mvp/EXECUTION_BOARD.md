@@ -5,7 +5,7 @@
 **normative_baseline_ref:** NB-0002  
 **Project:** PLANNING  
 **Implementation authority:** GRANTED
-**Implementation:** NOT STARTED
+**Implementation:** TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 
 ## Fato atual projetado
 
@@ -29,25 +29,25 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001 | READY | adquirir claim / iniciar EX-001 governadamente |
+| WI-001 | IN_REVIEW | review/audit independente e aceite separados |
 | WI-002..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
 PROPOSED............. 12
-READY................ 1
+READY................ 0
 IN_PROGRESS.......... 0
-IN_REVIEW............ 0
+IN_REVIEW............ 1
 DONE................. 0
 Development Cycles... 1
 Executions............ 1
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
-`WI-001 READY` não autoriza implementação. `EX-001 ELIGIBLE` ainda requer
-claim operacional e revalidação para iniciar.
+O resultado técnico de `EX-001` está disponível para a próxima task independente
+de review/audit. Nenhum resultado técnico equivale a aceite.
 
 ## Executions
 
 ```text
-EX-001............... ELIGIBLE
+EX-001............... SUCCEEDED
 ```

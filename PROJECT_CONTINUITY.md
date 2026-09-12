@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED`
-**Implementation:** `NOT STARTED`
+**Implementation:** `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`
 
 ---
 
@@ -146,7 +146,7 @@ Audit 2.10............. COMPLETE
 Remediation 2.10R...... COMPLETE
 Verification 2.10V..... PASS
 Human approval 2.11.... COMPLETE
-Implementation......... NOT AUTHORIZED
+Implementation......... governed by WI/Execution authority; technical result now awaiting review
 ```
 
 A Technology Baseline define **como implementar**, mas não autoriza por si só o
@@ -305,7 +305,7 @@ para fingir que a decisão ocorreu dentro da rodada fechada.
 
 ## 10. Estado corrente do PRJ-001
 
-Estado corrente após a decisão de readiness de WI-001:
+Estado corrente após o resultado técnico de EX-001:
 
 ```text
 Need NEED-001........... ACCEPTED
@@ -314,13 +314,13 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 12 PROPOSED / 1 READY
+Work Items.............. 12 PROPOSED / 1 IN_REVIEW
 Development Cycles...... 1 (DC-001)
-Executions.............. 1 (EX-001 ELIGIBLE)
+Executions.............. 1 (EX-001 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED
-Implementation.......... NOT STARTED
+Implementation.......... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 ```
@@ -343,7 +343,9 @@ humana de readiness de WI-001 foi registrada como `A-030`.
 ## 11. Limites da decisão de readiness de WI-001
 
 A decisão humana de readiness de WI-001 promoveu exclusivamente
-`WI-001 PROPOSED → READY`. Ela não autorizou:
+`WI-001 PROPOSED → READY`. A autorização posterior de `EXECUTE_WORK` foi
+exercida por `EX-001`, que produziu resultado técnico. A decisão de readiness
+não autorizou por si só:
 
 ```text
 qualquer outro WI → READY
@@ -354,15 +356,15 @@ Validation
 Delivery
 ```
 
-Contagem:
+Estado corrente após `EX-001`:
 
 ```text
 12 PROPOSED
-1 READY (WI-001)
+1 IN_REVIEW (WI-001)
 0 IN_PROGRESS
 0 DONE
-0 Development Cycles
-1 Execution (EX-001 ELIGIBLE)
+1 Development Cycle (DC-001)
+1 Execution (EX-001 SUCCEEDED)
 ```
 
 Não inferir autorização de implementação a partir de:
@@ -380,29 +382,28 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é iniciar `EX-001` governadamente, conforme lifecycle e
-governança aplicáveis.
+O próximo avanço real é avaliar o resultado técnico de `EX-001` de forma
+independente, conforme lifecycle e governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
-WI-001 READY
-→ Development Cycle DC-001 CREATED
-→ EX-001 ELIGIBLE
-→ adquirir claim / iniciar Execution
+WI-001 IN_REVIEW
+→ review/audit independente aplicável
+→ decisão de aceite humana conforme aplicável
 ```
 
-Nenhuma dessas etapas deve ser pulada.
+`EX-001 SUCCEEDED` não promove `WI-001` para `DONE`.
 
 ### Próxima ação recomendada
 
 Após a revisão e publicação humana deste checkpoint:
 
 ```text
-abrir task governada para adquirir claim e iniciar EX-001
+abrir task independente de review/audit para WI-001
 ```
 
-Não iniciar código diretamente.
+Não reexecutar EX-001 nem conceder aceite por inferência.
 
 ---
 
@@ -619,8 +620,8 @@ NB-0001 é histórica e imutável.
 
 Technology Baseline v0.10 está APPROVED / FROZEN.
 TIR v1.0 está APPROVED.
-Mesmo assim, Implementation authority está GRANTED e Implementation continua
-NOT STARTED.
+EX-001 produziu o resultado técnico autorizado; Implementation está
+TECHNICAL RESULT PRODUCED / AWAITING REVIEW.
 
 Planning Round 1 está COMPLETE.
 Business Baseline final da rodada: PBL-PRJ001-R1-v1.0.
@@ -646,11 +647,11 @@ VI-001 = PLANNED
 DT-001 v1 = CURRENT
 Roadmap v2 = CURRENT
 12 Work Items = PROPOSED
-1 READY (WI-001)
+1 IN_REVIEW (WI-001)
 1 Development Cycle (DC-001)
-1 Execution (EX-001 ELIGIBLE)
+1 Execution (EX-001 SUCCEEDED)
 Implementation authority = GRANTED
-Implementation = NOT STARTED
+Implementation = TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -662,11 +663,11 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado:
-iniciar EX-001 governadamente, com claim operacional válido.
+review/audit independente aplicável e decisão de aceite separada.
 
 Não promova WI-001 automaticamente.
-Não inicie código.
-Não inicie EX-001 sem claim operacional válido.
+Não reexecute EX-001 terminal.
+Não promova WI-001 para DONE sem review/audit/aceite aplicáveis.
 Não reabra auditoria encerrada.
 Não crie subagentes sem autorização explícita.
 Humano controla commit/push/merge/rebase/reset/clean.
@@ -731,14 +732,14 @@ VI-001...................... PLANNED
 DT-001 v1................... CURRENT
 ROADMAP v2.................. CURRENT
 
-WORK ITEMS.................. 12 PROPOSED / 1 READY (WI-001)
+WORK ITEMS.................. 12 PROPOSED / 1 IN_REVIEW (WI-001)
 DEVELOPMENT CYCLES.......... 1 (DC-001)
-EXECUTIONS.................. 1 (EX-001 ELIGIBLE)
+EXECUTIONS.................. 1 (EX-001 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED
-IMPLEMENTATION.............. NOT STARTED
+IMPLEMENTATION.............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 
 DECISION INPUT COMMIT....... ef10e525164f16d14b7416eab4e2de781e35ccec
-NEXT GOVERNED ACTION........ iniciar EX-001 governadamente
+NEXT GOVERNED ACTION........ review/audit independente e aceite separado
 ```

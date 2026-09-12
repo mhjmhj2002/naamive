@@ -9,7 +9,7 @@
 **Last valid audit:** AUD-009 — historical FAIL  
 **Audit phase:** CLOSED  
 **Implementation authority:** GRANTED
-**Implementation:** NOT STARTED
+**Implementation:** TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 
 ---
 
@@ -22,16 +22,16 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 12 PROPOSED / 1 READY
-WI-001................... READY
+Work Items.............. 12 PROPOSED / 1 IN_REVIEW
+WI-001................... IN_REVIEW
 Readiness authority...... GRANTED / EXERCISED
 Development Cycles...... 1 (DC-001)
 Executions.............. 1
-EX-001................... ELIGIBLE
+EX-001................... SUCCEEDED
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED
-Implementation.......... NOT STARTED
+Implementation.......... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
 A verdade operacional detalhada deve ser consultada em:
@@ -126,24 +126,25 @@ para Work Items, Cycles ou Executions.
 O fato de Module, Value Increment, DeliveryTarget e Roadmap estarem aprovados ou
 correntes não significa que desenvolvimento possa começar.
 
-O próximo avanço governado para WI-001 é iniciar `EX-001` governadamente.
+O próximo avanço governado para WI-001 é a revisão/auditoria independente do
+resultado técnico de `EX-001`.
 
 Fluxo mínimo:
 
 ```text
-Work Item READY
-→ Development Cycle DC-001 CREATED
-→ EX-001 ELIGIBLE
-→ adquirir claim / iniciar Execution
+Work Item IN_REVIEW
+→ review/audit independente aplicável
+→ decisão de aceite separada
 ```
 
-Enquanto `EX-001` não possuir claim operacional válido:
+`EX-001 SUCCEEDED` não equivale a `WI-001 DONE`:
 
 ```text
-Implementation = NOT STARTED
+Implementation = TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
-Nenhum agente, commit, teste ou sucesso técnico pode substituir esse gate.
+Nenhum agente, commit, teste ou sucesso técnico pode substituir review, auditoria
+ou aceite quando exigidos.
 
 ---
 

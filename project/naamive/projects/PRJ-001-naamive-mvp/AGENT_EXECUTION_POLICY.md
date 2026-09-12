@@ -24,18 +24,19 @@ Sob `PBL-PRJ001-R1-v1.0`:
 
 ```text
 12 WIs = PROPOSED
-1 WI = READY
+1 WI = IN_REVIEW
 1 Development Cycle (DC-001)
-1 Execution ELIGIBLE (EX-001)
+1 Execution SUCCEEDED (EX-001)
 ```
 
 ```text
 Implementation authority = GRANTED
-Implementation = NOT STARTED
+Implementation = TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
-`EX-001` ainda não possui claim operacional. O implementation agent não foi
-despachado.
+`EX-001` teve claim operacional exclusivo, produziu o resultado técnico e
+liberou o claim. O próximo worker, se houver, deve ser independente para review
+ou audit e não pode reexecutar esta tentativa terminal.
 
 ## Planning Round 1 closure
 
