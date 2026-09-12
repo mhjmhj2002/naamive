@@ -43,5 +43,6 @@ decision_input_commit...... cf4f2c032d61835329db820d9490250927b6bfeb
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
 históricos/superseded. FND-008, FND-009 e FND-010 foram verificados; FND-011
 está resolvido com a remediação materializada na v1.0 e o encerramento humano
-da fase de auditoria. Esta projeção não é fonte canônica:
-ver `governance/CURRENT_CONTINUITY.md`.
+da fase de auditoria. `governance/CURRENT_CONTINUITY.md` preserva a
+continuidade histórica encerrada da Planning Round 1 e não representa o estado
+corrente pós T1–T6.

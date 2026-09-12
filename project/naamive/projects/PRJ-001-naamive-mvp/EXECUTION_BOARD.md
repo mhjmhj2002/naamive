@@ -20,8 +20,9 @@ human approval............ GRANTED — T1–T6
 human decision ref........ governance/HUMAN_APPROVAL_T1_T6.md
 ```
 
-`governance/CURRENT_CONTINUITY.md` é canônico. Esta projeção não cria
-autoridade, lifecycle nem continuidade concorrente.
+`governance/CURRENT_CONTINUITY.md` preserva a continuidade histórica encerrada
+da Planning Round 1 e não representa o estado corrente pós T1–T6. Esta projeção
+não cria autoridade, lifecycle nem continuidade concorrente.
 
 ## Work Items
 
