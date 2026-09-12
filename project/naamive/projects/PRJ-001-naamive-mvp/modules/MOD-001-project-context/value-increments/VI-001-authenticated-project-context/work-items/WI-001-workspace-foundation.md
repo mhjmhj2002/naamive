@@ -33,6 +33,57 @@ Create the reproducible monorepo/workspace/build/guardrail foundation required b
 
 Business/domain behavior; authentication rules; Project/VI lifecycle mutation.
 
+## Envelope técnico e governança aplicável (referências já em vigor)
+
+Esta seção não introduz decisão nova. Ela apenas torna explícitas referências já
+aprovadas/em vigor que governam este Work Item.
+
+```text
+Technology Baseline v0.10............ APPROVED / FROZEN
+                                      technology/01_TECHNOLOGY_BASELINE.md
+TIR v1.0............................. APPROVED
+                                      readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
+Versões exatas (pins)................ readiness/04_VERSION_SNAPSHOT.md
+Implementation Foundation Contract... readiness/02_IMPLEMENTATION_FOUNDATION_CONTRACT.md
+Primeira fatia (correspondência)..... readiness/03_FIRST_VERTICAL_SLICE_PLAN.md (VS-01)
+```
+
+Já decidido e aplicável a este escopo:
+
+```text
+pnpm workspaces (TB-04)
+apps/web + apps/worker como composition roots (TB-03, TIR-007)
+layout físico inicial do repositório/monorepo (TIR-006)
+module privacy / importações proibidas (TB-06, TB-08, TIR-008)
+guardrails automáticos no build/CI (TB-10, TIR-008, TIR-040)
+PostgreSQL 18.6 (TB-19, TIR-002) e integração real em container (TIR-041)
+migrations forward-only com etapa explícita, sem migration no startup (TB-116..TB-118, TIR-011)
+roles de banco (TIR-013)
+Node.js 24.21.0 / pnpm 12.3.4 / TypeScript 7.0.2 / ESM (TIR-001, TIR-003, TIR-004)
+sem regra de negócio em composition root (TIR-007, readiness/02)
+```
+
+Governança aplicável ao avanço deste Work Item:
+
+```text
+readiness............... lifecycle/05 (seção 5) e governance/03_GATE_POLICY.md (seção 30)
+audit independente...... governance/04_AUDIT_AND_REVIEW_POLICY.md (seção 23),
+                         lifecycle/05 (seção 5.1)
+TIR != Execution........ DEC-002 (decisions/DEC-002_TIR_LIFECYCLE_PRECEDENCE.md)
+PROPOSED não executa.... lifecycle/05 (seção 4.4)
+```
+
+O mecanismo concreto de guardrail é detalhe de implementação delimitado pelo
+envelope aprovado: deve cobrir integralmente as violações exigidas por TB-10,
+TIR-008 e TIR-040, sem alterar boundaries ou enfraquecer regras, e registrar
+dependências/evidências conforme a policy de versões aplicável. O conteúdo do
+pacote `kernel` não é fixado por esta seção.
+
+A alocação de health e logging abaixo foi decidida pelo Project Owner em
+`DEC-006_WI001_FOUNDATION_OBSERVABILITY_ALLOCATION.md`; ela torna explícitas
+obrigações já vigentes de `readiness/02_IMPLEMENTATION_FOUNDATION_CONTRACT.md`
+sem alterar a Planning Baseline.
+
 ## Dependency satisfaction condition
 
 Round-1 approval materialized on the same audited baseline; no predecessor WI.
@@ -48,6 +99,9 @@ assigned, or an Execution started.
 - strict TypeScript / ESM
 - architecture guardrails executable
 - PostgreSQL 18.6 integration available
+- web health endpoints `/health/live` and `/health/ready`
+- worker equivalent machine-readable health
+- minimum structured logging foundation compatible with `readiness/02`
 - no business rules placed in composition roots
 
 ## Required tests
@@ -57,6 +111,9 @@ assigned, or an Execution started.
 - architecture guardrails reject forbidden deep/private imports
 - real PostgreSQL 18.6 integration bootstrap succeeds
 - workspace/app composition-root smoke tests pass
+- web health smoke/behavior verifies `/health/live` and `/health/ready`
+- worker equivalent machine-readable health is verified
+- structured logging bootstrap is verified against the `readiness/02` contract
 
 ## Required evidence
 
@@ -64,6 +121,7 @@ assigned, or an Execution started.
 - pipeline outputs for install/typecheck/architecture/integration/build
 - workspace tree / configuration diff
 - implementation diff/artifact scoped to this WI
+- health smoke/behavior, worker-health and structured-logging bootstrap outputs
 - finding references and baseline classification if scope changed
 
 ## Review / audit requirement
