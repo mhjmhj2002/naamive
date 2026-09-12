@@ -10,7 +10,7 @@ Module..................... MOD-001 PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 13 PROPOSED / 0 READY
+Work Items................. 12 PROPOSED / 1 READY
 Development Cycles......... 0
 Executions................. 0
 Validation................. NOT EXECUTED
@@ -38,6 +38,18 @@ further audit required..... NO
 human approval............. GRANTED — T1–T6
 human decision ref......... governance/HUMAN_APPROVAL_T1_T6.md
 decision_input_commit...... cf4f2c032d61835329db820d9490250927b6bfeb
+```
+
+## Readiness de WI-001
+
+```text
+WI-001..................... READY
+readiness gate............. APPROVED / EXERCISED
+readiness authority........ GRANTED / EXERCISED
+human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
+Development Cycle.......... NOT CREATED
+Execution.................. NONE
+Implementation............. NOT AUTHORIZED
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são

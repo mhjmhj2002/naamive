@@ -21,7 +21,9 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 13 PROPOSED / 0 READY
+Work Items.............. 12 PROPOSED / 1 READY
+WI-001................... READY
+Readiness authority...... GRANTED / EXERCISED
 Development Cycles...... 0
 Executions.............. 0
 Validation.............. NOT EXECUTED
@@ -121,20 +123,17 @@ para Work Items, Cycles ou Executions.
 O fato de Module, Value Increment, DeliveryTarget e Roadmap estarem aprovados ou
 correntes não significa que desenvolvimento possa começar.
 
-O próximo avanço de implementação depende de um Work Item satisfazer seu próprio
-gate de readiness.
+O próximo avanço governado para WI-001 é criar o Development Cycle aplicável.
 
 Fluxo mínimo:
 
 ```text
-Work Item PROPOSED
-→ readiness aplicável
-→ Work Item READY
-→ Development Cycle
+Work Item READY
+→ Development Cycle governado
 → Execution autorizada
 ```
 
-Enquanto nenhum Work Item estiver `READY`:
+Enquanto não houver Development Cycle e Execution autorizada:
 
 ```text
 Implementation = NOT AUTHORIZED

@@ -1,6 +1,6 @@
 # WI-001 — Repository / Workspace Foundation
 
-**State:** PROPOSED  
+**State:** READY
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** PRJ-001 — NAAMIVE MVP  
@@ -12,7 +12,8 @@
 **Depends on:** none  
 **Development Cycle:** NOT CREATED  
 **Execution:** NONE  
-**Readiness authority:** NOT GRANTED
+**Readiness authority:** GRANTED / EXERCISED
+**Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`
 
 ## Reason / business intention
 
@@ -22,8 +23,9 @@ material product/architecture decision.
 
 ## Relation to plan
 
-Canonical proposed entry in DevelopmentRoadmap v2. It remains non-executable
-until the round is approved and its own readiness gate passes.
+Canonical proposed entry in DevelopmentRoadmap v2. Its readiness gate was
+approved and exercised; a Development Cycle remains required before any
+Execution or implementation.
 
 ## Outcome
 
@@ -160,7 +162,8 @@ PROPOSED
 → IN_PROGRESS
 ```
 
-No code may start while this Work Item remains `PROPOSED`.
+`READY` does not authorize code, Execution or implementation. The next required
+governed action is creating the applicable Development Cycle.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

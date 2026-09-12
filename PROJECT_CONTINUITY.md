@@ -91,7 +91,8 @@ Leia nesta ordem:
 5. project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md
 6. project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md
 7. project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
-8. documentação específica da task atual
+8. project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_WI001_READINESS.md
+9. documentação específica da task atual
 ```
 
 Não reconstruir a história de auditoria por padrão.
@@ -303,7 +304,7 @@ para fingir que a decisão ocorreu dentro da rodada fechada.
 
 ## 10. Estado corrente do PRJ-001
 
-Estado esperado após a materialização T1–T6:
+Estado corrente após a decisão de readiness de WI-001:
 
 ```text
 Need NEED-001........... ACCEPTED
@@ -312,13 +313,14 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 13 PROPOSED / 0 READY
+Work Items.............. 12 PROPOSED / 1 READY
 Development Cycles...... 0
 Executions.............. 0
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation.......... NOT AUTHORIZED
 Human approval.......... GRANTED — T1–T6
+WI-001 readiness........ APPROVED / EXERCISED
 ```
 
 Arquivos operacionais principais:
@@ -331,16 +333,17 @@ project/naamive/projects/PRJ-001-naamive-mvp/ROADMAP.md
 project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
 ```
 
-A materialização T1–T6 foi registrada no Activity Log como `A-029`.
+A materialização T1–T6 foi registrada no Activity Log como `A-029`; a decisão
+humana de readiness de WI-001 foi registrada como `A-030`.
 
 ---
 
-## 11. O que T1–T6 NÃO autorizou
+## 11. Limites da decisão de readiness de WI-001
 
-A aprovação humana T1–T6 **não** autorizou:
+A decisão humana de readiness de WI-001 promoveu exclusivamente
+`WI-001 PROPOSED → READY`. Ela não autorizou:
 
 ```text
-WI-001 → READY
 qualquer outro WI → READY
 criação de Development Cycle
 criação de Execution
@@ -349,17 +352,11 @@ Validation
 Delivery
 ```
 
-Todos os 13 Work Items continuam:
-
-```text
-PROPOSED
-```
-
 Contagem:
 
 ```text
-13 PROPOSED
-0 READY
+12 PROPOSED
+1 READY (WI-001)
 0 IN_PROGRESS
 0 DONE
 0 Development Cycles
@@ -381,18 +378,14 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é o readiness do primeiro Work Item elegível, começando
-pelo `WI-001` conforme o roadmap corrente.
+O próximo avanço real é criar o Development Cycle aplicável para `WI-001`,
+conforme lifecycle e governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
-WI-001 PROPOSED
-→ avaliar critérios de readiness
-→ review/audit aplicável conforme NB-0002 e materialidade
-→ authority aplicável
-→ WI-001 READY
-→ criar Development Cycle
+WI-001 READY
+→ criar Development Cycle governado
 → criar Execution autorizada
 → implementação
 ```
@@ -401,20 +394,10 @@ Nenhuma dessas etapas deve ser pulada.
 
 ### Próxima ação recomendada
 
-Se as mudanças T1–T6 ainda não estiverem commitadas:
+Após a revisão e publicação humana deste checkpoint:
 
 ```text
-1. revisar git status/diff
-2. incluir project/naamive/README.md atualizado
-3. incluir PROJECT_CONTINUITY.md atualizado
-4. humano faz commit/push
-5. abrir nova task para readiness do WI-001
-```
-
-Se já estiverem commitadas:
-
-```text
-abrir nova task dedicada ao readiness do WI-001
+abrir task governada para criar o Development Cycle aplicável a WI-001
 ```
 
 Não iniciar código diretamente.

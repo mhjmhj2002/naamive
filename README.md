@@ -98,7 +98,7 @@ Module MOD-001............. PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 13 PROPOSED / 0 READY
+Work Items................. 12 PROPOSED / 1 READY
 Development Cycles......... 0
 Executions................. 0
 Implementation............. NOT AUTHORIZED
@@ -119,8 +119,10 @@ Seu readiness candidate foi preparado e passou por auditoria independente com:
 AUD-WI001-READINESS-01
 Result..................... PASS_WITH_FINDINGS
 Findings F-001 / F-002...... RESOLVED
-WI-001..................... PROPOSED
-Readiness authority........ NOT GRANTED
+WI-001..................... READY
+Readiness authority........ GRANTED / EXERCISED
+Development Cycles......... 0
+Executions................. 0
 Implementation............. NOT AUTHORIZED
 ```
 
@@ -133,6 +135,11 @@ F-002 — RESOLVED com fortalecimento da provenance de DEC-006
 
 O resultado histórico da auditoria permanece `PASS_WITH_FINDINGS`; a remediation
 não reescreve retroativamente o relatório de auditoria.
+
+A decisão humana de readiness está registrada em
+`project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_WI001_READINESS.md`.
+A próxima ação legítima é criar o Development Cycle aplicável; ela não é
+implementação direta.
 
 A documentação operacional corrente do self-hosting está em:
 

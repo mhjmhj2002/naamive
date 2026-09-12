@@ -17,7 +17,7 @@
 |---|---|---|---|
 | RM-001 | FINDING_REMEDIATION | FND-011 | CLOSED — remediação materializada na v1.0 e encerrada por decisão humana |
 | RM-002 | HUMAN_DECISION | HUMAN_APPROVAL_T1_T6 | EXERCISED — decisão humana T1–T6 registrada em `governance/HUMAN_APPROVAL_T1_T6.md` |
-| RM-003 | WORK_ITEM | WI-001 | RM-002 e critérios de readiness satisfeitos |
+| RM-003 | WORK_ITEM | WI-001 | readiness gate SATISFIED; WI-001 READY; próxima ação: criar Development Cycle aplicável |
 | RM-004..RM-015 | WORK_ITEM | WI-002..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
@@ -51,7 +51,9 @@ A decisão humana T1–T6 foi exercida e está registrada em
 business_baseline_ref PBL-PRJ001-R1-v1.0; normative_baseline_ref NB-0002;
 decision_input_commit cf4f2c032d61835329db820d9490250927b6bfeb).
 
-A currentness do Roadmap v2 **não** satisfaz automaticamente o readiness de
-WI-001. RM-003 continua dependente dos critérios de readiness da Work Item.
-Nenhuma WI se torna READY nesta decisão: permanecem 13 PROPOSED / 0 READY;
-0 Development Cycles; 0 Executions; Implementation NOT AUTHORIZED.
+A currentness do Roadmap v2 **não** satisfez automaticamente o readiness de
+WI-001. O gate de RM-003 foi posteriormente aprovado e exercido por
+`governance/HUMAN_APPROVAL_WI001_READINESS.md`: WI-001 está `READY`.
+Permanecem 12 PROPOSED / 1 READY; 0 Development Cycles; 0 Executions;
+Implementation NOT AUTHORIZED. A próxima ação legítima é criar o Development
+Cycle aplicável, não iniciar implementação.

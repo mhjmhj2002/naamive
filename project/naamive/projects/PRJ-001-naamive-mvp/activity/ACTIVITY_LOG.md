@@ -241,3 +241,23 @@ A-029
  executions: 0
  approval: GRANTED — T1–T6
  implementation: NOT AUTHORIZED
+
+A-030
+ type: HUMAN_DECISION / WI_READINESS_GATE
+ recorded_at: 2026-09-12T17:28:50-03:00
+ authority_principal: human:manuel-hinojosa:project-owner
+ authority_role: NAAMIVE Project Owner
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ decision_ref: governance/HUMAN_APPROVAL_WI001_READINESS.md
+ decision_input_commit: 7d0eb9c79a1dae73ad63edeb8a75690008767246
+ fact: WI-001 PROPOSED -> READY exercised by explicit human authority instruction
+ audit: AUD-WI001-READINESS-01
+ audit_result: PASS_WITH_FINDINGS
+ F-001: RESOLVED
+ F-002: RESOLVED
+ gate_result: APPROVED
+ work_items: 12 PROPOSED / 1 READY
+ development_cycles: 0
+ executions: 0
+ implementation: NOT AUTHORIZED

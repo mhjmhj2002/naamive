@@ -1,15 +1,16 @@
 # WI-001 — Readiness Candidate
 
-**status:** CANDIDATE / NOT APPROVED
+**status:** GOVERNED READINESS DECISION EXERCISED
 **work_item:** WI-001 — Repository / Workspace Foundation
-**work_item_state:** PROPOSED
+**work_item_state:** READY
 **impact:** MATERIAL
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0
 **normative_baseline_ref:** NB-0002
 **author_principal:** agent worker (task de preparação de readiness)
 **natureza:** artefato não normativo de preparação; não é audit, aprovação nem autoridade
 **human_authority_required:** human:manuel-hinojosa:project-owner (para qualquer transição de lifecycle)
-**readiness authority:** PENDING GOVERNED DECISION / NOT GRANTED
+**readiness authority:** GRANTED / EXERCISED
+**decision_ref:** governance/HUMAN_APPROVAL_WI001_READINESS.md
 **Development Cycle:** NOT CREATED
 **Execution:** NONE
 **Implementation:** NOT AUTHORIZED
@@ -30,9 +31,11 @@ objetivo.............. materializar evidência de preparação sem criar lifecyc
                        authority, Development Cycle, Execution ou implementação
 ```
 
-Esta avaliação não promove WI-001 para `READY`, não aprova implementação, não
-reabre a Planning Round 1 e não altera NB-0002, Technology Baseline v0.10, TIR
-v1.0, PBL-PRJ001-R1-v1.0 ou os artefatos históricos de baseline/auditoria.
+A preparação e o audit histórico não promoveram WI-001. A decisão humana
+posterior registrada em `governance/HUMAN_APPROVAL_WI001_READINESS.md` exerceu
+`WI-001 PROPOSED → READY`; ela não aprova implementação, não reabre a Planning
+Round 1 e não altera NB-0002, Technology Baseline v0.10, TIR v1.0,
+PBL-PRJ001-R1-v1.0 ou os artefatos históricos de baseline/auditoria.
 
 ---
 
@@ -64,12 +67,11 @@ READY FOR GOVERNED READINESS DECISION
 O audit independente histórico concluiu `PASS_WITH_FINDINGS`. Seus findings
 não bloqueadores foram tratados: `F-001` está `RESOLVED` com a materialização
 de `RECONCILE` em DEC-007; `F-002` está `RESOLVED` com o fortalecimento da
-provenance de DEC-006. A authority para a transição futura `PROPOSED → READY`
-permanece uma decisão governada pendente.
+provenance de DEC-006. A decisão humana governada posterior concedeu e exerceu
+a authority para `PROPOSED → READY`.
 
-Isto não altera o resultado histórico para `AUDIT PASS`, nem significa
-`WI-001 READY`, autorização de implementação, criação de Development Cycle ou
-início de Execution.
+Isto não altera o resultado histórico para `AUDIT PASS`, nem autoriza
+implementação, criação de Development Cycle ou início de Execution.
 
 ---
 
@@ -86,8 +88,8 @@ início de Execution.
 | 7 | guardrails de arquitetura | SUFICIENTE | comportamento obrigatório já delimitado por TB-10/TIR-008/TIR-040; mecanismo é detalhe compatível de implementação |
 | 8 | decisões materiais para a auditoria | SUFICIENTE | G-01 non-blocking; G-03 resolvido por DEC-006; G-02 é gate posterior |
 | 9 | blockers / Findings aplicáveis | SUFICIENTE | F-001 e F-002 do audit histórico: RESOLVED; nenhum blocker conhecido sobre WI-001 |
-| 10 | authority para a decisão `PROPOSED → READY` | PENDENTE DE DECISÃO GOVERNADA | requerida antes da decisão efetiva; não bloqueia a auditoria independente |
-| 11 | condições futuras de Development Cycle / Execution | SUFICIENTE | lifecycle/05 e DEC-002; WI ainda não as satisfaz por estar PROPOSED |
+| 10 | authority para a decisão `PROPOSED → READY` | EXERCIDA | decisão humana em `governance/HUMAN_APPROVAL_WI001_READINESS.md` |
+| 11 | condições futuras de Development Cycle / Execution | SUFICIENTE | lifecycle/05 e DEC-002; WI ainda não possui Development Cycle nem Execution |
 
 ---
 
@@ -111,14 +113,15 @@ o mecanismo compatível.
 ### G-02 — Authority para `WI-001 PROPOSED → READY`
 
 ```text
-classificação........ PENDING GOVERNED GATE AUTHORITY
-estado................ NOT GRANTED
-impacto.............. não bloqueia a auditoria independente; bloqueia somente a
-                       decisão efetiva de transição até haver principal/delegação
-                       verificável e ação governada correspondente
+classificação........ GOVERNED GATE AUTHORITY
+estado................ GRANTED / EXERCISED
+decisão............... governance/HUMAN_APPROVAL_WI001_READINESS.md
+impacto.............. a authority exigida para a transição foi materializada;
+                       não autoriza Development Cycle, Execution ou implementação
 ```
 
-Nenhuma authority é concedida por este candidate, por DEC-006 ou por esta task.
+Este candidate e DEC-006 não concedem authority; a authority foi concedida e
+exercida exclusivamente pela decisão humana referenciada acima.
 
 ### G-03 — Ownership de health e structured logging
 
@@ -140,8 +143,8 @@ remediation.
 resultado histórico..... PASS_WITH_FINDINGS (não alterado por este candidate)
 F-001................... RESOLVED — RECONCILE materialized em DEC-007
 F-002................... RESOLVED — DEC-006 provenance strengthened
-efeito.................. findings tratados para efeito da próxima decisão de gate;
-                          readiness authority permanece NOT GRANTED
+efeito.................. findings tratados para efeito da decisão de gate;
+                          readiness authority GRANTED / EXERCISED
 ```
 
 ---
@@ -164,9 +167,10 @@ preparação.
 ## 7. Continuidade legítima
 
 ```text
-1. obter/verificar a authority governada aplicável para a decisão de readiness
-2. decidir `WI-001 PROPOSED → READY` somente se todas as condições forem satisfeitas
-3. nenhuma Execution ou Development Cycle antes dessa decisão
+1. criar o Development Cycle aplicável para WI-001, conforme lifecycle/governança
+2. nenhuma Execution antes do Development Cycle e da authority aplicável
+3. nenhuma implementação é autorizada por esta decisão de readiness
 ```
 
-Este candidate não aprova o gate nem concede authority.
+Este candidate não aprovou o gate nem concedeu authority; a disposição final foi
+materializada no registro humano referenciado.

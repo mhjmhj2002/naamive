@@ -28,11 +28,12 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001..WI-013 | PROPOSED | somente após readiness governado próprio (a decisão humana T1–T6 não promoveu nenhuma WI) |
+| WI-001 | READY | criar o Development Cycle governado aplicável |
+| WI-002..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
-PROPOSED............. 13
-READY................ 0
+PROPOSED............. 12
+READY................ 1
 IN_PROGRESS.......... 0
 IN_REVIEW............ 0
 DONE................. 0
@@ -41,3 +42,5 @@ Executions............ 0
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
+`WI-001 READY` não autoriza implementação: Development Cycle e demais gates
+aplicáveis permanecem exigidos.
