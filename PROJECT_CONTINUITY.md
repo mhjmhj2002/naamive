@@ -1,42 +1,44 @@
 # NAAMIVE — Project Continuity
 
 **Status:** LIVING PROJECT DOCUMENT  
-**Natureza:** documento operacional e de continuidade; não normativo  
-**Local:** raiz do repositório  
+**Natureza:** documento operacional de continuidade; não normativo  
 **Arquivo:** `PROJECT_CONTINUITY.md`  
-**Última atualização:** 2026-09-10  
+**Última atualização:** 2026-09-12  
 **Branch ativa:** `lifecycle-reboot`  
-**Último commit validado:** `300b965a056c40bdfafe4833584abd74a28decc0`  
-**Normative Baseline vigente:** `NB-0002`  
-**Normative Baseline anterior:** `NB-0001` — histórica e imutável
+**Normative Baseline vigente:** `NB-0002` — RATIFIED / IN FORCE  
+**Technology Baseline:** `v0.10` — APPROVED / FROZEN  
+**Project:** `PRJ-001 — NAAMIVE MVP`  
+**Project lifecycle:** `PLANNING`  
+**Implementation:** `NOT AUTHORIZED`
 
 ---
 
 ## 1. Propósito
 
-Este arquivo é o roadmap operacional vivo do NAAMIVE.
+Este arquivo existe para permitir que um novo chat, agente ou sessão retome o
+NAAMIVE sem reconstruir a história inteira do lifecycle reboot.
 
-Ele deve permitir responder rapidamente:
+Ele deve responder rapidamente:
 
 ```text
-onde o projeto está?
-o que já terminou?
-qual lei está vigente?
-qual baseline está sendo preparada?
-qual é a próxima etapa?
-o que está bloqueado?
-como continuar sem reconstruir todo o contexto?
+onde estamos?
+qual baseline governa?
+o que já foi aprovado?
+o que ainda não foi autorizado?
+qual é a próxima ação legítima?
+o que não deve ser reaberto?
 ```
 
-Ele **não é normativo**.
+Este arquivo **não é normativo**.
 
 Em caso de divergência:
 
 ```text
 Normative Baseline vigente
-> documentação normativa candidata
+> artefatos canônicos do Project
+> decisões humanas governadas
 > PROJECT_CONTINUITY.md
-> material explicativo
+> documentação explicativa
 ```
 
 ---
@@ -55,7 +57,7 @@ software como consequência
 valor entregue como objetivo
 ```
 
-Hierarquia candidata atual:
+Hierarquia operacional:
 
 ```text
 Need
@@ -71,770 +73,502 @@ Work Item
 Execution
 ```
 
-Internal Phase Lifecycle é ortogonal à hierarquia de ownership.
+As entidades possuem lifecycles próprios. Uma `Execution` falhar não altera
+automaticamente o lifecycle do `Work Item`, `ValueIncrement`, `Module` ou
+`Project`.
 
 ---
 
-## 3. Leitura obrigatória ao retomar
+## 3. Leitura mínima ao retomar
 
+Leia nesta ordem:
 
 ```text
 1. PROJECT_CONTINUITY.md
-2. README.md
-3. AGENTS.md
+2. AGENTS.md
+3. project/naamive/README.md
 4. governance/normative-baselines/NB-0002.md
-5. NB0002_RATIFIED_MEMBERSHIP.md
-6. technology/01_TECHNOLOGY_BASELINE.md
-7. documentação específica da task atual
+5. project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md
+6. project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md
+7. project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
+8. documentação específica da task atual
 ```
 
-Regras:
+Não reconstruir a história de auditoria por padrão.
 
-```text
-NB-0002 = lei vigente
-NB-0001 = histórica e imutável
-Technology Baseline = desenho técnico derivado, não norma
-audits = evidência, não norma
-legacy = referência histórica, não autoridade
-```
-
-As árvores de staging `candidate/` e `ratified/`, se ainda estiverem presentes,
-não são fontes normativas concorrentes. A raiz ratificada e o certificado
-`NB-0002` prevalecem.
+Abrir auditorias antigas apenas se uma task concreta exigir evidência histórica.
 
 ---
 
-## 4. Estado normativo
-
+## 4. Estado normativo atual
 
 Baseline vigente:
 
 ```text
 NB-0002
-Status: RATIFIED / IN FORCE
-Membership: 71 documentos normativos
+Status................. RATIFIED / IN FORCE
+Ratified at............ 2026-09-08T18:38:36-03:00
+Membership............. 71 documentos normativos
+Previous baseline...... NB-0001
 ```
 
-Certificado:
+`NB-0001` permanece imutável como evidência normativa histórica e continua
+aplicável apenas onde a própria regra de baseline exigir histórico ou instância
+não migrada.
+
+Para o trabalho atual do NAAMIVE, a referência normativa é:
 
 ```text
-governance/normative-baselines/NB-0002.md
+normative_baseline_ref: NB-0002
 ```
 
-Commit de aplicação na raiz:
-
-```text
-fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
-docs(governance): apply ratified NB-0002 to repository root
-```
-
-Baseline anterior:
-
-```text
-NB-0001
-Status: histórica / imutável
-```
-
-A ratificação de `NB-0002` não migra automaticamente instâncias historicamente
-governadas por `NB-0001`.
-
-Migração continua explícita, rastreável e governada.
+Não tratar `NB-0002` como candidata. Ela já foi ratificada.
 
 ---
 
-## 5. Último checkpoint validado
+## 5. Technology Baseline
 
-
-Branch:
-
-```text
-lifecycle-reboot
-```
-
-HEAD validado:
-
-```text
-fca35ae8d554ea45e1d20444ea755d0d7bbfeb60
-docs(governance): apply ratified NB-0002 to repository root
-```
-
-Validação:
-
-```text
-branch/history......................... PASS
-NB-0002 certificate na raiz............ PASS
-Constitution NB-0002 / RATIFIED........ PASS
-71-member ratified membership.......... PASS
-ValueIncrement lifecycle vigente....... PASS
-root overlay............................ PASS
-NB-0001 preservada...................... PASS
-Technology Baseline permanece draft.... PASS
-```
-
-A rodada normativa NB-0002 está encerrada.
-
----
-
-## 6. Por que a Technology Baseline foi pausada
-
-A rodada técnica chegou a:
-
-```text
-Technology Baseline 2.6
-```
-
-Durante o desenho do 2.7/UI surgiu uma lacuna normativa real:
-
-```text
-Project macro phase
-não possuía lifecycle interno semântico suficiente
-```
-
-Além disso, foi identificada a necessidade de:
-
-```text
-ValueIncrement / Entrega de Valor
-DeliveryTarget
-DeliveryManifest / Candidacy Snapshot
-DevelopmentRoadmap
-PhaseCycle
-```
-
-Decisão:
-
-```text
-PAUSAR Technology Baseline
-→ corrigir a candidata normativa
-→ auditar
-→ ratificar NB-0002
-→ retomar Technology Baseline 2.7
-```
-
----
-
-## 7. ValueIncrement / Entrega de Valor
-
-```text
-Module
-→ capacidade de negócio relativamente estável
-
-ValueIncrement
-→ incremento finito, utilizável e verificável de valor
-
-Work Item
-→ trabalho planejado que produz parte do incremento
-
-Execution
-→ tentativa operacional autorizada
-```
-
-Exemplo:
-
-```text
-PROJECT Controle Financeiro Familiar
-
-Module Orçamento Familiar
-  ├ EV-01 Criar orçamento mensal
-  │  ├ WI-01 Estruturar orçamento
-  │  ├ WI-02 Definir limites
-  │  └ WI-03 Editar orçamento
-  │
-  ├ EV-02 Acompanhar realizado x planejado
-  └ EV-03 Alertar estouro de orçamento
-```
-
-Fluxo normal:
-
-```text
-Module
-→ ValueIncrement
-→ Work Item
-→ Execution
-```
-
----
-
-## 8. Delivery Target
-
-Disposition por target/version:
-
-```text
-REQUIRED_FOR_TARGET
-OPTIONAL_FOR_TARGET
-OUT_OF_TARGET
-```
-
-Disposition pertence à relação:
-
-```text
-DeliveryTargetVersion ↔ ValueIncrement
-```
-
-Não é atributo eterno da ValueIncrement.
-
-Separação:
-
-```text
-DeliveryTarget
-→ define obrigação
-
-Delivery Manifest / Candidacy Snapshot
-→ define o conjunto efetivamente apresentado na candidatura
-```
-
-`included_in_candidate` não deve ser atributo eterno do membership.
-
----
-
-## 9. Internal Phase Lifecycle
-
-Todos os seis macroestados não terminais do Project possuem ciclo interno
-candidato:
-
-```text
-CONCEPTION
-ARCHITECTURE
-PLANNING
-IMPLEMENTATION
-VALIDATION
-DELIVERY
-```
-
-`DELIVERED` é terminal.
-
-### CONCEPTION
-
-```text
-ESTABLISH_CONTEXT
-→ FRAME_PRODUCT_OUTCOME
-→ MAP_ACTORS_AND_JOURNEYS
-→ BOUND_SCOPE
-→ IDENTIFY_REQUIRED_CAPABILITIES
-→ CAPTURE_RULES_AND_CONSTRAINTS
-→ DEFINE_SUCCESS_CRITERIA
-→ ASSESS_RISKS_AND_ALTERNATIVES
-→ RESOLVE_OPEN_DECISIONS
-→ VERIFY_CONCEPTION_READINESS
-→ READY_FOR_ARCHITECTURE
-```
-
-### ARCHITECTURE
-
-```text
-RECEIVE_CONCEPTION_BASELINE
-→ REFINE_CAPABILITY_MAP
-→ DESIGN_MODULE_BOUNDARIES
-→ FORMALIZE_MODULES
-→ DEFINE_RESPONSIBILITIES_AND_INTERFACES
-→ MAP_DEPENDENCIES_AND_INTEGRATIONS
-→ MODEL_DATA_AND_CONCEPTUAL_CONTRACTS
-→ DESIGN_CROSS_CUTTING_CONCERNS
-→ ASSESS_ARCHITECTURE_ALTERNATIVES
-→ DEFINE_TECHNOLOGY_STRATEGY
-→ RESOLVE_ARCHITECTURE_DECISIONS
-→ VERIFY_ARCHITECTURE_COHERENCE
-→ FIX_ARCHITECTURE_BASELINE
-→ VERIFY_ARCHITECTURE_READINESS
-→ READY_FOR_PLANNING
-```
-
-### PLANNING
-
-```text
-RECEIVE_ARCHITECTURE_BASELINE
-→ ESTABLISH_DELIVERY_TARGET
-→ PLAN_MODULE_DELIVERY
-→ DECOMPOSE_MODULES_INTO_VALUE_INCREMENTS
-→ CHALLENGE_VALUE_DECOMPOSITION
-→ DEFINE_VALUE_INCREMENT_DEPENDENCIES
-→ ORDER_VALUE_DELIVERY
-→ DETAIL_NEAR_TERM_WORK
-→ PLAN_TRANSVERSAL_WORK
-→ DEFINE_VALIDATION_STRATEGY
-→ DEFINE_INTEGRATION_STRATEGY
-→ RESOLVE_PLANNING_DECISIONS
-→ VERIFY_TECHNOLOGY_READINESS
-→ FIX_PLANNING_BASELINE
-→ VERIFY_IMPLEMENTATION_READINESS
-→ READY_FOR_IMPLEMENTATION
-```
-
-### IMPLEMENTATION
-
-```text
-PREPARE_IMPLEMENTATION
-→ MATERIALIZE_VALUE
-→ VERIFY_IMPLEMENTATION
-→ READY_FOR_VALIDATION
-```
-
-Work Item Development:
-
-```text
-PREPARE_WORK
-→ IMPLEMENT_CHANGE
-→ VERIFY_CHANGE
-→ MATERIALIZE_CANDIDATE
-→ VERIFY_CANDIDATE
-→ PREPARE_REVIEW
-→ REVIEW_RESULT
-→ VERIFY_ACCEPTANCE
-→ READY_FOR_DECISION
-```
-
-### VALIDATION
-
-```text
-RECEIVE_IMPLEMENTATION_CANDIDATE
-→ FREEZE_VALIDATION_CONTEXT
-→ VERIFY_TARGET_COVERAGE
-→ VERIFY_MODULE_COHERENCE
-→ EXECUTE_CROSS_MODULE_VALIDATION
-→ VALIDATE_END_TO_END_JOURNEYS
-→ VALIDATE_NON_FUNCTIONAL_REQUIREMENTS
-→ CONSOLIDATE_EVIDENCE
-→ ASSESS_FINDINGS_AND_RISKS
-→ DETERMINE_REWORK_SCOPE
-→ VERIFY_VALIDATION_COMPLETENESS
-→ FIX_VALIDATION_BASELINE
-→ READY_FOR_DELIVERY
-```
-
-### DELIVERY
-
-```text
-RECEIVE_VALIDATED_CANDIDATE
-→ FREEZE_DELIVERY_CANDIDACY
-→ RESOLVE_TARGET_MEMBERSHIP
-→ BUILD_DELIVERY_MANIFEST
-→ VERIFY_REQUIRED_VALUE
-→ RESOLVE_OPTIONAL_INCLUSION
-→ CONSOLIDATE_RESIDUAL_FINDINGS_RISKS_EXCEPTIONS
-→ VERIFY_OPERATIONAL_READINESS
-→ PREPARE_DELIVERY_DECISION
-→ READY_FOR_DELIVERY_DECISION
-→ DECIDE_DELIVERY
-→ MATERIALIZE_DELIVERY
-→ CONFIRM_DELIVERY_HANDOFF
-```
-
----
-
-## 10. Impedimentos e Roadmap persistente
-
-Agent não pode encontrar problema e simplesmente parar.
-
-Fluxo:
-
-```text
-impedimento
-   ↓
-persistir Finding
-   ↓
-identificar affected scope
-   ↓
-classificar consequência
-   ↓
-registrar remediation
-   ↓
-recalcular continuity
-```
-
-### NON_BLOCKING
-
-```text
-persistir
-→ registrar no roadmap
-→ continuar trabalho ainda elegível
-```
-
-### BLOCKING
-
-```text
-persistir
-→ bloquear affected scope
-→ materializar GOVERNED_BLOCK
-→ procurar outro trabalho independente elegível
-```
-
-Princípio:
-
-```text
-agent memory != project continuity
-```
-
-O agent detecta e registra.
-
-O sistema persiste, supervisiona e retoma.
-
----
-
-## 11. Development Roadmap
-
-Deve ser:
-
-```text
-durável
-versionado
-restart-safe
-consultável
-supervisionado pelo backend/worker
-```
-
-Pode referenciar:
-
-```text
-WORK_ITEM
-FINDING_REMEDIATION
-HUMAN_DECISION
-RECOVERY
-RECONCILIATION
-```
-
-Roadmap não duplica o state das entidades referenciadas.
-
-Browser renderiza projection.
-
-Backend/worker supervisiona continuity/eligibility.
-
----
-
-## 12. Activity Center
-
-Deve distinguir:
-
-```text
-Project macro phase
-Internal Phase step
-Module
-ValueIncrement
-Work Item
-Execution
-Finding
-Decision
-Continuity
-```
-
-Três relógios:
-
-```text
-last_heartbeat_at
-last_operational_activity_at
-last_functional_progress_at
-```
-
-Princípio:
-
-```text
-ALIVE != PROGRESS
-```
-
----
-
-## 13. Baselines candidatas
-
-Baselines de negócio identificáveis:
-
-```text
-Conception Baseline
-Architecture Baseline
-Planning Baseline
-Validation Baseline
-Delivery candidacy baseline
-```
-
-Os nomes não obrigam entidades físicas com o mesmo nome.
-
-Requisito:
-
-```text
-identificável
-reproduzível
-versionável
-rastreável
-```
-
-Technology Baseline permanece artefato arquitetural separado.
-
----
-
-## 14. Technology Baseline e TIR
-
-Technology Baseline:
+Arquivo:
 
 ```text
 technology/01_TECHNOLOGY_BASELINE.md
-v0.10
-APPROVED / FROZEN
-Deriva de: NB-0002
 ```
 
-Fechamentos da rodada técnica 2:
+Estado atual:
 
 ```text
-2.7   APPROVED
-2.8   APPROVED
-2.9   CONSOLIDATION COMPLETE
-2.10  DESTRUCTIVE AUDIT COMPLETE
-2.10R REMEDIATION COMPLETE
-2.10V VERIFICATION PASS
-2.11  HUMAN APPROVAL / FREEZE COMPLETE
+Version................ v0.10
+Status................. APPROVED / FROZEN
+Derived from........... NB-0002
+Audit 2.10............. COMPLETE
+Remediation 2.10R...... COMPLETE
+Verification 2.10V..... PASS
+Human approval 2.11.... COMPLETE
+Implementation......... NOT AUTHORIZED
 ```
 
-TIR atual:
+A Technology Baseline define **como implementar**, mas não autoriza por si só o
+início da implementação.
 
-```text
-readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
-v1.0
-APPROVED
-AUD-016 = PASS
-```
-
-Aprovação humana:
-
-```text
-Manuel Hinojosa — NAAMIVE Project Owner
-2026-09-10
-```
-
-Estado:
-
-```text
-TIR human approval......... APPROVED
-Implementation............. AUTHORIZED FOR VS-01
-```
-
-TIR não altera a Technology Baseline congelada.
+Não voltar para o antigo estado `v0.6 BRAINSTORM` ou `2.7 PAUSED`. Isso é
+histórico obsoleto.
 
 ---
 
-## 15. Fase atual
+## 6. Technical Implementation Readiness
 
+O Project atual referencia:
 
 ```text
-SECOND DOCUMENTATION ROUND
-TECHNOLOGY BASELINE DESIGN
+TIR v1.0 — APPROVED
 ```
 
-A rodada normativa NB-0002 foi concluída e ratificada.
-
-Pergunta atual:
+Essa aprovação representa envelope técnico/readiness e não substitui:
 
 ```text
-como implementar tecnicamente a NB-0002
-sem redefinir sua lei?
-```
-
-Implementação continua bloqueada até:
-
-```text
-Technology Baseline aprovada
+Work Item readiness
 +
-Technical Implementation Readiness
+authority aplicável
++
+Development Cycle
++
+Execution autorizada
+```
+
+Portanto:
+
+```text
+TIR APPROVED != IMPLEMENTATION AUTHORIZED
 ```
 
 ---
 
-## 16. Rodada NB-0002 — concluída
+## 7. Planning Round 1 — fechamento
 
+A Planning Round 1 foi concluída.
+
+Estado terminal da rodada:
 
 ```text
-R2-01   Internal Phase Lifecycle general model
-R2-02   IMPLEMENTATION Internal Lifecycle
-R2-02b  Work Item Development + Development Roadmap
-R2-03   CONCEPTION Internal Lifecycle
-R2-04   ARCHITECTURE Internal Lifecycle
-R2-05   PLANNING Internal Lifecycle
-R2-06   VALIDATION Internal Lifecycle
-R2-07   DELIVERY Internal Lifecycle
-R2-08   Cross-Lifecycle Reconciliation
-R2-09   State / Persistence / Projection Reform
-R2-10   Contracts / Orchestration / Recovery
-R2-11   UI / Observability / API
-R2-12   Corpus Conformance
-R2-13   Destructive Audit
-R2-14   Remediation
-R2-15   Verification
-R2-16   Final Pre-Ratification
-R2-17   Human Ratification
+Planning Round 1............. COMPLETE
+Business Baseline............ PBL-PRJ001-R1-v1.0
+Audit phase.................. CLOSED
+Last valid audit............. AUD-009
+Known blocking findings...... 0
+Further audit required....... NO
+Documentation................ STABLE
 ```
 
-Value Delivery:
+AUD-001..AUD-009 permanecem evidência histórica.
+
+`AUD-009` é a última auditoria válida da Planning Round 1.
+
+Não criar:
 
 ```text
-VD-01 CLOSED
-VD-02 CLOSED
-VD-03 CLOSED
-VD-04 CLOSED
-VD-05 CLOSED
+AUD-010
+AUD-011
+nova auditoria da Planning Round 1
+```
+
+apenas para “confirmar de novo” o fechamento.
+
+A auditoria já cumpriu seu papel.
+
+---
+
+## 8. Business Baseline PBL-PRJ001-R1-v1.0
+
+`PBL-PRJ001-R1-v1.0` é o snapshot documental final da Planning Round 1.
+
+Ela foi estabilizada após a remediação de AUD9-001 / FND-011, incluindo a
+revalidação explícita dos objetos materiais anteriormente vinculados à v0.5.
+
+A baseline:
+
+```text
+não autoriza implementação
+não promove Work Item
+não cria Development Cycle
+não cria Execution
+não cria Delivery
+```
+
+### Regra importante pós-fechamento
+
+Decisões governadas posteriores podem alterar o **estado corrente** sem reescrever
+retroativamente a Planning Baseline histórica.
+
+Portanto:
+
+```text
+Planning Baseline v1.0
+= snapshot de entrada da decisão posterior
+
+estado corrente depois da decisão
+!= obrigação de criar v1.1 apenas porque lifecycle/currentness avançou
+```
+
+Não criar `PBL-PRJ001-R1-v1.1` para materializar apenas a aprovação T1–T6.
+
+---
+
+## 9. Aprovação humana T1–T6
+
+Depois do fechamento documental da Planning Round 1, o Project Owner exerceu
+uma nova decisão humana explícita.
+
+Authority:
+
+```text
+principal............... human:manuel-hinojosa:project-owner
+role.................... NAAMIVE Project Owner
+business_baseline_ref... PBL-PRJ001-R1-v1.0
+normative_baseline_ref.. NB-0002
+decision_input_commit... cf4f2c032d61835329db820d9490250927b6bfeb
+gate_result............. APPROVED
+```
+
+Registro governado:
+
+```text
+project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
+```
+
+Transições aprovadas e materializadas:
+
+```text
+T1  MOD-001       IDENTIFIED → DEFINED
+T2  VI-001        IDENTIFIED → DEFINED
+T3  VI-001        DEFINED → PLANNED
+T4  MOD-001       DEFINED → PLANNED
+T5  DT-001 v1     CANDIDATE / NOT CURRENT → CURRENT
+T6  Roadmap v2    CANDIDATE / NOT CURRENT → CURRENT
 ```
 
 Resultado:
 
 ```text
-NB-0002
-RATIFIED / IN FORCE
-71 normative members
+MOD-001........... PLANNED
+VI-001............ PLANNED
+DT-001 v1......... CURRENT
+Roadmap v2........ CURRENT
+```
+
+A antiga `ROUND_1_APPROVAL_CANDIDATE.md` é evidência histórica do estado anterior
+em que a promoção ainda não havia sido exercida. Não reescrever esse artefato
+para fingir que a decisão ocorreu dentro da rodada fechada.
+
+---
+
+## 10. Estado corrente do PRJ-001
+
+Estado esperado após a materialização T1–T6:
+
+```text
+Need NEED-001........... ACCEPTED
+Project PRJ-001......... PLANNING
+Module MOD-001.......... PLANNED
+VI-001.................. PLANNED
+DT-001 v1............... CURRENT
+Roadmap v2.............. CURRENT
+Work Items.............. 13 PROPOSED / 0 READY
+Development Cycles...... 0
+Executions.............. 0
+Validation.............. NOT EXECUTED
+Delivery................ NOT DELIVERED
+Implementation.......... NOT AUTHORIZED
+Human approval.......... GRANTED — T1–T6
+```
+
+Arquivos operacionais principais:
+
+```text
+project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md
+project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md
+project/naamive/projects/PRJ-001-naamive-mvp/DELIVERY_TARGET.md
+project/naamive/projects/PRJ-001-naamive-mvp/ROADMAP.md
+project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
+```
+
+A materialização T1–T6 foi registrada no Activity Log como `A-029`.
+
+---
+
+## 11. O que T1–T6 NÃO autorizou
+
+A aprovação humana T1–T6 **não** autorizou:
+
+```text
+WI-001 → READY
+qualquer outro WI → READY
+criação de Development Cycle
+criação de Execution
+início de implementação
+Validation
+Delivery
+```
+
+Todos os 13 Work Items continuam:
+
+```text
+PROPOSED
+```
+
+Contagem:
+
+```text
+13 PROPOSED
+0 READY
+0 IN_PROGRESS
+0 DONE
+0 Development Cycles
+0 Executions
+```
+
+Não inferir autorização de implementação a partir de:
+
+```text
+MOD-001 PLANNED
+VI-001 PLANNED
+DT-001 CURRENT
+Roadmap CURRENT
+Technology Baseline APPROVED
+TIR APPROVED
 ```
 
 ---
 
-## 17. Fechamento da rodada técnica 2 e readiness
+## 12. Próximo gate governado
+
+O próximo avanço real é o readiness do primeiro Work Item elegível, começando
+pelo `WI-001` conforme o roadmap corrente.
+
+Fluxo esperado:
 
 ```text
-Technology Baseline 2.7..2.11..... COMPLETE
-Technology Baseline v0.10......... APPROVED / FROZEN
+WI-001 PROPOSED
+→ avaliar critérios de readiness
+→ review/audit aplicável conforme NB-0002 e materialidade
+→ authority aplicável
+→ WI-001 READY
+→ criar Development Cycle
+→ criar Execution autorizada
+→ implementação
 ```
 
-TIR:
+Nenhuma dessas etapas deve ser pulada.
+
+### Próxima ação recomendada
+
+Se as mudanças T1–T6 ainda não estiverem commitadas:
 
 ```text
-documentation..................... COMPLETE
-technical verification............ PASS
-human approval.................... APPROVED
-TIR v1.0.......................... APPROVED
+1. revisar git status/diff
+2. incluir project/naamive/README.md atualizado
+3. incluir PROJECT_CONTINUITY.md atualizado
+4. humano faz commit/push
+5. abrir nova task para readiness do WI-001
 ```
 
-Primeira vertical slice:
+Se já estiverem commitadas:
 
 ```text
-VS-01 — Authenticated Project Context
-AUTHORIZED / NOT STARTED
+abrir nova task dedicada ao readiness do WI-001
 ```
 
-Estado de código:
+Não iniciar código diretamente.
+
+---
+
+## 13. Estado Git / checkpoint
+
+Checkpoint que serviu como **input da decisão T1–T6**:
 
 ```text
-CODE AUTHORIZED? YES — VS-01 ONLY
+cf4f2c032d61835329db820d9490250927b6bfeb
+chore(agents): constrain agent scope and delegation
+```
+
+Esse hash é deliberadamente preservado em `HUMAN_APPROVAL_T1_T6.md` para tornar
+reconstruível o snapshot exato sobre o qual a autoridade humana decidiu.
+
+### Atenção para novo chat
+
+O hash acima **não deve ser assumido como HEAD atual para sempre**.
+
+No início da nova sessão execute:
+
+```bash
+git branch --show-current
+git status --short
+git log -1 --oneline
+```
+
+Se existir commit posterior contendo T1–T6, trate-o como novo checkpoint.
+
+Se ainda houver working tree local, preserve as mudanças e não use
+`reset`, `clean`, `checkout` destrutivo ou rebase para “voltar ao checkpoint”.
+
+---
+
+## 14. Arquivos materializados pela decisão T1–T6
+
+Criado:
+
+```text
+project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
+```
+
+Alterados pela task:
+
+```text
+project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md
+project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md
+project/naamive/projects/PRJ-001-naamive-mvp/DELIVERY_TARGET.md
+project/naamive/projects/PRJ-001-naamive-mvp/ROADMAP.md
+project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
+project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/MODULE.md
+project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/VALUE_INCREMENT.md
+```
+
+Atualizado manualmente depois da task:
+
+```text
+project/naamive/README.md
+```
+
+Este próprio `PROJECT_CONTINUITY.md` deve ser atualizado/substituído junto com
+o checkpoint de handoff.
+
+---
+
+## 15. Arquivos históricos que NÃO devem ser “corrigidos” retroativamente
+
+Preservar como história:
+
+```text
+project/naamive/MANIFEST.md
+project/naamive/BASELINE_CERTIFICATE.md
+project/naamive/projects/PRJ-001-naamive-mvp/governance/PLANNING_BASELINE.md
+project/naamive/projects/PRJ-001-naamive-mvp/governance/ROUND_1_APPROVAL_CANDIDATE.md
+project/naamive/projects/PRJ-001-naamive-mvp/governance/CURRENT_CONTINUITY.md
+project/naamive/projects/PRJ-001-naamive-mvp/audits/AUD-001..AUD-009
+```
+
+Esses artefatos descrevem snapshots e decisões históricas.
+
+Não alterar seu significado apenas para refletir o estado corrente pós-T1–T6.
+
+---
+
+## 16. AGENTS.md — disciplina operacional atual
+
+`AGENTS.md` foi ajustado para evitar auto-orquestração excessiva.
+
+Regra essencial:
+
+```text
+um novo agente por task
+= responsabilidade do operador/orquestrador humano
+!= permissão para o worker criar subagentes
+```
+
+Por padrão o worker:
+
+```text
+recebe a task
+→ executa o escopo
+→ valida proporcionalmente
+→ reporta
+→ termina
+```
+
+Sem autorização explícita, não deve:
+
+```text
+criar subagente
+delegar revisão
+criar auditor para si mesmo
+fazer falsification pass recursivo
+crawlear o repo inteiro
+transformar validação local em nova auditoria
+```
+
+### Comandos locais
+
+Há um problema operacional observado com runners de IA: pipelines simples de
+shell podem ficar presos em `Executing command...` apesar de a operação ser
+trivial.
+
+Preferir:
+
+```bash
+tail -n 20 arquivo.md
+sed -n '1,80p' arquivo.md
+git status --short
+git diff --check
+```
+
+Evitar pipelines de inspeção desnecessários como:
+
+```bash
+tail ... | od ... | tail ...
+```
+
+Se um comando local simples de inspeção não retornar em poucos segundos:
+
+```text
+interromper
+→ usar alternativa equivalente mais simples
+→ continuar sem refazer etapas concluídas
 ```
 
 ---
 
-## 18. Technical Implementation Readiness
+## 17. Git safety
 
-Main TIR:
-
-```text
-readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
-v1.0 APPROVED
-```
-
-Foundation contract:
-
-```text
-readiness/02_IMPLEMENTATION_FOUNDATION_CONTRACT.md
-```
-
-First slice:
-
-```text
-readiness/03_FIRST_VERTICAL_SLICE_PLAN.md
-VS-01 AUTHORIZED / NOT STARTED
-```
-
-Version snapshot:
-
-```text
-readiness/04_VERSION_SNAPSHOT.md
-```
-
-Verification:
-
-```text
-audits/AUD-016_TIR_READINESS_VERIFICATION.md
-PASS
-```
-
-Human approval:
-
-```text
-readiness/06_TIR_APPROVAL_RECORD.md
-APPROVED
-Manuel Hinojosa — NAAMIVE Project Owner
-2026-09-10
-```
-
-Current rule:
-
-```text
-VS-01 may start
-frozen architecture may not be silently changed
-scope outside approved TIR/VS-01 requires explicit decision
-```
-
----
-
-## 19. R2-13 — registro histórico da auditoria destrutiva
-
-
-Esta etapa já foi concluída durante o fechamento da `NB-0002`.
-
-Ela tentou quebrar o modelo com cenários como:
-
-```text
-dois DeliveryTargets autoritativos atuais
-duas EVs ativas no MVP
-reentrada de fase sem nova PhaseCycleInstance
-baseline muda durante validation
-required omitida
-optional incluída sem aceite
-EV ACCEPTED reaberta
-Module INTEGRATED reaberto
-blocker sem affected scope
-NON_BLOCKING paralisa tudo
-agent encerra e roadmap perde continuity
-stale executor publica resultado
-handoff parcial
-target/member versions divergentes
-Delivery duplicada
-Delivery aceita sem target version exata
-```
-
-Resultado de fechamento:
-
-```text
-P0 = 0
-P1 = 0
-```
-
-O registro permanece aqui apenas para continuidade histórica.
-
----
-
-## 20. R2-14..R2-17 — fechamento histórico
-
-As etapas abaixo estão concluídas:
-
-```text
-R2-14 Remediation................ COMPLETE
-R2-15 Verification............... PASS
-R2-16 Final Pre-Ratification..... PASS
-R2-17 Human Ratification......... COMPLETE
-```
-
-Resultado:
-
-```text
-NB-0002 = RATIFIED / IN FORCE
-```
-
-A evidência de ratificação deve permanecer preservada.
-
-
----
-
-## 21. Regras operacionais
-
-### Um agente por task
-
-```text
-nova task material
-→ novo agente/contexto
-```
-
-### Git
-
-Operador humano controla:
+O humano controla operações de histórico:
 
 ```text
 commit
@@ -843,187 +577,180 @@ merge
 rebase
 reset
 clean
-history
+history rewrite
 ```
 
-### Não fazer agora
+Agentes não devem executar essas ações sem instrução humana explícita.
 
-```text
-não iniciar implementação
-não restaurar runtime legado
-não editar NB-0001
-não editar NB-0002 sem novo processo normativo
-não pular 2.10 Technical / Destructive Audit
-não aprovar/freeze a Technology Baseline antes da auditoria
-```
+Nunca usar comandos destrutivos para resolver divergência de contexto.
 
 ---
 
-## 22. Legado
+## 18. Legado
 
 ```text
 legacy can teach
 legacy cannot govern
 ```
 
-Backup pré-reboot continua preservado até decisão explícita futura.
+O runtime/projeto anterior ao lifecycle reboot é referência histórica.
+
+Não restaurar decisões antigas como autoridade atual apenas porque existiam no
+legado.
+
+A fonte de verdade para o fluxo atual é o corpus governado por `NB-0002` e os
+artefatos canônicos do Project atual.
 
 ---
 
-## 23. Status board
+## 19. Decisões que não devem ser reabertas sem fato novo
 
-### DONE
-
-```text
-Legacy archive
-Lifecycle reboot
-NB-0001 closure
-NB-0002 R2-01..R2-17
-NB-0002 human ratification
-NB-0002 root application
-Technology Baseline 2.1..2.11
-Technology Baseline v0.10 approval/freeze
-TIR documentation
-TIR technical verification AUD-016
-TIR human approval
-```
-
-### CURRENT
+Não reabrir por padrão:
 
 ```text
-VS-01 — Authenticated Project Context
-AUTHORIZED / NOT STARTED
+ratificação NB-0002
+Technology Baseline v0.10
+Planning Round 1
+AUD-001..AUD-009
+fechamento da audit phase
+PBL-PRJ001-R1-v1.0
+aprovação humana T1–T6
 ```
 
-### GATE
-
-```text
-TIR verification............ PASS
-TIR blockers................ 0
-human approval.............. APPROVED
-code authorized............. YES — VS-01 ONLY
-```
+Fato novo material pode exigir nova decisão governada no nível correto, mas não
+autoriza reescrever decisões históricas.
 
 ---
 
-## 24. Próxima ação concreta
+## 20. Handoff para novo chat/agente
+
+Use este bloco como leitura rápida:
 
 ```text
-START VS-01 — Authenticated Project Context
-```
+Estamos continuando o NAAMIVE na branch lifecycle-reboot.
 
-Scope authority:
+A Normative Baseline vigente é NB-0002 — RATIFIED / IN FORCE.
+NB-0001 é histórica e imutável.
 
-```text
-readiness/03_FIRST_VERTICAL_SLICE_PLAN.md
-```
+Technology Baseline v0.10 está APPROVED / FROZEN.
+TIR v1.0 está APPROVED.
+Mesmo assim, Implementation continua NOT AUTHORIZED.
 
-Rules:
+Planning Round 1 está COMPLETE.
+Business Baseline final da rodada: PBL-PRJ001-R1-v1.0.
+Audit phase: CLOSED.
+Última auditoria válida: AUD-009.
+Known blocking findings: 0.
+Further audit required para essa rodada: NO.
+Não criar nova auditoria da Planning Round 1.
 
-```text
-do not reopen frozen architecture
-do not expand beyond approved VS-01 without explicit decision
-```
+Depois do fechamento da rodada, o Project Owner exerceu HUMAN_APPROVAL_T1_T6.
 
----
+T1 MOD-001 IDENTIFIED → DEFINED
+T2 VI-001 IDENTIFIED → DEFINED
+T3 VI-001 DEFINED → PLANNED
+T4 MOD-001 DEFINED → PLANNED
+T5 DT-001 v1 CANDIDATE / NOT CURRENT → CURRENT
+T6 Roadmap v2 CANDIDATE / NOT CURRENT → CURRENT
 
-## 25. Handoff para novo chat/agente
+Estado corrente esperado:
+Project = PLANNING
+MOD-001 = PLANNED
+VI-001 = PLANNED
+DT-001 v1 = CURRENT
+Roadmap v2 = CURRENT
+13 Work Items = PROPOSED
+0 READY
+0 Development Cycles
+0 Executions
+Implementation = NOT AUTHORIZED
 
-```text
-Estamos continuando o projeto NAAMIVE na branch lifecycle-reboot.
+A aprovação T1–T6 está registrada em:
+project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
 
-Leia primeiro:
-1. PROJECT_CONTINUITY.md
-2. governance/normative-baselines/NB-0002.md
-3. technology/01_TECHNOLOGY_BASELINE.md
-4. technology/10_TECHNOLOGY_BASELINE_2_11_FREEZE_MANIFEST.md
-5. readiness/00_TIR_INDEX.md
-6. readiness/01_TECHNICAL_IMPLEMENTATION_READINESS.md
-7. readiness/02_IMPLEMENTATION_FOUNDATION_CONTRACT.md
-8. readiness/03_FIRST_VERTICAL_SLICE_PLAN.md
-9. readiness/04_VERSION_SNAPSHOT.md
-10. audits/AUD-016_TIR_READINESS_VERIFICATION.md
-11. readiness/06_TIR_APPROVAL_RECORD.md
+O decision_input_commit dessa aprovação é:
+cf4f2c032d61835329db820d9490250927b6bfeb
 
-NB-0002 = RATIFIED / IN FORCE.
-Technology Baseline v0.10 = APPROVED / FROZEN.
+Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD atual.
+No começo da sessão confira git status e git log -1.
 
-Last validated remote checkpoint before TIR package:
-300b965a056c40bdfafe4833584abd74a28decc0
+Próximo avanço governado:
+readiness do WI-001.
 
-TIR:
-v1.0 APPROVED
-documentation COMPLETE
-AUD-016 PASS
-blockers 0
-human approval APPROVED
-approver Manuel Hinojosa — NAAMIVE Project Owner
-date 2026-09-10
-
-First slice:
-VS-01 — Authenticated Project Context
-AUTHORIZED / NOT STARTED
-
-Code is authorized only for VS-01 within the approved TIR and frozen Technology Baseline.
-
-Do not reinterpret NB-0002.
-Do not silently mutate frozen Technology Baseline.
-Do not expand implementation beyond approved TIR/VS-01 without explicit decision.
+Não promova WI-001 automaticamente.
+Não inicie código.
+Não crie Cycle/Execution antes do WI estar READY.
+Não reabra auditoria encerrada.
+Não crie subagentes sem autorização explícita.
+Humano controla commit/push/merge/rebase/reset/clean.
 ```
 
 ---
 
-## 26. Manutenção deste arquivo
+## 21. Manutenção deste arquivo
 
 Atualizar quando houver:
 
 ```text
-novo milestone fechado
-novo commit/checkpoint validado
-mudança da próxima ação
+novo checkpoint/commit relevante
+mudança de baseline normativa
+nova decisão humana
+mudança de lifecycle corrente
+Work Item promovido para READY
+Development Cycle criado
+Execution criada
 finding bloqueante
-nova baseline normativa
-ratificação
-retomada da Technology Baseline
-início da implementação
+início autorizado de implementação
+mudança material da próxima ação
 ```
 
-Não usar como changelog infinito.
+Não transformar este arquivo em changelog infinito.
 
-Manter:
+Manter somente:
 
 ```text
 passado necessário
 +
-estado atual
+estado corrente
 +
-próximo caminho
+próxima ação
++
+regras críticas de retomada
 ```
 
 ---
 
-## 27. Estado atual em uma tela
+## 22. Estado atual em uma tela
 
 ```text
-PROJECT.................. NAAMIVE
-BRANCH................... lifecycle-reboot
-LAST VALIDATED HEAD....... 300b965a056c40bdfafe4833584abd74a28decc0
+PROJECT..................... NAAMIVE / PRJ-001
+BRANCH...................... lifecycle-reboot
 
-NORMATIVE BASELINE........ NB-0002
-NB-0002 STATUS............ RATIFIED / IN FORCE
+NORMATIVE BASELINE.......... NB-0002
+NB-0002 STATUS.............. RATIFIED / IN FORCE
+TECHNOLOGY BASELINE......... v0.10 APPROVED / FROZEN
+TIR......................... v1.0 APPROVED
 
-TECH BASELINE............. v0.10 APPROVED / FROZEN
-DOCUMENTATION ROUND 2..... COMPLETE
+PLANNING ROUND 1............ COMPLETE
+BUSINESS BASELINE........... PBL-PRJ001-R1-v1.0
+LAST VALID AUDIT............ AUD-009
+AUDIT PHASE................. CLOSED
+KNOWN BLOCKING FINDINGS..... 0
+FURTHER ROUND-1 AUDIT....... NO
 
-TIR....................... v1.0 APPROVED
-TIR DOCUMENTATION......... COMPLETE
-TIR VERIFICATION.......... PASS
-TIR BLOCKERS.............. 0
-TIR HUMAN APPROVAL........ APPROVED
+HUMAN APPROVAL T1–T6........ GRANTED / EXERCISED
+MOD-001..................... PLANNED
+VI-001...................... PLANNED
+DT-001 v1................... CURRENT
+ROADMAP v2.................. CURRENT
 
-FIRST SLICE............... VS-01 AUTHORIZED / NOT STARTED
+WORK ITEMS.................. 13 PROPOSED / 0 READY
+DEVELOPMENT CYCLES.......... 0
+EXECUTIONS.................. 0
+VALIDATION.................. NOT EXECUTED
+DELIVERY.................... NOT DELIVERED
+IMPLEMENTATION.............. NOT AUTHORIZED
 
-CODE AUTHORIZED?.......... YES — VS-01 ONLY
-
-NEXT ACTION............... START VS-01
+DECISION INPUT COMMIT....... cf4f2c032d61835329db820d9490250927b6bfeb
+NEXT GOVERNED ACTION........ WI-001 readiness
 ```
