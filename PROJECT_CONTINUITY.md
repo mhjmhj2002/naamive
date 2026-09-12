@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED`
-**Implementation:** `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`
+**Implementation:** `CODE REVIEW FAILED / GOVERNED REWORK REQUIRED`
 
 ---
 
@@ -305,7 +305,7 @@ para fingir que a decisão ocorreu dentro da rodada fechada.
 
 ## 10. Estado corrente do PRJ-001
 
-Estado corrente após o resultado técnico de EX-001:
+Estado corrente após a review independente de EX-001:
 
 ```text
 Need NEED-001........... ACCEPTED
@@ -320,7 +320,9 @@ Executions.............. 1 (EX-001 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED
-Implementation.......... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Code Review............... FAIL — CR-WI001-01 (4 BLOCKING / 1 NON_BLOCKING)
+Acceptance................ NOT GRANTED / BLOCKED
+Implementation............ CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 ```
@@ -382,14 +384,14 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é avaliar o resultado técnico de `EX-001` de forma
-independente, conforme lifecycle e governança aplicáveis.
+O próximo avanço real é rework governado dos findings bloqueantes de `CR-WI001-01`, seguido de nova review/aceite conforme lifecycle e governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
 WI-001 IN_REVIEW
-→ review/audit independente aplicável
+→ governed rework CR-WI001-F001..F004
+→ nova review/audit independente aplicável
 → decisão de aceite humana conforme aplicável
 ```
 
@@ -397,10 +399,10 @@ WI-001 IN_REVIEW
 
 ### Próxima ação recomendada
 
-Após a revisão e publicação humana deste checkpoint:
+Após o rework governado dos findings bloqueantes:
 
 ```text
-abrir task independente de review/audit para WI-001
+abrir nova task autorizada de review/audit para WI-001
 ```
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
@@ -620,8 +622,7 @@ NB-0001 é histórica e imutável.
 
 Technology Baseline v0.10 está APPROVED / FROZEN.
 TIR v1.0 está APPROVED.
-EX-001 produziu o resultado técnico autorizado; Implementation está
-TECHNICAL RESULT PRODUCED / AWAITING REVIEW.
+EX-001 produziu o resultado técnico autorizado; CR-WI001-01 retornou FAIL com quatro findings BLOCKING. Implementation está CODE REVIEW FAILED / GOVERNED REWORK REQUIRED.
 
 Planning Round 1 está COMPLETE.
 Business Baseline final da rodada: PBL-PRJ001-R1-v1.0.
@@ -651,7 +652,9 @@ Roadmap v2 = CURRENT
 1 Development Cycle (DC-001)
 1 Execution (EX-001 SUCCEEDED)
 Implementation authority = GRANTED
-Implementation = TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Code Review = FAIL — CR-WI001-01 (4 BLOCKING / 1 NON_BLOCKING)
+Acceptance = NOT GRANTED / BLOCKED
+Implementation = CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -663,7 +666,7 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado:
-review/audit independente aplicável e decisão de aceite separada.
+rework de CR-WI001-F001..F004, nova review/audit aplicável e decisão de aceite separada.
 
 Não promova WI-001 automaticamente.
 Não reexecute EX-001 terminal.

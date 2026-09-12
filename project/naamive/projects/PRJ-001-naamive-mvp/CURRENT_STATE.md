@@ -16,7 +16,7 @@ Executions................. 1
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED
-Implementation............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Implementation............. CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 ```
 
 ## Fechamento da Planning Round 1
@@ -52,7 +52,9 @@ Development Cycle.......... DC-001
 Execution.................. EX-001
 Execution state............ SUCCEEDED
 Implementation authority... GRANTED
-Implementation............. TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+Code Review................ FAIL — CR-WI001-01 (4 BLOCKING / 1 NON_BLOCKING)
+Acceptance................. NOT GRANTED / BLOCKED
+Implementation............. CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
