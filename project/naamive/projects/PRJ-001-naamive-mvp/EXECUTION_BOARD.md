@@ -9,11 +9,13 @@
 ## Fato atual projetado
 
 ```text
-AUD-001..AUD-009......... FAIL / historical
+AUD-001..AUD-009......... FAIL / historical; AUD-009 is last valid audit
 AUD3-001 / DEC-005....... RESOLVED / historical evidence retained
-active blockers........... FND-011 (AUD8-001)
-continuity................ CONT-PRJ001-010
-current next action....... independent AUD-010
+FND-011................... RESOLVED / v1.0 materialized; human closure recorded
+active blockers........... 0 known
+audit phase............... CLOSED
+current audit continuity.. NONE
+further audit required.... NO
 human approval............ NOT GRANTED
 ```
 
@@ -24,7 +26,7 @@ autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001..WI-013 | PROPOSED | somente após AUD-010, decisão humana e readiness governado |
+| WI-001..WI-013 | PROPOSED | somente após decisão humana própria e readiness governado |
 
 ```text
 PROPOSED............. 13

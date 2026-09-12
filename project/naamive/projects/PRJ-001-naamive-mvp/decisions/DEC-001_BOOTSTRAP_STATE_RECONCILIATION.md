@@ -26,4 +26,5 @@ The old claims remain historical facts of what the manual workspace said, but
 they are not accepted as authoritative lifecycle events.
 
 The desired transitions are moved to `ROUND_1_APPROVAL_CANDIDATE.md` and require
-independent audit + human approval.
+their own explicit human approval. The Planning Round 1 audit phase has since
+been closed without exercising those transitions.

@@ -168,49 +168,36 @@ governada forem satisfeitos.
 
 ---
 
-# 11. Independent Codex audit before final approval
+# 11. Evidence and human authority
 
-For the current manual self-hosted process:
+When a governed decision requires review evidence, its required evidence and
+authority must be explicit:
 
 ```text
 candidate planning/result
-→ independent Codex audit
-→ findings
-→ remediation
-→ re-audit if necessary
-→ PASS
-→ human approval
+→ applicable evidence and finding treatment
+→ explicit human authority decision when required
 ```
 
-No final approval is valid before the independent audit passes.
-
-Human approval remains the authority decision; Codex audit is evidence/gate and
-does not replace human authority.
+Human authority remains the authority decision; evidence never replaces it.
 
 
 ---
 
-# 12. Planning baseline and audit identity
+# 12. Planning Round 1 closure
 
-Every material planning audit must name the exact planning baseline and the
-author/auditor principals. For the current remediation candidate:
+Planning Round 1 is documentary complete under its final baseline:
 
 ```text
 baseline........ PBL-PRJ001-R1-v1.0
-author.......... agent:codex:naamive-aud9-remediation
-next auditor.... agent:codex:naamive-independent-audit
-human authority. human:manuel-hinojosa:project-owner
+last valid audit. AUD-009
+audit phase..... CLOSED by human decision
+blockers......... 0 known
+further audit.... NO
 ```
 
-A baseline indicada nesta seção deve sempre ser a candidata corrente; para a
-remediação após AUD-009 ela é `PBL-PRJ001-R1-v1.0`. Baselines anteriores são
-evidência histórica e não podem ser usadas como rota alternativa de audit ou
-aprovação.
-
-Uma nova conversa Codex com o mesmo principal não é usada para fingir que o
-auditor difere de si. A independência exige principal de auditoria distinto do
-produtor da candidata. A fase manual registra essa segregação e sua limitação
-de atestação local explicitamente.
+As baselines anteriores são evidência histórica. Este fechamento não aprova
+transições de lifecycle nem autoriza implementação.
 
 # 13. No state repair by silent edit
 

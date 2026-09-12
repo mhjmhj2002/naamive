@@ -205,3 +205,16 @@ A-027
  approval: NOT GRANTED
  implementation: NOT AUTHORIZED
  canonical_next_action: AUD-010
+
+A-028
+ type: HUMAN_DECISION / PLANNING_ROUND_CLOSURE
+ recorded_at: 2026-09-12T11:39:26-03:00
+ baseline: PBL-PRJ001-R1-v1.0
+ fact: human review closed the Planning Round 1 audit phase and stabilized the v1.0 documentation
+ audit_disposition: AUD-010 discarded and removed because its own audit record had invalid temporal metadata
+ substantive_findings_from_aud010: none accepted
+ last_valid_audit: AUD-009
+ remediation: AUD9-001 / FND-011 materialized in PBL-PRJ001-R1-v1.0
+ result: audit phase CLOSED; known blocking findings 0; further audit required NO
+ approval: NOT GRANTED
+ implementation: NOT AUTHORIZED

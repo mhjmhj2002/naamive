@@ -1,6 +1,6 @@
 # ROUND-1-APPROVAL-CANDIDATE — PRJ-001 / MOD-001 / VI-001
 
-**Status:** CANDIDATE FOR INDEPENDENT AUDIT  
+**Status:** CLOSED WITHOUT PROMOTION — retained as planning evidence
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
 **author_principal:** agent:codex:naamive-aud9-remediation  
@@ -8,8 +8,8 @@
 **Implementation:** NOT AUTHORIZED  
 **remediation_authority:** nenhuma; este registro não concede aprovação
 
-O humano não está sendo solicitado a aprovar agora. Após AUD-010 PASS sem
-blocker aplicável, poderá decidir explicitamente, nesta ordem:
+O humano não está sendo solicitado a aprovar por este registro. O conjunto
+abaixo permaneceu não exercido quando a Planning Round 1 foi encerrada:
 
 ```text
 T1 MOD-001 IDENTIFIED → DEFINED
@@ -21,9 +21,6 @@ T6 DevelopmentRoadmap v2 CANDIDATE → CURRENT
 ```
 
 Project permanece `PLANNING`; WIs permanecem `PROPOSED`; não se cria Cycle,
-Execution, Validation ou Delivery. A aprovação requer manifesto íntegro v1.0,
-AUD-010 válido, ausência de blocker aplicável e uma decisão humana nova; esta
-candidata nunca se converte silenciosamente em registro de aprovação.
-
-Pré-requisito de continuidade: `CONT-PRJ001-010`, `FND-011` e ação corrente
-exclusiva `AUD-010`.
+Execution, Validation ou Delivery. Esta candidata nunca se converte
+silenciosamente em registro de aprovação. Qualquer promoção posterior exige
+nova decisão humana e evidência governada própria, fora desta rodada encerrada.

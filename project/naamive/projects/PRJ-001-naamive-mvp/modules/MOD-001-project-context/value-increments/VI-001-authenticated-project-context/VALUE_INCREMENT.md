@@ -16,8 +16,8 @@ The earlier bootstrap label `VI-001 = DEFINED` had no valid parent transition an
 no governed approval proof. It is therefore superseded as an invalid projection,
 not treated as a valid `DEFINED → IDENTIFIED` lifecycle transition.
 
-Current provable state is `IDENTIFIED` until the audited approval candidate is
-accepted by the human authority.
+Current provable state is `IDENTIFIED` until an explicit human authority
+decision accepts the proposed transition set.
 
 ## Beneficiary
 
@@ -95,7 +95,7 @@ mitigation, validity and evidence links.
 ## Open questions
 
 ```text
-none currently known that require a new material decision before submitting the candidate to audit
+none currently known that require a new material decision for this closed planning round
 ```
 
 ## Work Item proposal set
@@ -114,12 +114,13 @@ and cannot authorize any Execution.
 
 ## Proposed transition set
 
-After MOD-001 is validly DEFINED, the same audited package proposes:
+After MOD-001 is validly DEFINED, the retained candidate proposes:
 
 ```text
 VI-001 IDENTIFIED → DEFINED
 VI-001 DEFINED → PLANNED
 ```
 
-Neither transition occurs until the independent audit passes and the human
-Project Owner explicitly approves the ordered transition set.
+Neither transition occurs until the human Project Owner explicitly approves the
+ordered transition set. The Round 1 audit phase is closed and did not execute
+either transition.

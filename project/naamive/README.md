@@ -3,8 +3,9 @@
 **Canonical root:** `project/naamive/`  
 **Project:** PRJ-001 — NAAMIVE MVP  
 **Current Project lifecycle:** PLANNING  
-**Planning baseline candidate:** `PBL-PRJ001-R1-v1.0`  
-**Last independent audit:** AUD-009 — FAIL  
+**Planning Round 1:** COMPLETE
+**Business Baseline final:** `PBL-PRJ001-R1-v1.0`
+**Last valid audit:** AUD-009 — historical FAIL
 **Implementation:** NOT AUTHORIZED
 
 ## Current governance truth
@@ -21,19 +22,19 @@ Development Cycles...... 0
 Executions.............. 0
 ```
 
-## Current gate
+## Fechamento documental da rodada
 
-AUD-009 confirmou integridade da v0.9, mas encontrou 24 objetos materiais
-ativos vinculados à v0.5 sem revalidação explícita. A v1.0 registra a
-revalidação por objeto e requer:
+AUD-009 identificou a necessidade de revalidar 24 objetos materiais antes
+vinculados à v0.5. A v1.0 materializou esse registro por objeto. Por decisão
+humana, a remediação foi aceita para o fechamento documental desta rodada.
 
 ```text
-CONT-PRJ001-010
-→ independent AUD-010
-→ no applicable blocking findings
-→ human decision
-→ only then explicit approved transitions
+Audit phase.................. CLOSED
+Known blocking findings...... 0
+Further audit required....... NO
+Documentation................ STABLE
 ```
 
-AUD3-001/DEC-005 remains resolved. Human approval and implementation remain
-blocked until the governing continuity exits successfully.
+AUD3-001/DEC-005 permanece resolvido. O fechamento não aprova transições de
+lifecycle nem autoriza implementação; qualquer decisão posterior exige sua
+própria autoridade e evidência governada.

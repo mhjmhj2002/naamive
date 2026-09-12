@@ -31,19 +31,15 @@ Sob `PBL-PRJ001-R1-v1.0`:
 
 No implementation agent may be dispatched yet.
 
-## Planning author/auditor segregation
+## Planning Round 1 closure
 
-Autor da remediação corrente:
+Autor histórico da remediação v1.0:
 
 `agent:codex:naamive-aud9-remediation`
 
-Independent auditor principal:
-
-`agent:codex:naamive-independent-audit`
-
-Uma janela de chat diferente não é suficiente se o principal for o mesmo. O
-fluxo corrente usa produtor e auditor declaradamente distintos; o relatório de
-auditoria deve registrar identidade, independência e limitação.
+`Planning Round 1 = COMPLETE`; fase de auditoria encerrada por decisão humana;
+AUD-009 é a última auditoria válida, `FND-011` está resolvido e não há
+auditoria futura planejada para a rodada.
 
 ## Gap rule
 
@@ -54,18 +50,16 @@ record Finding
 → stop affected scope
 → assign owner/exit condition/fallback/escalation
 → resolve at correct authority level
-→ verify/audit
+→ verify
 → resume only with valid continuity
 ```
 
-## Audit-before-human-approval
+## Authority before governed promotion
 
 ```text
 candidate baseline
-→ independent audit
-→ blockers resolved
-→ PASS
-→ human authority decision
+→ applicable evidence and finding treatment
+→ human authority decision when required
 ```
 
 PASS does not change state by itself.

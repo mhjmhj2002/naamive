@@ -8,7 +8,7 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Technology Baseline:** v0.10 — APPROVED / FROZEN  
 **TIR:** v1.0 — APPROVED (technical envelope)  
-**decision_status:** PENDING AUDIT + HUMAN APPROVAL  
+**decision_status:** CANDIDATE / HUMAN APPROVAL NOT EXERCISED
 **decision_authority_ref:** human:manuel-hinojosa:project-owner
 
 ## Escopo candidato
@@ -21,13 +21,14 @@ um Project e observa atividade contextual factual.
 |---|---|
 | VI-001 — Authenticated Project Context | REQUIRED_FOR_TARGET |
 
-## Gate
+## Fechamento documental da rodada
 
 ```text
-continuity_ref = CONT-PRJ001-010
-cause_ref      = FND-011 / AUD9-001
-next_audit     = AUD-010
+Planning Round 1............. COMPLETE
+Audit phase.................. CLOSED
+Known blocking findings...... 0
+Further audit required....... NO
 ```
 
-DT-001 não se torna current automaticamente. Após auditoria válida é necessária
-uma decisão humana explícita; antes disso não existe Delivery.
+DT-001 não se torna current automaticamente. O encerramento documental não
+exerce a decisão humana de currentness; antes dela não existe Delivery.

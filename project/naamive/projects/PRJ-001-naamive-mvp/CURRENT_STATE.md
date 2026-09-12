@@ -18,7 +18,7 @@ Delivery................... NOT DELIVERED
 Implementation............. NOT AUTHORIZED
 ```
 
-## Auditoria e continuidade
+## Fechamento da Planning Round 1
 
 ```text
 AUD-001.................... FAIL (historical)
@@ -29,14 +29,17 @@ AUD-005.................... FAIL (historical; AUD5-001 and AUD5-002)
 AUD-006.................... FAIL (historical; AUD6-001 and AUD6-002)
 AUD-007.................... FAIL (historical; AUD7-001, AUD7-002 and AUD7-003)
 AUD-008.................... FAIL (historical; AUD8-001)
-AUD-009.................... FAIL (historical; AUD9-001 / FND-011 remains open)
-current continuity......... CONT-PRJ001-010
-canonical next action...... independent AUD-010
-human approval............. NOT GRANTED / BLOCKED
+AUD-009.................... FAIL (last valid historical audit)
+AUD-010.................... INVALID / REMOVED (invalid temporal metadata)
+audit phase................ CLOSED BY HUMAN DECISION
+current audit continuity... NONE
+known blocking findings.... 0
+further audit required..... NO
+human approval............. NOT GRANTED
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
 históricos/superseded. FND-008, FND-009 e FND-010 foram verificados; FND-011
-permanece blocker até a verificação independente de AUD-010. Esta projeção não
-é fonte canônica:
+está resolvido com a remediação materializada na v1.0 e o encerramento humano
+da fase de auditoria. Esta projeção não é fonte canônica:
 ver `governance/CURRENT_CONTINUITY.md`.

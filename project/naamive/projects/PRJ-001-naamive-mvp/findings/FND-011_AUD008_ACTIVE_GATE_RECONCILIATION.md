@@ -1,8 +1,8 @@
 # FND-011 — AUD8-001 reconciliação de instruções ativas do gate
 
-**Status:** READY_FOR_VERIFICATION  
+**Status:** RESOLVED — remediation materialized in v1.0; audit phase closed by human decision
 **Severity:** P1  
-**Blocking:** YES until independent verification  
+**Blocking:** NO — historical causal record retained
 **source_finding:** AUD8-001  
 **source_evidence:** audits/AUD-008_PLANNING_ROUND_1_CODEX.md  
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
@@ -23,7 +23,8 @@ v1.0 atualiza os objetos candidatos e registra source, target, decisão,
 autoridade, evidência e resultado candidato por objeto em
 `governance/BASELINE_REVALIDATION_AUD009.md`.
 
-AUD-010 deve confirmar a suficiência desse record, que nenhuma instrução ativa,
-pedido, projeção, candidato de aprovação ou contexto de autoridade oferece
-baseline/autoria alternativa, e que não ocorreu promoção. Até então, aprovação
-humana, readiness e implementação permanecem bloqueadas.
+A decisão humana de fechamento confirmou que a revalidação da v1.0 materializa
+corretamente a remediação. AUD-010 foi descartado porque o próprio registro
+possuía metadata temporal inválida; nenhum finding substantivo novo foi aceito.
+AUD-009 permanece a última auditoria histórica válida. Este encerramento não
+promove lifecycle, não concede readiness e não autoriza implementação.

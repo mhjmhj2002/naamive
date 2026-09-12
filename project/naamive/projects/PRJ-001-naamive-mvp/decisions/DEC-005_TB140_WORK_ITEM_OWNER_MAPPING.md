@@ -1,6 +1,6 @@
 # DEC-005 — TB-140 Work Item owner / physical scope mapping
 
-**Status:** CANDIDATE FOR INDEPENDENT AUDIT  
+**Status:** RESOLVED / HISTORICAL EVIDENCE PRESERVED
 **Impact:** MATERIAL  
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
@@ -218,8 +218,8 @@ authorize implementation
 
 ## Fail-closed escape hatch
 
-If independent AUD-004 concludes that this mapping changes rather than merely
-maps TB-140 semantics, the planning round remains blocked and a successor
-Technology Baseline must be opened at the proper authority level.
+If a future governed assessment concludes that this mapping changes rather than
+merely maps TB-140 semantics, a successor Technology Baseline must be opened at
+the proper authority level.
 
 No implementer may resolve that question locally.

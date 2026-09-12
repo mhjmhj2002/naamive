@@ -1,30 +1,31 @@
 # Registro de revalidação — AUD9-001 / FND-011
 
 **record_id:** BRR-PRJ001-010  
-**status:** CANDIDATE FOR INDEPENDENT AUDIT  
+**status:** MATERIALIZED IN PBL-PRJ001-R1-v1.0 — CLOSED FOR PLANNING ROUND 1
 **source_business_baseline_ref:** PBL-PRJ001-R1-v0.5  
 **target_business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
 **decision:** REVALIDATE  
-**decision_authority_required:** human:manuel-hinojosa:project-owner — NOT EXERCISED  
+**closure_authority:** human:manuel-hinojosa:project-owner — audit-phase closure exercised
 **recorded_by:** agent:codex:naamive-aud9-remediation  
-**independent_verification_required:** agent:codex:naamive-independent-audit / AUD-010  
+**closure_basis:** remediação materializada na v1.0; AUD-010 descartado por metadata temporal inválida do próprio registro
 **created_at:** 2026-09-12T11:18:00-03:00
 
 ## Decisão candidata e limite de autoridade
 
-Este registro materializa o tratamento exigido por AUD9-001. Ele não aprova a
-revalidação, não fecha FND-011 e não promove lifecycle. A decisão candidata é
-que os objetos abaixo preservam escopo, estado, owner, obrigações de teste e
-evidence da v0.5, exceto pela troca explícita do binding para a candidata v1.0.
-Qualquer divergência encontrada por AUD-010 exige `REVOKE`, `RECONCILE` ou
-sucessor apropriado; não há equivalência implícita entre baselines.
+Este registro materializa o tratamento exigido por AUD9-001. A decisão humana
+de fechamento reconhece a remediação na v1.0 para esta Planning Round, sem
+aprovar lifecycle. Os objetos abaixo preservam escopo, estado, owner, obrigações
+de teste e evidence da v0.5, exceto pela troca explícita do binding para v1.0.
+Não há equivalência implícita entre baselines.
 
 ## Registros por objeto
 
 Em cada linha, a evidência é o conteúdo reavaliado do próprio objeto, pinado
-no manifesto v1.0, mais a preservação de AUD-009/FND-011. O resultado é
-**CANDIDATE — pendente de AUD-010 e de decisão humana**, nunca uma aprovação.
+no manifesto v1.0, mais a preservação de AUD-009/FND-011. O resultado
+`CANDIDATE` nas linhas abaixo é o fato histórico do registro; a disposição
+corrente da revalidação é **MATERIALIZED / CLOSED FOR ROUND 1**, nunca uma
+aprovação de lifecycle.
 
 | Objeto | Source → target | Decisão | Autoridade | Evidência específica | Resultado |
 |---|---|---|---|---|---|
@@ -53,9 +54,10 @@ no manifesto v1.0, mais a preservação de AUD-009/FND-011. O resultado é
 | `WI-013-canonical-project-read-source.md` | v0.5 → v1.0 | REVALIDATE | Project Owner requerida | escopo, critérios e evidence preservados | CANDIDATE |
 | `work-items/README.md` | v0.5 → v1.0 | REVALIDATE | Project Owner requerida | índice e regra de uso dos WIs preservados | CANDIDATE |
 
-## Condições de verificação
+## Fechamento
 
-AUD-010 deve confirmar que as 24 referências alvo são v1.0, que o manifesto
-fixa este registro, os objetos e AUD-009, e que não há alteração de escopo,
-estado, autoridade, critérios, riscos ou dependências além do binding
-de baseline. `FND-011` permanece blocking até essa verificação independente.
+As 24 referências alvo declaram v1.0, e o manifesto fixa este registro, os
+objetos e AUD-009. A decisão humana confirmou que não houve alteração de
+escopo, estado, autoridade, critérios, riscos ou dependências além do binding
+de baseline. `FND-011` está resolvido; nenhuma nova auditoria é requerida nesta
+Planning Round.

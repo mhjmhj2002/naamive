@@ -1,22 +1,22 @@
 # APPLY — NAAMIVE self-hosted project bootstrap — Part 1 v0.2
 
-This package supersedes the local planning package `v0.1`.
+**Status:** HISTORICAL BOOTSTRAP ARTIFACT — not an active operating instruction
 
-It is still a planning candidate.
+This artifact records the initial v0.2 bootstrap. Its original candidate and
+audit-gate language is historical. The final documentary state of Planning
+Round 1 is governed by `README.md` and `projects/PRJ-001-naamive-mvp/`.
 
 ```text
-Project lifecycle............... PLANNING
-Module MOD-001.................. IDENTIFIED
-VI-001.......................... DEFINED
-Work Items...................... 12 PROPOSED
-Development Cycles.............. 0
-Executions...................... 0
-Implementation.................. NOT STARTED
-Codex independent audit......... NOT YET EXECUTED
-Human approval.................. NOT GRANTED
+Planning Round 1................ COMPLETE
+Audit phase..................... CLOSED
+Last valid audit................ AUD-009
+Business Baseline............... PBL-PRJ001-R1-v1.0
+Documentation................... STABLE
+Known blocking findings......... 0
+Further audit required.......... NO
 ```
 
-Corrections in v0.2:
+Historical corrections in v0.2:
 
 ```text
 1. removed invalid Project state "ACTIVE"; Project is PLANNING
@@ -24,27 +24,15 @@ Corrections in v0.2:
 3. completed VI-001 DEFINED fields and MATERIAL impact
 4. corrected WI ownership: Project or Module; VI is a reference, not owner
 5. completed DT-001 v1 with canonical REQUIRED_FOR_TARGET metadata
-6. integrated EXECUTION_BOARD.md and mandatory independent Codex audit gate
+6. integrated EXECUTION_BOARD.md and the then-applicable audit gate
 ```
 
-Additional hardening:
+Historical hardening:
 
 ```text
 Need/Project impact made explicit
-AUDIT_REQUEST_CODEX.md added
 planning-round Activity facts updated without fabricating approval/audit
 ```
 
-Gate:
-
-```text
-READY FOR AUDIT
-→ independent Codex audit
-→ remediate blocking findings
-→ re-audit
-→ PASS
-→ human approval
-→ VI-001 PLANNED
-```
-
-Do not start implementation from this package before the gate is completed.
+No audit request is active for this completed planning round. This historical
+artifact does not authorize implementation.

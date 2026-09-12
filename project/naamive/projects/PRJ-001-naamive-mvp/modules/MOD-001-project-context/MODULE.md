@@ -130,5 +130,5 @@ MOD-001 IDENTIFIED → DEFINED
 ```
 
 This transition is **not executed by this file**. It is part of
-`ROUND_1_APPROVAL_CANDIDATE.md`, requires independent audit coverage and later
-human approval.
+`ROUND_1_APPROVAL_CANDIDATE.md` and requires its own explicit human approval.
+The Round 1 audit phase is closed and did not execute this transition.
