@@ -50,15 +50,20 @@ record Finding
 → stop affected scope
 → assign owner/exit condition/fallback/escalation
 → resolve at correct authority level
-→ verify
+→ verify/audit when required by policy
 → resume only with valid continuity
 ```
 
-## Authority before governed promotion
+## Review, audit and authority before governed promotion
+
+```text
+For future MATERIAL/CRITICAL advances, `NB-0002` and
+`governance/04_AUDIT_AND_REVIEW_POLICY.md` remain controlling: evidence does
+not substitute for audit when the policy requires audit.
 
 ```text
 candidate baseline
-→ applicable evidence and finding treatment
+→ applicable review/audit and finding treatment
 → human authority decision when required
 ```
 

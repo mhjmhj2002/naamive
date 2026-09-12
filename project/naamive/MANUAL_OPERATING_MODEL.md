@@ -168,18 +168,20 @@ governada forem satisfeitos.
 
 ---
 
-# 11. Evidence and human authority
+# 11. Review, audit and human authority
 
-When a governed decision requires review evidence, its required evidence and
-authority must be explicit:
+For future MATERIAL/CRITICAL advances, review and audit remain governed by
+`NB-0002` and `governance/04_AUDIT_AND_REVIEW_POLICY.md`. Evidence supports an
+audit; it does not replace an audit when the policy requires one.
 
 ```text
 candidate planning/result
-→ applicable evidence and finding treatment
+→ applicable review/audit and finding treatment
 → explicit human authority decision when required
 ```
 
-Human authority remains the authority decision; evidence never replaces it.
+Human authority remains the authority decision; evidence never replaces audit
+when audit is required.
 
 
 ---

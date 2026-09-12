@@ -98,7 +98,7 @@ normative owner type.
 ```text
 PROPOSED
 → readiness review against current approved baseline
-→ applicable independent evidence / explicit coverage proof
+→ applicable independent audit / explicit coverage proof
 → human/authority decision as required
 → READY
 → create Development Cycle

@@ -94,7 +94,7 @@ The TB-140 physical discriminator is not a substitute for lifecycle ownership.
 ```text
 PROPOSED
 → readiness review against current approved baseline
-→ applicable independent evidence / explicit coverage proof
+→ applicable independent audit / explicit coverage proof
 → human/authority decision as required
 → READY
 → create Development Cycle
