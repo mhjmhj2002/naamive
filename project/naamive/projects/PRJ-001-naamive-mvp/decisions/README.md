@@ -6,5 +6,6 @@
 - `DEC-004_ACTIVITY_CENTER_PROJECTION_CONTRACT.md` — candidate source/rebuild/invalidation contract for WI-010/011.
 - `DEC-005_TB140_WORK_ITEM_OWNER_MAPPING.md` — candidate mapping between normative Project/Module ownership and frozen TB-140 physical FK anchors.
 - `DEC-006_WI001_FOUNDATION_OBSERVABILITY_ALLOCATION.md` — Project Owner allocation of already-approved health and structured-logging foundation obligations to WI-001.
+- `DEC-007_WI001_BASELINE_RECONCILIATION.md` — Project Owner reconciliation of the current WI-001 revision with its immutable Planning Baseline coverage.
 
 Material candidate decisions remain subject to the round audit and later human approval where required.

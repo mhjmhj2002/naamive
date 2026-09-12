@@ -70,6 +70,80 @@ substitui a documentação normativa.
 
 ---
 
+## 1.1 Estado atual do self-hosting
+
+O NAAMIVE também está sendo usado para governar o próprio desenvolvimento.
+
+Workspace canônico:
+
+```text
+project/naamive/
+```
+
+Projeto corrente:
+
+```text
+PRJ-001 — NAAMIVE MVP
+```
+
+Estado resumido:
+
+```text
+Normative Baseline........ NB-0002 — RATIFIED / IN FORCE
+Technology Baseline....... v0.10 — APPROVED / FROZEN
+TIR........................ v1.0 — APPROVED
+Project.................... PRJ-001 PLANNING
+Planning Round 1........... COMPLETE
+Module MOD-001............. PLANNED
+VI-001..................... PLANNED
+DT-001 v1.................. CURRENT
+Roadmap v2................. CURRENT
+Work Items................. 13 PROPOSED / 0 READY
+Development Cycles......... 0
+Executions................. 0
+Implementation............. NOT AUTHORIZED
+```
+
+A decisão humana T1–T6 já foi exercida e materializou o avanço de MOD-001,
+VI-001, DT-001 v1 e Roadmap v2 sem autorizar implementação.
+
+O primeiro Work Item em preparação é:
+
+```text
+WI-001 — Repository / Workspace Foundation
+```
+
+Seu readiness candidate foi preparado e passou por auditoria independente com:
+
+```text
+AUD-WI001-READINESS-01
+Result..................... PASS_WITH_FINDINGS
+Findings F-001 / F-002...... RESOLVED
+WI-001..................... PROPOSED
+Readiness authority........ NOT GRANTED
+Implementation............. NOT AUTHORIZED
+```
+
+Os dois findings não bloqueadores identificados pela auditoria foram tratados:
+
+```text
+F-001 — RESOLVED por DEC-007, com classificação RECONCILE
+F-002 — RESOLVED com fortalecimento da provenance de DEC-006
+```
+
+O resultado histórico da auditoria permanece `PASS_WITH_FINDINGS`; a remediation
+não reescreve retroativamente o relatório de auditoria.
+
+A documentação operacional corrente do self-hosting está em:
+
+- [Self-hosted Project Workspace](project/naamive/README.md)
+- [Project Current State](project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md)
+- [Execution Board](project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md)
+- [WI-001 Readiness Candidate](project/naamive/projects/PRJ-001-naamive-mvp/governance/WI-001_READINESS_CANDIDATE.md)
+
+---
+
+
 ## 2. Mapa da documentação
 
 Índice completo:
@@ -236,6 +310,22 @@ A implementação só deve começar quando os requisitos de readiness estiverem
 satisfeitos, incluindo ratificação da documentação aplicável e uma Normative
 Baseline efetiva.
 
+No self-hosting atual, uma Technology Baseline aprovada ou um TIR aprovado não
+substituem o lifecycle próprio de Work Item:
+
+```text
+Work Item PROPOSED
+→ readiness
+→ auditoria aplicável
+→ authority decision
+→ Work Item READY
+→ Development Cycle
+→ Execution válida
+```
+
+Enquanto nenhum Work Item estiver `READY`, a implementação permanece
+`NOT AUTHORIZED`.
+
 ---
 
 ## 14. Normative Baselines
@@ -277,6 +367,10 @@ audits/
 Auditoria positiva não substitui ratificação humana quando autoridade humana é
 obrigatória.
 
+Auditorias de objetos posteriores, como readiness de Work Item, não reabrem por
+si só auditorias históricas de Planning Round já encerradas. Cada auditoria deve
+declarar objeto, baseline, escopo, evidência, findings, resultado e limitações.
+
 ---
 
 ## 16. Legado arquivado
@@ -300,6 +394,20 @@ Antes de realizar qualquer trabalho no repositório, leia:
 
 `AGENTS.md` define regras operacionais para agentes, mas não pode enfraquecer nem
 substituir a Normative Baseline aplicável.
+
+Princípio operacional atual:
+
+```text
+1 task
+→ 1 logical worker
+→ validação proporcional
+→ report
+→ STOP
+```
+
+Wrappers técnicos exigidos por um runtime não devem virar cadeias de workers,
+reviewers ou auditores. O worker lógico executa o escopo e encerra quando os
+critérios de conclusão forem satisfeitos.
 
 ---
 

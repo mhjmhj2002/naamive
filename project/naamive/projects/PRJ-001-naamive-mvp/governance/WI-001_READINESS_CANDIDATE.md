@@ -50,6 +50,7 @@ v1.0, PBL-PRJ001-R1-v1.0 ou os artefatos históricos de baseline/auditoria.
 | `governance/04_AUDIT_AND_REVIEW_POLICY.md` | audit independente proporcional para WI MATERIAL |
 | `decisions/DEC-002_TIR_LIFECYCLE_PRECEDENCE.md` | TIR não substitui WI READY nem authority de Execution |
 | `decisions/DEC-006_WI001_FOUNDATION_OBSERVABILITY_ALLOCATION.md` | decisão humana atual que aloca health e logging a WI-001 |
+| `decisions/DEC-007_WI001_BASELINE_RECONCILIATION.md` | reconciliação da revisão corrente de WI-001 com a cobertura histórica da PBL |
 | `HUMAN_APPROVAL_T1_T6.md`, Roadmap v2 e assurance matrix | estado do Project, planejamento e obrigações de assurance |
 
 ---
@@ -57,17 +58,18 @@ v1.0, PBL-PRJ001-R1-v1.0 ou os artefatos históricos de baseline/auditoria.
 ## 3. Resposta à pergunta central
 
 ```text
-READY FOR INDEPENDENT READINESS AUDIT
+READY FOR GOVERNED READINESS DECISION
 ```
 
-O envelope arquitetural e tecnológico está aprovado e delimita integralmente a
-implementação. A alocação explícita de health e structured logging ao WI-001
-resolve a lacuna de ownership anteriormente identificada. A authority para a
-transição futura `PROPOSED → READY` permanece uma decisão governada pendente,
-mas não é condição para iniciar a auditoria independente.
+O audit independente histórico concluiu `PASS_WITH_FINDINGS`. Seus findings
+não bloqueadores foram tratados: `F-001` está `RESOLVED` com a materialização
+de `RECONCILE` em DEC-007; `F-002` está `RESOLVED` com o fortalecimento da
+provenance de DEC-006. A authority para a transição futura `PROPOSED → READY`
+permanece uma decisão governada pendente.
 
-Isto não significa `WI-001 READY`, `AUDIT PASS`, autorização de implementação,
-criação de Development Cycle ou início de Execution.
+Isto não altera o resultado histórico para `AUDIT PASS`, nem significa
+`WI-001 READY`, autorização de implementação, criação de Development Cycle ou
+início de Execution.
 
 ---
 
@@ -83,7 +85,7 @@ criação de Development Cycle ou início de Execution.
 | 6 | baseline de negócio, normativa e técnica | SUFICIENTE | PBL-PRJ001-R1-v1.0; NB-0002; TB v0.10; TIR v1.0 |
 | 7 | guardrails de arquitetura | SUFICIENTE | comportamento obrigatório já delimitado por TB-10/TIR-008/TIR-040; mecanismo é detalhe compatível de implementação |
 | 8 | decisões materiais para a auditoria | SUFICIENTE | G-01 non-blocking; G-03 resolvido por DEC-006; G-02 é gate posterior |
-| 9 | blockers / Findings aplicáveis | SUFICIENTE | nenhum Finding ou blocker conhecido sobre WI-001 |
+| 9 | blockers / Findings aplicáveis | SUFICIENTE | F-001 e F-002 do audit histórico: RESOLVED; nenhum blocker conhecido sobre WI-001 |
 | 10 | authority para a decisão `PROPOSED → READY` | PENDENTE DE DECISÃO GOVERNADA | requerida antes da decisão efetiva; não bloqueia a auditoria independente |
 | 11 | condições futuras de Development Cycle / Execution | SUFICIENTE | lifecycle/05 e DEC-002; WI ainda não as satisfaz por estar PROPOSED |
 
@@ -132,6 +134,16 @@ efeito................ obrigações já vigentes do readiness/02 foram explicita
 Não foi criado Finding: a decisão resolve integralmente a lacuna nesta
 remediation.
 
+### Findings do audit de readiness AUD-WI001-READINESS-01
+
+```text
+resultado histórico..... PASS_WITH_FINDINGS (não alterado por este candidate)
+F-001................... RESOLVED — RECONCILE materialized em DEC-007
+F-002................... RESOLVED — DEC-006 provenance strengthened
+efeito.................. findings tratados para efeito da próxima decisão de gate;
+                          readiness authority permanece NOT GRANTED
+```
+
 ---
 
 ## 6. Limites para a implementação futura
@@ -152,10 +164,9 @@ preparação.
 ## 7. Continuidade legítima
 
 ```text
-1. abrir uma task separada de auditoria independente de readiness para WI-001
-2. se a auditoria for aprovada, obter/verificar a authority governada aplicável
-3. somente então decidir `WI-001 PROPOSED → READY`, se todas as condições forem satisfeitas
-4. nenhuma Execution ou Development Cycle antes dessa decisão
+1. obter/verificar a authority governada aplicável para a decisão de readiness
+2. decidir `WI-001 PROPOSED → READY` somente se todas as condições forem satisfeitas
+3. nenhuma Execution ou Development Cycle antes dessa decisão
 ```
 
-Nenhum audit foi criado ou executado por este candidate.
+Este candidate não aprova o gate nem concede authority.

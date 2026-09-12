@@ -5,6 +5,8 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0
 **normative_baseline_ref:** NB-0002
 **decision_authority:** human:manuel-hinojosa:project-owner
+**decision_timestamp:** 2026-09-12T17:19:00-03:00
+**decision_input_commit:** 2a473f5de9fd76ab8545ea77d3a03ddcf0bcaa8e
 **decision_source:** instrução humana explícita da remediation de readiness de WI-001 em 2026-09-12
 **Implementation:** NOT AUTHORIZED
 
