@@ -11,7 +11,7 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** none  
 **Development Cycle:** DC-001 (`development-cycles/DC-001-WI001.md`)
-**Execution:** NONE  
+**Execution:** EX-001 (`executions/EX-001-WI001.md`) — ELIGIBLE
 **Readiness authority:** GRANTED / EXERCISED
 **Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`
 

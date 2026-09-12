@@ -8,7 +8,8 @@
 **Normative Baseline:** `NB-0002`  
 **Last valid audit:** AUD-009 — historical FAIL  
 **Audit phase:** CLOSED  
-**Implementation:** NOT AUTHORIZED  
+**Implementation authority:** GRANTED
+**Implementation:** NOT STARTED
 
 ---
 
@@ -25,10 +26,12 @@ Work Items.............. 12 PROPOSED / 1 READY
 WI-001................... READY
 Readiness authority...... GRANTED / EXERCISED
 Development Cycles...... 1 (DC-001)
-Executions.............. 0
+Executions.............. 1
+EX-001................... ELIGIBLE
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
-Implementation.......... NOT AUTHORIZED
+Implementation authority GRANTED
+Implementation.......... NOT STARTED
 ```
 
 A verdade operacional detalhada deve ser consultada em:
@@ -123,21 +126,21 @@ para Work Items, Cycles ou Executions.
 O fato de Module, Value Increment, DeliveryTarget e Roadmap estarem aprovados ou
 correntes não significa que desenvolvimento possa começar.
 
-O próximo avanço governado para WI-001 é avaliar/criar uma Execution válida
-para DC-001 / WI-001.
+O próximo avanço governado para WI-001 é iniciar `EX-001` governadamente.
 
 Fluxo mínimo:
 
 ```text
 Work Item READY
 → Development Cycle DC-001 CREATED
-→ avaliar/criar Execution autorizada
+→ EX-001 ELIGIBLE
+→ adquirir claim / iniciar Execution
 ```
 
-Enquanto não houver Execution válida/autorizada:
+Enquanto `EX-001` não possuir claim operacional válido:
 
 ```text
-Implementation = NOT AUTHORIZED
+Implementation = NOT STARTED
 ```
 
 Nenhum agente, commit, teste ou sucesso técnico pode substituir esse gate.

@@ -100,8 +100,10 @@ DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
 Work Items................. 12 PROPOSED / 1 READY
 Development Cycles......... 1
-Executions................. 0
-Implementation............. NOT AUTHORIZED
+Executions................. 1
+EX-001...................... ELIGIBLE
+Implementation authority... GRANTED
+Implementation............. NOT STARTED
 ```
 
 A decisão humana T1–T6 já foi exercida e materializou o avanço de MOD-001,
@@ -122,8 +124,9 @@ Findings F-001 / F-002...... RESOLVED
 WI-001..................... READY
 Readiness authority........ GRANTED / EXERCISED
 Development Cycles......... 1 (DC-001)
-Executions................. 0
-Implementation............. NOT AUTHORIZED
+Executions................. 1 (EX-001 ELIGIBLE)
+Implementation authority... GRANTED
+Implementation............. NOT STARTED
 ```
 
 Os dois findings não bloqueadores identificados pela auditoria foram tratados:
@@ -138,8 +141,8 @@ não reescreve retroativamente o relatório de auditoria.
 
 A decisão humana de readiness está registrada em
 `project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_WI001_READINESS.md`.
-A próxima ação legítima é avaliar/criar uma Execution válida para `DC-001` /
-`WI-001`; ela não é implementação direta.
+A próxima ação legítima é iniciar `EX-001` governadamente, adquirindo claim
+operacional válido; ela não é implementação direta.
 
 A documentação operacional corrente do self-hosting está em:
 

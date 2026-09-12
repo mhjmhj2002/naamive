@@ -12,10 +12,11 @@ DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
 Work Items................. 12 PROPOSED / 1 READY
 Development Cycles......... 1
-Executions................. 0
+Executions................. 1
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
-Implementation............. NOT AUTHORIZED
+Implementation authority... GRANTED
+Implementation............. NOT STARTED
 ```
 
 ## Fechamento da Planning Round 1
@@ -48,8 +49,10 @@ readiness gate............. APPROVED / EXERCISED
 readiness authority........ GRANTED / EXERCISED
 human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
 Development Cycle.......... DC-001
-Execution.................. NONE
-Implementation............. NOT AUTHORIZED
+Execution.................. EX-001
+Execution state............ ELIGIBLE
+Implementation authority... GRANTED
+Implementation............. NOT STARTED
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são

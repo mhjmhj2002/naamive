@@ -274,3 +274,21 @@ A-031
  executions: 0
  implementation: NOT AUTHORIZED
  recorded_at: 2026-09-12T17:40:31-03:00
+
+A-032
+ type: EXECUTION_CREATED / ELIGIBILITY_EVALUATED
+ execution: EX-001
+ cycle: DC-001
+ work_item: WI-001
+ attempt: 1
+ reason: FIRST_ATTEMPT
+ authority_ref: governance/HUMAN_AUTHORIZATION_WI001_EXECUTION.md
+ input_commit: ef10e525164f16d14b7416eab4e2de781e35ccec
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ eligibility_result: ELIGIBLE
+ execution_state: ELIGIBLE
+ work_item_state: READY
+ development_cycles: 1
+ executions: 1
+ recorded_at: 2026-09-12T19:11:42-03:00

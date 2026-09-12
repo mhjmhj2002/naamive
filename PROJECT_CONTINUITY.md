@@ -9,7 +9,8 @@
 **Technology Baseline:** `v0.10` — APPROVED / FROZEN  
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
-**Implementation:** `NOT AUTHORIZED`
+**Implementation authority:** `GRANTED`
+**Implementation:** `NOT STARTED`
 
 ---
 
@@ -315,10 +316,11 @@ DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 12 PROPOSED / 1 READY
 Development Cycles...... 1 (DC-001)
-Executions.............. 0
+Executions.............. 1 (EX-001 ELIGIBLE)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
-Implementation.......... NOT AUTHORIZED
+Implementation authority GRANTED
+Implementation.......... NOT STARTED
 Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 ```
@@ -360,7 +362,7 @@ Contagem:
 0 IN_PROGRESS
 0 DONE
 0 Development Cycles
-0 Executions
+1 Execution (EX-001 ELIGIBLE)
 ```
 
 Não inferir autorização de implementação a partir de:
@@ -378,16 +380,16 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é avaliar/criar uma Execution válida para `WI-001` /
-`DC-001`, conforme lifecycle e governança aplicáveis.
+O próximo avanço real é iniciar `EX-001` governadamente, conforme lifecycle e
+governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
 WI-001 READY
 → Development Cycle DC-001 CREATED
-→ avaliar/criar Execution autorizada
-→ implementação
+→ EX-001 ELIGIBLE
+→ adquirir claim / iniciar Execution
 ```
 
 Nenhuma dessas etapas deve ser pulada.
@@ -397,7 +399,7 @@ Nenhuma dessas etapas deve ser pulada.
 Após a revisão e publicação humana deste checkpoint:
 
 ```text
-abrir task governada para avaliar/criar Execution válida para WI-001 / DC-001
+abrir task governada para adquirir claim e iniciar EX-001
 ```
 
 Não iniciar código diretamente.
@@ -617,7 +619,8 @@ NB-0001 é histórica e imutável.
 
 Technology Baseline v0.10 está APPROVED / FROZEN.
 TIR v1.0 está APPROVED.
-Mesmo assim, Implementation continua NOT AUTHORIZED.
+Mesmo assim, Implementation authority está GRANTED e Implementation continua
+NOT STARTED.
 
 Planning Round 1 está COMPLETE.
 Business Baseline final da rodada: PBL-PRJ001-R1-v1.0.
@@ -645,8 +648,9 @@ Roadmap v2 = CURRENT
 12 Work Items = PROPOSED
 1 READY (WI-001)
 1 Development Cycle (DC-001)
-0 Executions
-Implementation = NOT AUTHORIZED
+1 Execution (EX-001 ELIGIBLE)
+Implementation authority = GRANTED
+Implementation = NOT STARTED
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -658,11 +662,11 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado:
-avaliar/criar Execution válida para WI-001 / DC-001.
+iniciar EX-001 governadamente, com claim operacional válido.
 
 Não promova WI-001 automaticamente.
 Não inicie código.
-Não crie Execution antes de ela ser válida/autorizada.
+Não inicie EX-001 sem claim operacional válido.
 Não reabra auditoria encerrada.
 Não crie subagentes sem autorização explícita.
 Humano controla commit/push/merge/rebase/reset/clean.
@@ -727,13 +731,14 @@ VI-001...................... PLANNED
 DT-001 v1................... CURRENT
 ROADMAP v2.................. CURRENT
 
-WORK ITEMS.................. 13 PROPOSED / 0 READY
-DEVELOPMENT CYCLES.......... 0
-EXECUTIONS.................. 0
+WORK ITEMS.................. 12 PROPOSED / 1 READY (WI-001)
+DEVELOPMENT CYCLES.......... 1 (DC-001)
+EXECUTIONS.................. 1 (EX-001 ELIGIBLE)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
-IMPLEMENTATION.............. NOT AUTHORIZED
+IMPLEMENTATION AUTHORITY.... GRANTED
+IMPLEMENTATION.............. NOT STARTED
 
-DECISION INPUT COMMIT....... cf4f2c032d61835329db820d9490250927b6bfeb
-NEXT GOVERNED ACTION........ WI-001 readiness
+DECISION INPUT COMMIT....... ef10e525164f16d14b7416eab4e2de781e35ccec
+NEXT GOVERNED ACTION........ iniciar EX-001 governadamente
 ```

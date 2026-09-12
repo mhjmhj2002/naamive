@@ -26,11 +26,16 @@ Sob `PBL-PRJ001-R1-v1.0`:
 12 WIs = PROPOSED
 1 WI = READY
 1 Development Cycle (DC-001)
-0 Executions
+1 Execution ELIGIBLE (EX-001)
 ```
 
-Nenhum implementation agent pode ser despachado até existir Execution
-válida/autorizada.
+```text
+Implementation authority = GRANTED
+Implementation = NOT STARTED
+```
+
+`EX-001` ainda não possui claim operacional. O implementation agent não foi
+despachado.
 
 ## Planning Round 1 closure
 
