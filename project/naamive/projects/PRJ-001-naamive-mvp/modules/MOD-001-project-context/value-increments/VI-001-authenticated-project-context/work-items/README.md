@@ -2,7 +2,7 @@
 
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
-**Status:** 11 PROPOSED / 1 READY / 1 DONE / WI-002 EXECUTION NOT AUTHORIZED
+**Status:** 11 PROPOSED / 1 READY / 1 DONE / WI-002 EX-004 ELIGIBLE / NOT CLAIMED
 
 | WI | Title | Governing scope | Depends on | State |
 |---|---|---|---|---|
@@ -24,10 +24,10 @@
 reference VI-001; VI-001 is not their owner.
 
 `WI-002` readiness was approved and exercised by
-`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` was created without
-creating an Execution; implementation remains unauthorized. Its next governed
-action is to evaluate, authorize and create a valid Execution for `WI-002 /
-DC-002`.
+`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-004`,
+que está `ELIGIBLE` e sem claim operacional. Implementation authority está
+`GRANTED`, mas implementation permanece `NOT STARTED`. A próxima ação
+governada é adquirir claim operacional válido e iniciar `EX-004`.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

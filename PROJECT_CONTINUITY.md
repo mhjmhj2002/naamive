@@ -316,7 +316,7 @@ DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 11 PROPOSED / 1 READY / 1 DONE
 Development Cycles...... 2 (DC-001, DC-002)
-Executions.............. 3 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
+Executions.............. 4 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 ELIGIBLE / NOT CLAIMED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED / EXERCISED
@@ -330,8 +330,9 @@ WI-001 readiness........ APPROVED / EXERCISED
 WI-002 readiness........ APPROVED / EXERCISED
 WI-002 authority........ GRANTED / EXERCISED
 WI-002 Development Cycle DC-002 CREATED
-WI-002 Execution........ NONE
-WI-002 implementation... NOT AUTHORIZED
+WI-002 Execution........ EX-004 ELIGIBLE / NOT CLAIMED
+WI-002 implementation authority GRANTED
+WI-002 implementation... NOT STARTED
 ```
 
 Arquivos operacionais principais:
@@ -759,10 +760,11 @@ WORK ITEMS.................. 11 PROPOSED / 1 READY (WI-002) / 1 DONE (WI-001)
 WI-002 READINESS............ APPROVED / EXERCISED
 WI-002 AUTHORITY............ GRANTED / EXERCISED
 WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
-WI-002 EXECUTION............ NONE
-WI-002 IMPLEMENTATION....... NOT AUTHORIZED
+WI-002 EXECUTION............ EX-004 ELIGIBLE / NOT CLAIMED
+WI-002 IMPLEMENTATION AUTHORITY GRANTED
+WI-002 IMPLEMENTATION....... NOT STARTED
 DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
-EXECUTIONS.................. 3 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED)
+EXECUTIONS.................. 4 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 ELIGIBLE / NOT CLAIMED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED / EXERCISED
@@ -773,5 +775,5 @@ ACCEPTANCE.................. GRANTED / EXERCISED
 IMPLEMENTATION.............. WI-001 ACCEPTED / DONE
 
 DECISION INPUT COMMIT....... 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
-NEXT GOVERNED ACTION........ WI-002/DC-002: avaliar, autorizar e criar Execution válida
+NEXT GOVERNED ACTION........ WI-002/DC-002: adquirir claim operacional válido e iniciar EX-004 governadamente
 ```

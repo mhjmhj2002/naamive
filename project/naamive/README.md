@@ -27,13 +27,15 @@ WI-001................... DONE
 WI-002................... READY
 WI-002 readiness authority GRANTED / EXERCISED
 WI-002 Development Cycle. DC-002
-WI-002 Execution......... NONE
-WI-002 implementation.... NOT AUTHORIZED
+WI-002 Execution......... EX-004 — ELIGIBLE / NOT CLAIMED
+WI-002 implementation authority GRANTED
+WI-002 implementation.... NOT STARTED
 Development Cycles...... 2 (DC-001, DC-002)
-Executions.............. 3
+Executions.............. 4
 EX-001................... SUCCEEDED / HISTORICAL
 EX-002................... SUCCEEDED / HISTORICAL
 EX-003................... SUCCEEDED
+EX-004................... ELIGIBLE / NOT CLAIMED
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED / EXERCISED
