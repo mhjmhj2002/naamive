@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | IN_REVIEW | CR-WI002-02 FAIL / 1 blocking finding; governed rework of CR-WI002-02-F001 required; acceptance blocked |
+| WI-002 | IN_REVIEW | EX-006 SUCCEEDED; CR-WI002-03 independent code review required; acceptance blocked |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -40,7 +40,7 @@ IN_PROGRESS.......... 0
 IN_REVIEW............ 1
 DONE................. 1
 Development Cycles... 2 (DC-001, DC-002)
-Executions............ 5
+Executions............ 6
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
@@ -59,8 +59,8 @@ o bypass de DML runtime por comandos controlados com expected-version no banco.
 `CR-WI002-02-F001` (BLOCKING) registra que um `expectedVersion` nulo ainda
 permite mutação material pelos comandos controlados, e `CR-WI002-02-F002`
 (NON_BLOCKING) registra narrativa de projeção desatualizada. WI-002 permanece
-`IN_REVIEW`, acceptance não foi concedido, e a próxima ação é o rework
-governado do finding bloqueador; nenhum acceptance audit é implícito.
+`IN_REVIEW`, acceptance não foi concedido, e EX-006 produziu o rework técnico
+para re-review independente; nenhum acceptance audit é implícito.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.
@@ -77,5 +77,6 @@ EX-001............... SUCCEEDED
 EX-002............... SUCCEEDED / HISTORICAL
 EX-003............... SUCCEEDED
 EX-004............... SUCCEEDED / CLAIM RELEASED
-EX-005............... SUCCEEDED / CLAIM RELEASED / CURRENT REWORK RESULT
+EX-005............... SUCCEEDED / CLAIM RELEASED / HISTORICAL REWORK RESULT
+EX-006............... SUCCEEDED / CLAIM RELEASED / CURRENT REWORK RESULT
 ```

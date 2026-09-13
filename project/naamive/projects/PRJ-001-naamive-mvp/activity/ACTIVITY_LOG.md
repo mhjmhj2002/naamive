@@ -731,3 +731,46 @@ A-054
  execution_state: SUCCEEDED
  acceptance: NOT GRANTED / BLOCKED
  recorded_at: 2026-09-13T15:12:00-03:00
+
+A-055
+ type: REWORK_EXECUTION_STARTED
+ execution: EX-006
+ previous_execution: EX-005
+ review: CR-WI002-02
+ finding: CR-WI002-02-F001
+ work_item: WI-002
+ cycle: DC-002
+ attempt: 3
+ reason: REWORK_AFTER_CODE_REVIEW
+ claim_scope: EX-006 / WI-002 / DC-002
+ executor_principal: agent:codex:implementation:WI-002:EX-006
+ authority_ref: governance/HUMAN_AUTHORIZATION_WI002_EXECUTION.md
+ authority_status: VALID / REVALIDATED
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ owner_mapping: WI-002 -> VI-001 -> MOD-001 / VALUE_INCREMENT anchor / project_id NULL
+ execution_transition: ELIGIBLE -> RUNNING
+ work_item_transition: IN_REVIEW -> IN_PROGRESS
+ implementation: CODE REVIEW FAILED / GOVERNED REWORK REQUIRED -> REWORK IN PROGRESS
+ recorded_at: 2026-09-13T15:27:37-03:00
+
+A-056
+ type: REWORK_EXECUTION_SUCCEEDED / WORK_ITEM_READY_FOR_REVIEW
+ execution: EX-006
+ previous_execution: EX-005
+ review_source: CR-WI002-02
+ finding: CR-WI002-02-F001 REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW
+ work_item: WI-002
+ authority_ref: governance/HUMAN_AUTHORIZATION_WI002_EXECUTION.md
+ authority_status: VALID / REVALIDATED AT COMPLETION
+ governing_decision: DEC-008_WI002_PRINCIPAL_SEMANTICS.md
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ evidence_ref: executions/evidence/EX-006-WI002.md
+ authoritative_result: EX-006 remediation result
+ execution_transition: RUNNING -> SUCCEEDED
+ claim_status: RELEASED / COMPLETED
+ work_item_transition: IN_PROGRESS -> IN_REVIEW
+ implementation: REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+ next_governed_action: CR-WI002-03 independent code review
+ recorded_at: 2026-09-13T15:32:04-03:00

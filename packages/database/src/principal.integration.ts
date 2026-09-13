@@ -30,6 +30,23 @@ export async function verifyPrincipalPersistence(connectionString: string): Prom
     assert.equal(created.version, 1n);
     assert.equal(await isPrincipalActive(first, principalId), true);
 
+    const runtime = new Pool({ connectionString: runtimeUrl.toString() });
+    try {
+      const usernameNullBefore = await getPrincipal(first, principalId);
+      const usernameNullHistoryBefore = await getPrincipalHistory(first, principalId);
+      await assert.rejects(
+        () => runtime.query(
+          'SELECT * FROM authority.change_principal_username($1, NULL, $2, $3)',
+          [principalId, 'null_username_01', randomUUID()]
+        ),
+        /Principal expected version is required/
+      );
+      assert.deepEqual(await getPrincipal(first, principalId), usernameNullBefore);
+      assert.deepEqual(await getPrincipalHistory(first, principalId), usernameNullHistoryBefore);
+    } finally {
+      await runtime.end();
+    }
+
     for (const username of ['ab', 'Alpha_01', 'alpha.01', '1alpha', 'alpha 01']) {
       assert.throws(() => assertValidUsername(username), PrincipalValidationError);
     }
@@ -42,6 +59,23 @@ export async function verifyPrincipalPersistence(connectionString: string): Prom
     assert.equal(renamed.principalId, principalId);
     assert.equal(renamed.version, 2n);
     assert.notEqual(renamed.currentHistoryEventId, created.currentHistoryEventId);
+
+    const statusRuntime = new Pool({ connectionString: runtimeUrl.toString() });
+    try {
+      const statusNullBefore = await getPrincipal(first, principalId);
+      const statusNullHistoryBefore = await getPrincipalHistory(first, principalId);
+      await assert.rejects(
+        () => statusRuntime.query(
+          'SELECT * FROM authority.change_principal_status($1, NULL, $2, $3)',
+          [principalId, 'SUSPENDED', randomUUID()]
+        ),
+        /Principal expected version is required/
+      );
+      assert.deepEqual(await getPrincipal(first, principalId), statusNullBefore);
+      assert.deepEqual(await getPrincipalHistory(first, principalId), statusNullHistoryBefore);
+    } finally {
+      await statusRuntime.end();
+    }
 
     const reused = await createPrincipal(first, { username: 'alpha_01' });
     assert.notEqual(reused.principalId, principalId);
@@ -104,6 +138,19 @@ export async function verifyPrincipalPersistence(connectionString: string): Prom
 
   const administrator = new Pool({ connectionString });
   try {
+    const commandFunctions = await administrator.query<{ prosecdef: boolean; search_path: string | null }>(
+      `SELECT prosecdef, array_to_string(proconfig, ',') AS search_path
+       FROM pg_proc
+       WHERE oid IN (
+         'authority.change_principal_username(uuid,bigint,text,uuid)'::regprocedure,
+         'authority.change_principal_status(uuid,bigint,text,uuid)'::regprocedure
+       )`
+    );
+    assert.equal(commandFunctions.rows.length, 2);
+    for (const commandFunction of commandFunctions.rows) {
+      assert.equal(commandFunction.prosecdef, true);
+      assert.match(commandFunction.search_path ?? '', /search_path=pg_catalog, authority/);
+    }
     await assert.rejects(
       () => administrator.query(
         `INSERT INTO authority.principal (principal_id, username, status, version, current_history_event_id)

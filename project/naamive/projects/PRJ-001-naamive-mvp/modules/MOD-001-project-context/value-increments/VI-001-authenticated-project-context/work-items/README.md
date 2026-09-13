@@ -2,7 +2,7 @@
 
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
-**Status:** 11 PROPOSED / 1 IN_REVIEW / 1 DONE / WI-002 EX-005 SUCCEEDED / CLAIM RELEASED
+**Status:** 11 PROPOSED / 1 IN_REVIEW / 1 DONE / WI-002 EX-006 SUCCEEDED / CLAIM RELEASED
 
 | WI | Title | Governing scope | Depends on | State |
 |---|---|---|---|---|
@@ -24,13 +24,14 @@
 reference VI-001; VI-001 is not their owner.
 
 `WI-002` readiness was approved and exercised by
-`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-005`,
-que está `SUCCEEDED`, com claim liberado; `EX-004` é histórico. `WI-002` está
-`IN_REVIEW`; `CR-WI002-01` permanece `FAIL / HISTORICAL` e `CR-WI002-F001` está
-`RESOLVED`. `CR-WI002-02` retornou `FAIL`, registrando `CR-WI002-02-F001`
-(BLOCKING) e `CR-WI002-02-F002` (NON_BLOCKING). Implementation é `CODE REVIEW
-FAILED / GOVERNED REWORK REQUIRED`; acceptance não foi concedido. A próxima
-ação governada é o rework do finding bloqueador.
+`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-006`,
+que está `SUCCEEDED`, com claim liberado; `EX-004` e `EX-005` são históricos.
+`WI-002` está `IN_REVIEW`; `CR-WI002-01` permanece `FAIL / HISTORICAL` e
+`CR-WI002-F001` está `RESOLVED`. `CR-WI002-02` permanece `FAIL / HISTORICAL`;
+`CR-WI002-02-F001` é `REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`
+e `CR-WI002-02-F002` preserva status NON_BLOCKING. Implementation é `REWORK
+TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW`; acceptance não foi
+concedido. A próxima ação governada é `CR-WI002-03`.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

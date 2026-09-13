@@ -18,7 +18,7 @@
 | RM-001 | FINDING_REMEDIATION | FND-011 | CLOSED — remediação materializada na v1.0 e encerrada por decisão humana |
 | RM-002 | HUMAN_DECISION | HUMAN_APPROVAL_T1_T6 | EXERCISED — decisão humana T1–T6 registrada em `governance/HUMAN_APPROVAL_T1_T6.md` |
 | RM-003 | WORK_ITEM | WI-001 | DONE — human acceptance APPROVED / EXERCISED; CR-WI001-03-F001 e AUD-WI001-ACCEPTANCE-01-F001 resolvidos no fechamento |
-| RM-004 | WORK_ITEM | WI-002 | IN_REVIEW — EX-004 SUCCEEDED; CR-WI002-01 FAIL / governed rework required |
+| RM-004 | WORK_ITEM | WI-002 | IN_REVIEW — EX-006 SUCCEEDED; CR-WI002-03 independent re-review required |
 | RM-005..RM-015 | WORK_ITEM | WI-003..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana de
@@ -28,11 +28,12 @@ histórica/bloqueada, a preparação R2 está `PREPARED / POSITIVE` e
 `governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`
 e concedeu readiness authority `GRANTED / EXERCISED`. A authority
 `EXECUTE_WORK` de WI-002 está `GRANTED / EXERCISED`; `DC-002` referencia
-`EX-004 SUCCEEDED`. O resultado técnico está produzido, WI-002 está
-`IN_REVIEW`. `CR-WI002-01` retornou `FAIL` com `CR-WI002-F001` bloqueador;
-implementation está `CODE REVIEW FAILED / GOVERNED REWORK REQUIRED` e acceptance
-não foi concedido. A próxima ação é tratamento/rework governado do finding, não
-acceptance audit.
+`EX-006 SUCCEEDED`, com EX-004 e EX-005 históricos. O resultado técnico está
+produzido, WI-002 está `IN_REVIEW`. `CR-WI002-02` retornou `FAIL / HISTORICAL`;
+`CR-WI002-02-F001` recebeu remediação técnica e aguarda re-review independente;
+`CR-WI002-02-F002` permanece não bloqueador. Implementation está `REWORK
+TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW` e acceptance não foi
+concedido. A próxima ação é `CR-WI002-03`, não acceptance audit.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,
