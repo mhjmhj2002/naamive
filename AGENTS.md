@@ -218,9 +218,244 @@ Como orçamento operacional padrão, uma task mecânica deve normalmente termina
 em até **10–15 tool calls**. Se esse orçamento for excedido porque surgiu um
 bloqueio real, pare a expansão automática e reporte objetivamente o motivo.
 
-Comandos de terminal devem ser não interativos sempre que possível. Se um
-comando ficar aguardando input, serviço externo ou processo sem progresso,
-interrompa-o e reporte em vez de esperar indefinidamente.
+Comandos de terminal devem ser não interativos sempre que possível. Todo
+comando que possa bloquear, aguardar lock, depender de serviço externo, iniciar
+servidor, executar concorrência ou permanecer em background deve obedecer às
+regras de timeout e cleanup da seção 7.2.
+
+### 7.2 Segurança de comandos, probes e processos
+
+Estas regras valem para **qualquer IA, agente, reviewer, auditor, executor,
+subagente autorizado ou automação** trabalhando neste repositório.
+
+O objetivo é impedir que uma execução fique presa indefinidamente consumindo
+tempo, contexto ou recursos apenas porque um processo externo, lock, servidor ou
+job em background não terminou.
+
+Princípio obrigatório:
+
+```text
+no unbounded waits
+no unbounded database probes
+no orphan background processes
+```
+
+#### 7.2.1 Timeout é obrigatório quando houver possibilidade de espera
+
+Qualquer comando com possibilidade razoável de bloquear ou demorar sem progresso
+deve possuir um limite finito explícito.
+
+Isso inclui, quando aplicável:
+
+- probes de banco de dados;
+- testes de lock;
+- testes de concorrência;
+- `docker exec`;
+- `psql`;
+- Playwright/browser;
+- servidores HTTP temporários;
+- Vite/preview;
+- processos em background;
+- `wait`;
+- chamadas de rede;
+- scripts ad hoc de review/audit;
+- comandos que aguardem serviço externo;
+- qualquer ferramenta cujo término não seja garantido por construção.
+
+Para comandos shell, prefira um timeout externo explícito, por exemplo:
+
+```bash
+timeout 30s <command>
+```
+
+O valor deve ser proporcional ao comando. Não existe obrigação de usar `30s`;
+o importante é que o limite seja finito e coerente com a operação.
+
+Suites conhecidamente longas, como build ou integração completa, podem usar
+limites maiores, mas ainda devem ter uma estratégia de término finita.
+
+#### 7.2.2 Banco de dados exige proteção em mais de uma camada
+
+Probes de PostgreSQL que possam disputar lock ou executar SQL potencialmente
+bloqueante devem usar, quando aplicável:
+
+```text
+lock_timeout
+statement_timeout
+```
+
+Além disso, prefira manter um timeout externo no shell/processo.
+
+Exemplo conceitual:
+
+```bash
+timeout 30s docker exec   -e PGOPTIONS="-c statement_timeout=5000 -c lock_timeout=2000"   <container> psql ...
+```
+
+Não confie apenas em `lock_timeout` de uma das sessões concorrentes.
+
+Se duas ou mais sessões participarem do mesmo probe, todas as sessões capazes de
+bloquear devem possuir limites coerentes.
+
+#### 7.2.3 `wait` nunca pode ser ilimitado
+
+Um probe de concorrência não pode depender de:
+
+```bash
+wait <pid>
+```
+
+sem uma estratégia finita de timeout/abort.
+
+Processos em background devem ter:
+
+- PID rastreado;
+- timeout finito;
+- cleanup explícito;
+- encerramento no abort da task;
+- encerramento ao sair do script, quando aplicável.
+
+Use `trap`, cleanup equivalente ou mecanismo da ferramenta sempre que houver
+risco de processo órfão.
+
+#### 7.2.4 Servidores temporários devem ter lifecycle explícito
+
+Servidor temporário iniciado para teste não deve continuar vivo depois da task.
+
+Isso inclui, por exemplo:
+
+- Playwright test server;
+- Vite preview;
+- servidor HTTP local;
+- containers temporários;
+- processos auxiliares de integração.
+
+Ao iniciar um servidor temporário, registre como ele será encerrado.
+
+Não mate processo preexistente e não relacionado apenas para liberar porta.
+
+Se uma porta esperada estiver ocupada por serviço externo à task:
+
+- use outra porta segura; ou
+- reporte a limitação.
+
+Não altere processo alheio silenciosamente.
+
+#### 7.2.5 Preferir estado descartável para probes
+
+Security review, migration review, concorrência e probes destrutivos devem
+preferir:
+
+- banco descartável;
+- schema descartável;
+- container descartável;
+- fixture isolada.
+
+Não reutilize estado sujo como evidência final sem justificativa explícita.
+
+Se um probe intermediário puder deixar lock, sessão, dado ou processo residual,
+faça cleanup antes do próximo probe ou recrie o ambiente descartável.
+
+#### 7.2.6 Timeout é resultado, não convite para esperar mais
+
+Quando um comando exceder o timeout:
+
+1. interrompa o comando afetado;
+2. não continue esperando indefinidamente;
+3. registre qual comando expirou;
+4. preserve o último output útil;
+5. investigue a causa do bloqueio de forma proporcional;
+6. só repita se houver mudança material no probe ou no ambiente.
+
+Não aumente timeout repetidamente apenas para obter `PASS`.
+
+Não transforme:
+
+```text
+timeout
+```
+
+em:
+
+```text
+vamos esperar mais um pouco
+```
+
+sem nova evidência.
+
+#### 7.2.7 Abort da task exige interrupção real
+
+Quando o operador solicitar `STOP`, `ABORT`, `CANCEL` ou equivalente:
+
+- interrompa a execução corrente assim que tecnicamente possível;
+- não inicie novo probe;
+- não crie novo subagente;
+- não tente "terminar só mais uma verificação";
+- não substitua o comando travado por outro comando automaticamente;
+- não faça rework adicional;
+- preserve o estado já produzido;
+- reporte objetivamente o ponto de interrupção.
+
+Uma instrução de abort não é uma nova fase da investigação.
+
+#### 7.2.8 Evidence de review/audit deve registrar incidentes de execução
+
+Quando um timeout, lock, abort, processo órfão ou limitação de ambiente afetar a
+prova, o relatório deve registrar isso.
+
+Uma execução que ficou pendurada indefinidamente não é evidence válida de
+sucesso.
+
+Quando houver retry de um probe, diferencie:
+
+```text
+tentativa inicial
+retry
+resultado aplicável
+```
+
+e explique por que o retry substitui ou não a primeira tentativa como evidence.
+
+#### 7.2.9 Limite de expansão investigativa
+
+Reviews e audits podem criar probes temporários proporcionais ao risco, mas não
+devem proliferar indefinidamente variações do mesmo experimento.
+
+Depois que uma hipótese estiver suficientemente provada ou refutada:
+
+```text
+registrar conclusão
+→ parar aquela linha de investigação
+```
+
+Se surgirem múltiplas variações sucessivas (`probe2`, `probe3`, `probe-final`,
+`probe-final-2`, etc.), o agente deve reavaliar se:
+
+- falta uma hipótese clara;
+- o ambiente está contaminado;
+- o probe deveria ser simplificado;
+- é melhor recriar ambiente limpo;
+- já existe evidência suficiente para reportar finding.
+
+A investigação deve convergir.
+
+#### 7.2.10 Relação com Harness futuro
+
+Enquanto o Harness ainda não impõe esses limites tecnicamente, o agente deve
+obedecê-los por instrução operacional.
+
+Quando houver enforcement no Harness, preferir:
+
+```text
+timeout padrão por classe de comando
+PID/process handle rastreável
+cleanup automático
+cancelamento propagado
+limites de lock/statement para probes de banco
+detecção de processo órfão
+```
+
+A existência futura de enforcement não reduz a obrigação atual do agente.
 
 ---
 
