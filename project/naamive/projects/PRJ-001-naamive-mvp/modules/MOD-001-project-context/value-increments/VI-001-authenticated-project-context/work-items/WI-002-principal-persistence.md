@@ -1,6 +1,6 @@
 # WI-002 — Principal Persistence
 
-**State:** READY
+**State:** IN_REVIEW
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** MOD-001 — Project Context  
@@ -11,10 +11,10 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** WI-001  
 **Development Cycle:** DC-002 — `../../../../../development-cycles/DC-002-WI002.md`<br>
-**Execution:** EX-004 — ELIGIBLE
+**Execution:** EX-004 — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
-**Implementation:** NOT STARTED
+**Implementation:** TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
 **Readiness audit:** AUD-WI002-READINESS-01 — PASS / 0 blocking findings / 0 nonblocking findings
@@ -129,14 +129,16 @@ normative owner type.
 PROPOSED → READY................ APPROVED / EXERCISED
 READY → DC-002 CREATED........... recorded
 → EX-004 ELIGIBLE
-→ acquire valid operational claim
+→ valid operational claim acquired
 → EX-004 RUNNING
 → IN_PROGRESS
 ```
 
-`EX-004 ELIGIBLE` não promove WI-002 para `IN_PROGRESS` e não inicia
-implementação. No implementation may start until a valid operational claim is
-separately acquired and EX-004 is started.
+`EX-004` acquired the valid operational claim on 2026-09-13T11:42:30-03:00 and
+produced its technical result on 2026-09-13T11:52:07-03:00. WI-002 is now
+`IN_REVIEW`; implementation is `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`.
+The next governed action is independent technical review / acceptance audit; no
+acceptance was exercised by EX-004.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

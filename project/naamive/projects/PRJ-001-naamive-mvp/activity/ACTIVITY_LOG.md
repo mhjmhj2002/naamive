@@ -599,3 +599,47 @@ A-048
  implementation_authority: GRANTED
  implementation: NOT STARTED
  recorded_at: 2026-09-13T11:25:50-03:00
+
+A-049
+ type: OPERATIONAL_CLAIM_ACQUIRED / EXECUTION_STARTED / WORK_ITEM_STARTED
+ execution: EX-004
+ cycle: DC-002
+ work_item: WI-002
+ claim_scope: EX-004 / WI-002 / DC-002
+ claim_status: ACQUIRED / ACTIVE
+ executor_principal: agent:codex:implementation:WI-002:EX-004
+ runtime_identity: agent:codex:/root
+ authority_ref: governance/HUMAN_AUTHORIZATION_WI002_EXECUTION.md
+ authority_status: VALID / REVALIDATED
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ baseline_revalidation: PASS
+ owner_mapping: WI-002 -> VI-001 -> MOD-001 / VALUE_INCREMENT anchor / project_id NULL
+ concurrent_execution: NONE
+ authoritative_result_before_start: NONE
+ execution_transition: ELIGIBLE -> RUNNING
+ work_item_transition: READY -> IN_PROGRESS
+ implementation: NOT STARTED -> IN PROGRESS
+ recorded_at: 2026-09-13T11:42:30-03:00
+
+A-050
+ type: TECHNICAL_EXECUTION_COMPLETED / WORK_ITEM_SUBMITTED_FOR_REVIEW
+ execution: EX-004
+ cycle: DC-002
+ work_item: WI-002
+ executor_principal: agent:codex:implementation:WI-002:EX-004
+ authority_ref: governance/HUMAN_AUTHORIZATION_WI002_EXECUTION.md
+ authority_status: VALID / REVALIDATED AT COMPLETION
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ governing_decision: DEC-008_WI002_PRINCIPAL_SEMANTICS.md
+ finding_resolution: FND-WI002-RCP-001 RESOLVED BY DEC-008
+ evidence_ref: executions/evidence/EX-004-WI002.md
+ authoritative_result: EX-004 technical result
+ completion_revalidation: PASS
+ execution_transition: RUNNING -> SUCCEEDED
+ claim_status: RELEASED / COMPLETED
+ work_item_transition: IN_PROGRESS -> IN_REVIEW
+ implementation: TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+ next_governed_action: independent technical review / acceptance audit applicable to WI-002
+ recorded_at: 2026-09-13T11:52:07-03:00

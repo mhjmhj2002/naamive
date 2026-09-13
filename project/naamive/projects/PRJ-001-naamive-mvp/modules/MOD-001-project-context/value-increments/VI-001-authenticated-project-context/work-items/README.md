@@ -2,12 +2,12 @@
 
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
-**Status:** 11 PROPOSED / 1 READY / 1 DONE / WI-002 EX-004 ELIGIBLE / NOT CLAIMED
+**Status:** 11 PROPOSED / 1 IN_REVIEW / 1 DONE / WI-002 EX-004 SUCCEEDED / CLAIM RELEASED
 
 | WI | Title | Governing scope | Depends on | State |
 |---|---|---|---|---|
 | WI-001 | Repository / Workspace Foundation | PROJECT | none | DONE |
-| WI-002 | Principal Persistence | MODULE | WI-001 | READY |
+| WI-002 | Principal Persistence | MODULE | WI-001 | IN_REVIEW |
 | WI-003 | Username / Password Login | MODULE | WI-002 | PROPOSED |
 | WI-004 | Durable Server-side Session | MODULE | WI-003 | PROPOSED |
 | WI-005 | Authority / Scoped Grants | MODULE | WI-002, WI-004 | PROPOSED |
@@ -25,9 +25,9 @@ reference VI-001; VI-001 is not their owner.
 
 `WI-002` readiness was approved and exercised by
 `governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-004`,
-que está `ELIGIBLE` e sem claim operacional. Implementation authority está
-`GRANTED`, mas implementation permanece `NOT STARTED`. A próxima ação
-governada é adquirir claim operacional válido e iniciar `EX-004`.
+que está `SUCCEEDED` e com claim liberado. WI-002 está `IN_REVIEW` e
+implementation é `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`. A próxima ação
+governada é independent technical review / acceptance audit aplicável.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

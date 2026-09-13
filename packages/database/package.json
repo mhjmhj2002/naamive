@@ -11,6 +11,6 @@
     "migrate": "tsx src/migrate.ts",
     "integration": "tsx src/integration.ts"
   },
-  "dependencies": { "kysely": "0.29.5", "pg": "8.23.0" },
+  "dependencies": { "@naamive/modules": "workspace:*", "kysely": "0.29.5", "pg": "8.23.0" },
   "devDependencies": { "@types/pg": "8.15.6" }
 }

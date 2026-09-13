@@ -18,7 +18,7 @@
 | RM-001 | FINDING_REMEDIATION | FND-011 | CLOSED — remediação materializada na v1.0 e encerrada por decisão humana |
 | RM-002 | HUMAN_DECISION | HUMAN_APPROVAL_T1_T6 | EXERCISED — decisão humana T1–T6 registrada em `governance/HUMAN_APPROVAL_T1_T6.md` |
 | RM-003 | WORK_ITEM | WI-001 | DONE — human acceptance APPROVED / EXERCISED; CR-WI001-03-F001 e AUD-WI001-ACCEPTANCE-01-F001 resolvidos no fechamento |
-| RM-004 | WORK_ITEM | WI-002 | READY — EX-004 ELIGIBLE; adquirir claim operacional válido e iniciar governadamente |
+| RM-004 | WORK_ITEM | WI-002 | IN_REVIEW — EX-004 SUCCEEDED; independent technical review / acceptance audit applicable |
 | RM-005..RM-015 | WORK_ITEM | WI-003..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana de
@@ -28,9 +28,9 @@ histórica/bloqueada, a preparação R2 está `PREPARED / POSITIVE` e
 `governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`
 e concedeu readiness authority `GRANTED / EXERCISED`. A authority
 `EXECUTE_WORK` de WI-002 está `GRANTED / EXERCISED`; `DC-002` referencia
-`EX-004 ELIGIBLE`. Implementation authority está `GRANTED`, mas implementation
-permanece `NOT STARTED`. A próxima ação é adquirir claim operacional válido e
-iniciar `EX-004` governadamente.
+`EX-004 SUCCEEDED`. O resultado técnico está produzido, WI-002 está
+`IN_REVIEW` e implementation está `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`.
+A próxima ação é independent technical review / acceptance audit aplicável.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,

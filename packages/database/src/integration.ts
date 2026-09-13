@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import { bootstrap } from './bootstrap.js';
 import { migrate, migratorConnectionString } from './migrate.js';
+import { verifyPrincipalPersistence } from './principal.integration.js';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is required for the real PostgreSQL integration bootstrap');
@@ -14,6 +15,8 @@ try {
   if (!version.rows[0]?.version.includes('PostgreSQL 18.6')) throw new Error(`Expected PostgreSQL 18.6, got ${version.rows[0]?.version}`);
   if (roles.rows.length !== 4 || schema.rows.length !== 1) throw new Error('Database roles or platform schema were not created');
   if (metadata.rows.length !== 2) throw new Error('Kysely migration metadata is not located in platform');
+
+  await verifyPrincipalPersistence(connectionString);
 
   const migratorUrl = migratorConnectionString(connectionString);
   if (!migratorUrl) throw new Error('Migrator connection string is unavailable');
@@ -45,7 +48,7 @@ try {
       await runtimePool.end();
     }
   }
-  process.stdout.write(JSON.stringify({ integration: 'passed', version: version.rows[0].version, roles: roles.rows.map((row) => row.rolname), migration_metadata_schema: 'platform', advisory_lock: 'serialized', runtime_ddl: 'denied' }) + '\n');
+  process.stdout.write(JSON.stringify({ integration: 'passed', version: version.rows[0].version, roles: roles.rows.map((row) => row.rolname), migration_metadata_schema: 'platform', advisory_lock: 'serialized', runtime_ddl: 'denied', principal_persistence: 'passed' }) + '\n');
 } finally {
   await pool.end();
 }

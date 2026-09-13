@@ -10,7 +10,7 @@ Module..................... MOD-001 PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 11 PROPOSED / 1 READY / 1 DONE
+Work Items................. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
 Development Cycles......... 2 (DC-001, DC-002)
 Executions................. 4
 Validation................. NOT EXECUTED
@@ -20,17 +20,17 @@ Implementation............. WI-001 ACCEPTED / DONE
 DEC-008...................... CURRENT / GOVERNED
 FND-WI002-RCP-001........... RESOLVED BY DEC-008
 WI-002 readiness preparation R1... HISTORICAL / BLOCKED
-WI-002...................... READY
+WI-002...................... IN_REVIEW
 WI-002 readiness preparation R2... PREPARED / POSITIVE
 WI-002 audit................ AUD-WI002-READINESS-01 PASS
 WI-002 readiness authority.. GRANTED / EXERCISED
 WI-002 human decision....... governance/HUMAN_APPROVAL_WI002_READINESS.md
 WI-002 Development Cycle.... DC-002
-WI-002 Execution............ EX-004 — ELIGIBLE
-WI-002 claim................ NOT ACQUIRED
+WI-002 Execution............ EX-004 — SUCCEEDED
+WI-002 claim................ RELEASED / COMPLETED
 WI-002 implementation authority GRANTED
-WI-002 implementation....... NOT STARTED
-WI-002 next action.......... acquire valid operational claim and start EX-004 governedly
+WI-002 implementation....... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+WI-002 next action.......... independent technical review / acceptance audit applicable to WI-002
 ```
 
 ## Fechamento da Planning Round 1

@@ -1,2 +1,8 @@
-/** Business modules will expose explicit public contracts from this package. */
-export {};
+export {
+  PrincipalStateTransitionError,
+  PrincipalValidationError,
+  assertPrincipalStatusTransition,
+  assertValidUsername,
+  isActivePrincipalStatus,
+  type PrincipalStatus
+} from './authority/principal.js';

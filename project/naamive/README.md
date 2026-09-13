@@ -22,20 +22,20 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 11 PROPOSED / 1 READY / 1 DONE
+Work Items.............. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
 WI-001................... DONE
-WI-002................... READY
+WI-002................... IN_REVIEW
 WI-002 readiness authority GRANTED / EXERCISED
 WI-002 Development Cycle. DC-002
-WI-002 Execution......... EX-004 — ELIGIBLE / NOT CLAIMED
+WI-002 Execution......... EX-004 — SUCCEEDED / CLAIM RELEASED
 WI-002 implementation authority GRANTED
-WI-002 implementation.... NOT STARTED
+WI-002 implementation.... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 Development Cycles...... 2 (DC-001, DC-002)
 Executions.............. 4
 EX-001................... SUCCEEDED / HISTORICAL
 EX-002................... SUCCEEDED / HISTORICAL
 EX-003................... SUCCEEDED
-EX-004................... ELIGIBLE / NOT CLAIMED
+EX-004................... SUCCEEDED / CLAIM RELEASED
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED / EXERCISED

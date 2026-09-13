@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED / EXERCISED`
-**Implementation:** `WI-001 ACCEPTED / DONE`
+**Implementation:** `WI-002 TECHNICAL RESULT PRODUCED / AWAITING REVIEW`
 
 ---
 
@@ -314,9 +314,9 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 11 PROPOSED / 1 READY / 1 DONE
+Work Items.............. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
 Development Cycles...... 2 (DC-001, DC-002)
-Executions.............. 4 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 ELIGIBLE / NOT CLAIMED)
+Executions.............. 4 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED / EXERCISED
@@ -330,9 +330,9 @@ WI-001 readiness........ APPROVED / EXERCISED
 WI-002 readiness........ APPROVED / EXERCISED
 WI-002 authority........ GRANTED / EXERCISED
 WI-002 Development Cycle DC-002 CREATED
-WI-002 Execution........ EX-004 ELIGIBLE / NOT CLAIMED
+WI-002 Execution........ EX-004 SUCCEEDED / CLAIM RELEASED
 WI-002 implementation authority GRANTED
-WI-002 implementation... NOT STARTED
+WI-002 implementation... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 ```
 
 Arquivos operacionais principais:
@@ -416,9 +416,9 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-WI-002 está `READY` por decisão humana explícita e `DC-002` foi criado. Seu
-próximo avanço governado é avaliar, autorizar e criar uma Execution válida; não
-iniciar implementação diretamente.
+WI-002 está `IN_REVIEW` após `EX-004 SUCCEEDED`. Seu próximo avanço governado é
+independent technical review / acceptance audit aplicável; sucesso técnico não
+constitui aceite.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -687,8 +687,8 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado para WI-002:
-Avaliar, autorizar e criar uma Execution válida para DC-002. Não iniciar
-implementação diretamente.
+Independent technical review / acceptance audit aplicável ao resultado técnico
+de EX-004. Não exercer aceite diretamente.
 
 Não reexecute EX-001 terminal.
 Não reabra WI-001 DONE silenciosamente.
@@ -756,15 +756,15 @@ VI-001...................... PLANNED
 DT-001 v1................... CURRENT
 ROADMAP v2.................. CURRENT
 
-WORK ITEMS.................. 11 PROPOSED / 1 READY (WI-002) / 1 DONE (WI-001)
+WORK ITEMS.................. 11 PROPOSED / 1 IN_REVIEW (WI-002) / 1 DONE (WI-001)
 WI-002 READINESS............ APPROVED / EXERCISED
 WI-002 AUTHORITY............ GRANTED / EXERCISED
 WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
-WI-002 EXECUTION............ EX-004 ELIGIBLE / NOT CLAIMED
+WI-002 EXECUTION............ EX-004 SUCCEEDED / CLAIM RELEASED
 WI-002 IMPLEMENTATION AUTHORITY GRANTED
-WI-002 IMPLEMENTATION....... NOT STARTED
+WI-002 IMPLEMENTATION....... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
-EXECUTIONS.................. 4 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 ELIGIBLE / NOT CLAIMED)
+EXECUTIONS.................. 4 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED / EXERCISED
@@ -772,8 +772,8 @@ CODE REVIEW................. CR-WI001-03 PASS_WITH_FINDINGS
 ACCEPTANCE AUDIT............ AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 HUMAN ACCEPTANCE............ APPROVED / EXERCISED
 ACCEPTANCE.................. GRANTED / EXERCISED
-IMPLEMENTATION.............. WI-001 ACCEPTED / DONE
+IMPLEMENTATION.............. WI-002 TECHNICAL RESULT PRODUCED / AWAITING REVIEW
 
 DECISION INPUT COMMIT....... 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
-NEXT GOVERNED ACTION........ WI-002/DC-002: adquirir claim operacional válido e iniciar EX-004 governadamente
+NEXT GOVERNED ACTION........ WI-002: independent technical review / acceptance audit aplicável
 ```

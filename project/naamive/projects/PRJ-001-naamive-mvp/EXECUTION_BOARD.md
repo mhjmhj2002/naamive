@@ -30,14 +30,14 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | READY | adquirir claim operacional válido e iniciar EX-004 |
+| WI-002 | IN_REVIEW | independent technical review / acceptance audit applicable to WI-002 |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
 PROPOSED............. 11
-READY................ 1
+READY................ 0
 IN_PROGRESS.......... 0
-IN_REVIEW............ 0
+IN_REVIEW............ 1
 DONE................. 1
 Development Cycles... 2 (DC-001, DC-002)
 Executions............ 4
@@ -51,10 +51,9 @@ BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
 findings bloqueadores e `0` não bloqueadores. A decisão humana em
 `governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`;
 readiness authority está `GRANTED / EXERCISED`. A authority `EXECUTE_WORK` está
-`GRANTED / EXERCISED` e `EX-004` está `ELIGIBLE`, sem claim operacional;
-implementation authority está `GRANTED` e implementation permanece `NOT
-STARTED`. A próxima ação é adquirir claim operacional válido e iniciar `EX-004`
-governedly.
+`GRANTED / EXERCISED` e `EX-004` está `SUCCEEDED`, com claim liberado;
+implementation authority está `GRANTED` e implementation está `TECHNICAL RESULT
+PRODUCED / AWAITING REVIEW`.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.
@@ -70,5 +69,5 @@ review ou de audit equivale sozinho a aceite.
 EX-001............... SUCCEEDED
 EX-002............... SUCCEEDED / HISTORICAL
 EX-003............... SUCCEEDED
-EX-004............... ELIGIBLE / NOT CLAIMED
+EX-004............... SUCCEEDED / CLAIM RELEASED
 ```

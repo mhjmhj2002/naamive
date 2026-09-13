@@ -15,7 +15,7 @@ export async function bootstrap(connectionString = process.env.DATABASE_URL): Pr
     for (const role of ['naamive_web', 'naamive_worker']) {
       for (const schema of schemas) await pool.query(`GRANT USAGE ON SCHEMA ${schema} TO ${role}`);
     }
-    await pool.query('GRANT USAGE, CREATE ON SCHEMA platform TO naamive_migrator');
+    for (const schema of ['platform', 'authority']) await pool.query(`GRANT USAGE, CREATE ON SCHEMA ${schema} TO naamive_migrator`);
     await pool.query('ALTER DEFAULT PRIVILEGES FOR ROLE naamive_migrator IN SCHEMA platform GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO naamive_web, naamive_worker');
     await pool.query('GRANT CONNECT ON DATABASE naamive TO naamive_migrator, naamive_web, naamive_worker, naamive_observer');
   } finally {
