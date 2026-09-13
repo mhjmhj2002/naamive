@@ -1,57 +1,8 @@
-# VI-001 — Work Item Proposal Set
+# VI-001 — Work Items
 
-**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
-**normative_baseline_ref:** NB-0002  
-**Status:** 11 PROPOSED / 1 IN_REVIEW / 1 DONE / WI-002 EX-006 SUCCEEDED / CLAIM RELEASED
+Este diretório contém os documentos de definição e fluxo próprio dos Work Items
+de VI-001. A lista de status e o ramo corrente pertencem ao
+[STATUS.md pai](../STATUS.md); este arquivo não é uma segunda fonte de estado.
 
-| WI | Title | Governing scope | Depends on | State |
-|---|---|---|---|---|
-| WI-001 | Repository / Workspace Foundation | PROJECT | none | DONE |
-| WI-002 | Principal Persistence | MODULE | WI-001 | IN_REVIEW |
-| WI-003 | Username / Password Login | MODULE | WI-002 | PROPOSED |
-| WI-004 | Durable Server-side Session | MODULE | WI-003 | PROPOSED |
-| WI-005 | Authority / Scoped Grants | MODULE | WI-002, WI-004 | PROPOSED |
-| WI-006 | Session Bootstrap | MODULE | WI-004, WI-005 | PROPOSED |
-| WI-007 | Authorized Project List | MODULE | WI-005, WI-006, WI-013 | PROPOSED |
-| WI-008 | Explicit Project Selection | MODULE | WI-007 | PROPOSED |
-| WI-009 | Authenticated AppShell | MODULE | WI-006, WI-007, WI-008 | PROPOSED |
-| WI-010 | Initial Activity Center Projection | MODULE | WI-008, WI-009, WI-013 | PROPOSED |
-| WI-011 | SSE Invalidation and Canonical Refetch | MODULE | WI-009, WI-010 | PROPOSED |
-| WI-012 | End-to-end Validation Evidence | MODULE | WI-003..WI-011, WI-013 | PROPOSED |
-| WI-013 | Canonical Project Read Source | MODULE | WI-001 | PROPOSED |
-
-`WI-001` is Project-transversal. `WI-002..WI-013` are governed by MOD-001 and
-reference VI-001; VI-001 is not their owner.
-
-`WI-002` readiness was approved and exercised by
-`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-006`,
-que está `SUCCEEDED`, com claim liberado; `EX-004` e `EX-005` são históricos.
-`WI-002` está `IN_REVIEW`; `CR-WI002-01` permanece `FAIL / HISTORICAL` e
-`CR-WI002-F001` está `RESOLVED`. `CR-WI002-02` permanece `FAIL / HISTORICAL`;
-`CR-WI002-02-F001` é `RESOLVED` por `CR-WI002-03`; `CR-WI002-02-F002` permanece
-`OPEN / NON_BLOCKING`. Implementation é `CODE REVIEW PASSED WITH NONBLOCKING
-FINDING / AWAITING ACCEPTANCE AUDIT`; acceptance não foi concedido. A próxima
-ação governada é acceptance audit independente que carregue esse finding.
-
-Full criteria/test/evidence/audit mapping is also summarized in:
-
-`../../../../../governance/WORK_ITEM_ASSURANCE_MATRIX.md`
-
-
-## Normative ownership versus TB-140 persistence anchor
-
-Round 1 uses `DEC-005_TB140_WORK_ITEM_OWNER_MAPPING.md`.
-
-```text
-WI-001
-normative owner = PRJ-001
-TB-140 anchor   = PROJECT_TRANSVERSAL / project_id
-
-WI-002..WI-013
-normative owner = MOD-001
-VI reference    = VI-001
-TB-140 anchor   = VALUE_INCREMENT / value_increment_id
-Module owner    = derive VI-001.module_id → MOD-001
-```
-
-No Work Item may treat `VALUE_INCREMENT` as its normative lifecycle owner.
+Abra um Work Item somente pelo link do `STATUS.md` ou quando a task exigir
+evidência histórica específica.

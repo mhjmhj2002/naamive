@@ -2,17 +2,18 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { CONTINUITY_PATH, continuityViolation } from './project-continuity-guard.mjs';
 
-const currentState = 'project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md';
-const executionBoard = 'project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md';
+const projectStatus = 'project/naamive/projects/PRJ-001-naamive-mvp/STATUS.md';
+const moduleStatus = 'project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/STATUS.md';
+const viStatus = 'project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/STATUS.md';
 const roadmap = 'project/naamive/projects/PRJ-001-naamive-mvp/ROADMAP.md';
 const activityLog = 'project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md';
 
-test('rejects a changed current-state projection without continuity', () => {
-  assert.equal(continuityViolation([currentState]), true);
+test('rejects a changed Project status without continuity', () => {
+  assert.equal(continuityViolation([projectStatus]), true);
 });
 
-test('rejects a changed execution board without continuity', () => {
-  assert.equal(continuityViolation([executionBoard]), true);
+test('rejects a changed descendant status without continuity', () => {
+  assert.equal(continuityViolation([moduleStatus, viStatus]), true);
 });
 
 test('accepts a changed activity log with continuity', () => {
@@ -32,5 +33,5 @@ test('accepts unrelated technical changes', () => {
 });
 
 test('accepts multiple changed living projections with continuity', () => {
-  assert.equal(continuityViolation([currentState, executionBoard, roadmap, activityLog, CONTINUITY_PATH]), false);
+  assert.equal(continuityViolation([projectStatus, moduleStatus, viStatus, roadmap, activityLog, CONTINUITY_PATH]), false);
 });

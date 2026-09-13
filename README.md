@@ -9,6 +9,18 @@ O software é consequência.
 
 **Valor de negócio entregue é o objetivo.**
 
+## Comece aqui
+
+1. **Como trabalhar:** [AGENTS.md](AGENTS.md).
+2. **Onde estamos:** [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) e os
+   `STATUS.md` dos ramos `DOING` ou `BLOCKED`.
+3. **Qual lei governa:** no `STATUS.md` do Project, siga o
+   `normative_baseline_ref` até seu certificado em `governance/normative-baselines/`;
+   a membership do certificado leva ao [Documentation Map](00_DOCUMENTATION_MAP.md)
+   e à regra aplicável.
+
+Não use `HEAD`, `latest` ou a data de um documento para inferir a lei.
+
 ---
 
 ## 0. Origem e significado do nome
@@ -52,107 +64,25 @@ Transforming Business Needs into Delivered Software
 
 ---
 
-## 1. Onde começar
+## 1. Como trabalhar, onde estamos e qual lei governa
 
-Se você está chegando agora:
+1. **Como trabalhar:** leia [AGENTS.md](AGENTS.md).
+2. **Onde estamos:** abra [PROJECT_CONTINUITY.md](PROJECT_CONTINUITY.md) e
+   desça somente pelos ramos com `navigation_status` `DOING` ou `BLOCKED`.
+3. **Qual lei governa:** no `STATUS.md` do Project, obtenha o
+   `normative_baseline_ref`; abra o certificado correspondente em
+   `governance/normative-baselines/` e use seu membership para chegar ao
+   [Documentation Map](00_DOCUMENTATION_MAP.md) e à regra aplicável.
 
-1. leia a [Constituição](00_NAAMIVE_CONSTITUTION.md);
-2. veja o [guia visual do lifecycle](lifecycle/diagrams/00_LIFECYCLE_VISUAL_GUIDE.md);
-3. leia o [Lifecycle Model](lifecycle/01_LIFECYCLE_MODEL.md);
-4. aprofunde-se nos lifecycles específicos;
-5. consulte Governance e Contracts antes de interpretar autoridade, gates,
-   findings, exceções, handoffs, recovery ou continuidade;
-6. consulte os modelos derivados antes de implementar;
-7. se você for um agente, leia também [AGENTS.md](AGENTS.md).
+Não deduza a lei por `HEAD`, `latest` ou pelo documento aparentemente mais novo.
+O certificado da Normative Baseline determina as revisões que governam cada
+instância.
 
-O guia visual é **não normativo**. Ele facilita leitura humana, mas nunca
-substitui a documentação normativa.
-
----
-
-## 1.1 Estado atual do self-hosting
-
-O NAAMIVE também está sendo usado para governar o próprio desenvolvimento.
-
-Workspace canônico:
-
-```text
-project/naamive/
-```
-
-Projeto corrente:
-
-```text
-PRJ-001 — NAAMIVE MVP
-```
-
-Estado resumido:
-
-```text
-Normative Baseline........ NB-0002 — RATIFIED / IN FORCE
-Technology Baseline....... v0.10 — APPROVED / FROZEN
-TIR........................ v1.0 — APPROVED
-Project.................... PRJ-001 PLANNING
-Planning Round 1........... COMPLETE
-Module MOD-001............. PLANNED
-VI-001..................... PLANNED
-DT-001 v1.................. CURRENT
-Roadmap v2................. CURRENT
-Work Items................. 12 PROPOSED / 1 IN_REVIEW
-Development Cycles......... 1
-Executions................. 2
-EX-001...................... SUCCEEDED / HISTORICAL
-EX-002...................... SUCCEEDED
-Implementation authority... GRANTED
-Implementation............. REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
-```
-
-A decisão humana T1–T6 já foi exercida e materializou o avanço de MOD-001,
-VI-001, DT-001 v1 e Roadmap v2 sem autorizar implementação.
-
-O primeiro Work Item em preparação é:
-
-```text
-WI-001 — Repository / Workspace Foundation
-```
-
-Seu readiness candidate foi preparado e passou por auditoria independente com:
-
-```text
-AUD-WI001-READINESS-01
-Result..................... PASS_WITH_FINDINGS
-Findings F-001 / F-002...... RESOLVED
-WI-001..................... IN_REVIEW
-Readiness authority........ GRANTED / EXERCISED
-Development Cycles......... 1 (DC-001)
-Executions................. 2 (EX-001 historical; EX-002 SUCCEEDED)
-Implementation authority... GRANTED
-Implementation............. REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
-```
-
-Os dois findings não bloqueadores identificados pela auditoria foram tratados:
-
-```text
-F-001 — RESOLVED por DEC-007, com classificação RECONCILE
-F-002 — RESOLVED com fortalecimento da provenance de DEC-006
-```
-
-O resultado histórico da auditoria permanece `PASS_WITH_FINDINGS`; a remediation
-não reescreve retroativamente o relatório de auditoria.
-
-A decisão humana de readiness está registrada em
-`project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_WI001_READINESS.md`.
-`CR-WI001-01` permanece FAIL histórico. `EX-002` produziu a remediação técnica
-e `WI-001` está `IN_REVIEW`. A próxima ação legítima é `CR-WI001-02`
-independente e aceite separado; ela não promove `WI-001` automaticamente para
-`DONE`.
-
-A documentação operacional corrente do self-hosting está em:
-
-- [Self-hosted Project Workspace](project/naamive/README.md)
-- [Project Current State](project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md)
-- [Execution Board](project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md)
-- [WI-001 Readiness Candidate](project/naamive/projects/PRJ-001-naamive-mvp/governance/WI-001_READINESS_CANDIDATE.md)
+`navigation_status` é uma ajuda operacional, não um lifecycle normativo:
+`DOING` e `BLOCKED` indicam o ramo a abrir; `TODO` não deve ser investigado por
+padrão; `DONE` só deve ser aberto para evidência histórica ou dependência
+exigida pela task. Assim, se um pai estiver `DONE`, não atravesse seus
+descendentes por padrão.
 
 ---
 

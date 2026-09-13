@@ -1,148 +1,43 @@
 # MOD-001 — Project Context
 
-**Lifecycle state:** PLANNED  
-**Definition candidate:** APPROVED / EXERCISED — T1–T6  
-**Decision reference:** `../../governance/HUMAN_APPROVAL_T1_T6.md`  
 **Project:** PRJ-001  
 **Nature:** business capability  
-**Impact:** MATERIAL  
-**normative_baseline_ref:** NB-0002  
-**business_baseline_ref:** PBL-PRJ001-R1-v1.0
+**Impact:** MATERIAL
 
-## Responsibility
+## Responsabilidade
 
-Provide the business capability for an authorized human principal to enter and
-operate inside an explicit Project context without the browser becoming the
-source of authority or canonical truth.
+Prover a capacidade para um principal humano autorizado entrar e operar em um
+contexto explícito de Project, sem transformar o navegador em fonte de
+autoridade ou verdade canônica.
 
-## Inputs
+## Entradas
 
 ```text
-authenticated human principal
-server-side session status
-authority/grants scoped to Project
-canonical Project read source
+principal humano autenticado
+estado de sessão server-side
+authority/grants com escopo de Project
+fonte canônica de leitura do Project
 ```
 
-## Results
+## Resultados
 
 ```text
-visible authorized Projects
-explicit selected Project context
-factual contextual Activity Center projection
-restart-safe reconstruction of context
+Projects autorizados visíveis
+contexto de Project explicitamente selecionado
+projeção factual de Activity Center
+reconstrução segura do contexto após restart
 ```
 
-## Actors
+## Escopo
 
-```text
-human NAAMIVE operator / Project participant
-NAAMIVE web application
-AuthorityService
-Project query service
-Activity Center projector
-```
+Inclui autenticação de entrada, bootstrap durável de sessão, grants com escopo,
+visibilidade autorizada de Projects, seleção explícita, AppShell e projeção
+inicial do Activity Center. Exclui mutação de lifecycle de Project, motor de
+execução de Work Item, autonomia de agentes, Delivery e provisionamento HML/PROD.
 
-## In scope
+## Relações
 
-```text
-authenticated entry into the platform
-durable session bootstrap needed for context
-authorized Project visibility
-explicit Project selection
-initial contextual Activity Center
-SSE invalidation followed by canonical refetch
-```
-
-## Out of scope
-
-```text
-Project lifecycle mutation
-Work Item execution engine
-agent orchestration/autonomy
-Delivery workflow
-HML/PROD provisioning
-external evidence/blob storage
-```
-
-## Conceptual interfaces
-
-```text
-session bootstrap contract
-AuthorityService decision contract
-Project canonical query contract
-Activity Center projection query contract
-SSE invalidation hint contract
-```
-
-## Material dependencies
-
-| Dependency | Required result | Satisfaction condition | Impact if absent | Owner | Fallback |
-|---|---|---|---|---|---|
-| NB-0002 | valid lifecycle/governance law | RATIFIED / IN FORCE and compatible baseline ref | stop planning | Project Owner | return to normative governance |
-| Technology Baseline v0.10 | frozen technical boundaries | APPROVED / FROZEN | stop technical planning | Project Owner | technical change governance |
-| TIR v1.0 | concrete implementation envelope | APPROVED and interpreted only as technical readiness | stop implementation preparation | Project Owner | reopen TIR through governance |
-| PRJ-001 | owning Project in PLANNING | current Project baseline matches `PBL-PRJ001-R1-v1.0` | stop Module gate | Project Owner | reconcile Project baseline |
-
-## Success criteria
-
-A human principal can authenticate, see only authorized Projects, select one
-explicitly and reconstruct that Project context after restart. The Activity
-Center remains a derived projection and can be rebuilt from declared canonical
-sources.
-
-## Risks
-
-Material risks are not bare labels here. Canonical treatment is in:
-
-`../../risks/RISK_REGISTER.md`
-
-Applicable risk IDs:
-
-```text
-RISK-001 authorization scope leakage
-RISK-002 session/browser authority confusion
-RISK-003 projection used as canonical truth
-RISK-004 boundary/cross-module shortcut
-RISK-005 insufficient/deferred test evidence
-RISK-006 canonical Project read source ambiguity
-```
-
-## Open questions
-
-```text
-none known that require a new material product/architecture decision before the definition gate
-```
-
-Any new material question opens a Finding and stops the affected scope.
-
-## DeliveryTarget relation
-
-There is **no intrinsic DeliveryTarget disposition on Module**.
-
-The candidate `DT-001 v1` assigns `REQUIRED_FOR_TARGET` to `VI-001`. Any Module
-summary shown by UI is only a derivation from the memberships of its
-ValueIncrements.
-
-## Lifecycle progression exercised
-
-The ordered transitions T1 and T4 were exercised by explicit human authority
-decision recorded in `../../governance/HUMAN_APPROVAL_T1_T6.md`:
-
-```text
-T1 — MOD-001 IDENTIFIED → DEFINED    EXERCISED
-T4 — MOD-001 DEFINED → PLANNED       EXERCISED
-result: MOD-001 PLANNED
-```
-
-The previous section stating that this transition awaited human approval is
-reconciled here: the approval was granted and the decision was exercised via
-`governance/HUMAN_APPROVAL_T1_T6.md` (gate_result APPROVED, decision_input_commit
-cf4f2c032d61835329db820d9490250927b6bfeb).
-
-`ROUND_1_APPROVAL_CANDIDATE.md` remains historical evidence of the Round 1
-proposal, closed without promotion. It is not the approval.
-
-MOD-001 does **not** advance to IMPLEMENTING. Implementation remains
-NOT AUTHORIZED; Work Items remain PROPOSED / 0 READY; 0 Development Cycles;
-0 Executions.
+O Module contém o Value Increment `VI-001 — Authenticated Project Context`.
+Seu estado e a navegação para filhos diretos estão em [STATUS.md](STATUS.md).
+Riscos, decisões, gates e evidências permanecem nos artefatos governados
+apropriados; este arquivo descreve somente a capacidade.

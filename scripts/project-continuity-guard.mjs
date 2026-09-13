@@ -5,8 +5,9 @@ const root = resolve(import.meta.dirname, '..');
 
 export const CONTINUITY_PATH = 'PROJECT_CONTINUITY.md';
 export const CONTINUITY_TRIGGER_PATHS = new Set([
-  'project/naamive/projects/PRJ-001-naamive-mvp/CURRENT_STATE.md',
-  'project/naamive/projects/PRJ-001-naamive-mvp/EXECUTION_BOARD.md',
+  'project/naamive/projects/PRJ-001-naamive-mvp/STATUS.md',
+  'project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/STATUS.md',
+  'project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/STATUS.md',
   'project/naamive/projects/PRJ-001-naamive-mvp/ROADMAP.md',
   'project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md'
 ]);

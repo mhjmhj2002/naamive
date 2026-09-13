@@ -40,6 +40,19 @@ Antes de alterar documentação ou código:
 5. leia somente a documentação necessária para executar o escopo com segurança;
 6. só então proponha ou realize mudanças.
 
+Para navegar o estado corrente sem reconstruir o repositório, siga:
+
+```text
+README.md
+→ PROJECT_CONTINUITY.md
+→ STATUS.md do Project
+→ STATUS.md dos filhos diretos em ramo DOING ou BLOCKED
+```
+
+`navigation_status` é apenas uma ajuda operacional e não substitui o lifecycle
+normativo. Para resolver a lei aplicável, use o `normative_baseline_ref` do
+Project e o certificado de baseline; nunca infira a lei por `latest` ou `HEAD`.
+
 ### 2.1 Task mecânica/local
 
 Considere mecânica/local quando a task:

@@ -109,3 +109,17 @@ No code may start while this Work Item remains `PROPOSED`.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.
+
+## Fluxo corrente e evidência
+
+Este Work Item é o ramo operacional corrente bloqueado. Seu estado permanece
+`PROPOSED`: readiness authority é `NOT GRANTED`, Development Cycle é `NOT
+CREATED`, Execution é `NONE` e implementação é `NOT AUTHORIZED`.
+
+A preparação de readiness e os blockers canônicos estão em
+[`WI-003_READINESS_CANDIDATE.md`](../../../../../governance/WI-003_READINESS_CANDIDATE.md):
+`FND-WI003-RCP-001..004` permanecem `OPEN / MATERIAL / BLOCKING`. A próxima
+ação permitida é uma decisão material governada que trate esses blockers; depois
+disso, uma nova preparação de readiness pode ser criada. Gates, decisões,
+Development Cycle, Execution, reviews, audits e acceptance devem ser lidos em
+seus artefatos aplicáveis quando existirem.
