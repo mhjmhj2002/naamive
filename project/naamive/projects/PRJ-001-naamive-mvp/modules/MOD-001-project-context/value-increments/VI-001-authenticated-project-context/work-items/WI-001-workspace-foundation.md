@@ -11,7 +11,7 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** none  
 **Development Cycle:** DC-001 (`development-cycles/DC-001-WI001.md`)
-**Executions:** EX-001 (`executions/EX-001-WI001.md`) — SUCCEEDED / HISTORICAL; EX-002 (`executions/EX-002-WI001.md`) — SUCCEEDED
+**Executions:** EX-001 (`executions/EX-001-WI001.md`) — SUCCEEDED / HISTORICAL; EX-002 (`executions/EX-002-WI001.md`) — SUCCEEDED / HISTORICAL; EX-003 (`executions/EX-003-WI001.md`) — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED
 **Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`
 
@@ -25,7 +25,8 @@ material product/architecture decision.
 
 Canonical proposed entry in DevelopmentRoadmap v2. Its readiness gate was
 approved and exercised; `DC-001` já existe, `EX-001` ocorreu e permanece
-histórica, e `EX-002` materializou o rework governado após `CR-WI001-01`.
+histórica, `EX-002` materializou o primeiro rework e `EX-003` o segundo, ambos
+sem alterar o compromisso lógico de WI-001.
 
 ## Outcome
 
@@ -170,12 +171,12 @@ READY → IN_PROGRESS
 ```
 
 `EX-001` produced a technical result que falhou em `CR-WI001-01`. `EX-002`
-materializou a remediação no mesmo compromisso; o Work Item agora aguarda novo
-Code Review independente e as decisões separadas aplicáveis:
+falhou em `CR-WI001-02` e `EX-003` materializou a segunda remediação no mesmo
+compromisso; o Work Item agora aguarda `CR-WI001-03` e as decisões separadas aplicáveis:
 
 ```text
 IN_PROGRESS → IN_REVIEW
-review........ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 REQUIRED
+review........ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 REQUIRED
 acceptance.... NOT GRANTED
 audit......... PENDING AS APPLICABLE
 ```

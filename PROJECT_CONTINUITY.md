@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED`
-**Implementation:** `REWORK REVIEWED / FINDINGS BLOCKING`
+**Implementation:** `SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW`
 
 ---
 
@@ -305,7 +305,7 @@ para fingir que a decisão ocorreu dentro da rodada fechada.
 
 ## 10. Estado corrente do PRJ-001
 
-Estado corrente após CR-WI001-02:
+Estado corrente após EX-003:
 
 ```text
 Need NEED-001........... ACCEPTED
@@ -316,13 +316,13 @@ DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 12 PROPOSED / 1 IN_REVIEW
 Development Cycles...... 1 (DC-001)
-Executions.............. 2 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED)
+Executions.............. 3 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED
-Code Review............... CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL
+Code Review............... CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 REQUIRED
 Acceptance................ NOT GRANTED / BLOCKED
-Implementation............ REWORK REVIEWED / GOVERNED REWORK REQUIRED
+Implementation............ SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 ```
@@ -358,7 +358,7 @@ Validation
 Delivery
 ```
 
-Estado corrente após `EX-002`:
+Estado corrente após `EX-003`:
 
 ```text
 12 PROPOSED
@@ -366,7 +366,7 @@ Estado corrente após `EX-002`:
 0 IN_PROGRESS
 0 DONE
 1 Development Cycle (DC-001)
-2 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED)
+3 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 ```
 
 Não inferir autorização de implementação a partir de:
@@ -384,16 +384,14 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é o rework governado dos findings bloqueantes de
-`CR-WI001-02`, seguido de nova review independente e acceptance separado
-conforme lifecycle e governança aplicáveis.
+O próximo avanço real é a review independente `CR-WI001-03`, seguida de
+acceptance separado conforme lifecycle e governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
 WI-001 IN_REVIEW
-→ rework governado de F003/F004
-→ nova review independente
+→ CR-WI001-03 independente
 → decisão de aceite humana conforme aplicável
 ```
 
@@ -401,10 +399,10 @@ WI-001 IN_REVIEW
 
 ### Próxima ação recomendada
 
-Após a remediação governada de F003/F004:
+Após EX-003:
 
 ```text
-abrir nova task autorizada de review para WI-001
+abrir a task autorizada de review CR-WI001-03 para WI-001
 ```
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
@@ -624,9 +622,9 @@ NB-0001 é histórica e imutável.
 
 Technology Baseline v0.10 está APPROVED / FROZEN.
 TIR v1.0 está APPROVED.
-EX-001 é terminal/histórica; CR-WI001-01 permanece FAIL histórico. EX-002
-produziu a remediação; CR-WI001-02 resolveu F001, F002 e F005, mas manteve
-F003 e F004 bloqueantes.
+EX-001 e EX-002 são terminais/históricas; CR-WI001-01 e CR-WI001-02 permanecem
+FAIL históricos. EX-003 produziu a segunda remediação; F003, F004 e
+CR-WI001-02-F001 aguardam revisão independente.
 
 Planning Round 1 está COMPLETE.
 Business Baseline final da rodada: PBL-PRJ001-R1-v1.0.
@@ -654,11 +652,11 @@ Roadmap v2 = CURRENT
 12 Work Items = PROPOSED
 1 IN_REVIEW (WI-001)
 1 Development Cycle (DC-001)
-2 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED)
+3 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 Implementation authority = GRANTED
-Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL
+Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 REQUIRED
 Acceptance = NOT GRANTED / BLOCKED
-Implementation = REWORK REVIEWED / GOVERNED REWORK REQUIRED
+Implementation = SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -670,7 +668,7 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado:
-rework governado de CR-WI001-F003/F004, depois nova review independente.
+CR-WI001-03 independente, depois acceptance separado.
 
 Não promova WI-001 automaticamente.
 Não reexecute EX-001 terminal.
@@ -741,12 +739,12 @@ ROADMAP v2.................. CURRENT
 
 WORK ITEMS.................. 12 PROPOSED / 1 IN_REVIEW (WI-001)
 DEVELOPMENT CYCLES.......... 1 (DC-001)
-EXECUTIONS.................. 2 (EX-001 historical; EX-002 SUCCEEDED)
+EXECUTIONS.................. 3 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED
-IMPLEMENTATION.............. REWORK REVIEWED / FINDINGS BLOCKING
+IMPLEMENTATION.............. SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 
 DECISION INPUT COMMIT....... ef10e525164f16d14b7416eab4e2de781e35ccec
-NEXT GOVERNED ACTION........ rework de F003/F004; nova review; acceptance separado
+NEXT GOVERNED ACTION........ CR-WI001-03; acceptance separado
 ```

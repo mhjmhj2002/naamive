@@ -22,6 +22,18 @@ test('private imports are rejected', () => {
   }
 });
 
+test('dynamic private imports are rejected', () => {
+  const directory = join(tmpdir(), `naamive-guardrail-${process.pid}`);
+  mkdirSync(directory, { recursive: true });
+  const fixture = join(directory, 'dynamic-private-import.ts');
+  writeFileSync(fixture, "await import('@naamive/modules/need/internal/entity');\n");
+  try {
+    assert.deepEqual(violationsFor(fixture), ['private module/internal import']);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
 function fixturePath(...parts) {
   const directory = join(tmpdir(), `naamive-guardrail-${process.pid}`, ...parts.slice(0, -1));
   mkdirSync(directory, { recursive: true });
@@ -38,6 +50,16 @@ test('relative imports cannot bypass package public exports', () => {
   }
 });
 
+test('dynamic imports cannot bypass package public exports', () => {
+  const fixture = fixturePath('packages', 'kernel', 'src', 'dynamic-relative-deep-import.ts');
+  writeFileSync(fixture, "await import('../../database/src/index.ts');\n");
+  try {
+    assert.deepEqual(violationsFor(fixture), ['cross-package source access via relative import']);
+  } finally {
+    rmSync(join(tmpdir(), `naamive-guardrail-${process.pid}`), { recursive: true, force: true });
+  }
+});
+
 test('relative private imports are rejected', () => {
   const fixture = fixturePath('packages', 'kernel', 'src', 'relative-private-import.ts');
   writeFileSync(fixture, "import { entity } from '../../database/src/internal/entity.ts';\nvoid entity;\n");
@@ -45,6 +67,52 @@ test('relative private imports are rejected', () => {
     assert.deepEqual(violationsFor(fixture), ['private module/internal import', 'cross-package source access via relative import']);
   } finally {
     rmSync(join(tmpdir(), `naamive-guardrail-${process.pid}`), { recursive: true, force: true });
+  }
+});
+
+test('dynamic relative private imports are rejected', () => {
+  const fixture = fixturePath('packages', 'kernel', 'src', 'dynamic-relative-private-import.ts');
+  writeFileSync(fixture, "await import('../../database/src/internal/entity.ts');\n");
+  try {
+    assert.deepEqual(violationsFor(fixture), ['private module/internal import', 'cross-package source access via relative import']);
+  } finally {
+    rmSync(join(tmpdir(), `naamive-guardrail-${process.pid}`), { recursive: true, force: true });
+  }
+});
+
+test('dynamic deep package imports are rejected', () => {
+  const directory = join(tmpdir(), `naamive-guardrail-${process.pid}`);
+  mkdirSync(directory, { recursive: true });
+  const fixture = join(directory, 'dynamic-deep-package-import.ts');
+  writeFileSync(fixture, "await import('@naamive/database/src/index.ts');\n");
+  try {
+    assert.deepEqual(violationsFor(fixture), ['private module/internal import']);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('static deep package imports are rejected', () => {
+  const directory = join(tmpdir(), `naamive-guardrail-${process.pid}`);
+  mkdirSync(directory, { recursive: true });
+  const fixture = join(directory, 'static-deep-package-import.ts');
+  writeFileSync(fixture, "import { createDatabase } from '@naamive/database/src/index.ts';\nvoid createDatabase;\n");
+  try {
+    assert.deepEqual(violationsFor(fixture), ['private module/internal import']);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+});
+
+test('dynamic public package imports remain accepted', () => {
+  const directory = join(tmpdir(), `naamive-guardrail-${process.pid}`);
+  mkdirSync(directory, { recursive: true });
+  const fixture = join(directory, 'dynamic-public-package-import.ts');
+  writeFileSync(fixture, "await import('@naamive/database');\n");
+  try {
+    assert.deepEqual(violationsFor(fixture), []);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
   }
 });
 
