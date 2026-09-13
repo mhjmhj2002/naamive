@@ -260,3 +260,12 @@ somente pode iniciar se essa nova preparação for positiva.
 permanece PROPOSED, com readiness authority NOT GRANTED, auditoria NOT EXECUTED,
 Development Cycle NOT CREATED, Execution NONE e implementação NOT AUTHORIZED.
 Nova preparação de readiness continua obrigatória.
+
+## Disposição histórica
+
+A decisão humana final foi materializada em
+`decisions/DEC-008_WI002_PRINCIPAL_SEMANTICS.md`. Esta candidata continua sendo
+evidência de preparação e não é retroeditada. Em particular, sua proposta de
+reserva permanente do username anterior ao mesmo `principal_id` foi ajustada:
+DEC-008 determina que username anterior não fica permanentemente reservado e
+pode voltar a ficar disponível segundo as regras de unicidade aplicáveis.

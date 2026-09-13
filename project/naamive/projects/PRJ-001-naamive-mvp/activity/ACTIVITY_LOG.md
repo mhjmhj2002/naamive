@@ -497,3 +497,21 @@ A-043
  work_item_state: DONE
  acceptance: GRANTED / EXERCISED
  recorded_at: 2026-09-12T23:04:10-03:00
+
+A-044
+ type: HUMAN_DECISION_MATERIALIZED
+ decision: DEC-008
+ work_item: WI-002
+ authority_principal: human:manuel-hinojosa:project-owner
+ decision_input_commit: 354c334f221f9e7247aa926b4a3627b6260e57f5
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ finding: FND-WI002-RCP-001 RESOLVED BY DEC-008
+ fact: canonical Principal identity, username, status, currentness and material-history semantics decided
+ work_item_state: PROPOSED
+ readiness_authority: NOT GRANTED
+ readiness_audit: NOT EXECUTED
+ development_cycle: NOT CREATED
+ execution: NONE
+ implementation: NOT AUTHORIZED
+ recorded_at: 2026-09-13T10:39:08-03:00

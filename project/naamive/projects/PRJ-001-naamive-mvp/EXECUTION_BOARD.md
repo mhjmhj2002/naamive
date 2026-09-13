@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | PROPOSED | candidata de decisão preparada; decisão humana material sobre identidade/status/histórico requerida antes de nova preparação e auditoria independente de readiness |
+| WI-002 | PROPOSED | DEC-008 materializada; nova preparação de readiness é requerida antes da auditoria independente aplicável |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -44,12 +44,11 @@ Executions............ 3
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
-`WI-002_READINESS_CANDIDATE.md` foi preparado sem transição de lifecycle e
-identifica `FND-WI002-RCP-001` como blocker material. A candidata
-`WI-002_PRINCIPAL_SEMANTICS_DECISION_CANDIDATE.md` está `PREPARED`; a decisão
-humana material está `REQUIRED / NOT EXERCISED`. O finding permanece aberto,
-readiness authority segue `NOT GRANTED`, auditoria independente é `REQUIRED /
-NOT EXECUTED`, não existe Development Cycle ou Execution de WI-002 e sua
+`DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana sobre
+identidade, status e história do Principal; `FND-WI002-RCP-001` está `RESOLVED
+BY DEC-008`. A candidata de readiness anterior requer nova preparação.
+Readiness authority segue `NOT GRANTED`, auditoria independente está `NOT
+EXECUTED`, não existe Development Cycle ou Execution de WI-002 e sua
 implementação não está autorizada.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace

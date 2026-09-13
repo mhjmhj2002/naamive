@@ -13,6 +13,7 @@
 **Development Cycle:** NOT CREATED  
 **Execution:** NONE  
 **Readiness authority:** NOT GRANTED
+**Governing decision:** decisions/DEC-008_WI002_PRINCIPAL_SEMANTICS.md
 
 ## Reason / business intention
 
@@ -42,25 +43,51 @@ assigned, or an Execution started.
 
 ## Acceptance criteria
 
-- authority/security schema compatible with TIR
-- principal persisted with explicit status
-- material history preserved
-- migrations explicit and tested on real PostgreSQL
+- `principal_id` is an immutable UUID canonical Principal identity; mutable
+  attributes do not change it.
+- `username` is a mutable login attribute, unique while current and validated
+  exactly as `[a-z][a-z0-9_-]{2,31}`. A prior username is preserved in history
+  but is not permanently reserved and may become available under current
+  uniqueness rules.
+- Principal status is explicitly `ACTIVE` or `SUSPENDED`; only creation to
+  `ACTIVE`, `ACTIVE → SUSPENDED`, and `SUSPENDED → ACTIVE` are accepted. Only
+  `ACTIVE` is eligible for successful authentication/use as an active Principal.
+- `authority.principal` persists the current snapshot with `version bigint` and
+  explicit `current_history_event_id`; currentness is not inferred from
+  `MAX(version)`.
+- `authority.principal_history` is append-only and preserves
+  `PRINCIPAL_CREATED`, `USERNAME_CHANGED`, and `STATUS_CHANGED` material facts,
+  including historical username ownership by material version.
+- A material mutation requires expected version, increments version by exactly
+  one when accepted, and produces no history fact when stale.
+- Principal snapshot, explicit pointer, version, and reconstructable history
+  persist across restart; migrations are explicit and tested on real PostgreSQL.
 
 ## Required tests
 
 - clean PostgreSQL migration creates principal structures and constraints
-- principal status/currentness and material history persist
-- duplicate/invalid identity constraints fail deterministically
-- restart preserves principal state and history
+- immutable UUID identity, deterministic current username validation and
+  uniqueness behave deterministically; a former username may be reassigned
+  after it is no longer current
+- creation/status transitions accept only the defined state model; `SUSPENDED`
+  is not eligible for successful authentication/use as an active Principal
+- current snapshot, explicit pointer, version and append-only material history
+  persist for creation, username change and status change
+- expected-version stale mutation fails without changing the snapshot or adding
+  a history fact; accepted mutation increments version exactly once
+- restart reconstruction yields the same snapshot and explicit pointer without
+  inferring currentness from `MAX(version)`
 
 ## Required evidence
 
 - migration output on PostgreSQL 18.6
-- constraint/integration test outputs
-- restart persistence evidence
+- constraint/integration test outputs for UUID, username, status, history and
+  optimistic version behavior
+- restart persistence and reconstruction evidence, including explicit
+  `current_history_event_id`
 - implementation diff/artifact scoped to this WI
-- finding references and baseline classification if scope changed
+- DEC-008 and `FND-WI002-RCP-001` resolution references; finding references and
+  baseline classification if scope changed
 
 ## Review / audit requirement
 

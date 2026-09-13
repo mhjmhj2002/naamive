@@ -20,13 +20,12 @@
 | RM-003 | WORK_ITEM | WI-001 | DONE — human acceptance APPROVED / EXERCISED; CR-WI001-03-F001 e AUD-WI001-ACCEPTANCE-01-F001 resolvidos no fechamento |
 | RM-004..RM-015 | WORK_ITEM | WI-002..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
-`WI-002_READINESS_CANDIDATE.md` foi preparado com a conclusão `NEEDS MATERIAL
-DECISION`. A candidata
-`governance/WI-002_PRINCIPAL_SEMANTICS_DECISION_CANDIDATE.md` está `PREPARED`;
-a decisão humana material está `REQUIRED / NOT EXERCISED`. WI-002 permanece
-`PROPOSED` e o finding `FND-WI002-RCP-001` permanece `MATERIAL / BLOCKING` até
-uma decisão humana posterior. Nenhuma authority de readiness, Development
-Cycle, Execution ou autorização de implementação foi criada para WI-002.
+`DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana de
+semântica de Principal e resolve `FND-WI002-RCP-001`. WI-002 permanece
+`PROPOSED`; a candidata de readiness anterior requer nova preparação. Nenhuma
+authority de readiness foi concedida, a auditoria independente não foi
+executada, e nenhum Development Cycle, Execution ou autorização de
+implementação foi criado para WI-002.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,
