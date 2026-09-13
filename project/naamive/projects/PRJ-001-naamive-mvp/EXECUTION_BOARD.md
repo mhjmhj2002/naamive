@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | IN_REVIEW | independent technical review / acceptance audit applicable to WI-002 |
+| WI-002 | IN_REVIEW | governed treatment/rework of CR-WI002-F001; acceptance blocked |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -53,7 +53,11 @@ findings bloqueadores e `0` não bloqueadores. A decisão humana em
 readiness authority está `GRANTED / EXERCISED`. A authority `EXECUTE_WORK` está
 `GRANTED / EXERCISED` e `EX-004` está `SUCCEEDED`, com claim liberado;
 implementation authority está `GRANTED` e implementation está `TECHNICAL RESULT
-PRODUCED / AWAITING REVIEW`.
+PRODUCED / AWAITING REVIEW`. `CR-WI002-01` returned `FAIL` with one blocking
+finding (`CR-WI002-F001`): runtime database grants permit bypass of the
+expected-version/version-adjacency mutation protocol. WI-002 remains
+`IN_REVIEW`, EX-004 remains `SUCCEEDED`, acceptance is not granted, and the next
+action is governed treatment/rework; no acceptance audit is implied.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.

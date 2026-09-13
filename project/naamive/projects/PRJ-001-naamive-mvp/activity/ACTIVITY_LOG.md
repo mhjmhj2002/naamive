@@ -643,3 +643,19 @@ A-050
  implementation: TECHNICAL RESULT PRODUCED / AWAITING REVIEW
  next_governed_action: independent technical review / acceptance audit applicable to WI-002
  recorded_at: 2026-09-13T11:52:07-03:00
+
+A-051
+ type: INDEPENDENT_CODE_REVIEW_COMPLETED
+ review: CR-WI002-01
+ work_item: WI-002
+ execution: EX-004
+ implementation_principal: agent:codex:implementation:WI-002:EX-004
+ reviewer_principal: agent:codex:review:CR-WI002-01
+ review_target_commit: da624f2a7206f9eabe95e5c0afedb91b467d780a
+ result: FAIL
+ blocking_findings: 1
+ non_blocking_findings: 0
+ work_item_state: IN_REVIEW
+ execution_state: SUCCEEDED
+ acceptance: NOT GRANTED / BLOCKED
+ recorded_at: 2026-09-13T12:08:44-03:00

@@ -29,7 +29,9 @@ WI-002 readiness authority GRANTED / EXERCISED
 WI-002 Development Cycle. DC-002
 WI-002 Execution......... EX-004 — SUCCEEDED / CLAIM RELEASED
 WI-002 implementation authority GRANTED
-WI-002 implementation.... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+WI-002 code review........ CR-WI002-01 FAIL / 1 BLOCKING FINDING
+WI-002 implementation.... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 acceptance......... NOT GRANTED / BLOCKED
 Development Cycles...... 2 (DC-001, DC-002)
 Executions.............. 4
 EX-001................... SUCCEEDED / HISTORICAL

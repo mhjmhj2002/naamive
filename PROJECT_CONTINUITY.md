@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED / EXERCISED`
-**Implementation:** `WI-002 TECHNICAL RESULT PRODUCED / AWAITING REVIEW`
+**Implementation:** `WI-002 CODE REVIEW FAILED / GOVERNED REWORK REQUIRED`
 
 ---
 
@@ -332,7 +332,9 @@ WI-002 authority........ GRANTED / EXERCISED
 WI-002 Development Cycle DC-002 CREATED
 WI-002 Execution........ EX-004 SUCCEEDED / CLAIM RELEASED
 WI-002 implementation authority GRANTED
-WI-002 implementation... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+WI-002 code review....... CR-WI002-01 FAIL / 1 BLOCKING FINDING
+WI-002 implementation... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 acceptance........ NOT GRANTED / BLOCKED
 ```
 
 Arquivos operacionais principais:
@@ -416,9 +418,11 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-WI-002 está `IN_REVIEW` após `EX-004 SUCCEEDED`. Seu próximo avanço governado é
-independent technical review / acceptance audit aplicável; sucesso técnico não
-constitui aceite.
+WI-002 está `IN_REVIEW` após `EX-004 SUCCEEDED`. `CR-WI002-01` retornou `FAIL`
+com `CR-WI002-F001` bloqueador: o runtime pode contornar expected-version e
+admitir salto de versão. O próximo avanço governado é tratamento/rework do
+finding; sucesso técnico não constitui aceite e nenhum acceptance audit foi
+executado.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -762,7 +766,9 @@ WI-002 AUTHORITY............ GRANTED / EXERCISED
 WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
 WI-002 EXECUTION............ EX-004 SUCCEEDED / CLAIM RELEASED
 WI-002 IMPLEMENTATION AUTHORITY GRANTED
-WI-002 IMPLEMENTATION....... TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+WI-002 CODE REVIEW.......... CR-WI002-01 FAIL / 1 BLOCKING FINDING
+WI-002 IMPLEMENTATION....... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 ACCEPTANCE............ NOT GRANTED / BLOCKED
 DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
 EXECUTIONS.................. 4 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
@@ -772,8 +778,8 @@ CODE REVIEW................. CR-WI001-03 PASS_WITH_FINDINGS
 ACCEPTANCE AUDIT............ AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 HUMAN ACCEPTANCE............ APPROVED / EXERCISED
 ACCEPTANCE.................. GRANTED / EXERCISED
-IMPLEMENTATION.............. WI-002 TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+IMPLEMENTATION.............. WI-002 CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 
 DECISION INPUT COMMIT....... 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
-NEXT GOVERNED ACTION........ WI-002: independent technical review / acceptance audit aplicável
+NEXT GOVERNED ACTION........ WI-002: governed treatment/rework of CR-WI002-F001
 ```

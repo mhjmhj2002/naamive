@@ -14,7 +14,9 @@
 **Execution:** EX-004 — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
-**Implementation:** TECHNICAL RESULT PRODUCED / AWAITING REVIEW
+**Code review:** CR-WI002-01 — FAIL / 1 BLOCKING FINDING
+**Implementation:** CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+**Acceptance:** NOT GRANTED / BLOCKED
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
 **Readiness audit:** AUD-WI002-READINESS-01 — PASS / 0 blocking findings / 0 nonblocking findings
@@ -136,8 +138,9 @@ READY → DC-002 CREATED........... recorded
 
 `EX-004` acquired the valid operational claim on 2026-09-13T11:42:30-03:00 and
 produced its technical result on 2026-09-13T11:52:07-03:00. WI-002 is now
-`IN_REVIEW`; implementation is `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`.
-The next governed action is independent technical review / acceptance audit; no
+`IN_REVIEW`; `CR-WI002-01` returned `FAIL` with the blocking finding
+`CR-WI002-F001`; implementation is `CODE REVIEW FAILED / GOVERNED REWORK
+REQUIRED`. The next governed action is treatment/rework of that finding; no
 acceptance was exercised by EX-004.
 
 A material gap opens a Finding and stops only the affected scope according to

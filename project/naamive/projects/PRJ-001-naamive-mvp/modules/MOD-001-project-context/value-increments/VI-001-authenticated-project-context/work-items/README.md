@@ -26,8 +26,9 @@ reference VI-001; VI-001 is not their owner.
 `WI-002` readiness was approved and exercised by
 `governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-004`,
 que está `SUCCEEDED` e com claim liberado. WI-002 está `IN_REVIEW` e
-implementation é `TECHNICAL RESULT PRODUCED / AWAITING REVIEW`. A próxima ação
-governada é independent technical review / acceptance audit aplicável.
+`CR-WI002-01` retornou `FAIL` com um finding bloqueador (`CR-WI002-F001`).
+Implementation é `CODE REVIEW FAILED / GOVERNED REWORK REQUIRED`; acceptance não
+foi concedido. A próxima ação governada é tratamento/rework do finding.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 
