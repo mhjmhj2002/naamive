@@ -28,10 +28,10 @@ reference VI-001; VI-001 is not their owner.
 que está `SUCCEEDED`, com claim liberado; `EX-004` e `EX-005` são históricos.
 `WI-002` está `IN_REVIEW`; `CR-WI002-01` permanece `FAIL / HISTORICAL` e
 `CR-WI002-F001` está `RESOLVED`. `CR-WI002-02` permanece `FAIL / HISTORICAL`;
-`CR-WI002-02-F001` é `REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`
-e `CR-WI002-02-F002` preserva status NON_BLOCKING. Implementation é `REWORK
-TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW`; acceptance não foi
-concedido. A próxima ação governada é `CR-WI002-03`.
+`CR-WI002-02-F001` é `RESOLVED` por `CR-WI002-03`; `CR-WI002-02-F002` permanece
+`OPEN / NON_BLOCKING`. Implementation é `CODE REVIEW PASSED WITH NONBLOCKING
+FINDING / AWAITING ACCEPTANCE AUDIT`; acceptance não foi concedido. A próxima
+ação governada é acceptance audit independente que carregue esse finding.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

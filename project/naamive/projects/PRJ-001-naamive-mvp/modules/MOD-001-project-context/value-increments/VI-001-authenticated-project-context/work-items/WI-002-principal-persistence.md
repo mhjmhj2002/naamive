@@ -14,8 +14,8 @@
 **Execution:** EX-006 — SUCCEEDED / current rework result; EX-005 historical
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
-**Code review:** CR-WI002-01 — FAIL / HISTORICAL; CR-WI002-02 — FAIL / 1 BLOCKING FINDING
-**Implementation:** REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+**Code review:** CR-WI002-01 — FAIL / HISTORICAL; CR-WI002-02 — FAIL / HISTORICAL; CR-WI002-03 — PASS_WITH_FINDINGS / 1 NON_BLOCKING FINDING
+**Implementation:** CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
 **Acceptance:** NOT GRANTED / BLOCKED
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
@@ -141,10 +141,10 @@ EX-004 and EX-005 remain `SUCCEEDED` historical technical results. EX-006,
 attempt 3, used the existing authority to remediate `CR-WI002-02-F001` through
 the database authority boundary and is `SUCCEEDED`; its claim is released.
 WI-002 is `IN_REVIEW`; `CR-WI002-02` remains `FAIL / HISTORICAL` and
-`CR-WI002-02-F001` is `REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT
-RE-REVIEW`. `CR-WI002-02-F002` remains non-blocking historical documentation
-status. Implementation is `REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE
-REVIEW`; the next governed action is `CR-WI002-03`. No acceptance was exercised.
+`CR-WI002-02-F001` is `RESOLVED` by `CR-WI002-03`. `CR-WI002-02-F002` remains
+`OPEN / NON_BLOCKING`. Implementation is `CODE REVIEW PASSED WITH NONBLOCKING
+FINDING / AWAITING ACCEPTANCE AUDIT`; the next governed action is independent
+acceptance audit carrying that finding. No acceptance was exercised.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

@@ -29,11 +29,11 @@ WI-002 Development Cycle.... DC-002
 WI-002 Execution............ EX-006 — SUCCEEDED / current rework result; EX-005 historical
 WI-002 claim................ RELEASED / COMPLETED
 WI-002 implementation authority GRANTED
-WI-002 code review.......... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / 1 BLOCKING FINDING
-WI-002 implementation....... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+WI-002 code review.......... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / HISTORICAL; CR-WI002-03 PASS_WITH_FINDINGS / 1 NON_BLOCKING FINDING
+WI-002 implementation....... CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
 WI-002 acceptance............ NOT GRANTED / BLOCKED
-WI-002 finding.............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW; CR-WI002-02-F002 NON_BLOCKING
-WI-002 next action.......... CR-WI002-03 independent code review
+WI-002 finding.............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 OPEN / NON_BLOCKING
+WI-002 next action.......... independent WI-002 acceptance audit carrying CR-WI002-02-F002
 ```
 
 ## Fechamento da Planning Round 1
