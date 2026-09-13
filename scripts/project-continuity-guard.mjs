@@ -4,13 +4,7 @@ import { resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 
 export const CONTINUITY_PATH = 'PROJECT_CONTINUITY.md';
-export const CONTINUITY_TRIGGER_PATHS = new Set([
-  'project/naamive/projects/PRJ-001-naamive-mvp/STATUS.md',
-  'project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/STATUS.md',
-  'project/naamive/projects/PRJ-001-naamive-mvp/modules/MOD-001-project-context/value-increments/VI-001-authenticated-project-context/STATUS.md',
-  'project/naamive/projects/PRJ-001-naamive-mvp/ROADMAP.md',
-  'project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md'
-]);
+const PROJECT_STATUS_PATH = /^project\/naamive\/projects\/[^/]+\/STATUS\.md$/;
 
 function normalizedPath(path) {
   return path.replaceAll('\\', '/').replace(/^\.\//, '');
@@ -18,8 +12,8 @@ function normalizedPath(path) {
 
 export function continuityViolation(changedPaths) {
   const paths = new Set(changedPaths.map(normalizedPath));
-  const changedLivingProjection = [...paths].some((path) => CONTINUITY_TRIGGER_PATHS.has(path));
-  return changedLivingProjection && !paths.has(CONTINUITY_PATH);
+  const changedProjectIndexFact = [...paths].some((path) => PROJECT_STATUS_PATH.test(path));
+  return changedProjectIndexFact && !paths.has(CONTINUITY_PATH);
 }
 
 function gitOutput(args) {
@@ -60,7 +54,7 @@ export function checkProjectContinuity(changedPaths = changedPathsForRepository(
   if (continuityViolation(changedPaths)) {
     throw new Error(
       'Project continuity drift detected:\n' +
-      'living project state changed without PROJECT_CONTINUITY.md.\n' +
+      'Project STATUS changed without PROJECT_CONTINUITY.md.\n' +
       'Reconcile PROJECT_CONTINUITY.md before completing the task.'
     );
   }

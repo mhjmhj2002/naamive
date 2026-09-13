@@ -93,17 +93,104 @@ O guia visual é não normativo.
 
 ### 2.3 Continuidade obrigatória do projeto
 
-`PROJECT_CONTINUITY.md` é a projeção viva e não normativa de handoff do
-projeto. A task deve reconciliá-lo na mesma execução sempre que alterar
-materialmente um fato nele representado, incluindo estado corrente de Work Item,
-Execution, review/audit, acceptance, disposição de finding que afete a
-continuidade, próxima ação governada ou outro estado corrente material.
+`PROJECT_CONTINUITY.md` é o índice operacional, vivo e não normativo de
+Projects. Ele conhece somente cada Project e seu entry point; não é handoff
+detalhado de Work Item, Execution, review, audit, finding, acceptance, próxima
+ação interna, Roadmap ou Activity Log.
 
-Mudanças técnicas/locais sem efeito na continuidade do projeto não exigem essa
-atualização. Quando aplicável, não reconciliar `PROJECT_CONTINUITY.md` torna a
-task **INCOMPLETE**. Os artefatos canônicos do projeto prevalecem em qualquer
-conflito; o guard automatizado apenas detecta omissão de co-alteração e não
-valida semântica de lifecycle.
+O estado corrente é navegado hierarquicamente:
+
+```text
+PROJECT_CONTINUITY.md
+→ conhece somente Projects
+
+Project/STATUS.md
+→ conhece o Project e seus filhos diretos
+
+Module/STATUS.md
+→ conhece o Module e seus filhos diretos
+
+ValueIncrement/STATUS.md
+→ conhece o ValueIncrement e seus Work Items
+
+Work Item
+→ conhece seu próprio fluxo governado
+```
+
+Valem as regras:
+
+```text
+cada fato mutável tem um único dono;
+cada índice conhece somente seus filhos diretos;
+índices não criam snapshots globais concorrentes.
+```
+
+#### Roll-up vertical de status no self-hosting
+
+Status sobe somente pela vertical hierárquica:
+
+```text
+Work Item
+→ ValueIncrement
+→ Module
+→ Project
+→ PROJECT_CONTINUITY
+```
+
+Quando um filho mudar, atualize seu próprio artefato e a projeção desse filho no
+`STATUS.md` do pai direto. Continue para o próximo nível somente se essa
+alteração fizer o estado ou o `navigation_status` do pai efetivamente mudar; se
+o pai permanecer semanticamente igual, pare.
+
+```text
+child changes
+→ update direct parent projection
+
+if parent state/navigation changes
+→ continue upward
+
+else
+→ STOP
+```
+
+Por exemplo, `WI-003` concluído atualiza o Work Item e sua linha no
+`VI-001/STATUS.md`; se `VI-001` ainda tiver Work Items abertos e permanecer com
+o mesmo estado e `navigation_status`, não atualize `MOD-001/STATUS.md`.
+
+O fechamento de filhos não encerra o pai automaticamente. A última Work Item
+necessária concluída pode tornar o Value Increment elegível para transição, mas
+o avanço continua sujeito ao lifecycle, gates, findings, authority e demais
+regras aplicáveis. A mesma regra vale para Value Increments em relação ao Module
+e para Modules ou demais condições em relação ao Project.
+
+`PROJECT_CONTINUITY.md` deve ser reconciliado na mesma task somente quando a
+linha do Project mudar — por exemplo, Project adicionado, retirado ou
+superseded quando aplicável, `navigation_status`, entry point ou outro fato
+diretamente representado por ela. Quando aplicável, não reconciliar esse índice
+torna a task **INCOMPLETE**. Os artefatos canônicos do Project prevalecem em
+qualquer conflito.
+
+O guard automatizado detecta `STATUS.md` direto de Project alterado sem a
+reconciliação do índice como proxy conservador. Ele não interpreta a semântica
+de cada diff nem substitui a obrigação operacional de atualizar o índice apenas
+quando a linha do Project efetivamente mudar.
+
+### 2.4 Self-hosting / bootstrap
+
+O NAAMIVE exerce sua própria governança durante sua construção sempre que isso
+for tecnicamente possível. A lei define o modelo alvo do produto pronto,
+inclusive persistência canônica e projeções derivadas; essas capacidades podem
+ainda não existir durante a construção do próprio NAAMIVE.
+
+Não simule componentes inexistentes apenas para aparentar conformidade. Durante
+o bootstrap, `STATUS.md` governados podem ser a fonte documental corrente de
+sua vertical, desde que cada fato tenha uma única verdade corrente e arquivos
+concorrentes antigos sejam limpos ou aposentados. Preservam-se o histórico, o
+lifecycle próprio de cada entidade e a regra de que pai conhece somente filhos
+diretos; índices não substituem seus filhos.
+
+Esta é uma convenção operacional de self-hosting e não altera a Normative
+Baseline.
 
 ---
 
