@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | PROPOSED | DEC-008 materializada; nova preparação de readiness é requerida antes da auditoria independente aplicável |
+| WI-002 | PROPOSED | preparação R2 concluída; auditoria independente de readiness requerida / não executada |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -46,10 +46,11 @@ Executions............ 3
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana sobre
 identidade, status e história do Principal; `FND-WI002-RCP-001` está `RESOLVED
-BY DEC-008`. A candidata de readiness anterior requer nova preparação.
-Readiness authority segue `NOT GRANTED`, auditoria independente está `NOT
-EXECUTED`, não existe Development Cycle ou Execution de WI-002 e sua
-implementação não está autorizada.
+BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
+`PREPARED / READY FOR INDEPENDENT READINESS AUDIT`. Readiness authority segue
+`NOT GRANTED`, a auditoria independente é requerida e não executada, não existe
+Development Cycle ou Execution de WI-002 e sua implementação não está
+autorizada.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.

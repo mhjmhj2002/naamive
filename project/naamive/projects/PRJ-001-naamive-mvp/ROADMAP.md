@@ -22,10 +22,11 @@
 
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana de
 semântica de Principal e resolve `FND-WI002-RCP-001`. WI-002 permanece
-`PROPOSED`; a candidata de readiness anterior requer nova preparação. Nenhuma
-authority de readiness foi concedida, a auditoria independente não foi
-executada, e nenhum Development Cycle, Execution ou autorização de
-implementação foi criado para WI-002.
+`PROPOSED`; a preparação R1 é histórica/bloqueada e a preparação R2 está
+`PREPARED / READY FOR INDEPENDENT READINESS AUDIT`. Nenhuma authority de
+readiness foi concedida, a auditoria independente é requerida e não executada,
+e nenhum Development Cycle, Execution ou autorização de implementação foi
+criado para WI-002.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,
