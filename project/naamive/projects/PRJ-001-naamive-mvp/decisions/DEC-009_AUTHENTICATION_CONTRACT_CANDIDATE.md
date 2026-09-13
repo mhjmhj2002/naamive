@@ -325,3 +325,11 @@ APPROVE CANDIDATE AS PROPOSED
 REWORK REQUIRED
 REJECT
 ```
+
+## Registro histórico de decisão
+
+A decisão humana final foi materializada em
+[`DEC-009_AUTHENTICATION_CONTRACT.md`](DEC-009_AUTHENTICATION_CONTRACT.md) como
+`APPROVED`, com aprovação integral das seções 3–6 desta candidata. Esta
+candidata permanece evidência histórica de preparação e não é retroeditada;
+somente a decisão materializada possui efeito governado.

@@ -1,24 +1,24 @@
 # WI-003 — Preparação de Readiness R1
 
-**status:** PREPARED / BLOCKED  
-**work_item:** WI-003 — Username / Password Login  
-**work_item_state:** PROPOSED  
-**impact:** MATERIAL  
-**governing_scope:** MODULE / MOD-001  
-**value_increment_ref:** VI-001 — Authenticated Project Context  
-**dependency:** WI-002 — DONE  
-**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
-**normative_baseline_ref:** NB-0002  
-**preparation_input_commit:** 0b2cbcbadb1762310827bc3454ebbcb17582a7c0  
-**author_principal:** agent:codex:readiness:WI-003:R1  
-**nature:** non-normative readiness preparation; not audit, approval or authority  
-**readiness_authority:** NOT GRANTED  
-**development_cycle:** NOT CREATED  
-**execution:** NONE  
-**implementation:** NOT AUTHORIZED  
+**status:** HISTORICAL / SUPERSEDED BY R2
+**work_item:** WI-003 — Username / Password Login
+**work_item_state:** PROPOSED
+**impact:** MATERIAL
+**governing_scope:** MODULE / MOD-001
+**value_increment_ref:** VI-001 — Authenticated Project Context
+**dependency:** WI-002 — DONE
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
+**normative_baseline_ref:** NB-0002
+**preparation_input_commit:** 0b2cbcbadb1762310827bc3454ebbcb17582a7c0
+**author_principal:** agent:codex:readiness:WI-003:R1
+**nature:** historical non-normative readiness preparation; not audit, approval or authority
+**readiness_authority:** NOT GRANTED
+**development_cycle:** NOT CREATED
+**execution:** NONE
+**implementation:** NOT AUTHORIZED
 **prepared_at:** 2026-09-13T17:33:55-03:00
 
-## 1. Conclusão e elegibilidade
+## 1. Conclusão e elegibilidade histórica
 
 ```text
 conclusão................... BLOCKED
@@ -116,6 +116,7 @@ Execution.................... NONE
 implementation............... NOT AUTHORIZED
 ```
 
-A próxima ação é decisão material do Project Owner que resolva
-`FND-WI003-RCP-001..004`, seguida de nova preparação de readiness. Esta
-preparação não abre auditoria, não promove WI-003 e não inicia implementação.
+Este registro captura o estado anterior à DEC-009 e foi superseded como
+resultado corrente por `WI-003_READINESS_CANDIDATE_R2.md`. A preparação R2, e
+não esta R1, define a continuidade atual. Esta preparação não abriu auditoria,
+não promoveu WI-003 e não iniciou implementação.

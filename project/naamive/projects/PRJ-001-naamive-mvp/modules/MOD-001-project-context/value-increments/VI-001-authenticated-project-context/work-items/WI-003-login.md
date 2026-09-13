@@ -112,14 +112,16 @@ the Gap Protocol.
 
 ## Fluxo corrente e evidência
 
-Este Work Item é o ramo operacional corrente bloqueado. Seu estado permanece
-`PROPOSED`: readiness authority é `NOT GRANTED`, Development Cycle é `NOT
-CREATED`, Execution é `NONE` e implementação é `NOT AUTHORIZED`.
+Este Work Item é o ramo operacional corrente preparado para auditoria
+independente de readiness. Seu estado permanece `PROPOSED`: readiness authority
+é `NOT GRANTED`, Development Cycle é `NOT CREATED`, Execution é `NONE` e
+implementação é `NOT AUTHORIZED`.
 
-A preparação de readiness e os blockers canônicos estão em
-[`WI-003_READINESS_CANDIDATE.md`](../../../../../governance/WI-003_READINESS_CANDIDATE.md):
-`FND-WI003-RCP-001..004` permanecem `OPEN / MATERIAL / BLOCKING`. A próxima
-ação permitida é uma decisão material governada que trate esses blockers; depois
-disso, uma nova preparação de readiness pode ser criada. Gates, decisões,
-Development Cycle, Execution, reviews, audits e acceptance devem ser lidos em
-seus artefatos aplicáveis quando existirem.
+[`DEC-009_AUTHENTICATION_CONTRACT.md`](../../../../../decisions/DEC-009_AUTHENTICATION_CONTRACT.md)
+materializa a aprovação humana e resolve `FND-WI003-RCP-001..004`. A
+[`WI-003_READINESS_CANDIDATE_R2.md`](../../../../../governance/WI-003_READINESS_CANDIDATE_R2.md)
+conclui `READY FOR INDEPENDENT READINESS AUDIT`; R1 é evidência histórica e não
+é o resultado corrente. A próxima ação permitida é auditoria independente e
+proporcional de readiness. Gates, decisões, Development Cycle, Execution,
+reviews, audits e acceptance devem ser lidos em seus artefatos aplicáveis quando
+existirem.
