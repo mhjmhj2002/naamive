@@ -5,7 +5,7 @@
 **normative_baseline_ref:** NB-0002  
 **Project:** PLANNING  
 **Implementation authority:** GRANTED
-**Implementation:** REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+**Implementation:** REWORK REVIEWED / FINDINGS BLOCKING
 
 ## Fato atual projetado
 
@@ -13,7 +13,7 @@
 AUD-001..AUD-009......... FAIL / historical; AUD-009 is last valid audit
 AUD3-001 / DEC-005....... RESOLVED / historical evidence retained
 FND-011................... RESOLVED / v1.0 materialized; human closure recorded
-findings.................. F001–F005 remediation implemented / awaiting independent review
+findings.................. F001, F002 e F005 RESOLVED; F003 e F004 BLOCKING
 audit phase............... CLOSED
 current audit continuity.. NONE
 further audit required.... NO
@@ -29,7 +29,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001 | IN_REVIEW | CR-WI001-02 independent Code Review; acceptance remains separate |
+| WI-001 | IN_REVIEW | governed rework for CR-WI001-F003/F004; acceptance remains blocked |
 | WI-002..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -43,8 +43,9 @@ Executions............ 2
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
-`CR-WI001-01` retornou FAIL e permanece histórico. EX-002 implementou a
-remediação; nenhum resultado técnico equivale a aceite.
+`CR-WI001-01` retornou FAIL e permanece histórico. `CR-WI001-02` também
+retornou FAIL: F003 e F004 continuam bloqueantes. Nenhum resultado técnico
+equivale a aceite.
 
 ## Executions
 

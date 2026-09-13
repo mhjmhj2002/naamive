@@ -16,7 +16,7 @@ Executions................. 2
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED
-Implementation............. REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+Implementation............. REWORK REVIEWED / FINDINGS BLOCKING
 ```
 
 ## Fechamento da Planning Round 1
@@ -51,9 +51,9 @@ human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
 Development Cycle.......... DC-001
 Executions................. EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED
 Implementation authority... GRANTED
-Code Review................ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 REQUIRED
+Code Review................ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL
 Acceptance................. NOT GRANTED / BLOCKED
-Implementation............. REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+Implementation............. REWORK REVIEWED / GOVERNED REWORK REQUIRED
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
