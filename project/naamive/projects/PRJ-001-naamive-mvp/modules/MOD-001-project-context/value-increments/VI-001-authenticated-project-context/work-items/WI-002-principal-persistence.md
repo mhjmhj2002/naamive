@@ -14,8 +14,8 @@
 **Execution:** EX-005 — SUCCEEDED / current rework result
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
-**Code review:** CR-WI002-01 — FAIL / 1 BLOCKING FINDING
-**Implementation:** REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+**Code review:** CR-WI002-01 — FAIL / HISTORICAL; CR-WI002-02 — FAIL / 1 BLOCKING FINDING
+**Implementation:** CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 **Acceptance:** NOT GRANTED / BLOCKED
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
@@ -31,8 +31,9 @@ material product/architecture decision.
 ## Relation to plan
 
 Canonical entry in DevelopmentRoadmap v2. Its readiness gate is approved and
-exercised, and `DC-002` delimita sua Execution autorizada; `EX-004` está
-`ELIGIBLE`, sem claim operacional e sem início de implementação.
+exercised, and `DC-002` delimita sua Execution autorizada; `EX-005` é o
+resultado técnico de rework corrente, com claim liberado; `EX-004` permanece
+`SUCCEEDED / HISTORICAL`.
 
 ## Outcome
 
@@ -139,10 +140,12 @@ READY → DC-002 CREATED........... recorded
 EX-004 remains a `SUCCEEDED` historical technical result. EX-005, attempt 2,
 used the existing authority to remediate `CR-WI002-F001` through the database
 authority boundary and is `SUCCEEDED`; its claim is released. WI-002 is
-`IN_REVIEW`; implementation is `REWORK TECHNICAL RESULT PRODUCED / AWAITING
-CODE REVIEW`. The finding is `REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT
-RE-REVIEW`; the next governed action is `CR-WI002-02`. No acceptance was
-exercised.
+`IN_REVIEW`; `CR-WI002-02` returned `FAIL` and recorded the blocking finding
+`CR-WI002-02-F001` (a `NULL` expected version still permits a material mutation)
+plus the non-blocking `CR-WI002-02-F002` (stale projection narrative).
+`CR-WI002-F001` is `RESOLVED`; implementation is `CODE REVIEW FAILED / GOVERNED
+REWORK REQUIRED`. The next governed action is rework of the blocking finding.
+No acceptance was exercised.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

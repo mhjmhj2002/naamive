@@ -27,9 +27,10 @@ reference VI-001; VI-001 is not their owner.
 `governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-005`,
 que está `SUCCEEDED`, com claim liberado; `EX-004` é histórico. `WI-002` está
 `IN_REVIEW`; `CR-WI002-01` permanece `FAIL / HISTORICAL` e `CR-WI002-F001` está
-`REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`. Implementation é
-`REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW`; acceptance não foi
-concedido. A próxima ação governada é `CR-WI002-02`.
+`RESOLVED`. `CR-WI002-02` retornou `FAIL`, registrando `CR-WI002-02-F001`
+(BLOCKING) e `CR-WI002-02-F002` (NON_BLOCKING). Implementation é `CODE REVIEW
+FAILED / GOVERNED REWORK REQUIRED`; acceptance não foi concedido. A próxima
+ação governada é o rework do finding bloqueador.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

@@ -333,7 +333,7 @@ WI-002 Development Cycle DC-002 CREATED
 WI-002 Execution........ EX-005 SUCCEEDED / CLAIM RELEASED / current rework result
 WI-002 implementation authority GRANTED
 WI-002 code review....... CR-WI002-01 FAIL / 1 BLOCKING FINDING
-WI-002 implementation... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+WI-002 implementation... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
 WI-002 acceptance........ NOT GRANTED / BLOCKED
 ```
 
@@ -419,11 +419,13 @@ determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
 WI-002 está `IN_REVIEW` após `EX-005 SUCCEEDED`; EX-004 é histórico.
-`CR-WI002-01` permanece `FAIL / HISTORICAL`, e `CR-WI002-F001` está
-`REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`: a boundary runtime
-agora recusa DML bruto e exige expected-version pelos comandos controlados. A
-próxima ação governada é `CR-WI002-02`; sucesso técnico não constitui aceite e
-nenhum acceptance audit foi executado.
+`CR-WI002-01` permanece `FAIL / HISTORICAL` e `CR-WI002-F001` está `RESOLVED`: a
+boundary runtime recusa DML bruto e exige expected-version pelos comandos
+controlados. `CR-WI002-02` retornou `FAIL`, registrando `CR-WI002-02-F001`
+(BLOCKING — um expected version nulo ainda permite mutação material) e
+`CR-WI002-02-F002` (NON_BLOCKING — narrativa de projeção desatualizada). A
+próxima ação governada é o rework do finding bloqueador; sucesso técnico não
+constitui aceite e nenhum acceptance audit foi executado.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 

@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | IN_REVIEW | CR-WI002-02 independent code review required; acceptance blocked |
+| WI-002 | IN_REVIEW | CR-WI002-02 FAIL / 1 blocking finding; governed rework of CR-WI002-02-F001 required; acceptance blocked |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -54,10 +54,13 @@ readiness authority está `GRANTED / EXERCISED`. A authority `EXECUTE_WORK` est�
 `GRANTED / EXERCISED`; EX-004 permanece `SUCCEEDED / HISTORICAL` e EX-005
 produziu o resultado técnico de rework, com claim liberado. A remediação remove
 o bypass de DML runtime por comandos controlados com expected-version no banco.
-`CR-WI002-01` permanece `FAIL / HISTORICAL`; `CR-WI002-F001` está
-`REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`. WI-002 permanece
-`IN_REVIEW`, acceptance não foi concedido, e a próxima ação é `CR-WI002-02`;
-nenhum acceptance audit é implícito.
+`CR-WI002-01` permanece `FAIL / HISTORICAL`; `CR-WI002-F001` está `RESOLVED`.
+`CR-WI002-02` retornou `FAIL`: o bypass de DML bruto permanece fechado, mas
+`CR-WI002-02-F001` (BLOCKING) registra que um `expectedVersion` nulo ainda
+permite mutação material pelos comandos controlados, e `CR-WI002-02-F002`
+(NON_BLOCKING) registra narrativa de projeção desatualizada. WI-002 permanece
+`IN_REVIEW`, acceptance não foi concedido, e a próxima ação é o rework
+governado do finding bloqueador; nenhum acceptance audit é implícito.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.
