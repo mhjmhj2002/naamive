@@ -17,6 +17,12 @@ Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED / EXERCISED
 Implementation............. WI-001 ACCEPTED / DONE
+WI-002 readiness candidate.. PREPARED / NEEDS MATERIAL DECISION
+WI-002 audit................ REQUIRED / NOT EXECUTED
+WI-002 readiness authority.. NOT GRANTED
+WI-002 Development Cycle.... NOT CREATED
+WI-002 Execution............ NONE
+WI-002 implementation....... NOT AUTHORIZED
 ```
 
 ## Fechamento da Planning Round 1
