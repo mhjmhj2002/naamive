@@ -21,7 +21,7 @@ DEC-008...................... CURRENT / GOVERNED
 FND-WI002-RCP-001........... RESOLVED BY DEC-008
 WI-002 readiness preparation R1... HISTORICAL / BLOCKED
 WI-002 readiness preparation R2... PREPARED / READY FOR INDEPENDENT READINESS AUDIT
-WI-002 audit................ INDEPENDENT / REQUIRED / NOT EXECUTED
+WI-002 audit................ AUD-WI002-READINESS-01 PASS
 WI-002 readiness authority.. NOT GRANTED
 WI-002 Development Cycle.... NOT CREATED
 WI-002 Execution............ NONE
