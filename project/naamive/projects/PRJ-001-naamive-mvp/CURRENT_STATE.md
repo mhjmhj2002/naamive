@@ -12,7 +12,7 @@ DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
 Work Items................. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
 Development Cycles......... 2 (DC-001, DC-002)
-Executions................. 4
+Executions................. 5
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED / EXERCISED
@@ -26,13 +26,14 @@ WI-002 audit................ AUD-WI002-READINESS-01 PASS
 WI-002 readiness authority.. GRANTED / EXERCISED
 WI-002 human decision....... governance/HUMAN_APPROVAL_WI002_READINESS.md
 WI-002 Development Cycle.... DC-002
-WI-002 Execution............ EX-004 — SUCCEEDED
+WI-002 Execution............ EX-005 — SUCCEEDED / current rework result
 WI-002 claim................ RELEASED / COMPLETED
 WI-002 implementation authority GRANTED
 WI-002 code review.......... CR-WI002-01 FAIL / 1 BLOCKING FINDING
-WI-002 implementation....... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 implementation....... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 WI-002 acceptance............ NOT GRANTED / BLOCKED
-WI-002 next action.......... governed treatment/rework of CR-WI002-F001
+WI-002 finding.............. CR-WI002-F001 REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW
+WI-002 next action.......... CR-WI002-02 — independent code review required
 ```
 
 ## Fechamento da Planning Round 1

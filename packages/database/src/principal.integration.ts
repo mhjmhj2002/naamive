@@ -19,7 +19,10 @@ import {
 
 export async function verifyPrincipalPersistence(connectionString: string): Promise<void> {
   const principalId = randomUUID();
-  const first = createDatabase(connectionString);
+  const runtimeUrl = new URL(connectionString);
+  runtimeUrl.username = 'naamive_web';
+  runtimeUrl.password = '';
+  const first = createDatabase(runtimeUrl.toString());
   try {
     const created = await createPrincipal(first, { principalId, username: 'alpha_01' });
     assert.equal(created.principalId, principalId);
@@ -112,11 +115,38 @@ export async function verifyPrincipalPersistence(connectionString: string): Prom
     await administrator.end();
   }
 
-  const runtimeUrl = new URL(connectionString);
-  runtimeUrl.username = 'naamive_web';
-  runtimeUrl.password = '';
   const runtime = new Pool({ connectionString: runtimeUrl.toString() });
   try {
+    const hostilePrincipalId = randomUUID();
+    const hostileHistoryId = randomUUID();
+    await assert.rejects(
+      () => runtime.query(
+        `INSERT INTO authority.principal_history (history_event_id, principal_id, version, username, status, event_type)
+         VALUES ($1, $2, 7, 'hostile_01', 'ACTIVE', 'USERNAME_CHANGED')`,
+        [hostileHistoryId, principalId]
+      ),
+      /permission denied/i
+    );
+    await assert.rejects(
+      () => runtime.query('UPDATE authority.principal SET version = 7 WHERE principal_id = $1', [principalId]),
+      /permission denied/i
+    );
+    await assert.rejects(
+      () => runtime.query('UPDATE authority.principal SET current_history_event_id = $1 WHERE principal_id = $2', [hostileHistoryId, principalId]),
+      /permission denied/i
+    );
+    await assert.rejects(
+      () => runtime.query("UPDATE authority.principal SET username = 'hostile_02', status = 'SUSPENDED' WHERE principal_id = $1", [principalId]),
+      /permission denied/i
+    );
+    await assert.rejects(
+      () => runtime.query(
+        `INSERT INTO authority.principal (principal_id, username, status, version, current_history_event_id)
+         VALUES ($1, 'hostile_03', 'ACTIVE', 7, $2)`,
+        [hostilePrincipalId, hostileHistoryId]
+      ),
+      /permission denied/i
+    );
     await assert.rejects(
       () => runtime.query('UPDATE authority.principal_history SET username = username'),
       /permission denied/i
@@ -127,5 +157,29 @@ export async function verifyPrincipalPersistence(connectionString: string): Prom
     );
   } finally {
     await runtime.end();
+  }
+
+  const concurrentPrincipalId = randomUUID();
+  const concurrentFirst = createDatabase(runtimeUrl.toString());
+  const concurrentSecond = createDatabase(runtimeUrl.toString());
+  try {
+    const created = await createPrincipal(concurrentFirst, { principalId: concurrentPrincipalId, username: 'delta_04' });
+    const historyBefore = await getPrincipalHistory(concurrentFirst, concurrentPrincipalId);
+    const outcomes = await Promise.allSettled([
+      changePrincipalUsername(concurrentFirst, { principalId: concurrentPrincipalId, expectedVersion: created.version, username: 'echo_005' }),
+      changePrincipalUsername(concurrentSecond, { principalId: concurrentPrincipalId, expectedVersion: created.version, username: 'foxtrot_06' })
+    ]);
+    assert.equal(outcomes.filter((outcome) => outcome.status === 'fulfilled').length, 1);
+    assert.equal(outcomes.filter((outcome) => outcome.status === 'rejected').length, 1);
+    const rejected = outcomes.find((outcome) => outcome.status === 'rejected');
+    assert.ok(rejected?.status === 'rejected' && rejected.reason instanceof PrincipalVersionConflictError);
+    const current = await getPrincipal(concurrentFirst, concurrentPrincipalId);
+    const historyAfter = await getPrincipalHistory(concurrentFirst, concurrentPrincipalId);
+    assert.equal(current?.version, created.version + 1n);
+    assert.equal(historyAfter.length, historyBefore.length + 1);
+    assert.equal(historyAfter.at(-1)?.historyEventId, current?.currentHistoryEventId);
+  } finally {
+    await concurrentFirst.destroy();
+    await concurrentSecond.destroy();
   }
 }

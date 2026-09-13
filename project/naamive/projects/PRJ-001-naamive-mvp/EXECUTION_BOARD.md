@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | IN_REVIEW | governed treatment/rework of CR-WI002-F001; acceptance blocked |
+| WI-002 | IN_REVIEW | CR-WI002-02 independent code review required; acceptance blocked |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -40,7 +40,7 @@ IN_PROGRESS.......... 0
 IN_REVIEW............ 1
 DONE................. 1
 Development Cycles... 2 (DC-001, DC-002)
-Executions............ 4
+Executions............ 5
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
@@ -51,13 +51,13 @@ BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
 findings bloqueadores e `0` não bloqueadores. A decisão humana em
 `governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`;
 readiness authority está `GRANTED / EXERCISED`. A authority `EXECUTE_WORK` está
-`GRANTED / EXERCISED` e `EX-004` está `SUCCEEDED`, com claim liberado;
-implementation authority está `GRANTED` e implementation está `TECHNICAL RESULT
-PRODUCED / AWAITING REVIEW`. `CR-WI002-01` returned `FAIL` with one blocking
-finding (`CR-WI002-F001`): runtime database grants permit bypass of the
-expected-version/version-adjacency mutation protocol. WI-002 remains
-`IN_REVIEW`, EX-004 remains `SUCCEEDED`, acceptance is not granted, and the next
-action is governed treatment/rework; no acceptance audit is implied.
+`GRANTED / EXERCISED`; EX-004 permanece `SUCCEEDED / HISTORICAL` e EX-005
+produziu o resultado técnico de rework, com claim liberado. A remediação remove
+o bypass de DML runtime por comandos controlados com expected-version no banco.
+`CR-WI002-01` permanece `FAIL / HISTORICAL`; `CR-WI002-F001` está
+`REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`. WI-002 permanece
+`IN_REVIEW`, acceptance não foi concedido, e a próxima ação é `CR-WI002-02`;
+nenhum acceptance audit é implícito.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.
@@ -74,4 +74,5 @@ EX-001............... SUCCEEDED
 EX-002............... SUCCEEDED / HISTORICAL
 EX-003............... SUCCEEDED
 EX-004............... SUCCEEDED / CLAIM RELEASED
+EX-005............... SUCCEEDED / CLAIM RELEASED / CURRENT REWORK RESULT
 ```

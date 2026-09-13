@@ -11,11 +11,11 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** WI-001  
 **Development Cycle:** DC-002 — `../../../../../development-cycles/DC-002-WI002.md`<br>
-**Execution:** EX-004 — SUCCEEDED
+**Execution:** EX-005 — SUCCEEDED / current rework result
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
 **Code review:** CR-WI002-01 — FAIL / 1 BLOCKING FINDING
-**Implementation:** CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+**Implementation:** REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 **Acceptance:** NOT GRANTED / BLOCKED
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
@@ -136,12 +136,13 @@ READY → DC-002 CREATED........... recorded
 → IN_PROGRESS
 ```
 
-`EX-004` acquired the valid operational claim on 2026-09-13T11:42:30-03:00 and
-produced its technical result on 2026-09-13T11:52:07-03:00. WI-002 is now
-`IN_REVIEW`; `CR-WI002-01` returned `FAIL` with the blocking finding
-`CR-WI002-F001`; implementation is `CODE REVIEW FAILED / GOVERNED REWORK
-REQUIRED`. The next governed action is treatment/rework of that finding; no
-acceptance was exercised by EX-004.
+EX-004 remains a `SUCCEEDED` historical technical result. EX-005, attempt 2,
+used the existing authority to remediate `CR-WI002-F001` through the database
+authority boundary and is `SUCCEEDED`; its claim is released. WI-002 is
+`IN_REVIEW`; implementation is `REWORK TECHNICAL RESULT PRODUCED / AWAITING
+CODE REVIEW`. The finding is `REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT
+RE-REVIEW`; the next governed action is `CR-WI002-02`. No acceptance was
+exercised.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

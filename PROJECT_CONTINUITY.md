@@ -3,7 +3,7 @@
 **Status:** LIVING PROJECT DOCUMENT  
 **Natureza:** documento operacional de continuidade; não normativo  
 **Arquivo:** `PROJECT_CONTINUITY.md`  
-**Última atualização:** 2026-09-12  
+**Última atualização:** 2026-09-13
 **Branch ativa:** `lifecycle-reboot`  
 **Normative Baseline vigente:** `NB-0002` — RATIFIED / IN FORCE  
 **Technology Baseline:** `v0.10` — APPROVED / FROZEN  
@@ -316,7 +316,7 @@ DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
 Development Cycles...... 2 (DC-001, DC-002)
-Executions.............. 4 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 SUCCEEDED)
+Executions.............. 5 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 SUCCEEDED / HISTORICAL; EX-005 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED / EXERCISED
@@ -330,10 +330,10 @@ WI-001 readiness........ APPROVED / EXERCISED
 WI-002 readiness........ APPROVED / EXERCISED
 WI-002 authority........ GRANTED / EXERCISED
 WI-002 Development Cycle DC-002 CREATED
-WI-002 Execution........ EX-004 SUCCEEDED / CLAIM RELEASED
+WI-002 Execution........ EX-005 SUCCEEDED / CLAIM RELEASED / current rework result
 WI-002 implementation authority GRANTED
 WI-002 code review....... CR-WI002-01 FAIL / 1 BLOCKING FINDING
-WI-002 implementation... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 implementation... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 WI-002 acceptance........ NOT GRANTED / BLOCKED
 ```
 
@@ -418,11 +418,12 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-WI-002 está `IN_REVIEW` após `EX-004 SUCCEEDED`. `CR-WI002-01` retornou `FAIL`
-com `CR-WI002-F001` bloqueador: o runtime pode contornar expected-version e
-admitir salto de versão. O próximo avanço governado é tratamento/rework do
-finding; sucesso técnico não constitui aceite e nenhum acceptance audit foi
-executado.
+WI-002 está `IN_REVIEW` após `EX-005 SUCCEEDED`; EX-004 é histórico.
+`CR-WI002-01` permanece `FAIL / HISTORICAL`, e `CR-WI002-F001` está
+`REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`: a boundary runtime
+agora recusa DML bruto e exige expected-version pelos comandos controlados. A
+próxima ação governada é `CR-WI002-02`; sucesso técnico não constitui aceite e
+nenhum acceptance audit foi executado.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -764,13 +765,13 @@ WORK ITEMS.................. 11 PROPOSED / 1 IN_REVIEW (WI-002) / 1 DONE (WI-001
 WI-002 READINESS............ APPROVED / EXERCISED
 WI-002 AUTHORITY............ GRANTED / EXERCISED
 WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
-WI-002 EXECUTION............ EX-004 SUCCEEDED / CLAIM RELEASED
+WI-002 EXECUTION............ EX-005 SUCCEEDED / CLAIM RELEASED / current rework result
 WI-002 IMPLEMENTATION AUTHORITY GRANTED
 WI-002 CODE REVIEW.......... CR-WI002-01 FAIL / 1 BLOCKING FINDING
-WI-002 IMPLEMENTATION....... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 IMPLEMENTATION....... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
 WI-002 ACCEPTANCE............ NOT GRANTED / BLOCKED
 DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
-EXECUTIONS.................. 4 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 SUCCEEDED)
+EXECUTIONS.................. 5 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 historical; EX-005 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED / EXERCISED

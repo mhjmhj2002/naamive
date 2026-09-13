@@ -102,21 +102,11 @@ export async function createPrincipal(
   assertValidUsername(input.username);
   const principalId = input.principalId ?? newId();
   const historyEventId = newId();
-  return database.transaction().execute(async (transaction) => {
-    await sql`
-      INSERT INTO authority.principal (principal_id, username, status, version, current_history_event_id)
-      VALUES (${principalId}::uuid, ${input.username}, 'ACTIVE', 1, ${historyEventId}::uuid)
-    `.execute(transaction);
-    await sql`
-      INSERT INTO authority.principal_history (history_event_id, principal_id, version, username, status, event_type)
-      VALUES (${historyEventId}::uuid, ${principalId}::uuid, 1, ${input.username}, 'ACTIVE', 'PRINCIPAL_CREATED')
-    `.execute(transaction);
-    const result = await sql<PrincipalRow>`
-      SELECT principal_id, username, status, version, current_history_event_id
-      FROM authority.principal WHERE principal_id = ${principalId}::uuid
-    `.execute(transaction);
-    return snapshotFrom(requiredRow(result.rows[0]));
-  });
+  const result = await sql<PrincipalRow>`
+    SELECT principal_id, username, status, version, current_history_event_id
+    FROM authority.create_principal(${principalId}::uuid, ${input.username}, ${historyEventId}::uuid)
+  `.execute(database);
+  return snapshotFrom(requiredRow(result.rows[0]));
 }
 
 export async function changePrincipalUsername(
@@ -131,6 +121,8 @@ export async function changePrincipalStatus(
   database: Kysely<DatabaseSchema>,
   input: { principalId: string; expectedVersion: bigint; status: PrincipalStatus }
 ): Promise<PrincipalSnapshot> {
+  const current = await getPrincipal(database, input.principalId);
+  assertPrincipalStatusTransition(requiredRow(current).status, input.status);
   return mutatePrincipal(database, input.principalId, input.expectedVersion, 'STATUS_CHANGED', undefined, input.status);
 }
 
@@ -173,37 +165,26 @@ async function mutatePrincipal(
   requestedUsername: string | undefined,
   requestedStatus: PrincipalStatus | undefined
 ): Promise<PrincipalSnapshot> {
-  return database.transaction().execute(async (transaction) => {
-    const currentResult = await sql<PrincipalRow>`
-      SELECT principal_id, username, status, version, current_history_event_id
-      FROM authority.principal WHERE principal_id = ${principalId}::uuid FOR UPDATE
-    `.execute(transaction);
-    const current = requiredRow(currentResult.rows[0]);
-    if (BigInt(current.version) !== expectedVersion) throw new PrincipalVersionConflictError();
-
-    const nextUsername = requestedUsername ?? current.username;
-    const nextStatus = requestedStatus ?? current.status;
-    if (requestedStatus !== undefined) assertPrincipalStatusTransition(current.status, requestedStatus);
-    if (requestedUsername !== undefined && requestedUsername === current.username) {
-      throw new PrincipalValidationError('A username mutation must change the current username');
+  const historyEventId = newId();
+  try {
+    const result = eventType === 'USERNAME_CHANGED'
+      ? await sql<PrincipalRow>`
+          SELECT principal_id, username, status, version, current_history_event_id
+          FROM authority.change_principal_username(${principalId}::uuid, ${expectedVersion.toString()}::bigint,
+            ${requestedUsername!}, ${historyEventId}::uuid)
+        `.execute(database)
+      : await sql<PrincipalRow>`
+          SELECT principal_id, username, status, version, current_history_event_id
+          FROM authority.change_principal_status(${principalId}::uuid, ${expectedVersion.toString()}::bigint,
+            ${requestedStatus!}, ${historyEventId}::uuid)
+        `.execute(database);
+    return snapshotFrom(requiredRow(result.rows[0]));
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Principal expected version is stale')) {
+      throw new PrincipalVersionConflictError();
     }
-    const nextVersion = expectedVersion + 1n;
-    const historyEventId = newId();
-    await sql`
-      INSERT INTO authority.principal_history (history_event_id, principal_id, version, username, status, event_type)
-      VALUES (${historyEventId}::uuid, ${principalId}::uuid, ${nextVersion.toString()}::bigint,
-        ${nextUsername}, ${nextStatus}, ${eventType})
-    `.execute(transaction);
-    const update = await sql<PrincipalRow>`
-      UPDATE authority.principal
-      SET username = ${nextUsername}, status = ${nextStatus}, version = ${nextVersion.toString()}::bigint,
-        current_history_event_id = ${historyEventId}::uuid
-      WHERE principal_id = ${principalId}::uuid AND version = ${expectedVersion.toString()}::bigint
-      RETURNING principal_id, username, status, version, current_history_event_id
-    `.execute(transaction);
-    if (!update.rows[0]) throw new PrincipalVersionConflictError();
-    return snapshotFrom(update.rows[0]);
-  });
+    throw error;
+  }
 }
 
 function requiredRow<T>(row: T | undefined): T {

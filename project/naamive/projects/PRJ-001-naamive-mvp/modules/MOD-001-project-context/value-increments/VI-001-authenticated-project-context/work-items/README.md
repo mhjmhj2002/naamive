@@ -2,7 +2,7 @@
 
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
-**Status:** 11 PROPOSED / 1 IN_REVIEW / 1 DONE / WI-002 EX-004 SUCCEEDED / CLAIM RELEASED
+**Status:** 11 PROPOSED / 1 IN_REVIEW / 1 DONE / WI-002 EX-005 SUCCEEDED / CLAIM RELEASED
 
 | WI | Title | Governing scope | Depends on | State |
 |---|---|---|---|---|
@@ -24,11 +24,12 @@
 reference VI-001; VI-001 is not their owner.
 
 `WI-002` readiness was approved and exercised by
-`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-004`,
-que está `SUCCEEDED` e com claim liberado. WI-002 está `IN_REVIEW` e
-`CR-WI002-01` retornou `FAIL` com um finding bloqueador (`CR-WI002-F001`).
-Implementation é `CODE REVIEW FAILED / GOVERNED REWORK REQUIRED`; acceptance não
-foi concedido. A próxima ação governada é tratamento/rework do finding.
+`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` referencia `EX-005`,
+que está `SUCCEEDED`, com claim liberado; `EX-004` é histórico. `WI-002` está
+`IN_REVIEW`; `CR-WI002-01` permanece `FAIL / HISTORICAL` e `CR-WI002-F001` está
+`REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT RE-REVIEW`. Implementation é
+`REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW`; acceptance não foi
+concedido. A próxima ação governada é `CR-WI002-02`.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 
