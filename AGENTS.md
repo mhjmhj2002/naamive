@@ -152,55 +152,151 @@ Não invente tecnologia em silêncio.
 
 ---
 
-## 7. Um agente por task
+## 7. Um worker lógico por task
 
-Use **um novo agente por task**.
+Use **um novo worker lógico por task**.
 
-Esta regra é uma responsabilidade do **operador/orquestrador humano**. Ela
-**não autoriza o agente da task a criar, delegar ou coordenar outros agentes**.
-
-O agente é um worker, não um orquestrador.
-
-Por padrão, o agente da task deve:
+A regra central é:
 
 ```text
-receber a task
-→ executar o escopo
-→ validar proporcionalmente
-→ reportar o resultado
-→ encerrar
+1 task
+→ 1 worker lógico responsável
+→ 1 resultado
+→ STOP
 ```
 
-Sem instrução explícita na própria task, o agente **não deve**:
+Esta regra não depende da topologia técnica do harness.
 
-- criar subagente;
-- delegar parte da task a outro worker;
-- criar reviewer, auditor ou verifier independente;
-- solicitar a outro agente que tente falsificar suas conclusões;
-- executar revisão independente recursiva;
-- criar nova task para si mesmo ou para outro agente;
-- transformar validação local em uma nova auditoria;
-- continuar trabalhando depois que os critérios de conclusão forem satisfeitos.
+Alguns ambientes executam o modelo principal como um **supervisor wrapper** sem
+acesso direto a shell, filesystem, Git, banco de dados ou outras ferramentas.
+Nesses ambientes, o supervisor pode precisar despachar a task para um worker com
+ferramentas.
 
-Quando revisão ou auditoria independente for desejada, ela deve ser uma
-**task separada**, iniciada pelo operador/orquestrador depois que o worker
-anterior terminar.
+Essa delegação técnica é permitida quando necessária para executar a task e,
+por si só, **não cria um segundo worker lógico**.
 
-Exceção: subagentes só podem ser usados quando a task recebida disser
-explicitamente que delegação é necessária ou autorizada e definir seu escopo.
+A topologia padrão permitida é:
 
-Mesmo quando autorizados:
+```text
+operador / harness
+        ↓
+supervisor wrapper
+        ↓
+1 worker lógico
+        ↓
+resultado
+        ↓
+STOP
+```
 
-- subagentes não podem criar outros subagentes;
-- a delegação deve permanecer limitada ao escopo original;
-- o agente principal não deve iniciar ciclos recursivos de verificação.
+Por padrão:
+
+- o supervisor pode despachar a **task integral** para exatamente um worker;
+- o worker despachado é o único worker lógico da task;
+- o supervisor não executa trabalho substantivo da task;
+- o supervisor não decompõe a task entre vários workers;
+- o supervisor não cria verifier, reviewer, auditor ou worker adicional;
+- o worker lógico não delega nem cria subagentes;
+- não há delegação recursiva;
+- não há paralelismo entre workers;
+- review ou auditoria independente continua sendo uma **task separada**;
+- falha ou bloqueio do worker não autoriza automaticamente um segundo worker.
+
+O supervisor wrapper pode:
+
+- transmitir a task integralmente ao worker;
+- preservar contexto, escopo, authority, baseline e restrições;
+- acompanhar o estado operacional;
+- receber o resultado;
+- retransmitir o resultado ao operador;
+- propagar `STOP`, `ABORT` ou `CANCEL`.
+
+O supervisor wrapper não deve:
+
+- dividir a task entre vários workers;
+- complementar silenciosamente o trabalho técnico do worker;
+- criar uma segunda opinião automática;
+- iniciar falsification pass, review recursivo ou auditoria independente;
+- substituir um worker bloqueado por outro sem autorização;
+- atribuir a si próprio trabalho executado pelo worker.
+
+### 7.1 Identidade, autoria e rastreabilidade no harness
+
+Quando houver supervisor wrapper, diferencie:
+
+```text
+logical_worker_principal
+supervisor_wrapper
+runtime_worker_identity
+```
+
+O papel governado pertence ao **worker lógico**.
+
+O supervisor wrapper não deve ser registrado como implementador, reviewer ou
+auditor apenas porque recebeu a task primeiro.
+
+Quando o harness expuser uma identidade real do worker, registre-a.
+
+Quando não houver identidade estável do runtime worker, registre o identificador
+disponível de modelo/sessão/runtime e preserve o principal lógico atribuído pela
+task.
+
+Não fabrique identidade.
+
+Para review/auditoria independente, a independência deve existir entre os
+**workers lógicos** das tasks relevantes.
+
+Exemplo:
+
+```text
+Task de implementação
+→ worker lógico A
+
+Task de review independente
+→ worker lógico B
+```
+
+O mesmo tipo de supervisor wrapper pode envolver as duas tasks sem, por si só,
+invalidar independência, desde que os workers lógicos sejam distintos e não haja
+review recursivo dentro da mesma task.
+
+### 7.2 Quando múltiplos workers são permitidos
+
+Múltiplos workers, subagentes ou paralelismo **não são proibidos em absoluto**.
+
+Eles só podem ser usados quando a própria task ou uma política superior autorizar
+explicitamente a topologia e definir, no mínimo:
+
+- quantidade ou limite de workers;
+- papéis;
+- escopo de cada worker;
+- profundidade máxima de delegação;
+- se paralelismo é permitido;
+- quem consolida o resultado;
+- como autoria/evidence serão atribuídas.
+
+Sem essa autorização explícita, vale a topologia padrão:
+
+```text
+supervisor wrapper opcional
+→ exatamente 1 worker lógico
+→ sem filhos
+```
+
+Mesmo quando múltiplos workers forem autorizados:
+
+- nenhum worker cria nova camada recursiva sem autorização;
+- a delegação permanece limitada ao escopo original;
+- cada contribuição material deve ser rastreável;
+- o consolidator não deve apagar a autoria/evidence dos demais;
+- review independente não deve surgir espontaneamente dentro da implementação.
 
 Não reutilize indefinidamente o mesmo contexto para tasks independentes.
 
 Isso reduz contaminação de contexto, facilita auditoria e deixa causa e
 responsabilidade da mudança mais claras.
 
-### 7.1 Execução enxuta
+### 7.3 Execução enxuta
 
 Prefira o caminho mais curto que prove a conclusão da task.
 
@@ -221,12 +317,13 @@ bloqueio real, pare a expansão automática e reporte objetivamente o motivo.
 Comandos de terminal devem ser não interativos sempre que possível. Todo
 comando que possa bloquear, aguardar lock, depender de serviço externo, iniciar
 servidor, executar concorrência ou permanecer em background deve obedecer às
-regras de timeout e cleanup da seção 7.2.
+regras de timeout e cleanup da seção 7.4.
 
-### 7.2 Segurança de comandos, probes e processos
+### 7.4 Segurança de comandos, probes e processos
 
 Estas regras valem para **qualquer IA, agente, reviewer, auditor, executor,
-subagente autorizado ou automação** trabalhando neste repositório.
+worker lógico, supervisor wrapper, subagente autorizado ou automação**
+trabalhando neste repositório.
 
 O objetivo é impedir que uma execução fique presa indefinidamente consumindo
 tempo, contexto ou recursos apenas porque um processo externo, lock, servidor ou
@@ -240,7 +337,7 @@ no unbounded database probes
 no orphan background processes
 ```
 
-#### 7.2.1 Timeout é obrigatório quando houver possibilidade de espera
+#### 7.4.1 Timeout é obrigatório quando houver possibilidade de espera
 
 Qualquer comando com possibilidade razoável de bloquear ou demorar sem progresso
 deve possuir um limite finito explícito.
@@ -274,7 +371,7 @@ o importante é que o limite seja finito e coerente com a operação.
 Suites conhecidamente longas, como build ou integração completa, podem usar
 limites maiores, mas ainda devem ter uma estratégia de término finita.
 
-#### 7.2.2 Banco de dados exige proteção em mais de uma camada
+#### 7.4.2 Banco de dados exige proteção em mais de uma camada
 
 Probes de PostgreSQL que possam disputar lock ou executar SQL potencialmente
 bloqueante devem usar, quando aplicável:
@@ -289,7 +386,9 @@ Além disso, prefira manter um timeout externo no shell/processo.
 Exemplo conceitual:
 
 ```bash
-timeout 30s docker exec   -e PGOPTIONS="-c statement_timeout=5000 -c lock_timeout=2000"   <container> psql ...
+timeout 30s docker exec \
+  -e PGOPTIONS="-c statement_timeout=5000 -c lock_timeout=2000" \
+  <container> psql ...
 ```
 
 Não confie apenas em `lock_timeout` de uma das sessões concorrentes.
@@ -297,7 +396,7 @@ Não confie apenas em `lock_timeout` de uma das sessões concorrentes.
 Se duas ou mais sessões participarem do mesmo probe, todas as sessões capazes de
 bloquear devem possuir limites coerentes.
 
-#### 7.2.3 `wait` nunca pode ser ilimitado
+#### 7.4.3 `wait` nunca pode ser ilimitado
 
 Um probe de concorrência não pode depender de:
 
@@ -318,7 +417,7 @@ Processos em background devem ter:
 Use `trap`, cleanup equivalente ou mecanismo da ferramenta sempre que houver
 risco de processo órfão.
 
-#### 7.2.4 Servidores temporários devem ter lifecycle explícito
+#### 7.4.4 Servidores temporários devem ter lifecycle explícito
 
 Servidor temporário iniciado para teste não deve continuar vivo depois da task.
 
@@ -341,7 +440,7 @@ Se uma porta esperada estiver ocupada por serviço externo à task:
 
 Não altere processo alheio silenciosamente.
 
-#### 7.2.5 Preferir estado descartável para probes
+#### 7.4.5 Preferir estado descartável para probes
 
 Security review, migration review, concorrência e probes destrutivos devem
 preferir:
@@ -356,7 +455,7 @@ Não reutilize estado sujo como evidência final sem justificativa explícita.
 Se um probe intermediário puder deixar lock, sessão, dado ou processo residual,
 faça cleanup antes do próximo probe ou recrie o ambiente descartável.
 
-#### 7.2.6 Timeout é resultado, não convite para esperar mais
+#### 7.4.6 Timeout é resultado, não convite para esperar mais
 
 Quando um comando exceder o timeout:
 
@@ -383,22 +482,25 @@ vamos esperar mais um pouco
 
 sem nova evidência.
 
-#### 7.2.7 Abort da task exige interrupção real
+#### 7.4.7 Abort da task exige interrupção real
 
 Quando o operador solicitar `STOP`, `ABORT`, `CANCEL` ou equivalente:
 
 - interrompa a execução corrente assim que tecnicamente possível;
 - não inicie novo probe;
-- não crie novo subagente;
+- não crie novo worker além do worker lógico já atribuído;
 - não tente "terminar só mais uma verificação";
 - não substitua o comando travado por outro comando automaticamente;
 - não faça rework adicional;
 - preserve o estado já produzido;
 - reporte objetivamente o ponto de interrupção.
 
+O supervisor wrapper deve propagar o abort ao worker lógico e não despachar um
+worker substituto.
+
 Uma instrução de abort não é uma nova fase da investigação.
 
-#### 7.2.8 Evidence de review/audit deve registrar incidentes de execução
+#### 7.4.8 Evidence de review/audit deve registrar incidentes de execução
 
 Quando um timeout, lock, abort, processo órfão ou limitação de ambiente afetar a
 prova, o relatório deve registrar isso.
@@ -416,7 +518,7 @@ resultado aplicável
 
 e explique por que o retry substitui ou não a primeira tentativa como evidence.
 
-#### 7.2.9 Limite de expansão investigativa
+#### 7.4.9 Limite de expansão investigativa
 
 Reviews e audits podem criar probes temporários proporcionais ao risco, mas não
 devem proliferar indefinidamente variações do mesmo experimento.
@@ -439,7 +541,7 @@ Se surgirem múltiplas variações sucessivas (`probe2`, `probe3`, `probe-final`
 
 A investigação deve convergir.
 
-#### 7.2.10 Relação com Harness futuro
+#### 7.4.10 Relação com Harness futuro
 
 Enquanto o Harness ainda não impõe esses limites tecnicamente, o agente deve
 obedecê-los por instrução operacional.
@@ -670,11 +772,16 @@ Quando a **task recebida** for de auditoria:
 - mantenha independência proporcional à materialidade.
 
 "Independência" aqui significa separação adequada entre implementação e a task
-de auditoria. **Não significa que um agente deve criar outro agente para
-auditá-lo.**
+de auditoria. Ela deve existir entre os **workers lógicos** responsáveis pelas
+tasks relevantes.
 
-Se a auditoria independente exigir um worker diferente, o operador/orquestrador
-deve iniciar essa task separadamente.
+Um supervisor wrapper exigido pelo harness pode despachar a task de auditoria
+para exatamente um worker lógico, conforme a seção 7, sem se tornar ele próprio
+o auditor.
+
+O worker de implementação não deve criar sua própria auditoria independente.
+Quando a auditoria exigir outro worker lógico, o operador/orquestrador deve
+iniciar essa task separadamente.
 
 Auditoria positiva não equivale a ratificação humana.
 
@@ -797,7 +904,9 @@ Antes de declarar concluído, faça **uma validação proporcional ao escopo**:
 8. não publique nem faça commit sem autorização;
 9. **encerre a task**.
 
-Não crie subagente para verificar a conclusão.
+O worker lógico não deve criar outro worker para verificar sua própria conclusão.
+Um supervisor wrapper também não deve despachar um segundo worker/verifier para
+essa finalidade sem autorização explícita da task.
 
 Não faça segunda auditoria, falsification pass, review recursivo ou nova rodada
 de investigação por padrão depois que os checks aplicáveis passarem.
