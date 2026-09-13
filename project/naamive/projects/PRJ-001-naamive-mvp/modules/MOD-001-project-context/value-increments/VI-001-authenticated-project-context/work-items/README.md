@@ -24,9 +24,10 @@
 reference VI-001; VI-001 is not their owner.
 
 `WI-002` readiness was approved and exercised by
-`governance/HUMAN_APPROVAL_WI002_READINESS.md`. This does not create its
-Development Cycle or Execution, and implementation remains unauthorized. Its
-next governed action is to create the applicable Development Cycle.
+`governance/HUMAN_APPROVAL_WI002_READINESS.md`. `DC-002` was created without
+creating an Execution; implementation remains unauthorized. Its next governed
+action is to evaluate, authorize and create a valid Execution for `WI-002 /
+DC-002`.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

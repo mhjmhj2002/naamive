@@ -11,7 +11,7 @@ VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
 Work Items................. 11 PROPOSED / 1 READY / 1 DONE
-Development Cycles......... 1
+Development Cycles......... 2 (DC-001, DC-002)
 Executions................. 3
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
@@ -25,10 +25,10 @@ WI-002 readiness preparation R2... PREPARED / POSITIVE
 WI-002 audit................ AUD-WI002-READINESS-01 PASS
 WI-002 readiness authority.. GRANTED / EXERCISED
 WI-002 human decision....... governance/HUMAN_APPROVAL_WI002_READINESS.md
-WI-002 Development Cycle.... NOT CREATED
+WI-002 Development Cycle.... DC-002
 WI-002 Execution............ NONE
 WI-002 implementation....... NOT AUTHORIZED
-WI-002 next action.......... create the applicable governed Development Cycle
+WI-002 next action.......... evaluate / authorize / create a valid Execution for WI-002 / DC-002
 ```
 
 ## Fechamento da Planning Round 1

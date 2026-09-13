@@ -315,7 +315,7 @@ VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 11 PROPOSED / 1 READY / 1 DONE
-Development Cycles...... 1 (DC-001)
+Development Cycles...... 2 (DC-001, DC-002)
 Executions.............. 3 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
@@ -329,7 +329,7 @@ Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 WI-002 readiness........ APPROVED / EXERCISED
 WI-002 authority........ GRANTED / EXERCISED
-WI-002 Development Cycle NOT CREATED
+WI-002 Development Cycle DC-002 CREATED
 WI-002 Execution........ NONE
 WI-002 implementation... NOT AUTHORIZED
 ```
@@ -346,7 +346,8 @@ project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
 
 A materialização T1–T6 foi registrada no Activity Log como `A-029`; a decisão
 humana de readiness de WI-001 foi registrada como `A-030`; a decisão humana de
-readiness de WI-002 foi registrada como `A-046`.
+readiness de WI-002 foi registrada como `A-046`; a criação de `DC-002` foi
+registrada como `A-047`.
 
 ---
 
@@ -414,9 +415,9 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-WI-002 está `READY` por decisão humana explícita. Seu próximo avanço governado
-é criar o Development Cycle aplicável; não criar Execution nem iniciar
-implementação diretamente.
+WI-002 está `READY` por decisão humana explícita e `DC-002` foi criado. Seu
+próximo avanço governado é avaliar, autorizar e criar uma Execution válida; não
+iniciar implementação diretamente.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -666,7 +667,7 @@ Roadmap v2 = CURRENT
 11 Work Items = PROPOSED
 1 Work Item = READY (WI-002)
 1 DONE (WI-001)
-1 Development Cycle (DC-001)
+2 Development Cycles (DC-001, DC-002)
 3 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 Implementation authority = GRANTED / EXERCISED
 Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
@@ -685,7 +686,7 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado para WI-002:
-Criar o Development Cycle aplicável. Não criar Execution nem iniciar
+Avaliar, autorizar e criar uma Execution válida para DC-002. Não iniciar
 implementação diretamente.
 
 Não reexecute EX-001 terminal.
@@ -757,10 +758,10 @@ ROADMAP v2.................. CURRENT
 WORK ITEMS.................. 11 PROPOSED / 1 READY (WI-002) / 1 DONE (WI-001)
 WI-002 READINESS............ APPROVED / EXERCISED
 WI-002 AUTHORITY............ GRANTED / EXERCISED
-WI-002 DEVELOPMENT CYCLE.... NOT CREATED
+WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
 WI-002 EXECUTION............ NONE
 WI-002 IMPLEMENTATION....... NOT AUTHORIZED
-DEVELOPMENT CYCLES.......... 1 (DC-001)
+DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
 EXECUTIONS.................. 3 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
@@ -772,5 +773,5 @@ ACCEPTANCE.................. GRANTED / EXERCISED
 IMPLEMENTATION.............. WI-001 ACCEPTED / DONE
 
 DECISION INPUT COMMIT....... 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
-NEXT GOVERNED ACTION........ WI-002: criar o Development Cycle aplicável
+NEXT GOVERNED ACTION........ WI-002/DC-002: avaliar, autorizar e criar Execution válida
 ```

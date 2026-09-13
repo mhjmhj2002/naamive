@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | READY | criar o Development Cycle governado aplicável |
+| WI-002 | READY | avaliar / autorizar / criar Execution válida para DC-002 |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -39,7 +39,7 @@ READY................ 1
 IN_PROGRESS.......... 0
 IN_REVIEW............ 0
 DONE................. 1
-Development Cycles... 1
+Development Cycles... 2 (DC-001, DC-002)
 Executions............ 3
 ```
 
@@ -50,9 +50,10 @@ BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
 `PREPARED / POSITIVE`; `AUD-WI002-READINESS-01` registrou `PASS`, com `0`
 findings bloqueadores e `0` não bloqueadores. A decisão humana em
 `governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`;
-readiness authority está `GRANTED / EXERCISED`. Não existe Development Cycle ou
-Execution de WI-002 e sua implementação não está autorizada. A próxima ação é
-criar o Development Cycle governado aplicável.
+readiness authority está `GRANTED / EXERCISED`. `DC-002` foi criado para WI-002;
+não existe Execution de WI-002 e sua implementação não está autorizada. A
+próxima ação é avaliar, autorizar e criar uma Execution válida para `WI-002 /
+DC-002`.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.
