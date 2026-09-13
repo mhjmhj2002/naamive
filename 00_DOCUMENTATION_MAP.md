@@ -93,6 +93,15 @@ governance/
 
 Define quem pode decidir e quais controles se aplicam.
 
+Propostas de alteração futura podem ser consultadas em:
+
+```text
+governance/PEC_REGISTER.md
+```
+
+`PEC_REGISTER.md` contém propostas não normativas e não é parte da Governance
+normativa vigente.
+
 ---
 
 # 6. Contracts

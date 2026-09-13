@@ -244,6 +244,15 @@ Nova revisão documental não migra automaticamente instâncias existentes.
 
 Migração normativa exige decisão explícita source → target.
 
+### 4.1. Propostas de evolução normativa
+
+Quando o self-hosting revelar uma melhoria normativa desejável que não precise
+bloquear o trabalho atual, não altere silenciosamente a lei vigente.
+
+Registre ou proponha registro em `governance/PEC_REGISTER.md`.
+
+PEC não altera a Normative Baseline nem autoriza comportamento novo.
+
 ---
 
 ## 5. Antes da primeira ratificação
