@@ -10,31 +10,32 @@ Module..................... MOD-001 PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
+Work Items................. 11 PROPOSED / 2 DONE
 Development Cycles......... 2 (DC-001, DC-002)
 Executions................. 6
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED / EXERCISED
-Implementation............. WI-001 ACCEPTED / DONE
+Implementation............. WI-002 ACCEPTED / DONE
 DEC-008...................... CURRENT / GOVERNED
 FND-WI002-RCP-001........... RESOLVED BY DEC-008
 WI-002 readiness preparation R1... HISTORICAL / BLOCKED
-WI-002...................... IN_REVIEW
+WI-002...................... DONE
 WI-002 readiness preparation R2... PREPARED / POSITIVE
 WI-002 audit................ AUD-WI002-READINESS-01 PASS
 WI-002 readiness authority.. GRANTED / EXERCISED
 WI-002 human decision....... governance/HUMAN_APPROVAL_WI002_READINESS.md
-WI-002 Development Cycle.... DC-002
-WI-002 Execution............ EX-006 — SUCCEEDED / current rework result; EX-005 historical
+WI-002 Development Cycle.... DC-002 COMPLETED
+WI-002 Execution............ EX-006 — SUCCEEDED / final technical result; EX-004 and EX-005 historical
 WI-002 claim................ RELEASED / COMPLETED
 WI-002 implementation authority GRANTED
 WI-002 code review.......... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / HISTORICAL; CR-WI002-03 PASS_WITH_FINDINGS / 1 NON_BLOCKING FINDING
 WI-002 acceptance audit..... AUD-WI002-ACCEPTANCE-01 PASS_WITH_FINDINGS / 0 BLOCKING FINDINGS / 1 NON_BLOCKING FINDING
-WI-002 implementation....... ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
-WI-002 acceptance............ NOT GRANTED / AWAITING HUMAN ACCEPTANCE
-WI-002 finding.............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 OPEN / NON_BLOCKING
-WI-002 next action.......... HUMAN ACCEPTANCE carrying CR-WI002-02-F002
+WI-002 implementation....... ACCEPTED / DONE
+WI-002 acceptance............ ACCEPTED
+WI-002 human acceptance..... governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md
+WI-002 finding.............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 RESOLVED BY CLOSURE TREATMENT
+WI-002 next action.......... next ordered Work Item planning/authorization according to Roadmap
 ```
 
 ## Fechamento da Planning Round 1

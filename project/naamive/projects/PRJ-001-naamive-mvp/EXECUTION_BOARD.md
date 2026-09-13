@@ -5,7 +5,7 @@
 **normative_baseline_ref:** NB-0002
 **Project:** PLANNING
 **Implementation authority:** GRANTED / EXERCISED
-**Implementation:** WI-001 ACCEPTED / DONE
+**Implementation:** WI-002 ACCEPTED / DONE
 
 ## Fato atual projetado
 
@@ -30,15 +30,15 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | IN_REVIEW | AUD-WI002-ACCEPTANCE-01 PASS_WITH_FINDINGS; HUMAN ACCEPTANCE carrying CR-WI002-02-F002; acceptance not granted |
-| WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
+| WI-002 | DONE | accepted by Project Owner; DC-002 completed |
+| WI-003..WI-013 | PROPOSED | next ordered Work Item eligible for its governed planning/authorization flow |
 
 ```text
 PROPOSED............. 11
 READY................ 0
 IN_PROGRESS.......... 0
-IN_REVIEW............ 1
-DONE................. 1
+IN_REVIEW............ 0
+DONE................. 2
 Development Cycles... 2 (DC-001, DC-002)
 Executions............ 6
 ```
@@ -56,12 +56,12 @@ EX-006 é o resultado técnico corrente, com claim liberado. A remediação remo
 o bypass de DML runtime por comandos controlados com expected-version no banco.
 `CR-WI002-01` permanece `FAIL / HISTORICAL`; `CR-WI002-F001` está `RESOLVED`.
 `CR-WI002-02` permanece `FAIL / HISTORICAL`. `CR-WI002-03` retornou
-`PASS_WITH_FINDINGS`: `CR-WI002-02-F001` está `RESOLVED`, enquanto
-`CR-WI002-02-F002` permanece `OPEN / NON_BLOCKING` por narrativa de projeção
-desatualizada. `AUD-WI002-ACCEPTANCE-01` retornou `PASS_WITH_FINDINGS`, sem
-finding bloqueador novo e carregando esse finding. WI-002 permanece `IN_REVIEW`,
-acceptance não foi concedido, e a próxima decisão é HUMAN ACCEPTANCE carregando
-o finding não bloqueador; audit positiva não é aceite implícito.
+`PASS_WITH_FINDINGS`: `CR-WI002-02-F001` está `RESOLVED`. O finding
+`CR-WI002-02-F002` foi `RESOLVED BY CLOSURE TREATMENT`, após a reconciliação da
+narrativa viva de WI-002 para `EX-006` final e EX-004/EX-005 históricos.
+`AUD-WI002-ACCEPTANCE-01` permanece `PASS_WITH_FINDINGS` historicamente, sem
+finding bloqueador. O Project Owner aceitou WI-002; audit positiva não foi
+tratada como aceite implícito.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.
@@ -77,7 +77,7 @@ review ou de audit equivale sozinho a aceite.
 EX-001............... SUCCEEDED
 EX-002............... SUCCEEDED / HISTORICAL
 EX-003............... SUCCEEDED
-EX-004............... SUCCEEDED / CLAIM RELEASED
+EX-004............... SUCCEEDED / CLAIM RELEASED / HISTORICAL
 EX-005............... SUCCEEDED / CLAIM RELEASED / HISTORICAL REWORK RESULT
-EX-006............... SUCCEEDED / CLAIM RELEASED / CURRENT REWORK RESULT
+EX-006............... SUCCEEDED / CLAIM RELEASED / FINAL TECHNICAL RESULT
 ```

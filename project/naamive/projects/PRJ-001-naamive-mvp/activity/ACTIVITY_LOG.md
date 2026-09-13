@@ -824,3 +824,27 @@ A-058
  next_decision: HUMAN ACCEPTANCE carrying CR-WI002-02-F002
  audit_ref: audits/AUD-WI002-ACCEPTANCE-01_INDEPENDENT_ACCEPTANCE_AUDIT.md
  recorded_at: 2026-09-13T16:30:11-03:00
+
+A-059
+ type: ACCEPTANCE_DECISION
+ decision: APPROVED
+ authority_role: Project Owner
+ subject: WI-002
+ cycle: DC-002
+ current_execution: EX-006
+ audit: AUD-WI002-ACCEPTANCE-01
+ audit_result: PASS_WITH_FINDINGS
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ governing_decision: DEC-008
+ finding_dispositions:
+   CR-WI002-F001: RESOLVED / historical
+   CR-WI002-02-F001: RESOLVED / historical
+   CR-WI002-02-F002: RESOLVED BY CLOSURE TREATMENT — WI-002 living Relation to plan and Process gate reconciled to EX-006 final; EX-004 and EX-005 historical; stale EX-004 ELIGIBLE projection removed
+ work_item_state: DONE
+ development_cycle_state: COMPLETED
+ execution_state: SUCCEEDED
+ acceptance: ACCEPTED
+ decision_ref: governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md
+ next: planning/authorization of the next ordered Work Item according to the current Roadmap
+ recorded_at: 2026-09-13T17:05:50-03:00

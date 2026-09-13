@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED / EXERCISED`
-**Implementation:** `WI-002 ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE`
+**Implementation:** `WI-002 ACCEPTED / DONE; WI-003 NOT STARTED`
 
 ---
 
@@ -305,7 +305,7 @@ para fingir que a decisão ocorreu dentro da rodada fechada.
 
 ## 10. Estado corrente do PRJ-001
 
-Estado corrente após `EX-006` e `CR-WI002-03`:
+Estado corrente após o aceite humano de WI-002:
 
 ```text
 Need NEED-001........... ACCEPTED
@@ -314,7 +314,7 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
+Work Items.............. 11 PROPOSED / 2 DONE
 Development Cycles...... 2 (DC-001, DC-002)
 Executions.............. 6 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 SUCCEEDED / HISTORICAL; EX-005 SUCCEEDED / HISTORICAL; EX-006 SUCCEEDED)
 Validation.............. NOT EXECUTED
@@ -329,15 +329,16 @@ Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 WI-002 readiness........ APPROVED / EXERCISED
 WI-002 authority........ GRANTED / EXERCISED
-WI-002 Development Cycle DC-002 CREATED
-WI-002 Execution........ EX-006 SUCCEEDED / CLAIM RELEASED / current rework result; EX-005 historical
+WI-002 Development Cycle DC-002 COMPLETED
+WI-002 Execution........ EX-006 SUCCEEDED / CLAIM RELEASED / final technical result; EX-004 and EX-005 historical
 WI-002 implementation authority GRANTED
 WI-002 code review....... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / HISTORICAL; CR-WI002-03 PASS_WITH_FINDINGS
 WI-002 acceptance audit.. AUD-WI002-ACCEPTANCE-01 PASS_WITH_FINDINGS / 0 BLOCKING FINDINGS / 1 NON_BLOCKING FINDING
-WI-002 findings.......... CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 OPEN / NON_BLOCKING
-WI-002 implementation... ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
-WI-002 acceptance........ NOT GRANTED / AWAITING HUMAN ACCEPTANCE
-WI-002 next decision..... HUMAN ACCEPTANCE carrying CR-WI002-02-F002
+WI-002 findings.......... CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 RESOLVED BY CLOSURE TREATMENT
+WI-002 implementation... ACCEPTED / DONE
+WI-002 acceptance........ ACCEPTED
+WI-002 acceptance ref.... governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md
+WI-002 next action....... next ordered Work Item planning/authorization according to Roadmap
 ```
 
 Arquivos operacionais principais:
@@ -421,15 +422,15 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-WI-002 está `IN_REVIEW` após `EX-006 SUCCEEDED`; EX-005 e EX-004 são
-históricos. `CR-WI002-01` e `CR-WI002-02` permanecem `FAIL / HISTORICAL`.
-`CR-WI002-F001` e `CR-WI002-02-F001` estão `RESOLVED`; `CR-WI002-02-F002`
-permanece `OPEN / NON_BLOCKING` por narrativa de projeção desatualizada.
-`CR-WI002-03` retornou `PASS_WITH_FINDINGS` e
-`AUD-WI002-ACCEPTANCE-01` retornou `PASS_WITH_FINDINGS`, sem blocker novo e
-carregando esse finding. A implementação está `ACCEPTANCE AUDIT PASSED WITH
-NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE`; acceptance não foi concedido.
-A próxima decisão governada é HUMAN ACCEPTANCE carregando `CR-WI002-02-F002`.
+WI-002 está `DONE` por aceite humano explícito após `EX-006 SUCCEEDED` como
+resultado técnico final; EX-005 e EX-004 são históricos. `CR-WI002-01` e
+`CR-WI002-02` permanecem `FAIL / HISTORICAL`; `CR-WI002-03` e
+`AUD-WI002-ACCEPTANCE-01` permanecem `PASS_WITH_FINDINGS` historicamente.
+`CR-WI002-F001` e `CR-WI002-02-F001` estão `RESOLVED`;
+`CR-WI002-02-F002` está `RESOLVED BY CLOSURE TREATMENT`, pois toda a narrativa
+viva de WI-002 foi reconciliada para EX-006 final e EX-004/EX-005 históricos.
+WI-003 não foi iniciado. A próxima ação governada é o fluxo de
+planejamento/autorização do próximo Work Item ordenado no Roadmap.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -677,8 +678,7 @@ VI-001 = PLANNED
 DT-001 v1 = CURRENT
 Roadmap v2 = CURRENT
 11 Work Items = PROPOSED
-1 Work Item = IN_REVIEW (WI-002)
-1 DONE (WI-001)
+2 Work Items = DONE (WI-001, WI-002)
 2 Development Cycles (DC-001, DC-002)
 6 Executions (EX-001 e EX-002 históricas; EX-003 SUCCEEDED; EX-004 e EX-005 históricos; EX-006 SUCCEEDED)
 Implementation authority = GRANTED / EXERCISED
@@ -686,14 +686,14 @@ Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-W
 Acceptance Audit = AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 Human Acceptance = APPROVED / EXERCISED
 Acceptance = GRANTED / EXERCISED
-WI-002 Execution = EX-006 SUCCEEDED / current rework result
+WI-002 Execution = EX-006 SUCCEEDED / final technical result; EX-004 and EX-005 historical
 CR-WI002-02 = FAIL / HISTORICAL
 CR-WI002-03 = PASS_WITH_FINDINGS
 CR-WI002-02-F001 = RESOLVED
-CR-WI002-02-F002 = OPEN / NON_BLOCKING
+CR-WI002-02-F002 = RESOLVED BY CLOSURE TREATMENT
 AUD-WI002-ACCEPTANCE-01 = PASS_WITH_FINDINGS
-Implementation = ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
-WI-002 acceptance = NOT GRANTED
+Implementation = WI-002 ACCEPTED / DONE
+WI-002 acceptance = ACCEPTED
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -785,17 +785,17 @@ VI-001...................... PLANNED
 DT-001 v1................... CURRENT
 ROADMAP v2.................. CURRENT
 
-WORK ITEMS.................. 11 PROPOSED / 1 IN_REVIEW (WI-002) / 1 DONE (WI-001)
+WORK ITEMS.................. 11 PROPOSED / 2 DONE (WI-001, WI-002)
 WI-002 READINESS............ APPROVED / EXERCISED
 WI-002 AUTHORITY............ GRANTED / EXERCISED
-WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
-WI-002 EXECUTION............ EX-006 SUCCEEDED / CLAIM RELEASED / current rework result; EX-005 historical
+WI-002 DEVELOPMENT CYCLE.... DC-002 COMPLETED
+WI-002 EXECUTION............ EX-006 SUCCEEDED / CLAIM RELEASED / final technical result; EX-004 and EX-005 historical
 WI-002 IMPLEMENTATION AUTHORITY GRANTED
 WI-002 CODE REVIEW.......... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / HISTORICAL; CR-WI002-03 PASS_WITH_FINDINGS
 WI-002 ACCEPTANCE AUDIT..... AUD-WI002-ACCEPTANCE-01 PASS_WITH_FINDINGS / 0 BLOCKING FINDINGS / 1 NON_BLOCKING FINDING
-WI-002 FINDINGS............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 OPEN / NON_BLOCKING
-WI-002 IMPLEMENTATION....... ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
-WI-002 ACCEPTANCE............ NOT GRANTED / AWAITING HUMAN ACCEPTANCE
+WI-002 FINDINGS............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 RESOLVED BY CLOSURE TREATMENT
+WI-002 IMPLEMENTATION....... ACCEPTED / DONE
+WI-002 ACCEPTANCE............ ACCEPTED
 DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
 EXECUTIONS.................. 6 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 historical; EX-005 historical; EX-006 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
@@ -805,8 +805,8 @@ CODE REVIEW................. CR-WI001-03 PASS_WITH_FINDINGS
 ACCEPTANCE AUDIT............ AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 HUMAN ACCEPTANCE............ APPROVED / EXERCISED
 ACCEPTANCE.................. GRANTED / EXERCISED
-IMPLEMENTATION.............. WI-002 ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
+IMPLEMENTATION.............. WI-002 ACCEPTED / DONE; WI-003 NOT STARTED
 
 DECISION INPUT COMMIT (T1–T6) cf4f2c032d61835329db820d9490250927b6bfeb
-NEXT GOVERNED DECISION...... WI-002: HUMAN ACCEPTANCE carrying CR-WI002-02-F002
+NEXT GOVERNED ACTION........ next ordered Work Item planning/authorization according to Roadmap
 ```

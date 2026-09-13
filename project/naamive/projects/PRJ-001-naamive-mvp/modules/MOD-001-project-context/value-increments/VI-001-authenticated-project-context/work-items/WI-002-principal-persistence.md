@@ -1,6 +1,6 @@
 # WI-002 — Principal Persistence
 
-**State:** IN_REVIEW
+**State:** DONE
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** MOD-001 — Project Context  
@@ -11,13 +11,14 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** WI-001  
 **Development Cycle:** DC-002 — `../../../../../development-cycles/DC-002-WI002.md`<br>
-**Execution:** EX-006 — SUCCEEDED / current rework result; EX-005 historical
+**Execution:** EX-006 — SUCCEEDED / final technical result; EX-004 and EX-005 historical
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
 **Code review:** CR-WI002-01 — FAIL / HISTORICAL; CR-WI002-02 — FAIL / HISTORICAL; CR-WI002-03 — PASS_WITH_FINDINGS / 1 NON_BLOCKING FINDING
 **Acceptance audit:** AUD-WI002-ACCEPTANCE-01 — PASS_WITH_FINDINGS / 0 BLOCKING FINDINGS / 1 NON-BLOCKING FINDING
-**Implementation:** ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
-**Acceptance:** NOT GRANTED / AWAITING HUMAN ACCEPTANCE
+**Implementation:** ACCEPTED / DONE
+**Acceptance:** ACCEPTED
+**Human acceptance:** governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
 **Readiness audit:** AUD-WI002-READINESS-01 — PASS / 0 blocking findings / 0 nonblocking findings
@@ -31,10 +32,10 @@ material product/architecture decision.
 
 ## Relation to plan
 
-Canonical entry in DevelopmentRoadmap v2. Its readiness gate is approved and
-exercised, and `DC-002` delimita sua Execution autorizada; `EX-005` é o
-resultado técnico de rework corrente, com claim liberado; `EX-004` permanece
-`SUCCEEDED / HISTORICAL`.
+Canonical entry in DevelopmentRoadmap v2. Its readiness gate was approved and
+exercised, and `DC-002` delimitou sua cadeia de Execution autorizada.
+`EX-006` é o resultado técnico final `SUCCEEDED`; `EX-004` e `EX-005`
+permanecem `SUCCEEDED / HISTORICAL`.
 
 ## Outcome
 
@@ -131,23 +132,21 @@ normative owner type.
 
 ```text
 PROPOSED → READY................ APPROVED / EXERCISED
-READY → DC-002 CREATED........... recorded
-→ EX-004 ELIGIBLE
-→ valid operational claim acquired
-→ EX-004 RUNNING
-→ IN_PROGRESS
+READY → DC-002 CREATED........... recorded / historical
+EX-004 → EX-005 → EX-006......... SUCCEEDED chain; EX-004 and EX-005 historical
+EX-006............................ final technical result / SUCCEEDED
+IN_REVIEW → DONE.................. human acceptance APPROVED / EXERCISED
 ```
 
 EX-004 and EX-005 remain `SUCCEEDED` historical technical results. EX-006,
 attempt 3, used the existing authority to remediate `CR-WI002-02-F001` through
-the database authority boundary and is `SUCCEEDED`; its claim is released.
-WI-002 is `IN_REVIEW`; `CR-WI002-02` remains `FAIL / HISTORICAL` and
-`CR-WI002-02-F001` is `RESOLVED` by `CR-WI002-03`. `CR-WI002-02-F002` remains
-`OPEN / NON_BLOCKING`. `AUD-WI002-ACCEPTANCE-01` returned
-`PASS_WITH_FINDINGS`, with no blocker and carrying that finding. Implementation
-is `ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN
-ACCEPTANCE`; the next governed decision is HUMAN ACCEPTANCE carrying that
-finding. No acceptance was exercised.
+the database authority boundary and is the final `SUCCEEDED` technical result;
+its claim is released. `CR-WI002-02` remains `FAIL / HISTORICAL` and
+`CR-WI002-02-F001` remains `RESOLVED` by `CR-WI002-03`.
+`CR-WI002-02-F002` is `RESOLVED BY CLOSURE TREATMENT` after this living
+projection was reconciled. `AUD-WI002-ACCEPTANCE-01` remains
+`PASS_WITH_FINDINGS` historically. Human acceptance was exercised by
+`governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md`; WI-002 is `DONE`.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.
