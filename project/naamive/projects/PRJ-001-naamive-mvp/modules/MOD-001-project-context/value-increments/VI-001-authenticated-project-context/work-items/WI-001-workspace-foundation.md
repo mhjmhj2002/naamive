@@ -1,6 +1,6 @@
 # WI-001 — Repository / Workspace Foundation
 
-**State:** IN_REVIEW
+**State:** DONE
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** PRJ-001 — NAAMIVE MVP  
@@ -14,6 +14,8 @@
 **Executions:** EX-001 (`executions/EX-001-WI001.md`) — SUCCEEDED / HISTORICAL; EX-002 (`executions/EX-002-WI001.md`) — SUCCEEDED / HISTORICAL; EX-003 (`executions/EX-003-WI001.md`) — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED
 **Readiness decision:** `governance/HUMAN_APPROVAL_WI001_READINESS.md`
+**Acceptance:** GRANTED / EXERCISED
+**Acceptance decision:** `governance/HUMAN_APPROVAL_WI001_ACCEPTANCE.md`
 
 ## Reason / business intention
 
@@ -170,16 +172,20 @@ Execution has now started under its recorded operational claim:
 READY → IN_PROGRESS
 ```
 
-`EX-001` produced a technical result que falhou em `CR-WI001-01`. `EX-002`
-falhou em `CR-WI001-02` e `EX-003` materializou a segunda remediação no mesmo
-compromisso; o Work Item agora aguarda `CR-WI001-03` e as decisões separadas aplicáveis:
+`EX-001` produziu resultado técnico que falhou em `CR-WI001-01`; `EX-002`
+materializou o primeiro rework, que falhou em `CR-WI001-02`; e `EX-003`
+materializou o segundo e último resultado técnico do mesmo compromisso.
 
 ```text
-IN_PROGRESS → IN_REVIEW
-review........ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 REQUIRED
-acceptance.... NOT GRANTED
-audit......... PENDING AS APPLICABLE
+WI-001......... DONE
+EX-001......... SUCCEEDED / HISTORICAL
+EX-002......... SUCCEEDED / HISTORICAL — first rework
+EX-003......... SUCCEEDED — second/final rework technical result
+review......... CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
+audit.......... AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
+acceptance..... GRANTED / EXERCISED
 ```
 
-A material gap opens a Finding and stops only the affected scope according to
-the Gap Protocol.
+`CR-WI001-03-F001` e `AUD-WI001-ACCEPTANCE-01-F001` foram resolvidos por este
+fechamento documental. O aceite humano não promove VI-001, MOD-001, PRJ-001,
+Validation ou Delivery.

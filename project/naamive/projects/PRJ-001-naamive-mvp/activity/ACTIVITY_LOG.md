@@ -477,3 +477,23 @@ A-042
  next_decision: HUMAN ACCEPTANCE
  audit_ref: audits/AUD-WI001-ACCEPTANCE-01_INDEPENDENT_ACCEPTANCE_AUDIT.md
  recorded_at: 2026-09-12T22:51:36-03:00
+
+A-043
+ type: HUMAN_ACCEPTANCE_EXERCISED / WORK_ITEM_DONE
+ work_item: WI-001
+ work_item_transition: IN_REVIEW -> DONE
+ acceptance_transition: NOT GRANTED -> GRANTED / EXERCISED
+ authority_principal: human:manuel-hinojosa:project-owner
+ authority_role: NAAMIVE Project Owner
+ decision_ref: governance/HUMAN_APPROVAL_WI001_ACCEPTANCE.md
+ decision_input_commit: 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ authoritative_execution: EX-003
+ code_review: CR-WI001-03 PASS_WITH_FINDINGS
+ acceptance_audit: AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
+ blocking_findings: 0
+ findings_resolved_in_closure: CR-WI001-03-F001; AUD-WI001-ACCEPTANCE-01-F001
+ work_item_state: DONE
+ acceptance: GRANTED / EXERCISED
+ recorded_at: 2026-09-12T23:04:10-03:00

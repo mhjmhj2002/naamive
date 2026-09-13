@@ -10,13 +10,13 @@ Module..................... MOD-001 PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 12 PROPOSED / 1 IN_REVIEW
+Work Items................. 12 PROPOSED / 1 DONE
 Development Cycles......... 1
 Executions................. 3
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
-Implementation authority... GRANTED
-Implementation............. ACCEPTANCE AUDIT COMPLETED / HUMAN ACCEPTANCE PENDING / NON-BLOCKING DOCUMENTATION FINDINGS OPEN
+Implementation authority... GRANTED / EXERCISED
+Implementation............. WI-001 ACCEPTED / DONE
 ```
 
 ## Fechamento da Planning Round 1
@@ -44,18 +44,20 @@ decision_input_commit...... cf4f2c032d61835329db820d9490250927b6bfeb
 ## Readiness de WI-001
 
 ```text
-WI-001..................... IN_REVIEW
+WI-001..................... DONE
 readiness gate............. APPROVED / EXERCISED
 readiness authority........ GRANTED / EXERCISED
 human decision ref......... governance/HUMAN_APPROVAL_WI001_READINESS.md
 Development Cycle.......... DC-001
 Executions................. EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED
-Implementation authority... GRANTED
+Implementation authority... GRANTED / EXERCISED
 Code Review................ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
 Acceptance Audit........... AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
-Acceptance................. NOT GRANTED
-Next decision.............. HUMAN ACCEPTANCE
-Implementation............. ACCEPTANCE AUDIT COMPLETED / HUMAN ACCEPTANCE PENDING / NON-BLOCKING DOCUMENTATION FINDINGS OPEN
+Human acceptance ref....... governance/HUMAN_APPROVAL_WI001_ACCEPTANCE.md
+Acceptance................. GRANTED / EXERCISED
+Blocking findings.......... 0
+Documentation findings..... RESOLVED IN CLOSURE
+Implementation............. WI-001 ACCEPTED / DONE
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
