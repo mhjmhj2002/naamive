@@ -1,11 +1,11 @@
 # PRJ-001 — Execution Board
 
-**Board type:** derived manual projection / not canonical lifecycle storage  
-**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
-**normative_baseline_ref:** NB-0002  
-**Project:** PLANNING  
+**Board type:** derived manual projection / not canonical lifecycle storage
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
+**normative_baseline_ref:** NB-0002
+**Project:** PLANNING
 **Implementation authority:** GRANTED
-**Implementation:** INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
+**Implementation:** ACCEPTANCE AUDIT COMPLETED / HUMAN ACCEPTANCE PENDING / NON-BLOCKING DOCUMENTATION FINDINGS OPEN
 
 ## Fato atual projetado
 
@@ -29,7 +29,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001 | IN_REVIEW | disposition de CR-WI001-03-F001 e human acceptance conforme aplicável |
+| WI-001 | IN_REVIEW | HUMAN ACCEPTANCE; findings documentais não bloqueantes permanecem visíveis |
 | WI-002..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -45,8 +45,10 @@ Executions............ 3
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
-foram resolvidos; `CR-WI001-03-F001` permanece não bloqueante. Nenhum resultado
-técnico ou de review equivale a aceite.
+foram resolvidos; `CR-WI001-03-F001` permanece não bloqueante.
+`AUD-WI001-ACCEPTANCE-01` retornou PASS_WITH_FINDINGS: a evidência é suficiente
+para decisão humana e o drift narrativo de WI-001 permanece não bloqueante.
+Nenhum resultado técnico, de review ou de audit equivale a aceite.
 
 ## Executions
 

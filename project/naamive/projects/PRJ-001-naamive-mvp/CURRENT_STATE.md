@@ -1,6 +1,6 @@
 # PRJ-001 — Current State
 
-**business_baseline_ref:** PBL-PRJ001-R1-v1.0  
+**business_baseline_ref:** PBL-PRJ001-R1-v1.0
 **normative_baseline_ref:** NB-0002
 
 ```text
@@ -16,7 +16,7 @@ Executions................. 3
 Validation................. NOT EXECUTED
 Delivery................... NOT DELIVERED
 Implementation authority... GRANTED
-Implementation............. INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
+Implementation............. ACCEPTANCE AUDIT COMPLETED / HUMAN ACCEPTANCE PENDING / NON-BLOCKING DOCUMENTATION FINDINGS OPEN
 ```
 
 ## Fechamento da Planning Round 1
@@ -52,8 +52,10 @@ Development Cycle.......... DC-001
 Executions................. EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED
 Implementation authority... GRANTED
 Code Review................ CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
+Acceptance Audit........... AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 Acceptance................. NOT GRANTED
-Implementation............. INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
+Next decision.............. HUMAN ACCEPTANCE
+Implementation............. ACCEPTANCE AUDIT COMPLETED / HUMAN ACCEPTANCE PENDING / NON-BLOCKING DOCUMENTATION FINDINGS OPEN
 ```
 
 AUD3-001/DEC-005 permanece resolvido. FND-003, FND-006 e FND-007 são
