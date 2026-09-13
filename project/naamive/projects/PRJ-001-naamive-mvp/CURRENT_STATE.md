@@ -10,7 +10,7 @@ Module..................... MOD-001 PLANNED
 VI-001..................... PLANNED
 DT-001 v1.................. CURRENT
 Roadmap v2................. CURRENT
-Work Items................. 12 PROPOSED / 1 DONE
+Work Items................. 11 PROPOSED / 1 READY / 1 DONE
 Development Cycles......... 1
 Executions................. 3
 Validation................. NOT EXECUTED
@@ -20,12 +20,15 @@ Implementation............. WI-001 ACCEPTED / DONE
 DEC-008...................... CURRENT / GOVERNED
 FND-WI002-RCP-001........... RESOLVED BY DEC-008
 WI-002 readiness preparation R1... HISTORICAL / BLOCKED
-WI-002 readiness preparation R2... PREPARED / READY FOR INDEPENDENT READINESS AUDIT
+WI-002...................... READY
+WI-002 readiness preparation R2... PREPARED / POSITIVE
 WI-002 audit................ AUD-WI002-READINESS-01 PASS
-WI-002 readiness authority.. NOT GRANTED
+WI-002 readiness authority.. GRANTED / EXERCISED
+WI-002 human decision....... governance/HUMAN_APPROVAL_WI002_READINESS.md
 WI-002 Development Cycle.... NOT CREATED
 WI-002 Execution............ NONE
 WI-002 implementation....... NOT AUTHORIZED
+WI-002 next action.......... create the applicable governed Development Cycle
 ```
 
 ## Fechamento da Planning Round 1

@@ -30,12 +30,12 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | PROPOSED | auditoria independente de readiness PASS; decisão de authority governada pendente |
+| WI-002 | READY | criar o Development Cycle governado aplicável |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
-PROPOSED............. 12
-READY................ 0
+PROPOSED............. 11
+READY................ 1
 IN_PROGRESS.......... 0
 IN_REVIEW............ 0
 DONE................. 1
@@ -47,10 +47,12 @@ Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana sobre
 identidade, status e história do Principal; `FND-WI002-RCP-001` está `RESOLVED
 BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
-`PREPARED / POSITIVE`; `AUD-WI002-READINESS-01` registrou `PASS`. Readiness
-authority segue `NOT GRANTED`; não existe Development Cycle ou Execution de
-WI-002 e sua implementação não está autorizada. A próxima ação é decisão de
-authority governada, não promoção implícita.
+`PREPARED / POSITIVE`; `AUD-WI002-READINESS-01` registrou `PASS`, com `0`
+findings bloqueadores e `0` não bloqueadores. A decisão humana em
+`governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`;
+readiness authority está `GRANTED / EXERCISED`. Não existe Development Cycle ou
+Execution de WI-002 e sua implementação não está autorizada. A próxima ação é
+criar o Development Cycle governado aplicável.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.

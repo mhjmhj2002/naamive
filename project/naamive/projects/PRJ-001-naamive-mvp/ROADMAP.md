@@ -18,15 +18,17 @@
 | RM-001 | FINDING_REMEDIATION | FND-011 | CLOSED — remediação materializada na v1.0 e encerrada por decisão humana |
 | RM-002 | HUMAN_DECISION | HUMAN_APPROVAL_T1_T6 | EXERCISED — decisão humana T1–T6 registrada em `governance/HUMAN_APPROVAL_T1_T6.md` |
 | RM-003 | WORK_ITEM | WI-001 | DONE — human acceptance APPROVED / EXERCISED; CR-WI001-03-F001 e AUD-WI001-ACCEPTANCE-01-F001 resolvidos no fechamento |
-| RM-004..RM-015 | WORK_ITEM | WI-002..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
+| RM-004 | WORK_ITEM | WI-002 | READY — readiness humana APPROVED / EXERCISED; criar o Development Cycle aplicável |
+| RM-005..RM-015 | WORK_ITEM | WI-003..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana de
-semântica de Principal e resolve `FND-WI002-RCP-001`. WI-002 permanece
-`PROPOSED`; a preparação R1 é histórica/bloqueada, a preparação R2 está
-`PREPARED / POSITIVE` e `AUD-WI002-READINESS-01` registrou `PASS`. Nenhuma
-authority de readiness foi concedida, e nenhum Development Cycle, Execution ou
-autorização de implementação foi criado para WI-002. A próxima ação é a decisão
-de authority governada.
+semântica de Principal e resolve `FND-WI002-RCP-001`. A preparação R1 é
+histórica/bloqueada, a preparação R2 está `PREPARED / POSITIVE` e
+`AUD-WI002-READINESS-01` registrou `PASS`, sem findings. A decisão humana em
+`governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`
+e concedeu readiness authority `GRANTED / EXERCISED`. Nenhum Development Cycle,
+Execution ou autorização de implementação foi criado para WI-002. A próxima
+ação é criar o Development Cycle governado aplicável.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,

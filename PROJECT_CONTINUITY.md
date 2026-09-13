@@ -314,7 +314,7 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 12 PROPOSED / 1 DONE
+Work Items.............. 11 PROPOSED / 1 READY / 1 DONE
 Development Cycles...... 1 (DC-001)
 Executions.............. 3 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 Validation.............. NOT EXECUTED
@@ -327,6 +327,11 @@ Acceptance................ GRANTED / EXERCISED
 Implementation............ WI-001 ACCEPTED / DONE
 Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
+WI-002 readiness........ APPROVED / EXERCISED
+WI-002 authority........ GRANTED / EXERCISED
+WI-002 Development Cycle NOT CREATED
+WI-002 Execution........ NONE
+WI-002 implementation... NOT AUTHORIZED
 ```
 
 Arquivos operacionais principais:
@@ -340,7 +345,8 @@ project/naamive/projects/PRJ-001-naamive-mvp/activity/ACTIVITY_LOG.md
 ```
 
 A materialização T1–T6 foi registrada no Activity Log como `A-029`; a decisão
-humana de readiness de WI-001 foi registrada como `A-030`.
+humana de readiness de WI-001 foi registrada como `A-030`; a decisão humana de
+readiness de WI-002 foi registrada como `A-046`.
 
 ---
 
@@ -408,10 +414,9 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-```text
-não declarar WI-002 READY
-não iniciar Execution
-```
+WI-002 está `READY` por decisão humana explícita. Seu próximo avanço governado
+é criar o Development Cycle aplicável; não criar Execution nem iniciar
+implementação diretamente.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -658,7 +663,8 @@ MOD-001 = PLANNED
 VI-001 = PLANNED
 DT-001 v1 = CURRENT
 Roadmap v2 = CURRENT
-12 Work Items = PROPOSED
+11 Work Items = PROPOSED
+1 Work Item = READY (WI-002)
 1 DONE (WI-001)
 1 Development Cycle (DC-001)
 3 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
@@ -678,8 +684,9 @@ cf4f2c032d61835329db820d9490250927b6bfeb
 Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD atual.
 No começo da sessão confira git status e git log -1.
 
-Próximo avanço governado:
-Não inferir automaticamente; aplicar dependências/ordem do Roadmap e readiness próprio do próximo WI.
+Próximo avanço governado para WI-002:
+Criar o Development Cycle aplicável. Não criar Execution nem iniciar
+implementação diretamente.
 
 Não reexecute EX-001 terminal.
 Não reabra WI-001 DONE silenciosamente.
@@ -747,7 +754,12 @@ VI-001...................... PLANNED
 DT-001 v1................... CURRENT
 ROADMAP v2.................. CURRENT
 
-WORK ITEMS.................. 12 PROPOSED / 1 DONE (WI-001)
+WORK ITEMS.................. 11 PROPOSED / 1 READY (WI-002) / 1 DONE (WI-001)
+WI-002 READINESS............ APPROVED / EXERCISED
+WI-002 AUTHORITY............ GRANTED / EXERCISED
+WI-002 DEVELOPMENT CYCLE.... NOT CREATED
+WI-002 EXECUTION............ NONE
+WI-002 IMPLEMENTATION....... NOT AUTHORIZED
 DEVELOPMENT CYCLES.......... 1 (DC-001)
 EXECUTIONS.................. 3 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
@@ -760,5 +772,5 @@ ACCEPTANCE.................. GRANTED / EXERCISED
 IMPLEMENTATION.............. WI-001 ACCEPTED / DONE
 
 DECISION INPUT COMMIT....... 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
-NEXT GOVERNED ACTION........ não inferir; depende de Roadmap e readiness próprio do próximo WI
+NEXT GOVERNED ACTION........ WI-002: criar o Development Cycle aplicável
 ```

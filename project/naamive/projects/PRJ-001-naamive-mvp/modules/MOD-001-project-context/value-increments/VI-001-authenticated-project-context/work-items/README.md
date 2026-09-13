@@ -2,12 +2,12 @@
 
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **normative_baseline_ref:** NB-0002  
-**Status:** 13 PROPOSED / 0 READY / NO EXECUTION AUTHORITY
+**Status:** 11 PROPOSED / 1 READY / 1 DONE / WI-002 EXECUTION NOT AUTHORIZED
 
 | WI | Title | Governing scope | Depends on | State |
 |---|---|---|---|---|
-| WI-001 | Repository / Workspace Foundation | PROJECT | none | PROPOSED |
-| WI-002 | Principal Persistence | MODULE | WI-001 | PROPOSED |
+| WI-001 | Repository / Workspace Foundation | PROJECT | none | DONE |
+| WI-002 | Principal Persistence | MODULE | WI-001 | READY |
 | WI-003 | Username / Password Login | MODULE | WI-002 | PROPOSED |
 | WI-004 | Durable Server-side Session | MODULE | WI-003 | PROPOSED |
 | WI-005 | Authority / Scoped Grants | MODULE | WI-002, WI-004 | PROPOSED |
@@ -22,6 +22,11 @@
 
 `WI-001` is Project-transversal. `WI-002..WI-013` are governed by MOD-001 and
 reference VI-001; VI-001 is not their owner.
+
+`WI-002` readiness was approved and exercised by
+`governance/HUMAN_APPROVAL_WI002_READINESS.md`. This does not create its
+Development Cycle or Execution, and implementation remains unauthorized. Its
+next governed action is to create the applicable Development Cycle.
 
 Full criteria/test/evidence/audit mapping is also summarized in:
 

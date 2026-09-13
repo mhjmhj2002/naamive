@@ -1,6 +1,6 @@
 # WI-002 — Principal Persistence
 
-**State:** PROPOSED  
+**State:** READY
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** MOD-001 — Project Context  
@@ -12,7 +12,10 @@
 **Depends on:** WI-001  
 **Development Cycle:** NOT CREATED  
 **Execution:** NONE  
-**Readiness authority:** NOT GRANTED
+**Readiness authority:** GRANTED / EXERCISED
+**Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
+**Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
+**Readiness audit:** AUD-WI002-READINESS-01 — PASS / 0 blocking findings / 0 nonblocking findings
 **Governing decision:** decisions/DEC-008_WI002_PRINCIPAL_SEMANTICS.md
 
 ## Reason / business intention
@@ -23,8 +26,9 @@ material product/architecture decision.
 
 ## Relation to plan
 
-Canonical proposed entry in DevelopmentRoadmap v2. It remains non-executable
-until the round is approved and its own readiness gate passes.
+Canonical entry in DevelopmentRoadmap v2. Its readiness gate is approved and
+exercised; it remains non-executable until the applicable Development Cycle is
+created and a valid Execution is separately authorized.
 
 ## Outcome
 
@@ -120,17 +124,15 @@ normative owner type.
 ## Process gate
 
 ```text
-PROPOSED
-→ readiness review against current approved baseline
-→ applicable independent audit / explicit coverage proof
-→ human/authority decision as required
-→ READY
-→ create Development Cycle
+PROPOSED → READY................ APPROVED / EXERCISED
+READY
+→ create applicable Development Cycle
 → valid Execution starts
 → IN_PROGRESS
 ```
 
-No code may start while this Work Item remains `PROPOSED`.
+No implementation may start until the applicable Development Cycle exists and a
+valid Execution is separately authorized.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

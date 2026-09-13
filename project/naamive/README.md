@@ -8,8 +8,8 @@
 **Normative Baseline:** `NB-0002`  
 **Last valid audit:** AUD-009 — historical FAIL  
 **Audit phase:** CLOSED  
-**Implementation authority:** GRANTED
-**Implementation:** REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+**Implementation authority:** GRANTED / EXERCISED
+**Implementation:** WI-001 ACCEPTED / DONE
 
 ---
 
@@ -22,17 +22,22 @@ Module MOD-001.......... PLANNED
 VI-001.................. PLANNED
 DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
-Work Items.............. 12 PROPOSED / 1 IN_REVIEW
-WI-001................... IN_REVIEW
-Readiness authority...... GRANTED / EXERCISED
+Work Items.............. 11 PROPOSED / 1 READY / 1 DONE
+WI-001................... DONE
+WI-002................... READY
+WI-002 readiness authority GRANTED / EXERCISED
+WI-002 Development Cycle. NOT CREATED
+WI-002 Execution......... NONE
+WI-002 implementation.... NOT AUTHORIZED
 Development Cycles...... 1 (DC-001)
-Executions.............. 2
+Executions.............. 3
 EX-001................... SUCCEEDED / HISTORICAL
-EX-002................... SUCCEEDED
+EX-002................... SUCCEEDED / HISTORICAL
+EX-003................... SUCCEEDED
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
-Implementation authority GRANTED
-Implementation.......... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+Implementation authority GRANTED / EXERCISED
+Implementation.......... WI-001 ACCEPTED / DONE
 ```
 
 A verdade operacional detalhada deve ser consultada em:
@@ -127,21 +132,24 @@ para Work Items, Cycles ou Executions.
 O fato de Module, Value Increment, DeliveryTarget e Roadmap estarem aprovados ou
 correntes não significa que desenvolvimento possa começar.
 
-O próximo avanço governado para WI-001 é `CR-WI001-02`, revisão independente
-da remediação técnica de `EX-002`.
+O próximo avanço governado para WI-002 é criar o Development Cycle aplicável.
 
 Fluxo mínimo:
 
 ```text
-Work Item IN_REVIEW
-→ review/audit independente aplicável
-→ decisão de aceite separada
+WI-002 READY
+→ Development Cycle
+→ Execution authority / Execution
+→ implementation
 ```
 
-`EX-002 SUCCEEDED` não equivale a `WI-001 DONE`:
+`WI-002 READY` não cria Development Cycle, Execution nem autorização de
+implementação:
 
 ```text
-Implementation = REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+Development Cycle = NOT CREATED
+Execution = NONE
+Implementation = NOT AUTHORIZED
 ```
 
 Nenhum agente, commit, teste ou sucesso técnico pode substituir review, auditoria
