@@ -18,6 +18,8 @@ Delivery................... NOT DELIVERED
 Implementation authority... GRANTED / EXERCISED
 Implementation............. WI-001 ACCEPTED / DONE
 WI-002 readiness candidate.. PREPARED / NEEDS MATERIAL DECISION
+FND-WI002-RCP-001........... MATERIAL / BLOCKING
+WI-002 decision candidate... PREPARED / HUMAN DECISION REQUIRED / NOT EXERCISED
 WI-002 audit................ REQUIRED / NOT EXECUTED
 WI-002 readiness authority.. NOT GRANTED
 WI-002 Development Cycle.... NOT CREATED

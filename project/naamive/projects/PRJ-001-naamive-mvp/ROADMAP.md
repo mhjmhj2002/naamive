@@ -21,9 +21,12 @@
 | RM-004..RM-015 | WORK_ITEM | WI-002..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `WI-002_READINESS_CANDIDATE.md` foi preparado com a conclusão `NEEDS MATERIAL
-DECISION`: WI-002 permanece `PROPOSED`; o finding `FND-WI002-RCP-001` deve ser
-resolvido antes de auditoria independente de readiness. Nenhuma authority,
-Development Cycle, Execution ou autorização de implementação foi criada.
+DECISION`. A candidata
+`governance/WI-002_PRINCIPAL_SEMANTICS_DECISION_CANDIDATE.md` está `PREPARED`;
+a decisão humana material está `REQUIRED / NOT EXERCISED`. WI-002 permanece
+`PROPOSED` e o finding `FND-WI002-RCP-001` permanece `MATERIAL / BLOCKING` até
+uma decisão humana posterior. Nenhuma authority de readiness, Development
+Cycle, Execution ou autorização de implementação foi criada para WI-002.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,
