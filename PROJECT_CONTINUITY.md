@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED / EXERCISED`
-**Implementation:** `WI-002 ACCEPTED / DONE; WI-003 NOT STARTED`
+**Implementation:** `WI-002 ACCEPTED / DONE; WI-003 PROPOSED / NOT AUTHORIZED`
 
 ---
 
@@ -338,7 +338,10 @@ WI-002 findings.......... CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-
 WI-002 implementation... ACCEPTED / DONE
 WI-002 acceptance........ ACCEPTED
 WI-002 acceptance ref.... governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md
-WI-002 next action....... next ordered Work Item planning/authorization according to Roadmap
+WI-003 readiness prep..... R1 PREPARED / BLOCKED
+WI-003 state.............. PROPOSED
+WI-003 blockers........... FND-WI003-RCP-001..004 OPEN / MATERIAL / BLOCKING
+WI-003 next action........ governed material decision; then new readiness preparation
 ```
 
 Arquivos operacionais principais:
@@ -429,8 +432,11 @@ resultado técnico final; EX-005 e EX-004 são históricos. `CR-WI002-01` e
 `CR-WI002-F001` e `CR-WI002-02-F001` estão `RESOLVED`;
 `CR-WI002-02-F002` está `RESOLVED BY CLOSURE TREATMENT`, pois toda a narrativa
 viva de WI-002 foi reconciliada para EX-006 final e EX-004/EX-005 históricos.
-WI-003 não foi iniciado. A próxima ação governada é o fluxo de
-planejamento/autorização do próximo Work Item ordenado no Roadmap.
+WI-003 permanece `PROPOSED`. A preparação de readiness R1 identificou quatro
+findings materiais bloqueadores: fonte/ciclo de vida da credencial, contrato
+HTTP de login, semântica e cronograma do controle de abuso e resultado de
+sucesso na fronteira com WI-004. A próxima ação governada é uma decisão material
+que resolva esses blockers; somente depois cabe nova preparação de readiness.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -694,6 +700,8 @@ CR-WI002-02-F002 = RESOLVED BY CLOSURE TREATMENT
 AUD-WI002-ACCEPTANCE-01 = PASS_WITH_FINDINGS
 Implementation = WI-002 ACCEPTED / DONE
 WI-002 acceptance = ACCEPTED
+WI-003 readiness preparation R1 = PREPARED / BLOCKED
+WI-003 blockers = FND-WI003-RCP-001..004 OPEN / MATERIAL / BLOCKING
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -704,8 +712,9 @@ cf4f2c032d61835329db820d9490250927b6bfeb
 Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD atual.
 No começo da sessão confira git status e git log -1.
 
-Próximo avanço governado para WI-002:
-HUMAN ACCEPTANCE, carregando `CR-WI002-02-F002`. Não exercer aceite diretamente.
+Próximo avanço governado para WI-003:
+decisão material que resolva FND-WI003-RCP-001..004; não criar Development
+Cycle, Execution nem conceder authority antes de nova preparação e gate.
 
 Não reexecute EX-001 terminal.
 Não reabra WI-001 DONE silenciosamente.
@@ -805,8 +814,10 @@ CODE REVIEW................. CR-WI001-03 PASS_WITH_FINDINGS
 ACCEPTANCE AUDIT............ AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 HUMAN ACCEPTANCE............ APPROVED / EXERCISED
 ACCEPTANCE.................. GRANTED / EXERCISED
-IMPLEMENTATION.............. WI-002 ACCEPTED / DONE; WI-003 NOT STARTED
+IMPLEMENTATION.............. WI-002 ACCEPTED / DONE; WI-003 PROPOSED / NOT AUTHORIZED
 
 DECISION INPUT COMMIT (T1–T6) cf4f2c032d61835329db820d9490250927b6bfeb
-NEXT GOVERNED ACTION........ next ordered Work Item planning/authorization according to Roadmap
+WI-003 READINESS PREP....... R1 PREPARED / BLOCKED
+WI-003 BLOCKERS............. FND-WI003-RCP-001..004 OPEN / MATERIAL / BLOCKING
+NEXT GOVERNED ACTION........ material decision resolving WI-003 readiness blockers; then new readiness preparation
 ```

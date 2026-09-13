@@ -35,7 +35,14 @@ WI-002 implementation....... ACCEPTED / DONE
 WI-002 acceptance............ ACCEPTED
 WI-002 human acceptance..... governance/HUMAN_APPROVAL_WI002_ACCEPTANCE.md
 WI-002 finding.............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 RESOLVED BY CLOSURE TREATMENT
-WI-002 next action.......... next ordered Work Item planning/authorization according to Roadmap
+WI-003 readiness preparation R1... PREPARED / BLOCKED
+WI-003...................... PROPOSED
+WI-003 readiness authority.. NOT GRANTED
+WI-003 Development Cycle.... NOT CREATED
+WI-003 Execution............ NONE
+WI-003 implementation....... NOT AUTHORIZED
+WI-003 blockers............. FND-WI003-RCP-001..004 OPEN / MATERIAL / BLOCKING
+WI-003 next action.......... governed material decision resolving the four readiness blockers; then new readiness preparation
 ```
 
 ## Fechamento da Planning Round 1

@@ -44,6 +44,14 @@ Executions............ 6
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
+`WI-003_READINESS_CANDIDATE.md` está `PREPARED / BLOCKED`: a dependência
+`WI-002` está satisfeita e compatível, mas quatro findings materiais permanecem
+abertos sobre a fonte/ciclo de vida da credencial, o contrato HTTP de login, a
+semântica durável e o cronograma do controle de abuso, e o resultado de sucesso
+na fronteira com WI-004. Portanto WI-003 continua `PROPOSED`, sem authority,
+Development Cycle, Execution ou autorização de implementação. A próxima ação é
+uma decisão material governada que resolva esses blockers; depois, nova
+preparação de readiness.
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana sobre
 identidade, status e história do Principal; `FND-WI002-RCP-001` está `RESOLVED
 BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
