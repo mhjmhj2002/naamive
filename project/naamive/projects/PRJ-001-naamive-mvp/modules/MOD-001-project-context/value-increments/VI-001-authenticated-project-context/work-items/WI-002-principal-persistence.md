@@ -15,8 +15,9 @@
 **Readiness authority:** GRANTED / EXERCISED
 **Implementation authority:** GRANTED
 **Code review:** CR-WI002-01 — FAIL / HISTORICAL; CR-WI002-02 — FAIL / HISTORICAL; CR-WI002-03 — PASS_WITH_FINDINGS / 1 NON_BLOCKING FINDING
-**Implementation:** CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
-**Acceptance:** NOT GRANTED / BLOCKED
+**Acceptance audit:** AUD-WI002-ACCEPTANCE-01 — PASS_WITH_FINDINGS / 0 BLOCKING FINDINGS / 1 NON-BLOCKING FINDING
+**Implementation:** ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN ACCEPTANCE
+**Acceptance:** NOT GRANTED / AWAITING HUMAN ACCEPTANCE
 **Readiness human approval:** governance/HUMAN_APPROVAL_WI002_READINESS.md
 **Readiness preparation:** governance/WI-002_READINESS_CANDIDATE_R2.md — PREPARED / POSITIVE
 **Readiness audit:** AUD-WI002-READINESS-01 — PASS / 0 blocking findings / 0 nonblocking findings
@@ -142,9 +143,11 @@ attempt 3, used the existing authority to remediate `CR-WI002-02-F001` through
 the database authority boundary and is `SUCCEEDED`; its claim is released.
 WI-002 is `IN_REVIEW`; `CR-WI002-02` remains `FAIL / HISTORICAL` and
 `CR-WI002-02-F001` is `RESOLVED` by `CR-WI002-03`. `CR-WI002-02-F002` remains
-`OPEN / NON_BLOCKING`. Implementation is `CODE REVIEW PASSED WITH NONBLOCKING
-FINDING / AWAITING ACCEPTANCE AUDIT`; the next governed action is independent
-acceptance audit carrying that finding. No acceptance was exercised.
+`OPEN / NON_BLOCKING`. `AUD-WI002-ACCEPTANCE-01` returned
+`PASS_WITH_FINDINGS`, with no blocker and carrying that finding. Implementation
+is `ACCEPTANCE AUDIT PASSED WITH NONBLOCKING FINDING / AWAITING HUMAN
+ACCEPTANCE`; the next governed decision is HUMAN ACCEPTANCE carrying that
+finding. No acceptance was exercised.
 
 A material gap opens a Finding and stops only the affected scope according to
 the Gap Protocol.

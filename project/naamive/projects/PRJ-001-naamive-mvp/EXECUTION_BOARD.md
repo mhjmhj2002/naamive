@@ -30,7 +30,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 | WIs | Estado | Próxima ação |
 |---|---|---|
 | WI-001 | DONE | commitment accepted / no further action for this WI |
-| WI-002 | IN_REVIEW | CR-WI002-03 PASS_WITH_FINDINGS; independent acceptance audit carrying CR-WI002-02-F002 required; acceptance not granted |
+| WI-002 | IN_REVIEW | AUD-WI002-ACCEPTANCE-01 PASS_WITH_FINDINGS; HUMAN ACCEPTANCE carrying CR-WI002-02-F002; acceptance not granted |
 | WI-003..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -51,16 +51,17 @@ BY DEC-008`. A preparação R1 é histórica/bloqueada; a preparação R2 está
 findings bloqueadores e `0` não bloqueadores. A decisão humana em
 `governance/HUMAN_APPROVAL_WI002_READINESS.md` exerceu `WI-002 PROPOSED → READY`;
 readiness authority está `GRANTED / EXERCISED`. A authority `EXECUTE_WORK` está
-`GRANTED / EXERCISED`; EX-004 permanece `SUCCEEDED / HISTORICAL` e EX-005
-produziu o resultado técnico de rework, com claim liberado. A remediação remove
+`GRANTED / EXERCISED`; EX-004 e EX-005 permanecem `SUCCEEDED / HISTORICAL` e
+EX-006 é o resultado técnico corrente, com claim liberado. A remediação remove
 o bypass de DML runtime por comandos controlados com expected-version no banco.
 `CR-WI002-01` permanece `FAIL / HISTORICAL`; `CR-WI002-F001` está `RESOLVED`.
 `CR-WI002-02` permanece `FAIL / HISTORICAL`. `CR-WI002-03` retornou
 `PASS_WITH_FINDINGS`: `CR-WI002-02-F001` está `RESOLVED`, enquanto
 `CR-WI002-02-F002` permanece `OPEN / NON_BLOCKING` por narrativa de projeção
-desatualizada. WI-002 permanece `IN_REVIEW`, acceptance não foi concedido, e o
-próximo passo é acceptance audit independente que carregue o finding não
-bloqueador; nenhum acceptance audit é implícito.
+desatualizada. `AUD-WI002-ACCEPTANCE-01` retornou `PASS_WITH_FINDINGS`, sem
+finding bloqueador novo e carregando esse finding. WI-002 permanece `IN_REVIEW`,
+acceptance não foi concedido, e a próxima decisão é HUMAN ACCEPTANCE carregando
+o finding não bloqueador; audit positiva não é aceite implícito.
 `CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
 `CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
 foram resolvidos; `CR-WI001-03-F001` foi resolvido no fechamento documental.

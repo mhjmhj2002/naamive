@@ -18,7 +18,7 @@
 | RM-001 | FINDING_REMEDIATION | FND-011 | CLOSED — remediação materializada na v1.0 e encerrada por decisão humana |
 | RM-002 | HUMAN_DECISION | HUMAN_APPROVAL_T1_T6 | EXERCISED — decisão humana T1–T6 registrada em `governance/HUMAN_APPROVAL_T1_T6.md` |
 | RM-003 | WORK_ITEM | WI-001 | DONE — human acceptance APPROVED / EXERCISED; CR-WI001-03-F001 e AUD-WI001-ACCEPTANCE-01-F001 resolvidos no fechamento |
-| RM-004 | WORK_ITEM | WI-002 | IN_REVIEW — CR-WI002-03 PASS_WITH_FINDINGS; independent acceptance audit carrying CR-WI002-02-F002 required |
+| RM-004 | WORK_ITEM | WI-002 | IN_REVIEW — AUD-WI002-ACCEPTANCE-01 PASS_WITH_FINDINGS; HUMAN ACCEPTANCE carrying CR-WI002-02-F002 |
 | RM-005..RM-015 | WORK_ITEM | WI-003..WI-012 e WI-013 | dependências declaradas nos WIs e baseline compatível |
 
 `DEC-008_WI002_PRINCIPAL_SEMANTICS.md` materializa a decisão humana de
@@ -31,10 +31,10 @@ e concedeu readiness authority `GRANTED / EXERCISED`. A authority
 `EX-006 SUCCEEDED`, com EX-004 e EX-005 históricos. O resultado técnico está
 produzido, WI-002 está `IN_REVIEW`. `CR-WI002-02` retornou `FAIL / HISTORICAL`;
 `CR-WI002-02-F001` está `RESOLVED` por `CR-WI002-03`; `CR-WI002-02-F002`
-permanece `OPEN / NON_BLOCKING`. Implementation está `CODE REVIEW PASSED WITH
-NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT` e acceptance não foi
-concedido. A próxima ação é acceptance audit independente que carregue o
-finding não bloqueador.
+permanece `OPEN / NON_BLOCKING`. `AUD-WI002-ACCEPTANCE-01` retornou
+`PASS_WITH_FINDINGS`, com `0` findings bloqueadores novos e esse finding
+aplicável carregado. WI-002 permanece `IN_REVIEW`, acceptance não foi concedido
+e a próxima decisão é HUMAN ACCEPTANCE carregando o finding não bloqueador.
 
 `depends_on` só é satisfeito pelo resultado declarado em baseline compatível.
 Mudança material exige classificar impacto como `KEEP`, `REVALIDATE`,

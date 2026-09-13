@@ -798,3 +798,29 @@ A-057
  execution_state: SUCCEEDED
  acceptance: NOT GRANTED
  recorded_at: 2026-09-13T15:46:13-03:00
+
+A-058
+ type: INDEPENDENT_ACCEPTANCE_AUDIT_COMPLETED
+ audit: AUD-WI002-ACCEPTANCE-01
+ audit_type: INDEPENDENT_ACCEPTANCE_AUDIT
+ work_item: WI-002
+ cycle: DC-002
+ current_execution: EX-006
+ audit_target_commit: d15bb1fb110cee8644a8f82ab468256a8c3d4a63
+ technical_result_commit: bed3a16e83968080293f9ca15fade5d85408e049
+ business_baseline_ref: PBL-PRJ001-R1-v1.0
+ normative_baseline_ref: NB-0002
+ governing_decision: DEC-008
+ auditor_principal: agent:codex:audit:AUD-WI002-ACCEPTANCE-01
+ independence: CONFIRMED / distinct logical principals
+ result: PASS_WITH_FINDINGS
+ blocking_findings: 0
+ non_blocking_findings: 1
+ findings: CR-WI002-02-F002 OPEN / NON_BLOCKING
+ work_item_state: IN_REVIEW
+ execution_state: SUCCEEDED
+ code_review: CR-WI002-03 PASS_WITH_FINDINGS
+ acceptance: NOT GRANTED
+ next_decision: HUMAN ACCEPTANCE carrying CR-WI002-02-F002
+ audit_ref: audits/AUD-WI002-ACCEPTANCE-01_INDEPENDENT_ACCEPTANCE_AUDIT.md
+ recorded_at: 2026-09-13T16:30:11-03:00
