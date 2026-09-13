@@ -5,7 +5,7 @@
 **normative_baseline_ref:** NB-0002  
 **Project:** PLANNING  
 **Implementation authority:** GRANTED
-**Implementation:** SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+**Implementation:** INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
 
 ## Fato atual projetado
 
@@ -13,7 +13,7 @@
 AUD-001..AUD-009......... FAIL / historical; AUD-009 is last valid audit
 AUD3-001 / DEC-005....... RESOLVED / historical evidence retained
 FND-011................... RESOLVED / v1.0 materialized; human closure recorded
-findings.................. F001, F002 e F005 RESOLVED; F003, F004 e CR-WI001-02-F001 REMEDIATION IMPLEMENTED / AWAITING INDEPENDENT REVIEW
+findings.................. CR-WI001-F001..F005 e CR-WI001-02-F001 RESOLVED; CR-WI001-03-F001 OPEN / NON_BLOCKING
 audit phase............... CLOSED
 current audit continuity.. NONE
 further audit required.... NO
@@ -29,7 +29,7 @@ não cria autoridade, lifecycle nem continuidade concorrente.
 
 | WIs | Estado | Próxima ação |
 |---|---|---|
-| WI-001 | IN_REVIEW | CR-WI001-03 independente requerido; acceptance remains blocked |
+| WI-001 | IN_REVIEW | disposition de CR-WI001-03-F001 e human acceptance conforme aplicável |
 | WI-002..WI-013 | PROPOSED | dependências e readiness próprios |
 
 ```text
@@ -43,9 +43,10 @@ Executions............ 3
 ```
 
 Nenhuma linha pode avançar enquanto qualquer blocker aplicável permanecer.
-`CR-WI001-01` retornou FAIL e permanece histórico. `CR-WI001-02` também
-retornou FAIL: EX-003 materializou a remediação de F003/F004 e do finding de
-whitespace. `CR-WI001-03` ainda é requerido; nenhum resultado técnico equivale a aceite.
+`CR-WI001-01` e `CR-WI001-02` retornaram FAIL e permanecem históricos.
+`CR-WI001-03` retornou PASS_WITH_FINDINGS: F003, F004 e o finding de whitespace
+foram resolvidos; `CR-WI001-03-F001` permanece não bloqueante. Nenhum resultado
+técnico ou de review equivale a aceite.
 
 ## Executions
 

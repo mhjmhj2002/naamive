@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED`
-**Implementation:** `SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW`
+**Implementation:** `INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN`
 
 ---
 
@@ -320,9 +320,9 @@ Executions.............. 3 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HI
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED
-Code Review............... CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 REQUIRED
-Acceptance................ NOT GRANTED / BLOCKED
-Implementation............ SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+Code Review............... CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
+Acceptance................ NOT GRANTED
+Implementation............ INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
 Human approval.......... GRANTED — T1–T6
 WI-001 readiness........ APPROVED / EXERCISED
 ```
@@ -384,14 +384,15 @@ TIR APPROVED
 
 ## 12. Próximo gate governado
 
-O próximo avanço real é a review independente `CR-WI001-03`, seguida de
-acceptance separado conforme lifecycle e governança aplicáveis.
+O próximo avanço real é a disposition do finding não bloqueante
+`CR-WI001-03-F001`, seguida de acceptance separado conforme lifecycle e
+governança aplicáveis.
 
 Fluxo esperado:
 
 ```text
 WI-001 IN_REVIEW
-→ CR-WI001-03 independente
+→ disposition de CR-WI001-03-F001
 → decisão de aceite humana conforme aplicável
 ```
 
@@ -399,10 +400,10 @@ WI-001 IN_REVIEW
 
 ### Próxima ação recomendada
 
-Após EX-003:
+Após CR-WI001-03:
 
 ```text
-abrir a task autorizada de review CR-WI001-03 para WI-001
+registrar a disposition de CR-WI001-03-F001 e submeter o acceptance humano aplicável
 ```
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
@@ -623,8 +624,9 @@ NB-0001 é histórica e imutável.
 Technology Baseline v0.10 está APPROVED / FROZEN.
 TIR v1.0 está APPROVED.
 EX-001 e EX-002 são terminais/históricas; CR-WI001-01 e CR-WI001-02 permanecem
-FAIL históricos. EX-003 produziu a segunda remediação; F003, F004 e
-CR-WI001-02-F001 aguardam revisão independente.
+FAIL históricos. EX-003 produziu a segunda remediação; CR-WI001-03 comprovou
+F003, F004 e CR-WI001-02-F001 como resolvidos. CR-WI001-03-F001 permanece
+não bloqueante.
 
 Planning Round 1 está COMPLETE.
 Business Baseline final da rodada: PBL-PRJ001-R1-v1.0.
@@ -654,9 +656,9 @@ Roadmap v2 = CURRENT
 1 Development Cycle (DC-001)
 3 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
 Implementation authority = GRANTED
-Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 REQUIRED
-Acceptance = NOT GRANTED / BLOCKED
-Implementation = SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
+Acceptance = NOT GRANTED
+Implementation = INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -668,7 +670,7 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado:
-CR-WI001-03 independente, depois acceptance separado.
+Disposition de CR-WI001-03-F001, depois acceptance separado.
 
 Não promova WI-001 automaticamente.
 Não reexecute EX-001 terminal.
@@ -743,8 +745,8 @@ EXECUTIONS.................. 3 (EX-001 historical; EX-002 historical; EX-003 SUC
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED
-IMPLEMENTATION.............. SECOND REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+IMPLEMENTATION.............. INDEPENDENT CODE REVIEW COMPLETED / NON_BLOCKING FINDING OPEN
 
 DECISION INPUT COMMIT....... ef10e525164f16d14b7416eab4e2de781e35ccec
-NEXT GOVERNED ACTION........ CR-WI001-03; acceptance separado
+NEXT GOVERNED ACTION........ disposition de CR-WI001-03-F001; acceptance separado
 ```
