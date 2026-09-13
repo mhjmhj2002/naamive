@@ -78,6 +78,20 @@ Para leitura rápida do sistema, quando ela for necessária, use:
 
 O guia visual é não normativo.
 
+### 2.3 Continuidade obrigatória do projeto
+
+`PROJECT_CONTINUITY.md` é a projeção viva e não normativa de handoff do
+projeto. A task deve reconciliá-lo na mesma execução sempre que alterar
+materialmente um fato nele representado, incluindo estado corrente de Work Item,
+Execution, review/audit, acceptance, disposição de finding que afete a
+continuidade, próxima ação governada ou outro estado corrente material.
+
+Mudanças técnicas/locais sem efeito na continuidade do projeto não exigem essa
+atualização. Quando aplicável, não reconciliar `PROJECT_CONTINUITY.md` torna a
+task **INCOMPLETE**. Os artefatos canônicos do projeto prevalecem em qualquer
+conflito; o guard automatizado apenas detecta omissão de co-alteração e não
+valida semântica de lifecycle.
+
 ---
 
 ## 3. Ordem de autoridade documental

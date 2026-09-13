@@ -10,7 +10,7 @@
 **Project:** `PRJ-001 — NAAMIVE MVP`  
 **Project lifecycle:** `PLANNING`  
 **Implementation authority:** `GRANTED / EXERCISED`
-**Implementation:** `WI-002 CODE REVIEW FAILED / GOVERNED REWORK REQUIRED`
+**Implementation:** `WI-002 CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT`
 
 ---
 
@@ -305,7 +305,7 @@ para fingir que a decisão ocorreu dentro da rodada fechada.
 
 ## 10. Estado corrente do PRJ-001
 
-Estado corrente após EX-003:
+Estado corrente após `EX-006` e `CR-WI002-03`:
 
 ```text
 Need NEED-001........... ACCEPTED
@@ -316,7 +316,7 @@ DT-001 v1............... CURRENT
 Roadmap v2.............. CURRENT
 Work Items.............. 11 PROPOSED / 1 IN_REVIEW / 1 DONE
 Development Cycles...... 2 (DC-001, DC-002)
-Executions.............. 5 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 SUCCEEDED / HISTORICAL; EX-005 SUCCEEDED)
+Executions.............. 6 (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED; EX-004 SUCCEEDED / HISTORICAL; EX-005 SUCCEEDED / HISTORICAL; EX-006 SUCCEEDED)
 Validation.............. NOT EXECUTED
 Delivery................ NOT DELIVERED
 Implementation authority GRANTED / EXERCISED
@@ -330,11 +330,13 @@ WI-001 readiness........ APPROVED / EXERCISED
 WI-002 readiness........ APPROVED / EXERCISED
 WI-002 authority........ GRANTED / EXERCISED
 WI-002 Development Cycle DC-002 CREATED
-WI-002 Execution........ EX-005 SUCCEEDED / CLAIM RELEASED / current rework result
+WI-002 Execution........ EX-006 SUCCEEDED / CLAIM RELEASED / current rework result; EX-005 historical
 WI-002 implementation authority GRANTED
-WI-002 code review....... CR-WI002-01 FAIL / 1 BLOCKING FINDING
-WI-002 implementation... CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+WI-002 code review....... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / HISTORICAL; CR-WI002-03 PASS_WITH_FINDINGS
+WI-002 findings.......... CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 OPEN / NON_BLOCKING
+WI-002 implementation... CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
 WI-002 acceptance........ NOT GRANTED / BLOCKED
+WI-002 next action....... independent WI-002 acceptance audit carrying CR-WI002-02-F002
 ```
 
 Arquivos operacionais principais:
@@ -418,14 +420,14 @@ Não inferir automaticamente um novo avanço. O próximo trabalho deve ser
 determinado pelas dependências e ordem do Roadmap e pelo readiness próprio do
 próximo Work Item.
 
-WI-002 está `IN_REVIEW` após `EX-005 SUCCEEDED`; EX-004 é histórico.
-`CR-WI002-01` permanece `FAIL / HISTORICAL` e `CR-WI002-F001` está `RESOLVED`: a
-boundary runtime recusa DML bruto e exige expected-version pelos comandos
-controlados. `CR-WI002-02` retornou `FAIL`, registrando `CR-WI002-02-F001`
-(BLOCKING — um expected version nulo ainda permite mutação material) e
-`CR-WI002-02-F002` (NON_BLOCKING — narrativa de projeção desatualizada). A
-próxima ação governada é o rework do finding bloqueador; sucesso técnico não
-constitui aceite e nenhum acceptance audit foi executado.
+WI-002 está `IN_REVIEW` após `EX-006 SUCCEEDED`; EX-005 e EX-004 são
+históricos. `CR-WI002-01` e `CR-WI002-02` permanecem `FAIL / HISTORICAL`.
+`CR-WI002-F001` e `CR-WI002-02-F001` estão `RESOLVED`; `CR-WI002-02-F002`
+permanece `OPEN / NON_BLOCKING` por narrativa de projeção desatualizada.
+`CR-WI002-03` retornou `PASS_WITH_FINDINGS`. A implementação está `CODE REVIEW
+PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT`; acceptance não foi
+concedido. A próxima ação governada é uma acceptance audit independente que
+carregue `CR-WI002-02-F002`.
 
 Não reexecutar EX-001 nem conceder aceite por inferência.
 
@@ -666,23 +668,29 @@ T4 MOD-001 DEFINED → PLANNED
 T5 DT-001 v1 CANDIDATE / NOT CURRENT → CURRENT
 T6 Roadmap v2 CANDIDATE / NOT CURRENT → CURRENT
 
-Estado corrente esperado:
+Estado corrente:
 Project = PLANNING
 MOD-001 = PLANNED
 VI-001 = PLANNED
 DT-001 v1 = CURRENT
 Roadmap v2 = CURRENT
 11 Work Items = PROPOSED
-1 Work Item = READY (WI-002)
+1 Work Item = IN_REVIEW (WI-002)
 1 DONE (WI-001)
 2 Development Cycles (DC-001, DC-002)
-3 Executions (EX-001 SUCCEEDED / HISTORICAL; EX-002 SUCCEEDED / HISTORICAL; EX-003 SUCCEEDED)
+6 Executions (EX-001 e EX-002 históricas; EX-003 SUCCEEDED; EX-004 e EX-005 históricos; EX-006 SUCCEEDED)
 Implementation authority = GRANTED / EXERCISED
 Code Review = CR-WI001-01 FAIL / HISTORICAL; CR-WI001-02 FAIL / HISTORICAL; CR-WI001-03 PASS_WITH_FINDINGS
 Acceptance Audit = AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 Human Acceptance = APPROVED / EXERCISED
 Acceptance = GRANTED / EXERCISED
-Implementation = WI-001 ACCEPTED / DONE
+WI-002 Execution = EX-006 SUCCEEDED / current rework result
+CR-WI002-02 = FAIL / HISTORICAL
+CR-WI002-03 = PASS_WITH_FINDINGS
+CR-WI002-02-F001 = RESOLVED
+CR-WI002-02-F002 = OPEN / NON_BLOCKING
+Implementation = CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
+WI-002 acceptance = NOT GRANTED
 
 A aprovação T1–T6 está registrada em:
 project/naamive/projects/PRJ-001-naamive-mvp/governance/HUMAN_APPROVAL_T1_T6.md
@@ -694,8 +702,8 @@ Esse commit é o snapshot de entrada da decisão, não necessariamente o HEAD at
 No começo da sessão confira git status e git log -1.
 
 Próximo avanço governado para WI-002:
-Independent technical review / acceptance audit aplicável ao resultado técnico
-de EX-004. Não exercer aceite diretamente.
+Acceptance audit independente, carregando `CR-WI002-02-F002`. Não exercer aceite
+diretamente.
 
 Não reexecute EX-001 terminal.
 Não reabra WI-001 DONE silenciosamente.
@@ -707,6 +715,18 @@ Humano controla commit/push/merge/rebase/reset/clean.
 ---
 
 ## 21. Manutenção deste arquivo
+
+`PROJECT_CONTINUITY.md` é uma projeção operacional obrigatória e **não
+normativa**. Quando uma task governada/material alterar o estado corrente do
+projeto ou a próxima ação governada, ela deve reconciliar este arquivo na mesma
+task a partir de `CURRENT_STATE.md`, `EXECUTION_BOARD.md`, `ROADMAP.md` e
+`activity/ACTIVITY_LOG.md`; não é aceitável adiar para “atualizar a continuidade
+depois”. Em conflito, esses artefatos canônicos prevalecem.
+
+O `scripts/project-continuity-guard.mjs` verifica a omissão mais comum: alteração
+de projeções vivas canônicas sem co-alteração deste handoff. Ele não valida a
+correção semântica do lifecycle; a reconciliação humana/operacional continua
+obrigatória.
 
 Atualizar quando houver:
 
@@ -767,13 +787,14 @@ WORK ITEMS.................. 11 PROPOSED / 1 IN_REVIEW (WI-002) / 1 DONE (WI-001
 WI-002 READINESS............ APPROVED / EXERCISED
 WI-002 AUTHORITY............ GRANTED / EXERCISED
 WI-002 DEVELOPMENT CYCLE.... DC-002 CREATED
-WI-002 EXECUTION............ EX-005 SUCCEEDED / CLAIM RELEASED / current rework result
+WI-002 EXECUTION............ EX-006 SUCCEEDED / CLAIM RELEASED / current rework result; EX-005 historical
 WI-002 IMPLEMENTATION AUTHORITY GRANTED
-WI-002 CODE REVIEW.......... CR-WI002-01 FAIL / 1 BLOCKING FINDING
-WI-002 IMPLEMENTATION....... REWORK TECHNICAL RESULT PRODUCED / AWAITING CODE REVIEW
+WI-002 CODE REVIEW.......... CR-WI002-01 FAIL / HISTORICAL; CR-WI002-02 FAIL / HISTORICAL; CR-WI002-03 PASS_WITH_FINDINGS
+WI-002 FINDINGS............. CR-WI002-F001 RESOLVED; CR-WI002-02-F001 RESOLVED; CR-WI002-02-F002 OPEN / NON_BLOCKING
+WI-002 IMPLEMENTATION....... CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
 WI-002 ACCEPTANCE............ NOT GRANTED / BLOCKED
 DEVELOPMENT CYCLES.......... 2 (DC-001, DC-002)
-EXECUTIONS.................. 5 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 historical; EX-005 SUCCEEDED)
+EXECUTIONS.................. 6 (EX-001 historical; EX-002 historical; EX-003 SUCCEEDED; EX-004 historical; EX-005 historical; EX-006 SUCCEEDED)
 VALIDATION.................. NOT EXECUTED
 DELIVERY.................... NOT DELIVERED
 IMPLEMENTATION AUTHORITY.... GRANTED / EXERCISED
@@ -781,8 +802,8 @@ CODE REVIEW................. CR-WI001-03 PASS_WITH_FINDINGS
 ACCEPTANCE AUDIT............ AUD-WI001-ACCEPTANCE-01 PASS_WITH_FINDINGS
 HUMAN ACCEPTANCE............ APPROVED / EXERCISED
 ACCEPTANCE.................. GRANTED / EXERCISED
-IMPLEMENTATION.............. WI-002 CODE REVIEW FAILED / GOVERNED REWORK REQUIRED
+IMPLEMENTATION.............. WI-002 CODE REVIEW PASSED WITH NONBLOCKING FINDING / AWAITING ACCEPTANCE AUDIT
 
-DECISION INPUT COMMIT....... 10ec0cefbb4f113afe129db18b11f00b2d3d43c9
-NEXT GOVERNED ACTION........ WI-002: governed treatment/rework of CR-WI002-F001
+DECISION INPUT COMMIT (T1–T6) cf4f2c032d61835329db820d9490250927b6bfeb
+NEXT GOVERNED ACTION........ WI-002: independent acceptance audit carrying CR-WI002-02-F002
 ```
