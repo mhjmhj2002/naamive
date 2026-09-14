@@ -2,6 +2,7 @@ import { Pool } from 'pg';
 import { bootstrap } from './bootstrap.js';
 import { migrate, migratorConnectionString } from './migrate.js';
 import { verifyPrincipalPersistence } from './principal.integration.js';
+import { verifyPasswordLoginPersistence } from './login.integration.js';
 
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) throw new Error('DATABASE_URL is required for the real PostgreSQL integration bootstrap');
@@ -17,6 +18,7 @@ try {
   if (metadata.rows.length !== 2) throw new Error('Kysely migration metadata is not located in platform');
 
   await verifyPrincipalPersistence(connectionString);
+  await verifyPasswordLoginPersistence(connectionString);
 
   const migratorUrl = migratorConnectionString(connectionString);
   if (!migratorUrl) throw new Error('Migrator connection string is unavailable');
@@ -48,7 +50,7 @@ try {
       await runtimePool.end();
     }
   }
-  process.stdout.write(JSON.stringify({ integration: 'passed', version: version.rows[0].version, roles: roles.rows.map((row) => row.rolname), migration_metadata_schema: 'platform', advisory_lock: 'serialized', runtime_ddl: 'denied', principal_persistence: 'passed' }) + '\n');
+  process.stdout.write(JSON.stringify({ integration: 'passed', version: version.rows[0].version, roles: roles.rows.map((row) => row.rolname), migration_metadata_schema: 'platform', advisory_lock: 'serialized', runtime_ddl: 'denied', principal_persistence: 'passed', password_login: 'passed' }) + '\n');
 } finally {
   await pool.end();
 }

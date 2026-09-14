@@ -1,7 +1,7 @@
 # VI-001 — Status
 
 **navigation_status:** DOING  
-**lifecycle_state:** PLANNED  
+**lifecycle_state:** IMPLEMENTING
 **normative_baseline_ref:** NB-0002  
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Technology Baseline:** v0.10 — APPROVED / FROZEN  
@@ -13,7 +13,7 @@
 |---|---|---|---|
 | WI-001 — Repository / Workspace Foundation | DONE | DONE | [WI-001](work-items/WI-001-workspace-foundation.md) |
 | WI-002 — Principal Persistence | DONE | DONE | [WI-002](work-items/WI-002-principal-persistence.md) |
-| WI-003 — Username / Password Login | DOING | READY | [WI-003](work-items/WI-003-login.md) |
+| WI-003 — Username / Password Login | DOING | IN_REVIEW | [WI-003](work-items/WI-003-login.md) |
 | WI-004 — Durable Server-side Session | TODO | PROPOSED | [WI-004](work-items/WI-004-server-side-session.md) |
 | WI-005 — Authority / Scoped Grants | TODO | PROPOSED | [WI-005](work-items/WI-005-authority-grants.md) |
 | WI-006 — Session Bootstrap | TODO | PROPOSED | [WI-006](work-items/WI-006-session-bootstrap.md) |
@@ -25,8 +25,7 @@
 | WI-012 — End-to-end Validation Evidence | TODO | PROPOSED | [WI-012](work-items/WI-012-e2e-validation-evidence.md) |
 | WI-013 — Canonical Project Read Source | TODO | PROPOSED | [WI-013](work-items/WI-013-canonical-project-read-source.md) |
 
-WI-003 é o ramo corrente com o Development Cycle governado `DC-003` criado.
-Seu lifecycle é `READY` por `GATE-WI003-02`; `FND-WI003-RCP-001..004` estão
-`RESOLVED BY DEC-009` e `FND-AUD-WI003-01-001` permanece tratado como `KEEP`.
-Não há Execution e implementação continua não autorizada até existir authority
-própria ativa. Abra WI-003 para seu fluxo e evidência.
+WI-003 é o ramo corrente em `IN_REVIEW`; `EX-007` terminou `SUCCEEDED` e
+`DC-003` está em `PREPARE_REVIEW`. `FND-WI003-RCP-001..004` estão `RESOLVED BY
+DEC-009` e `FND-AUD-WI003-01-001` permanece tratado como `KEEP`. A próxima
+ação é review independente, não aceite automático.

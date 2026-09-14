@@ -9,6 +9,8 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@naamive/database": "workspace:*",
+    "@naamive/modules": "workspace:*",
     "@fastify/type-provider-typebox": "6.1.0",
     "@tanstack/react-query": "5.102.8",
     "fastify": "5.12.3",

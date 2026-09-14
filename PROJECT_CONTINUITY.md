@@ -3,6 +3,7 @@
 **Natureza:** índice operacional de Projects; não normativo
 **Regra:** cada fato mutável tem um único dono; este arquivo só localiza o
 Project a abrir.
+**Última reconciliação do índice:** 2026-09-14T20:09:01-03:00
 
 ## Navegação
 

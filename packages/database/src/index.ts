@@ -9,6 +9,8 @@ import {
   type PrincipalStatus
 } from '@naamive/modules';
 
+export { createLoginAuthenticationRepository } from './login.js';
+
 export interface DatabaseSchema {
   platform: { foundation_migration_probe: { id: number } };
   authority: {
@@ -27,6 +29,21 @@ export interface DatabaseSchema {
       status: PrincipalStatus;
       event_type: PrincipalHistoryEventType;
       occurred_at: Date;
+    };
+  };
+  security: {
+    human_password_credential: {
+      credential_id: string;
+      principal_id: string;
+      credential_version: string;
+      hash_format_version: number;
+      algorithm: 'argon2id';
+      memory_kib: number;
+      iterations: number;
+      parallelism: number;
+      salt: Buffer;
+      hash: Buffer;
+      revoked_at: Date | null;
     };
   };
 }

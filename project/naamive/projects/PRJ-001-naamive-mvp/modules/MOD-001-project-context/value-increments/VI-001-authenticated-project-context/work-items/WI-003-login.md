@@ -1,6 +1,6 @@
 # WI-003 — Username / Password Login
 
-**State:** READY
+**State:** IN_REVIEW
 **Project:** PRJ-001  
 **Module:** MOD-001 — Project Context  
 **Owner:** MOD-001 — Project Context  
@@ -11,7 +11,7 @@
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** WI-002  
 **Development Cycle:** DC-003
-**Execution:** NONE  
+**Execution:** EX-007 — SUCCEEDED
 **Readiness authority:** GRANTED / EXERCISED (`AUTH-PRJ001-WI-READINESS-01`; `GATE-WI003-02`)
 
 ## Reason / business intention
@@ -22,8 +22,8 @@ material product/architecture decision.
 
 ## Relation to plan
 
-Canonical proposed entry in DevelopmentRoadmap v2. It remains non-executable
-until the round is approved and its own readiness gate passes.
+Entrada canônica do DevelopmentRoadmap v2, executada nesta passagem causal sob
+authority específica e limitada a `WI-003` / `DC-003` / `EX-007`.
 
 ## Outcome
 
@@ -112,13 +112,21 @@ the Gap Protocol.
 
 ## Fluxo corrente e evidência
 
-Este Work Item é o ramo operacional corrente apto a iniciar execução quando as
-condições posteriores forem satisfeitas. Seu estado é `READY`: a readiness
-authority foi `GRANTED / EXERCISED` pelo
+A readiness authority foi `GRANTED / EXERCISED` pelo
 [`GATE-WI003-02_READINESS.md`](../../../../../governance/GATE-WI003-02_READINESS.md),
-sob `AUTH-PRJ001-WI-READINESS-01`. `DC-003` foi criado sem criar Execution:
-Execution continua `NONE` e implementação continua `NOT AUTHORIZED` até existir
-authority própria válida para a tentativa.
+sob `AUTH-PRJ001-WI-READINESS-01`. A instrução explícita corrente do Project
+Owner para executar WI-003 e corrigir sua documentação foi materializada como
+[`AUTH-WI003-EXECUTION-01.md`](../../../../../governance/AUTH-WI003-EXECUTION-01.md).
+Ela é a authority rastreável, específica e não reutilizável desta primeira
+tentativa.
+
+`EX-007` percorreu `CREATED → ELIGIBLE → RUNNING → SUCCEEDED`; a primeira
+Execution válida promoveu `READY → IN_PROGRESS` e o resultado técnico,
+evidências e candidato para avaliação promoveram `IN_PROGRESS → IN_REVIEW`.
+O pacote de review está em
+[`EX-007-WI003.md`](../../../../../executions/EX-007-WI003.md) e
+[`EX-007-WI003.md`](../../../../../executions/evidence/EX-007-WI003.md).
+Não há decisão de aceite nesta Work Item.
 
 [`DEC-009_AUTHENTICATION_CONTRACT.md`](../../../../../decisions/DEC-009_AUTHENTICATION_CONTRACT.md)
 materializa a aprovação humana e resolve `FND-WI003-RCP-001..004`. A
@@ -127,8 +135,8 @@ conclui `READY FOR INDEPENDENT READINESS AUDIT`; R1 é evidência histórica e n
 é o resultado corrente. [`AUD-WI003-01_INDEPENDENT_READINESS_AUDIT.md`](../../../../../governance/AUD-WI003-01_INDEPENDENT_READINESS_AUDIT.md)
 permanece a evidência independente aplicável, e
 [`GATE-WI003-01_READINESS.md`](../../../../../governance/GATE-WI003-01_READINESS.md)
-permanece o bloqueio histórico de authority. Com `DC-003` criado, a próxima ação
-legal exata é decidir a authority reutilizável de Execution candidata; este gate
-não criou Execution nem autorização de implementação. Gates, decisões, Development Cycle, Execution,
-reviews, audits e acceptance devem ser lidos em seus artefatos aplicáveis quando
-existirem.
+permanece o bloqueio histórico de authority. Gates, decisões, Development
+Cycle, Execution, reviews, audits e acceptance devem ser lidos em seus
+artefatos aplicáveis quando existirem. A próxima ação legal é review
+independente do resultado de WI-003, seguido da auditoria/decisão de aceite
+exigidas para uma Work Item `MATERIAL`.

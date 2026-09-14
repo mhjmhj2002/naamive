@@ -15,7 +15,7 @@ de `NB-0002`, sua membership e o [Documentation Map](../../../../00_DOCUMENTATIO
 
 | Child | Type | Navigation | Lifecycle | Entry |
 |---|---|---|---|---|
-| MOD-001 — Project Context | MODULE | DOING | PLANNED | [module status](modules/MOD-001-project-context/STATUS.md) |
+| MOD-001 — Project Context | MODULE | DOING | IMPLEMENTING | [module status](modules/MOD-001-project-context/STATUS.md) |
 
 Não abra filhos `DONE` sem necessidade de evidência histórica ou dependência
 explícita. Este índice não lista Value Increments nem Work Items.

@@ -1,4 +1,8 @@
-# AUTH-PRJ001-WI-EXECUTION-01 — Candidata de authority reutilizável para orquestração de Execution
+# AUTH-PRJ001-WI-EXECUTION-01 — Candidata histórica não exercida de authority reutilizável para orquestração de Execution
+
+> Registro histórico: esta proposta não foi exercida, não é a authority
+> corrente e não deve ser usada como source of truth para `WI-003`/`EX-007`.
+> A authority pontual aplicável está em `AUTH-WI003-EXECUTION-01.md`.
 
 **status:** CANDIDATE FOR HUMAN AUTHORITY GRANT
 **normative_effect:** NONE UNTIL APPROVED
