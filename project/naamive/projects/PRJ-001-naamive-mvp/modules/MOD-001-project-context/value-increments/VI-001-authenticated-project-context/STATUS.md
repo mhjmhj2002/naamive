@@ -25,8 +25,8 @@
 | WI-012 — End-to-end Validation Evidence | TODO | PROPOSED | [WI-012](work-items/WI-012-e2e-validation-evidence.md) |
 | WI-013 — Canonical Project Read Source | TODO | PROPOSED | [WI-013](work-items/WI-013-canonical-project-read-source.md) |
 
-WI-003 é o ramo corrente pronto para a criação governada de Development Cycle.
+WI-003 é o ramo corrente com o Development Cycle governado `DC-003` criado.
 Seu lifecycle é `READY` por `GATE-WI003-02`; `FND-WI003-RCP-001..004` estão
 `RESOLVED BY DEC-009` e `FND-AUD-WI003-01-001` permanece tratado como `KEEP`.
-Não há Development Cycle nem Execution e implementação não está autorizada.
-Abra WI-003 para seu fluxo e evidência.
+Não há Execution e implementação continua não autorizada até existir authority
+própria ativa. Abra WI-003 para seu fluxo e evidência.

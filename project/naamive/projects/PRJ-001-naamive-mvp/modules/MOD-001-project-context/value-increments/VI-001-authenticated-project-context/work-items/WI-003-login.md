@@ -10,7 +10,7 @@
 **normative_baseline_ref:** NB-0002  
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Depends on:** WI-002  
-**Development Cycle:** NOT CREATED  
+**Development Cycle:** DC-003
 **Execution:** NONE  
 **Readiness authority:** GRANTED / EXERCISED (`AUTH-PRJ001-WI-READINESS-01`; `GATE-WI003-02`)
 
@@ -116,8 +116,9 @@ Este Work Item é o ramo operacional corrente apto a iniciar execução quando a
 condições posteriores forem satisfeitas. Seu estado é `READY`: a readiness
 authority foi `GRANTED / EXERCISED` pelo
 [`GATE-WI003-02_READINESS.md`](../../../../../governance/GATE-WI003-02_READINESS.md),
-sob `AUTH-PRJ001-WI-READINESS-01`. Development Cycle continua `NOT CREATED`,
-Execution continua `NONE` e implementação continua `NOT AUTHORIZED`.
+sob `AUTH-PRJ001-WI-READINESS-01`. `DC-003` foi criado sem criar Execution:
+Execution continua `NONE` e implementação continua `NOT AUTHORIZED` até existir
+authority própria válida para a tentativa.
 
 [`DEC-009_AUTHENTICATION_CONTRACT.md`](../../../../../decisions/DEC-009_AUTHENTICATION_CONTRACT.md)
 materializa a aprovação humana e resolve `FND-WI003-RCP-001..004`. A
@@ -126,8 +127,8 @@ conclui `READY FOR INDEPENDENT READINESS AUDIT`; R1 é evidência histórica e n
 é o resultado corrente. [`AUD-WI003-01_INDEPENDENT_READINESS_AUDIT.md`](../../../../../governance/AUD-WI003-01_INDEPENDENT_READINESS_AUDIT.md)
 permanece a evidência independente aplicável, e
 [`GATE-WI003-01_READINESS.md`](../../../../../governance/GATE-WI003-01_READINESS.md)
-permanece o bloqueio histórico de authority. A próxima ação legal exata é criar
-Development Cycle sob authority própria; este gate não cria Cycle, Execution ou
-autorização de implementação. Gates, decisões, Development Cycle, Execution,
+permanece o bloqueio histórico de authority. Com `DC-003` criado, a próxima ação
+legal exata é decidir a authority reutilizável de Execution candidata; este gate
+não criou Execution nem autorização de implementação. Gates, decisões, Development Cycle, Execution,
 reviews, audits e acceptance devem ser lidos em seus artefatos aplicáveis quando
 existirem.

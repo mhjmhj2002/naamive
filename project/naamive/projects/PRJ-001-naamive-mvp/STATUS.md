@@ -1,7 +1,7 @@
 # PRJ-001 — Status
 
 **navigation_status:** DOING  
-**lifecycle_state:** PLANNING  
+**lifecycle_state:** IMPLEMENTATION
 **normative_baseline_ref:** [NB-0002](../../../../governance/normative-baselines/NB-0002.md)  
 **business_baseline_ref:** PBL-PRJ001-R1-v1.0  
 **Technology Baseline:** [v0.10 — APPROVED / FROZEN](../../../../technology/01_TECHNOLOGY_BASELINE.md)  
