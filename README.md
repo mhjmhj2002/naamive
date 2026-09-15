@@ -28,6 +28,10 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 * [Status da Necessidade](documentacao/necessidade/STATUS_DA_NECESSIDADE.md)
 * [Resultados do Processo da Necessidade](documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md)
 
+### Projeto
+
+* [Ciclo de Vida do Projeto](documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md)
+
 ## Dados operacionais
 
 ### Necessidades
@@ -42,13 +46,15 @@ README.md
 CONTINUIDADE_ATUAL.md
 
 documentacao/
-└── necessidade/
-    ├── 01_DEFINICAO_DA_NECESSIDADE.md
-    ├── 02_MODELO_DE_NECESSIDADE.md
-    ├── 03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md
-    ├── CICLO_DE_VIDA_DA_NECESSIDADE.md
-    ├── STATUS_DA_NECESSIDADE.md
-    └── RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md
+├── necessidade/
+│   ├── 01_DEFINICAO_DA_NECESSIDADE.md
+│   ├── 02_MODELO_DE_NECESSIDADE.md
+│   ├── 03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md
+│   ├── CICLO_DE_VIDA_DA_NECESSIDADE.md
+│   ├── STATUS_DA_NECESSIDADE.md
+│   └── RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md
+└── projeto/
+    └── CICLO_DE_VIDA_DO_PROJETO.md
 
 dados/
 └── necessidades/

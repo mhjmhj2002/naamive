@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A próxima vertical necessária é Projeto.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. O início conceitual do ciclo de vida do Projeto está registrado, sem modelo, status, Resultados do Processo ou instância materializados.
 
 ## Necessidade ativa
 
@@ -20,7 +20,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * Recomendação: `ASSUMIR_COMPROMISSO`
 * Decisão humana de compromisso: `APROVADO`, registrada por `mhj`, usuário responsável e criador identificado no contexto atual
 * Projeto: ainda não criado
-* Transição obrigatória atual: criação do Projeto 1:1 e, após sua existência, registro em `EM_PROJETO`
+* Transição obrigatória atual: criação futura do Projeto 1:1 e, após sua existência, registro em `EM_PROJETO`
 
 `QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` não pode receber `EM_PROJETO` enquanto não existir o Projeto correspondente. A transição obrigatória não foi materializada por ausência da entidade Projeto e de seu modelo; não existe status intermediário para representar essa lacuna.
 
@@ -32,6 +32,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * `documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md`
 * `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
+* `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 
 ## Decisões estruturais atuais
 
@@ -46,19 +47,24 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * `NAO_CARACTERIZA_NECESSIDADE` não autoriza encerramento unilateral pelo agente; pode levar a tratamento na formação ou a `CANCELAMENTO_APROVADO` por decisão humana.
 * `NAO_ASSUMIR_COMPROMISSO` é recomendação do agente e não cancela automaticamente a Necessidade.
 * Nesta primeira versão, o usuário responsável é o criador da Necessidade; decisões humanas materiais registram a decisão e o usuário autenticado que as realizou, sem papéis ou matriz de permissões.
-* Ainda não existe Projeto criado para `N-001`, pois a entidade Projeto e seu modelo ainda não foram definidos; isso impede materializar a transição obrigatória.
+* O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio.
+* O ciclo inicial conceitual do Projeto é `ENQUADRAMENTO` → `DESCOBERTA` → `DIREÇÃO DA SOLUÇÃO` → `DECOMPOSIÇÃO EM MÓDULOS`; esses nomes ainda não são status formais.
+* A formação inicial termina quando o primeiro Módulo for materializado. `EM_MODULO` foi proposto apenas como equivalente conceitual de `EM_PROJETO` na Necessidade; não há catálogo de status do Projeto.
+* A ausência de informação não pode ser substituída por invenção: o agente deve distinguir conteúdo conhecido, inferido, proposto e desconhecido, e acionar a pessoa usuária para informação essencial indisponível ou decisão humana material.
+* Auditoria e verificação são controles transversais, não uma quinta fase do ciclo do Projeto.
+* Ainda não existe Projeto criado para `N-001`. Não há modelo ou instância de Projeto, o que impede materializar a transição obrigatória para `EM_PROJETO`.
 
 ## Última atividade concluída
 
-Achados da auditoria independente da vertical Necessidade corrigidos: foram formalizados o tratamento de `NAO_CARACTERIZA_NECESSIDADE`, a recomendação `NAO_ASSUMIR_COMPROMISSO`, o cancelamento humano e sua rastreabilidade. A `N-001` permanece com `APROVADO`, registrado por `mhj`, e aguarda a materialização obrigatória de seu Projeto 1:1.
+O ciclo conceitual inicial do Projeto foi registrado. Foram definidas sua origem obrigatória e 1:1 em Necessidade aprovada, as fases `ENQUADRAMENTO`, `DESCOBERTA`, `DIREÇÃO DA SOLUÇÃO` e `DECOMPOSIÇÃO EM MÓDULOS`, seus limites, a participação humana, a regra contra invenção, a auditoria transversal e a fronteira no primeiro Módulo. Não foram criados modelo, status, Resultados do Processo, instância de Projeto ou Módulo.
 
 ## Próxima ação
 
-Definir a entidade Projeto e seu modelo mínimo. A definição de Projeto deverá estabelecer criação atômica ou recuperável após `APROVADO`, preservando a relação 1:1 e evitando qualquer novo status intermediário da Necessidade. Então, permitir que a `N-001` origine seu Projeto 1:1 e complete a transição obrigatória para `EM_PROJETO`.
+Continuar a definição detalhada do ciclo de vida do Projeto, começando pela fase `ENQUADRAMENTO`, sem avançar prematuramente para modelo, catálogo de status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho.
 
 ## Bloqueios ou decisões pendentes
 
-Nenhum bloqueio conhecido para continuar a definição da vertical Necessidade.
+Nenhum bloqueio conhecido para continuar a definição do ciclo de vida do Projeto.
 
 ## Arquivos mínimos para continuar
 
@@ -71,4 +77,5 @@ Nenhum bloqueio conhecido para continuar a definição da vertical Necessidade.
 * `documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md`
 * `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
+* `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 * `dados/necessidades/N-001/necessidade.md`
