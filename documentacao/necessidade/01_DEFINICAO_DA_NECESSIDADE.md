@@ -6,6 +6,8 @@ Necessidade representa uma mudança de negócio que pode justificar a criação 
 
 Ela descreve principalmente **o que precisa mudar e por quê**, sem antecipar como a mudança será implementada.
 
+Esta documentação define o conceito e o modelo de Necessidade. As instâncias reais administradas pelo NAAMIVE pertencem à área de dados operacionais.
+
 Uma Necessidade deve ser:
 
 * clara;
