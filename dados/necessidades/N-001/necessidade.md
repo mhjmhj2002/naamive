@@ -124,7 +124,7 @@ Esta Necessidade surgiu da experiência prática com desenvolvimento apoiado por
 
 Resultado inicial: `QUALIFICAVEL`.
 
-Este resultado registra somente a verificação inicial. A Necessidade não é declarada aceita, pois ainda não existe ciclo de vida definido.
+Este resultado registra somente a verificação inicial. Ele é Resultado do Processo, não status do ciclo de vida.
 
 ## Situação operacional
 
@@ -158,10 +158,20 @@ Justificativa: há valor e prioridade altos, aderência ao NAAMIVE e não há re
 
 `APROVADO`.
 
-Esta foi uma decisão humana, ocorrida após a recomendação do agente. Ainda não foi decidido se `APROVADO` será nome de estado formal da Necessidade.
+Esta foi uma decisão humana, ocorrida após a recomendação do agente. `APROVADO` é Resultado do Processo e não é nome de status formal da Necessidade.
 
 ### Projeto originado
 
 `AINDA NÃO`.
 
 Motivo: a entidade Projeto e seu modelo ainda não foram definidos.
+
+## Situação no ciclo de vida
+
+O ciclo de formação está concluído, com auditoria `QUALIFICAVEL`. A qualificação também está concluída, com recomendação `ASSUMIR_COMPROMISSO` e decisão humana de compromisso `APROVADO`.
+
+Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md), `APROVADO` exige a criação obrigatória do Projeto correspondente antes que a Necessidade possa assumir formalmente `EM_PROJETO`.
+
+Essa transição ainda não foi materializada porque a entidade Projeto e seu modelo não estão definidos. Trata-se de lacuna de implementação e modelagem, não de um novo status intermediário. Enquanto a lacuna existir, não há status oficial atribuível que represente corretamente este instante entre a decisão já ocorrida e a criação obrigatória do Projeto.
+
+Próximo evento obrigatório: criar o Projeto 1:1 correspondente à `N-001` e, então, registrar `EM_PROJETO`.

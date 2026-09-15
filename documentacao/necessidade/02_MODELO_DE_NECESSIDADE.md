@@ -96,13 +96,4 @@ Se for uma evolução, o produto afetado está identificado?
 
 ## Resultado da verificação inicial
 
-Registre um dos resultados abaixo:
-
-```text
-QUALIFICAVEL
-PRECISA_DE_ESCLARECIMENTO
-PRECISA_DE_DECOMPOSICAO
-NAO_CARACTERIZA_NECESSIDADE
-```
-
-Esses resultados representam somente a verificação inicial do registro. Não são estados de ciclo de vida.
+Registre o resultado da auditoria aplicável conforme o catálogo de [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). Esses resultados representam conclusões da verificação inicial; não são estados de ciclo de vida.

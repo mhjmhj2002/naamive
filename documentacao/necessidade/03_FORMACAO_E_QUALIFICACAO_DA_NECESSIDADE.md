@@ -1,8 +1,8 @@
 # Formação e qualificação da Necessidade
 
-## Limite desta definição
+## Escopo desta definição
 
-Este documento formaliza somente o trecho da vida da Necessidade que vai do seu registro inicial até a decisão humana sobre assumir compromisso.
+Este documento detalha a formação e a qualificação, trechos iniciais do ciclo de vida da Necessidade, desde o registro até a decisão humana sobre assumir compromisso.
 
 ```text
 entrada
@@ -13,7 +13,7 @@ entrada
 → decisão humana de compromisso
 ```
 
-O ciclo de vida completo da Necessidade não está definido nem fechado por este documento. A relação posterior com Projeto, o acompanhamento e o encerramento permanecem para definição futura.
+O ciclo de vida completo, inclusive a relação posterior com Projeto e o encerramento, está definido em [Ciclo de Vida da Necessidade](CICLO_DE_VIDA_DA_NECESSIDADE.md). Os status oficiais estão em [Status da Necessidade](STATUS_DA_NECESSIDADE.md), e os resultados produzidos durante este processo estão em [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md).
 
 ## Entrada
 
@@ -72,7 +72,7 @@ nova auditoria
 
 Uma Necessidade pode sair da formação quando há problema compreensível, afetados identificáveis, resultado pretendido compreensível, fronteira de escopo suficiente, critério de atendimento observável, ausência de contradição material conhecida, tamanho compatível com uma única Necessidade, separação adequada entre problema e solução e confirmação da intenção pela pessoa usuária.
 
-Nessa condição, a auditoria produz o resultado `QUALIFICAVEL`. Esse resultado é da auditoria ou verificação; ele não é estado formal do ciclo de vida.
+Nessa condição, a auditoria produz o resultado de formação previsto no catálogo de [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). Esse resultado é da auditoria ou verificação; ele não é estado formal do ciclo de vida.
 
 ## Capacidades especializadas identificadas
 
@@ -113,7 +113,7 @@ nova qualificação
 
 ## Recomendação e decisão de compromisso
 
-Concluída a qualificação, o agente especializado emite recomendação fundamentada, como `ASSUMIR_COMPROMISSO`. A recomendação não é decisão material.
+Concluída a qualificação, o agente especializado emite a recomendação fundamentada prevista no catálogo de [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). A recomendação não é decisão material.
 
 ```text
 Agente especializado

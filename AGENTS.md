@@ -74,3 +74,13 @@ Uma atividade não é considerada concluída se o índice estiver incompatível 
 Não utilize `CONTINUIDADE_ATUAL.md` como diário permanente. Reescreva-o conforme o trabalho avança.
 
 Histórico futuro, caso necessário, deverá possuir mecanismo próprio. O arquivo de continuidade responde **onde estamos agora**, e não tudo que aconteceu desde o início.
+
+## 6. Organização de ciclo de vida, status e resultados do processo
+
+Toda entidade que possuir ciclo de vida próprio deve ter um arquivo específico com nome iniciado por `CICLO_DE_VIDA_`, como `CICLO_DE_VIDA_DA_NECESSIDADE.md` ou `CICLO_DE_VIDA_DO_PROJETO.md`.
+
+Toda entidade que possuir status próprios deve ter um arquivo específico com nome iniciado por `STATUS_`. Os status de entidades diferentes não devem ser misturados no mesmo arquivo.
+
+Quando uma entidade possuir Resultados do Processo formalizados, eles devem ter arquivo próprio com nome iniciado por `RESULTADOS_DO_PROCESSO_`.
+
+O catálogo oficial de status e o catálogo oficial de Resultados do Processo devem permanecer concentrados em seus arquivos próprios. Outros documentos podem referenciá-los, mas não devem manter listas normativas concorrentes.

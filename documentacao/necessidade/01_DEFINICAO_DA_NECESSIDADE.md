@@ -29,10 +29,10 @@ Quando a Necessidade for uma evolução, deve identificar o produto existente af
 
 ## Relação entre Necessidade e Projeto
 
-Uma Necessidade aceita origina um único Projeto:
+Uma Necessidade com compromisso aprovado origina um único Projeto:
 
 ```text
-1 Necessidade aceita
+1 Necessidade com compromisso aprovado
 → origina
 → 1 Projeto
 ```
