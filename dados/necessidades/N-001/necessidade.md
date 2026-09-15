@@ -112,7 +112,7 @@ Esta Necessidade surgiu da experiência prática com desenvolvimento apoiado por
 
 ## Verificação inicial
 
-| Aspecto | Resultado |
+| Aspecto | Avaliação |
 | --- | --- |
 | Clareza | ATENDE |
 | Coerência | ATENDE |
@@ -140,7 +140,7 @@ Este resultado registra somente a verificação inicial. Ele é Resultado do Pro
 
 ### Qualificação
 
-| Aspecto | Resultado | Conclusão |
+| Aspecto | Avaliação | Conclusão |
 | --- | --- | --- |
 | Valor | `ALTO` | Pode reduzir retrabalho, perda de contexto e coordenação manual no desenvolvimento com inteligência artificial. |
 | Prioridade | `ALTA` | O problema é central para tornar sustentável o aumento do uso de agentes. |
@@ -156,9 +156,11 @@ Justificativa: há valor e prioridade altos, aderência ao NAAMIVE e não há re
 
 ### Decisão humana de compromisso
 
-`APROVADO`.
+| Decisão | Usuário autenticado que decidiu |
+| --- | --- |
+| `APROVADO` | `mhj` |
 
-Esta foi uma decisão humana, ocorrida após a recomendação do agente. `APROVADO` é Resultado do Processo e não é nome de status formal da Necessidade.
+Esta foi uma decisão humana material, ocorrida após a recomendação do agente. O identificador `mhj` é o único identificador de usuário comprovável no contexto atual: ele consta como autor do histórico versionado do registro da N-001. Nesta primeira versão, o criador é o usuário responsável pela Necessidade. `APROVADO` é Resultado do Processo e não é nome de status formal da Necessidade.
 
 ### Projeto originado
 

@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui agora ciclo de vida, status e Resultados do Processo formalizados. A próxima vertical necessária é Projeto.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A próxima vertical necessária é Projeto.
 
 ## Necessidade ativa
 
@@ -18,7 +18,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * Resultado da auditoria: `QUALIFICAVEL`
 * Qualificação: concluída
 * Recomendação: `ASSUMIR_COMPROMISSO`
-* Decisão humana de compromisso: `APROVADO`
+* Decisão humana de compromisso: `APROVADO`, registrada por `mhj`, usuário responsável e criador identificado no contexto atual
 * Projeto: ainda não criado
 * Transição obrigatória atual: criação do Projeto 1:1 e, após sua existência, registro em `EM_PROJETO`
 
@@ -43,15 +43,18 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * Produto, Necessidade e Projeto são conceitos distintos.
 * Uma Necessidade com compromisso aprovado origina obrigatoriamente um único Projeto.
 * Não há estado permanente entre a decisão `APROVADO` e `EM_PROJETO`.
+* `NAO_CARACTERIZA_NECESSIDADE` não autoriza encerramento unilateral pelo agente; pode levar a tratamento na formação ou a `CANCELAMENTO_APROVADO` por decisão humana.
+* `NAO_ASSUMIR_COMPROMISSO` é recomendação do agente e não cancela automaticamente a Necessidade.
+* Nesta primeira versão, o usuário responsável é o criador da Necessidade; decisões humanas materiais registram a decisão e o usuário autenticado que as realizou, sem papéis ou matriz de permissões.
 * Ainda não existe Projeto criado para `N-001`, pois a entidade Projeto e seu modelo ainda não foram definidos; isso impede materializar a transição obrigatória.
 
 ## Última atividade concluída
 
-Ciclo de vida, catálogo de status e catálogo de Resultados do Processo da Necessidade formalizados. A situação da `N-001` foi reavaliada: possui `APROVADO`, mas ainda aguarda a materialização obrigatória da criação de seu Projeto 1:1 por ausência da entidade Projeto.
+Achados da auditoria independente da vertical Necessidade corrigidos: foram formalizados o tratamento de `NAO_CARACTERIZA_NECESSIDADE`, a recomendação `NAO_ASSUMIR_COMPROMISSO`, o cancelamento humano e sua rastreabilidade. A `N-001` permanece com `APROVADO`, registrado por `mhj`, e aguarda a materialização obrigatória de seu Projeto 1:1.
 
 ## Próxima ação
 
-Definir a entidade Projeto e seu modelo mínimo para permitir que a `N-001` origine seu Projeto 1:1 e complete a transição obrigatória para `EM_PROJETO`.
+Definir a entidade Projeto e seu modelo mínimo. A definição de Projeto deverá estabelecer criação atômica ou recuperável após `APROVADO`, preservando a relação 1:1 e evitando qualquer novo status intermediário da Necessidade. Então, permitir que a `N-001` origine seu Projeto 1:1 e complete a transição obrigatória para `EM_PROJETO`.
 
 ## Bloqueios ou decisões pendentes
 

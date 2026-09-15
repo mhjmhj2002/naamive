@@ -74,6 +74,8 @@ Uma Necessidade pode sair da formação quando há problema compreensível, afet
 
 Nessa condição, a auditoria produz o resultado de formação previsto no catálogo de [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). Esse resultado é da auditoria ou verificação; ele não é estado formal do ciclo de vida.
 
+Quando a auditoria produzir `NAO_CARACTERIZA_NECESSIDADE`, o agente não pode encerrar unilateralmente a Necessidade. Se ainda houver possibilidade de compreender ou reformular a demanda, a formação continua com o tratamento adequado. Quando o diagnóstico for definitivo, o encerramento somente ocorre se o usuário responsável confirmar a decisão humana material `CANCELAMENTO_APROVADO`.
+
 ## Capacidades especializadas identificadas
 
 As capacidades necessárias ao especialista em Necessidade, sem criar ainda catálogo global de competências nem arquitetura definitiva de agentes, são:
@@ -119,8 +121,12 @@ Concluída a qualificação, o agente especializado emite a recomendação funda
 Agente especializado
 → analisa, audita, qualifica e recomenda
 
-Humano com autoridade
-→ decide
+Usuário autenticado responsável pela Necessidade
+→ decide sobre o compromisso ou cancelamento
 ```
 
-O agente não assume sozinho compromisso de execução, pessoas, orçamento ou tempo. Quando a decisão humana for positiva, uma Necessidade com compromisso aprovado deverá originar um único Projeto. Este documento não cria Projeto, não define seu modelo e não define sua estrutura.
+O agente não assume sozinho compromisso de execução, pessoas, orçamento ou tempo. Nesta primeira versão, o usuário responsável é o usuário que criou a Necessidade; não há papéis, delegação ou configuração de autoridade. Toda decisão humana material deve registrar a decisão e o usuário autenticado que a realizou.
+
+Quando a recomendação for `ASSUMIR_COMPROMISSO`, a decisão humana positiva `APROVADO` exige que a Necessidade origine um único Projeto. Quando a recomendação for `NAO_ASSUMIR_COMPROMISSO`, ela não cancela a Necessidade: o usuário responsável pode confirmar `CANCELAMENTO_APROVADO` ou, se informação, condição ou mudança justificar nova análise, o processo pode retornar à formação ou à qualificação conforme a causa concreta. Não há, nesta definição, status ou Resultado do Processo para espera, adiamento ou reconsideração.
+
+Este documento não cria Projeto, não define seu modelo e não define sua estrutura.
