@@ -23,6 +23,7 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 
 * [Definição da Necessidade](documentacao/necessidade/01_DEFINICAO_DA_NECESSIDADE.md)
 * [Modelo de Necessidade](documentacao/necessidade/02_MODELO_DE_NECESSIDADE.md)
+* [Formação e qualificação da Necessidade](documentacao/necessidade/03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md)
 
 ## Dados operacionais
 
@@ -40,7 +41,8 @@ CONTINUIDADE_ATUAL.md
 documentacao/
 └── necessidade/
     ├── 01_DEFINICAO_DA_NECESSIDADE.md
-    └── 02_MODELO_DE_NECESSIDADE.md
+    ├── 02_MODELO_DE_NECESSIDADE.md
+    └── 03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md
 
 dados/
 └── necessidades/

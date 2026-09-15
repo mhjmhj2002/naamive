@@ -125,3 +125,43 @@ Esta Necessidade surgiu da experiência prática com desenvolvimento apoiado por
 Resultado inicial: `QUALIFICAVEL`.
 
 Este resultado registra somente a verificação inicial. A Necessidade não é declarada aceita, pois ainda não existe ciclo de vida definido.
+
+## Situação operacional
+
+### Formação
+
+**Resultado da auditoria:** `QUALIFICAVEL`.
+
+**Pontos adequados:** o problema e os afetados estão claros; o resultado pretendido é coerente; o escopo da primeira jornada utilizável e o fora de escopo delimitam a fronteira; há critério de atendimento observável; o tamanho é compatível com uma Necessidade de novo produto; problema e solução estão separados; e a intenção foi confirmada pela pessoa usuária.
+
+**Pontos a melhorar:** “coordenação manual contínua” é um objetivo com componente qualitativo. O critério de atendimento deve continuar representando uma primeira jornada completa utilizável, sem exigir um NAAMIVE perfeito.
+
+**Tratamento escolhido:** `NENHUM_TRATAMENTO_ADICIONAL`, pois os pontos de atenção não impedem compreensão, qualificação ou compromisso e já estão tratados pela delimitação registrada.
+
+### Qualificação
+
+| Aspecto | Resultado | Conclusão |
+| --- | --- | --- |
+| Valor | `ALTO` | Pode reduzir retrabalho, perda de contexto e coordenação manual no desenvolvimento com inteligência artificial. |
+| Prioridade | `ALTA` | O problema é central para tornar sustentável o aumento do uso de agentes. |
+| Aderência | `ATENDE` | A Necessidade define o próprio produto NAAMIVE e é compatível com seu propósito. |
+| Restrições impeditivas | `NENHUMA` | As restrições conhecidas condicionam a condução, mas não impedem o compromisso. |
+| Dependências impeditivas | `NENHUMA` | Não há dependência conhecida que impeça assumir compromisso neste momento. |
+
+### Recomendação
+
+`ASSUMIR_COMPROMISSO`.
+
+Justificativa: há valor e prioridade altos, aderência ao NAAMIVE e não há restrição ou dependência impeditiva conhecida.
+
+### Decisão humana de compromisso
+
+`APROVADO`.
+
+Esta foi uma decisão humana, ocorrida após a recomendação do agente. Ainda não foi decidido se `APROVADO` será nome de estado formal da Necessidade.
+
+### Projeto originado
+
+`AINDA NÃO`.
+
+Motivo: a entidade Projeto e seu modelo ainda não foram definidos.
