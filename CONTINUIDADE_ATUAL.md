@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados. A vertical Projeto possui definição conceitual, modelo mínimo, formação, ciclo de vida reorganizado e catálogo normativo de status. Ainda não há Resultados do Processo do Projeto, instância de Projeto ou Módulo materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem ciclo de vida, status e Resultados do Processo formalizados. Ainda não há instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -37,6 +37,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`
 * `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 * `documentacao/projeto/STATUS_DO_PROJETO.md`
+* `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
 
 ## Decisões estruturais atuais
 
@@ -57,20 +58,25 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * `CONCLUIDO` e `CANCELADO` são terminais. `CONCLUIDO` é terminal de sucesso e permite que a Necessidade de origem transicione de `EM_PROJETO` para `ATENDIDA`.
 * `CANCELADO` é terminal excepcional, dependente de decisão humana válida; o agente não pode cancelar unilateralmente.
 * Decisões humanas, conclusões de auditoria, recomendações e Resultados do Processo permanecem separados do catálogo de status.
-* Não existe `RESULTADOS_DO_PROCESSO_DO_PROJETO.md`; seus conceitos serão formalizados separadamente, seguindo a separação já estabelecida na Necessidade.
+* O catálogo normativo de Resultados do Processo do Projeto está em `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md` e contém exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`; nenhum deles é status.
+* `FORMACAO_SUFICIENTE`, junto da materialização dos Módulos necessários, permite a transição para `EM_MODULOS`; a materialização em si não é Resultado do Processo.
+* `FORMACAO_INSUFICIENTE` mantém o Projeto em `EM_FORMACAO` e aciona o tratamento de lacunas pelo motor de formação, seguido de nova verificação.
+* `COMPROMISSO_ATENDIDO` permite a transição para `CONCLUIDO`; `COMPROMISSO_NAO_ATENDIDO` mantém o Projeto em `EM_MODULOS` até novo trabalho descendente e nova verificação agregada.
+* `CANCELAMENTO_APROVADO` é decisão humana material e permite a transição de status não terminal para `CANCELADO`.
+* Pela relação 1:1, `Projeto CONCLUIDO → Necessidade ATENDIDA` e `Projeto CANCELADO → Necessidade CANCELADA`. Não deve existir segundo Projeto para contornar um cancelamento.
 * Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado. Não há decisão conceitual sobre responsável pelo Projeto.
 
 ## Última atividade concluída
 
-Foi criado `documentacao/projeto/STATUS_DO_PROJETO.md` como a fonte normativa única do catálogo de status do Projeto. O catálogo formaliza `EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO`, sem criar instâncias, Módulos ou Resultados do Processo. O ciclo de vida recebeu somente a referência ao novo catálogo, preservando fluxo e transições; a `N-001` não foi alterada.
+Foi criado `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md` como a fonte normativa única do catálogo de Resultados do Processo do Projeto. O catálogo formaliza exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`, sem criar instâncias ou Módulos. O ciclo de vida e o catálogo de status passaram a referenciar esses resultados sem alterar seus status ou fluxo; a `N-001` não foi alterada.
 
 ## Próxima ação
 
-Voltar ao brainstorm para definir `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md`, mantendo a separação entre status e Resultados do Processo.
+Voltar ao brainstorm antes de criar a instância `P-001` ou avançar para a definição de Módulo.
 
 ## Bloqueios ou decisões pendentes
 
-Não há decisão sobre responsável pelo Projeto. Permanecem pendentes o catálogo de Resultados do Processo do Projeto e a criação futura do Projeto 1:1 para a `N-001`.
+Não há decisão sobre responsável pelo Projeto. Permanecem pendentes a criação futura do Projeto 1:1 para a `N-001` e a definição de Módulo.
 
 ## Arquivos mínimos para continuar
 
@@ -85,4 +91,5 @@ Não há decisão sobre responsável pelo Projeto. Permanecem pendentes o catál
 * `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`
 * `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 * `documentacao/projeto/STATUS_DO_PROJETO.md`
+* `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
 * `dados/necessidades/N-001/necessidade.md`
