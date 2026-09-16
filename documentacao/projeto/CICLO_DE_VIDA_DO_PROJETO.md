@@ -6,7 +6,7 @@ Este documento define o fluxo, os eventos e as transições do Projeto desde sua
 
 Ele não define o modelo da entidade, os detalhes internos da formação, o catálogo normativo de status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho. A formação do Projeto é definida em [Formação do Projeto](03_FORMACAO_DO_PROJETO.md).
 
-Os status usados conceitualmente neste ciclo serão formalizados em catálogo próprio em atividade posterior. Os Resultados do Processo do Projeto também serão catalogados separadamente; conclusões de auditoria, decisões, verificações e recomendações não devem ser tratados como status.
+O catálogo normativo de status do Projeto está em [Status do Projeto](STATUS_DO_PROJETO.md). Os Resultados do Processo do Projeto serão catalogados separadamente; conclusões de auditoria, decisões, verificações e recomendações não devem ser tratados como status.
 
 ## Origem do Projeto
 
@@ -37,7 +37,7 @@ criação do Projeto
 → CONCLUIDO
 ```
 
-`EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO` são posições conceituais deste ciclo; não constituem ainda um catálogo normativo de status.
+`EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO` são as posições usadas neste ciclo. Seus significados normativos pertencem exclusivamente ao [Status do Projeto](STATUS_DO_PROJETO.md).
 
 ## Formação e entrada em `EM_MODULOS`
 
