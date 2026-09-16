@@ -164,16 +164,18 @@ Esta foi uma decisão humana material, ocorrida após a recomendação do Especi
 
 ### Projeto originado
 
-`AINDA NÃO`.
+`P-001 — Jornada Inicial do NAAMIVE`.
 
-Motivo: a instância de Projeto 1:1 correspondente ainda não foi materializada.
+Localização: `dados/projetos/P-001/projeto.md`.
+
+A instância 1:1 foi materializada com sucesso em `EM_FORMACAO` pelo Especialista em Formação do Projeto. Não existe outro Projeto vinculado à `N-001`.
 
 ## Situação no ciclo de vida
 
 O ciclo de formação está concluído, com auditoria `QUALIFICAVEL`. A qualificação também está concluída, com recomendação `ASSUMIR_COMPROMISSO` e decisão humana de compromisso `APROVADO`.
 
-Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), `APROVADO` exige a criação obrigatória do Projeto correspondente antes que a Necessidade possa assumir formalmente `EM_PROJETO`.
+Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), o bootstrap obrigatório criou o Projeto 1:1 `P-001` em `EM_FORMACAO`. A criação foi concluída antes da atualização desta Necessidade.
 
-Essa transição ainda não foi materializada porque a instância de Projeto 1:1 correspondente ainda não foi criada. Trata-se de lacuna de materialização, não de um novo status intermediário. Enquanto a lacuna existir, não há status oficial atribuível que represente corretamente este instante entre a decisão já ocorrida e a criação obrigatória do Projeto.
+**Status atual da Necessidade:** `EM_PROJETO`.
 
-Próximo evento obrigatório: criar o Projeto 1:1 correspondente à `N-001` e, então, registrar `EM_PROJETO`.
+O próximo Ator é o Auditor do Projeto. A `N-001` não replica as etapas ou os status internos da formação de `P-001`.
