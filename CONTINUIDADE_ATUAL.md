@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A vertical Projeto possui definição conceitual, modelo mínimo e formação formalizados; seu ciclo de vida inicial continua pendente de reorganização. Não há status, Resultados do Processo, instância de Projeto ou Módulo materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados. A vertical Projeto possui definição conceitual, modelo mínimo, formação e ciclo de vida reorganizado. Ainda não há catálogo de status do Projeto, Resultados do Processo do Projeto, instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -39,55 +39,40 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 
 ## Decisões estruturais atuais
 
-* `documentacao/` contém definições e modelos.
-* `dados/` contém instâncias reais administradas pelo NAAMIVE.
-* Entidades operacionais devem possuir coleções próprias.
-* Relações futuras entre entidades devem ocorrer por identificadores, evitando aninhamento físico indevido.
+* `documentacao/` contém definições e modelos; `dados/` contém instâncias reais administradas pelo NAAMIVE.
+* Entidades operacionais devem possuir coleções próprias, e relações futuras devem ocorrer por identificadores, evitando aninhamento físico indevido.
 * Todo vocabulário controlado pelo NAAMIVE usa Português do Brasil.
 * Produto, Necessidade e Projeto são conceitos distintos.
-* Uma Necessidade com compromisso aprovado origina obrigatoriamente um único Projeto.
-* Não há estado permanente entre a decisão `APROVADO` e `EM_PROJETO`.
-* `NAO_CARACTERIZA_NECESSIDADE` não autoriza encerramento unilateral pelo agente; pode levar a tratamento na formação ou a `CANCELAMENTO_APROVADO` por decisão humana.
-* `NAO_ASSUMIR_COMPROMISSO` é recomendação do agente e não cancela automaticamente a Necessidade.
-* Nesta primeira versão, o usuário responsável é o criador da Necessidade; decisões humanas materiais registram a decisão e o usuário autenticado que as realizou, sem papéis ou matriz de permissões.
-* O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio.
-* A Necessidade permanece como fonte de verdade do compromisso de mudança; o Projeto não redefine silenciosamente seu problema, resultado, escopo, fora de escopo, critério de atendimento, valor, contexto ou restrições conhecidos.
-* O modelo mínimo atual do Projeto é composto por identificador técnico, código, nome e Necessidade de origem.
-* Ainda não existe instância de Projeto, inclusive `P-001`.
-* Não há decisão conceitual sobre responsável pelo Projeto.
-* O Projeto transforma o compromisso recebido em direção realizável, organiza sua realização e conduz a decomposição até o nível de Módulo.
-* O Projeto identifica, delimita e materializa Módulos, mas não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
-* A materialização dos Módulos encerra a responsabilidade direta do Projeto de formação e decomposição, sem encerrar a existência do Projeto como entidade pai, agregadora e referência do compromisso.
-* O ciclo inicial conceitual do Projeto é `ENQUADRAMENTO` → `DESCOBERTA` → `DIREÇÃO DA SOLUÇÃO` → `DECOMPOSIÇÃO EM MÓDULOS`; esses nomes ainda não são status formais.
-* A formação do Projeto é o motor operacional que conduz esse fluxo até a identificação, delimitação e materialização de Módulos, sem criar o Projeto.
-* Auditoria e verificação são controles transversais da formação, não uma quinta etapa; o avanço exige qualidade e suficiência verificadas após o tratamento de lacunas.
-* A pessoa usuária participa apenas quando houver informação essencial indisponível, esclarecimento de intenção ou compromisso material, decisão humana material ou alternativas relevantes cuja escolha seja material.
-* A ausência de informação não pode ser substituída por invenção. O material de formação deve distinguir conteúdo conhecido, inferido, proposto e desconhecido, e conclusões materiais tratadas como fatos devem ter suporte identificável.
-* O ciclo de vida atual do Projeto foi registrado antes de sua definição conceitual e deverá ser reorganizado em atividade posterior. `EM_MODULO` foi proposto apenas como equivalente conceitual de `EM_PROJETO` na Necessidade; não há catálogo de status do Projeto.
-* A ausência de informação não pode ser substituída por invenção: o agente deve distinguir conteúdo conhecido, inferido, proposto e desconhecido, e acionar a pessoa usuária para informação essencial indisponível ou decisão humana material.
-* Auditoria e verificação são controles transversais, não uma quinta fase do ciclo do Projeto.
-* Ainda não existe Projeto criado para `N-001`. Embora o modelo mínimo exista, a ausência de instância impede materializar a transição obrigatória para `EM_PROJETO`.
+* Uma Necessidade com compromisso aprovado origina obrigatoriamente um único Projeto. Não há estado permanente entre `APROVADO` e `EM_PROJETO`.
+* O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio. A Necessidade permanece como fonte de verdade do compromisso de mudança.
+* O Projeto transforma o compromisso recebido em direção realizável, organiza sua realização e conduz a decomposição até o nível de Módulo. Ele não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
+* A formação do Projeto conduz a compreensão e a decomposição até a materialização dos Módulos. Suas etapas e controles transversais estão concentrados em `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`; o ciclo de vida não os duplica.
+* O fluxo principal do Projeto é: criação → `EM_FORMACAO` → Módulos necessários materializados → `EM_MODULOS` → conclusão do trabalho necessário dos Módulos → verificação agregada → `CONCLUIDO`.
+* `EM_MODULOS` substitui a proposta anterior `EM_MODULO`, pois um Projeto pode originar N Módulos e sua realização passa a ser conduzida por eles.
+* Em `EM_MODULOS`, o Projeto permanece como entidade pai, agregadora e referência do compromisso. Ele não replica os status internos dos Módulos.
+* A conclusão dos Módulos não conclui automaticamente o Projeto: a verificação agregada deve confirmar que o resultado atende ao compromisso da Necessidade. Se insuficiente, o Projeto permanece na condução pelos Módulos.
+* `CONCLUIDO` é terminal de sucesso e permite que a Necessidade de origem transicione de `EM_PROJETO` para `ATENDIDA`.
+* `CANCELADO` é terminal excepcional, dependente de decisão humana válida; o agente não pode cancelar unilateralmente.
+* Não existem `STATUS_DO_PROJETO.md` nem `RESULTADOS_DO_PROCESSO_DO_PROJETO.md`. Seus catálogos serão formalizados separadamente, seguindo a separação já estabelecida na Necessidade.
+* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado. Não há decisão conceitual sobre responsável pelo Projeto.
 
 ## Última atividade concluída
 
-A definição, o modelo mínimo e a formação do Projeto foram concluídos. A formação formaliza o fluxo `ENQUADRAMENTO` → `DESCOBERTA` → `DIREÇÃO DA SOLUÇÃO` → `DECOMPOSIÇÃO EM MÓDULOS`, com auditoria e verificação transversais, investigação autônoma e interação humana somente quando necessária. Não foram criados status, Resultados do Processo, instância de Projeto, `P-001`, responsável pelo Projeto ou Módulo. O ciclo de vida já existente foi preservado e continua pendente de reorganização.
+O ciclo de vida do Projeto foi reorganizado. O documento passou a descrever somente fluxo, eventos e transições, e referencia `03_FORMACAO_DO_PROJETO.md` para as etapas de formação e seus controles. Foram definidos conceitualmente `EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO`, sem criar catálogos formais de status ou Resultados do Processo. Nenhuma instância de Projeto ou Módulo foi criada e a `N-001` não foi alterada.
 
 ## Próxima ação
 
-Voltar ao brainstorm para reorganizar e definir corretamente `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`, considerando a definição conceitual, o modelo mínimo e a formação agora formalizados, sem antecipar status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho.
+Voltar ao brainstorm para definir `documentacao/projeto/STATUS_DO_PROJETO.md`, mantendo a separação entre status e Resultados do Processo.
 
 ## Bloqueios ou decisões pendentes
 
-Não há decisão sobre responsável pelo Projeto. A reorganização do ciclo de vida atual permanece como trabalho posterior.
+Não há decisão sobre responsável pelo Projeto. Permanecem pendentes os catálogos de status e de Resultados do Processo do Projeto, bem como a criação futura do Projeto 1:1 para a `N-001`.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `documentacao/necessidade/01_DEFINICAO_DA_NECESSIDADE.md`
-* `documentacao/necessidade/02_MODELO_DE_NECESSIDADE.md`
-* `documentacao/necessidade/03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md`
 * `documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md`
 * `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`

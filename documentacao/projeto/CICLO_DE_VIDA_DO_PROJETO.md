@@ -1,107 +1,57 @@
 # Ciclo de Vida do Projeto
 
-## Finalidade e escopo
+## Finalidade
 
-Este documento registra somente os conceitos já definidos para o trecho inicial do ciclo de vida do Projeto. Não define modelo de dados, catálogo de status, Resultados do Processo, instâncias de Projeto, Módulos, Entregas de Valor ou Itens de Trabalho.
+Este documento define o fluxo, os eventos e as transições do Projeto desde sua criação obrigatória, a partir de uma Necessidade com compromisso aprovado, até seu encerramento.
 
-O Projeto é o esforço finito criado para atender uma Necessidade aprovada. Ele permanece existente depois que seus Módulos começam a ser conduzidos.
+Ele não define o modelo da entidade, os detalhes internos da formação, o catálogo normativo de status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho. A formação do Projeto é definida em [Formação do Projeto](03_FORMACAO_DO_PROJETO.md).
+
+Os status usados conceitualmente neste ciclo serão formalizados em catálogo próprio em atividade posterior. Os Resultados do Processo do Projeto também serão catalogados separadamente; conclusões de auditoria, decisões, verificações e recomendações não devem ser tratados como status.
 
 ## Origem do Projeto
 
 Uma Necessidade com compromisso humano `APROVADO` origina obrigatoriamente exatamente um Projeto:
 
 ```text
-1 Necessidade aprovada
-→ 1 Projeto
+1 Necessidade com compromisso aprovado
+→ criação obrigatória de 1 Projeto
+→ Projeto entra em formação
 ```
 
-O Projeto nasce da Necessidade aprovada; não começa por um novo formulário vazio preenchido pela pessoa usuária. A criação deverá ser implementada futuramente de forma atômica ou recuperável, preservando a relação 1:1. Este documento não define como essa implementação ocorrerá.
+O Projeto não nasce de formulário independente nem de criação manual desvinculada da Necessidade. A criação futura deve preservar a relação 1:1 de forma atômica ou recuperável, sem que este documento defina sua implementação técnica.
 
-## Formação inicial do Projeto
+A existência do Projeto correspondente permite que a Necessidade de origem assuma `EM_PROJETO`, conforme o [Ciclo de Vida da Necessidade](../necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md).
 
-Inicialmente, o Projeto percorre as quatro fases conceituais abaixo, nesta ordem:
+## Fluxo principal
 
 ```text
-ENQUADRAMENTO
-→ DESCOBERTA
-→ DIREÇÃO DA SOLUÇÃO
-→ DECOMPOSIÇÃO EM MÓDULOS
+criação do Projeto
+→ EM_FORMACAO
+→ formação conduzida
+→ formação suficiente e Módulos necessários materializados
+→ EM_MODULOS
+→ trabalho conduzido pelos Módulos
+→ trabalho necessário dos Módulos concluído
+→ verificação agregada do compromisso do Projeto
+→ compromisso atendido
+→ CONCLUIDO
 ```
 
-Esses nomes descrevem fases conceituais; não constituem, por si, status formais.
+`EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO` são posições conceituais deste ciclo; não constituem ainda um catálogo normativo de status.
 
-### ENQUADRAMENTO
+## Formação e entrada em `EM_MODULOS`
 
-Pergunta central: **“Que Projeto nasceu desta Necessidade?”**
+Após sua criação, o Projeto está em `EM_FORMACAO` e sob responsabilidade direta de formação e decomposição. Esse trabalho é conduzido conforme a [Formação do Projeto](03_FORMACAO_DO_PROJETO.md), que define as etapas, os controles e as condições para a materialização dos Módulos.
 
-Esta fase interpreta o compromisso recebido, o objetivo, o resultado esperado, os limites, o contexto conhecido e as lacunas. Ela não pode definir solução, arquitetura, Módulos ou trabalho executável.
+A transição para `EM_MODULOS` ocorre somente quando a formação for suficiente e os Módulos necessários nela definidos tiverem sido materializados adequadamente. Nesse ponto, o Projeto encerra sua responsabilidade direta de formação e decomposição, mas não é encerrado.
 
-### DESCOBERTA
+`EM_MODULOS` substitui a proposta anterior `EM_MODULO`: um Projeto pode originar N Módulos, e essa posição representa que sua realização passa a ser conduzida por eles, não que o Projeto esteja dentro de um único Módulo.
 
-Pergunta central: **“O que precisamos compreender antes de decidir como realizar?”**
+## Condução pelos Módulos
 
-Esta fase pode investigar o contexto, o produto existente, os sistemas, as restrições, as dependências, os riscos e os desconhecidos relevantes. Ela não pode fechar solução, arquitetura nem decompor o Projeto em Módulos.
+Em `EM_MODULOS`, o Projeto permanece existente como entidade pai, agregador e referência do compromisso recebido da Necessidade. O trabalho direto passa para os Módulos e seus futuros descendentes.
 
-### DIREÇÃO DA SOLUÇÃO
-
-Pergunta central: **“Qual caminho de solução faz sentido para atender a Necessidade?”**
-
-Esta fase pode propor e analisar abordagens de alto nível e as decisões estruturais necessárias. Ela deve chegar somente ao nível suficiente para permitir a decomposição do Projeto. Não deve detalhar toda a implementação nem criar Entregas de Valor ou Itens de Trabalho.
-
-### DECOMPOSIÇÃO EM MÓDULOS
-
-Pergunta central: **“Em quais grandes partes coerentes este Projeto precisa ser dividido?”**
-
-Esta fase pode identificar os Módulos necessários e justificar suas fronteiras. Ela deve parar no nível de Módulo e não pode avançar para Entrega de Valor nem Item de Trabalho.
-
-## Fronteira da formação do Projeto
-
-O trecho inicial de formação do Projeto termina quando o primeiro Módulo é materializado. A partir desse ponto, conceitualmente, o Projeto passa a ser conduzido por seus Módulos.
-
-Foi proposto `EM_MODULO` como equivalente conceitual de `EM_PROJETO` na Necessidade. Este é apenas um registro conceitual: não há, neste momento, catálogo formal de status do Projeto. A criação de Módulos não encerra o Projeto.
-
-## Participação humana
-
-Não há ritual de aprovação humana em toda fase. O agente deve investigar e trabalhar autonomamente tudo que estiver dentro de sua competência. A pessoa usuária é chamada quando houver informação essencial que não possa ser descoberta ou quando existir decisão humana material.
-
-Decisões humanas não podem ser substituídas pelo agente.
-
-## Princípio contra invenção
-
-> A ausência de informação não pode ser substituída por invenção.
-
-O agente deve distinguir explicitamente o que é:
-
-* conhecido;
-* inferido;
-* proposto; ou
-* desconhecido.
-
-Afirmações materiais devem possuir origem identificável. Diante de uma lacuna, o agente deve:
-
-1. tentar descobrir por evidência;
-2. quando aplicável, registrar uma alternativa como proposta, e não como fato; e
-3. solicitar interação humana quando depender de conhecimento ou decisão humana.
-
-A auditoria ou revisão deve impedir o avanço quando uma conclusão material estiver sendo tratada como fato sem sustentação.
-
-## Auditoria e verificação transversal
-
-Auditoria ou verificação não é, por enquanto, uma quinta fase do ciclo. Ela atua como controle transversal:
-
-```text
-produção ou refinamento
-→ verificação
-→ se insuficiente, investigação, retrabalho ou interação humana conforme a causa
-→ nova verificação
-→ avanço quando suficiente
-```
-
-Este documento não define catálogo formal de resultados de auditoria.
-
-## Hierarquia de referência
-
-Para contextualizar a fronteira do Projeto, a hierarquia conceitual é:
+O Projeto não replica os status internos de seus Módulos, e este documento não define o ciclo interno deles. Para explicitar apenas a fronteira conceitual, a hierarquia de referência é:
 
 ```text
 Necessidade (1)
@@ -111,4 +61,41 @@ Necessidade (1)
 → Item de Trabalho (N)
 ```
 
-O modelo interno das entidades abaixo de Projeto não é definido aqui.
+## Verificação agregada e conclusão
+
+A conclusão do trabalho dos Módulos é condição necessária, mas não suficiente, para concluir o Projeto. Após esse trabalho estar concluído, o Projeto deve verificar em nível agregado se o resultado produzido:
+
+* permanece coerente com a Necessidade de origem;
+* atende ao resultado comprometido;
+* respeita as fronteiras relevantes do compromisso; e
+* permite considerar o Projeto efetivamente realizado.
+
+A pergunta conceitual dessa verificação é: **“O resultado agregado produzido atende ao compromisso que originou este Projeto?”** Esta verificação não recebe nome formal de Resultado do Processo nesta definição.
+
+Se ela ainda não for suficiente, o Projeto não avança para `CONCLUIDO`: permanece no trecho de condução pelos Módulos, com trabalho adicional ou correção antes de nova verificação. Este documento não define como um Módulo retorna, reabre ou altera seu próprio ciclo.
+
+`CONCLUIDO` é a posição terminal de sucesso. O Projeto somente chega a ela quando o trabalho necessário dos Módulos estiver concluído e a verificação agregada confirmar o atendimento do compromisso. Como efeito externo, a Necessidade de origem pode transicionar de `EM_PROJETO` para `ATENDIDA`, conforme seu próprio ciclo de vida.
+
+## Caminho excepcional de cancelamento
+
+Há um caminho excepcional de encerramento:
+
+```text
+decisão humana válida de cancelamento
+→ CANCELADO
+```
+
+O agente não pode cancelar unilateralmente o Projeto. A definição do Resultado do Processo que autoriza o cancelamento, do responsável pelo Projeto, da matriz de permissões e das regras detalhadas de cancelamento em cada ponto do ciclo permanece para atividade posterior.
+
+`CANCELADO` é terminal e distinto de `CONCLUIDO`.
+
+## Transições
+
+| Evento ou condição | Transição | Regra |
+| --- | --- | --- |
+| Criação obrigatória do Projeto a partir de Necessidade com compromisso humano `APROVADO` | criação → `EM_FORMACAO` | A criação preserva a relação 1:1 com a Necessidade de origem. A existência do Projeto permite que a Necessidade assuma `EM_PROJETO`. |
+| Formação suficiente e Módulos necessários materializados | `EM_FORMACAO` → `EM_MODULOS` | A formação e a decomposição deixam de ser responsabilidade direta do Projeto; sua existência como pai, agregador e referência do compromisso permanece. |
+| Conclusão do trabalho necessário dos Módulos | `EM_MODULOS` → verificação agregada | A conclusão dos Módulos não conclui automaticamente o Projeto. |
+| Verificação agregada suficiente | verificação agregada → `CONCLUIDO` | Exige confirmação de que o resultado agregado atende ao compromisso recebido da Necessidade. |
+| Verificação agregada insuficiente | verificação agregada → permanece em `EM_MODULOS` | Trabalho adicional ou correção deve ocorrer antes de nova verificação. |
+| Decisão humana válida de cancelamento | posição não terminal → `CANCELADO` | Caminho excepcional; o agente não pode cancelar unilateralmente. |
