@@ -94,3 +94,23 @@ Para verticais estruturadas na convenção documental numerada, o prefixo numér
 Assim, os documentos de ciclo de vida, status e Resultados do Processo dessas verticais devem usar, respectivamente, os prefixos `05_CICLO_DE_VIDA_`, `06_STATUS_` e `07_RESULTADOS_DO_PROCESSO_`. Não devem ser criados, nesse padrão, arquivos sem numeração como `CICLO_DE_VIDA_...`, `STATUS_...` ou `RESULTADOS_DO_PROCESSO_...`.
 
 O catálogo oficial de status e o catálogo oficial de Resultados do Processo devem permanecer concentrados em seus arquivos próprios. Outros documentos podem referenciá-los, mas não devem manter listas normativas concorrentes.
+
+## 7. Skills dos Atores agênticos
+
+Quando uma atividade corresponder a um Ator agêntico que possua Skill materializada, o agente deve ler a Skill correspondente antes de executar o trabalho. A Skill é um manual operacional do Ator; ela não substitui `AGENTS.md`, `README.md`, `CONTINUIDADE_ATUAL.md` nem as fontes normativas que indicar.
+
+Um agente não deve usar a Skill de outro Ator para acumular responsabilidades indevidamente. Ao terminar o trabalho do seu Ator, deve entregar o handoff definido e encerrar aquela responsabilidade. `Owner` não possui Skill, pois é Ator humano.
+
+### Índice de Skills disponíveis
+
+#### Necessidade
+
+* `formacao-da-necessidade` → `.agents/skills/necessidade/formacao-da-necessidade/SKILL.md`
+* `auditoria-da-necessidade` → `.agents/skills/necessidade/auditoria-da-necessidade/SKILL.md`
+* `qualificacao-da-necessidade` → `.agents/skills/necessidade/qualificacao-da-necessidade/SKILL.md`
+
+#### Projeto
+
+* `formacao-do-projeto` → `.agents/skills/projeto/formacao-do-projeto/SKILL.md`
+* `auditoria-do-projeto` → `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`
+* `verificacao-agregada-do-projeto` → `.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md`

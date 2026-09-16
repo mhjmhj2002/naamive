@@ -21,7 +21,7 @@ Não existe um segundo conceito concorrente de responsável pelo Projeto nesta v
 
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
-* **Skill principal conceitual:** Formação do Projeto.
+* **Skill principal:** [.agents/skills/projeto/formacao-do-projeto/SKILL.md](../../.agents/skills/projeto/formacao-do-projeto/SKILL.md).
 
 Responsabilidades:
 
@@ -45,7 +45,7 @@ Não há Ator separado para cada etapa da formação nesta versão.
 
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
-* **Skill principal conceitual:** Auditoria do Projeto.
+* **Skill principal:** [.agents/skills/projeto/auditoria-do-projeto/SKILL.md](../../.agents/skills/projeto/auditoria-do-projeto/SKILL.md).
 
 Responsabilidades:
 
@@ -60,7 +60,7 @@ Sua atuação se relaciona conceitualmente a `FORMACAO_SUFICIENTE` e `FORMACAO_I
 
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
-* **Skill principal conceitual:** Verificação Agregada do Projeto.
+* **Skill principal:** [.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md](../../.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md).
 
 Responsabilidades:
 

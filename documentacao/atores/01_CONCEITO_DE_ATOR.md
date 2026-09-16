@@ -6,9 +6,9 @@
 
 **Executor** é quem concretamente exerce aquele Ator em uma execução.
 
-**Skill** é a capacidade especializada necessária para um agente exercer um Ator agêntico.
+**Skill** é a capacidade operacional especializada necessária para um agente exercer um Ator agêntico. Ela pode ser materializada no repositório como um manual operacional do Ator.
 
-Os três conceitos são distintos. Um Ator define a responsabilidade; o Executor a realiza; e a Skill principal capacita o agente para exercer a responsabilidade agêntica correspondente.
+Os três conceitos são distintos. Um Ator define a responsabilidade; o Executor a realiza; e a Skill principal capacita o agente para exercer a responsabilidade agêntica correspondente. A Skill materializada orienta a execução, sem substituir a documentação normativa que define o domínio e o processo.
 
 Exemplo conceitual:
 

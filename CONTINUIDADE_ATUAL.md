@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo e Atores formalizados. Ainda não há instância de Projeto ou Módulo materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo, Atores e Skills agênticas materializadas. Ainda não há instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -42,10 +42,28 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Nec
 * `documentacao/projeto/06_STATUS_DO_PROJETO.md`
 * `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
 
+## Skills agênticas materializadas
+
+Skills são manuais operacionais dos Atores agênticos, não fontes normativas do domínio. O agente deve carregar a Skill correspondente à responsabilidade que exerce, sem acumular o papel de outro Ator. Permanece válido o princípio “pastelero a tus pasteles”.
+
+Existem seis Skills nesta versão:
+
+* Necessidade:
+  * `formacao-da-necessidade` em `.agents/skills/necessidade/formacao-da-necessidade/SKILL.md`;
+  * `auditoria-da-necessidade` em `.agents/skills/necessidade/auditoria-da-necessidade/SKILL.md`; e
+  * `qualificacao-da-necessidade` em `.agents/skills/necessidade/qualificacao-da-necessidade/SKILL.md`.
+* Projeto:
+  * `formacao-do-projeto` em `.agents/skills/projeto/formacao-do-projeto/SKILL.md`;
+  * `auditoria-do-projeto` em `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`; e
+  * `verificacao-agregada-do-projeto` em `.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md`.
+
+`Owner` não possui Skill por ser Ator humano. Nenhuma Skill genérica foi criada.
+
 ## Decisões estruturais atuais
 
 * As verticais Necessidade e Projeto usam a sequência documental `01_DEFINICAO`, `02_MODELO`, `03_ATORES`, `04_FORMACAO`, `05_CICLO_DE_VIDA`, `06_STATUS` e `07_RESULTADOS_DO_PROCESSO`. A seção de organização documental em `AGENTS.md` formaliza que esses prefixos numéricos fazem parte obrigatória do nome dos arquivos das verticais estruturadas nesse padrão.
 * `documentacao/atores/01_CONCEITO_DE_ATOR.md` define transversalmente Ator, Executor e Skill. Ator é o papel especializado responsável; Executor é quem o exerce concretamente; Skill é a capacidade especializada necessária para exercer um Ator agêntico.
+* Skills agênticas podem ser materializadas como `SKILL.md` no repositório. Elas orientam a operação do Ator e não substituem a documentação normativa.
 * Agentes exercem responsabilidades especializadas. Não existe agente genérico responsável por toda a cadeia do NAAMIVE: cada Ator agêntico possui fronteira clara, Skill principal correspondente, entrega seu resultado e encerra sua atuação naquele trabalho.
 * O princípio é “pastelero a tus pasteles”: cada agente sabe qual responsabilidade exerce e não acumula papéis especializados sem necessidade. A aproximação atual é Ator agêntico especializado ≈ agente especializado ≈ Skill principal correspondente, sem impedir capacidades auxiliares futuras.
 * `Owner` é Ator humano transversal, executado nesta versão pelo usuário autenticado. Não é papel configurável, grupo, perfil RBAC, ownership por entidade, permissão delegável, hierarquia, matriz de autoridade, aprovação por maioria nem modelo multiusuário.
@@ -71,11 +89,16 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Nec
 
 ## Última atividade concluída
 
-Foi eliminada a incompatibilidade entre `AGENTS.md` e a estrutura documental numerada: a convenção obrigatória para verticais estruturadas agora formaliza `01` a `07`, incluindo `05_CICLO_DE_VIDA_`, `06_STATUS_` e `07_RESULTADOS_DO_PROCESSO_`. A estrutura, os catálogos, os status, a `N-001`, Projetos e Módulos não foram alterados nesta correção.
+Foram materializadas as seis Skills dos Atores agênticos de Necessidade e Projeto, atualizados os documentos de Atores, o conceito transversal de Ator, `AGENTS.md` e `README.md`. Não foram criados `P-001` ou Módulos, nem houve alteração em catálogos, status ou na instância `N-001`.
 
 ## Próxima ação
 
-Voltar ao brainstorm para preparar o teste de fogo da vertical Projeto com a `N-001`, sem criar automaticamente `P-001` nesta atividade.
+Executar o teste de fogo da vertical Projeto com a `N-001`, utilizando efetivamente, nesta ordem:
+
+1. `formacao-do-projeto`;
+2. `auditoria-do-projeto`.
+
+Não criar automaticamente `P-001` nesta atividade.
 
 ## Bloqueios ou decisões pendentes
 
@@ -87,6 +110,8 @@ Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse c
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `documentacao/atores/01_CONCEITO_DE_ATOR.md`
+* `.agents/skills/projeto/formacao-do-projeto/SKILL.md`
+* `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`
 * `documentacao/necessidade/03_ATORES_DA_NECESSIDADE.md`
 * `documentacao/necessidade/04_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md`
 * `documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md`

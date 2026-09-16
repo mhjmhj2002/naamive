@@ -17,6 +17,22 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 
 [CONTINUIDADE_ATUAL.md](CONTINUIDADE_ATUAL.md)
 
+## Skills agênticas
+
+As Skills são manuais operacionais dos Atores agênticos; a documentação das verticais permanece a fonte normativa do domínio e do processo.
+
+### Necessidade
+
+* [Formação da Necessidade](.agents/skills/necessidade/formacao-da-necessidade/SKILL.md)
+* [Auditoria da Necessidade](.agents/skills/necessidade/auditoria-da-necessidade/SKILL.md)
+* [Qualificação da Necessidade](.agents/skills/necessidade/qualificacao-da-necessidade/SKILL.md)
+
+### Projeto
+
+* [Formação do Projeto](.agents/skills/projeto/formacao-do-projeto/SKILL.md)
+* [Auditoria do Projeto](.agents/skills/projeto/auditoria-do-projeto/SKILL.md)
+* [Verificação Agregada do Projeto](.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md)
+
 ## Documentação
 
 ### Atores
@@ -55,6 +71,23 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 AGENTS.md
 README.md
 CONTINUIDADE_ATUAL.md
+
+.agents/
+└── skills/
+    ├── necessidade/
+    │   ├── formacao-da-necessidade/
+    │   │   └── SKILL.md
+    │   ├── auditoria-da-necessidade/
+    │   │   └── SKILL.md
+    │   └── qualificacao-da-necessidade/
+    │       └── SKILL.md
+    └── projeto/
+        ├── formacao-do-projeto/
+        │   └── SKILL.md
+        ├── auditoria-do-projeto/
+        │   └── SKILL.md
+        └── verificacao-agregada-do-projeto/
+            └── SKILL.md
 
 documentacao/
 ├── atores/

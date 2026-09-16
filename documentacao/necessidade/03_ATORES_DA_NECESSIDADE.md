@@ -23,7 +23,7 @@ O Owner não executa a auditoria agêntica, não substitui pesquisa ou investiga
 
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
-* **Skill principal conceitual:** Formação da Necessidade.
+* **Skill principal:** [.agents/skills/necessidade/formacao-da-necessidade/SKILL.md](../../.agents/skills/necessidade/formacao-da-necessidade/SKILL.md).
 
 Responsabilidades:
 
@@ -51,7 +51,7 @@ Não há Atores separados para cada tratamento interno da formação.
 
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
-* **Skill principal conceitual:** Auditoria da Necessidade.
+* **Skill principal:** [.agents/skills/necessidade/auditoria-da-necessidade/SKILL.md](../../.agents/skills/necessidade/auditoria-da-necessidade/SKILL.md).
 
 Responsabilidades:
 
@@ -66,7 +66,7 @@ Sua atuação se relaciona conceitualmente a `QUALIFICAVEL`, `PRECISA_DE_ESCLARE
 
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
-* **Skill principal conceitual:** Qualificação da Necessidade.
+* **Skill principal:** [.agents/skills/necessidade/qualificacao-da-necessidade/SKILL.md](../../.agents/skills/necessidade/qualificacao-da-necessidade/SKILL.md).
 
 Responsabilidades:
 
