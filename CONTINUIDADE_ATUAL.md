@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE possui as verticais documentadas de Necessidade e Projeto. A primeira execução real da Formação do Projeto foi concluída até o handoff de auditoria: o bootstrap de `P-001` foi realizado a partir da `N-001`, e nenhum Módulo foi materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo, Atores e Skills agênticas materializadas. A documentação e a Skill de Formação do Projeto agora formalizam o bootstrap do Projeto após `APROVADO`. Ainda não há instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -19,23 +19,10 @@ O NAAMIVE possui as verticais documentadas de Necessidade e Projeto. A primeira 
 * Qualificação: concluída
 * Recomendação: `ASSUMIR_COMPROMISSO`
 * Decisão humana de compromisso: `APROVADO`, registrada por `mhj`, identificador histórico do usuário autenticado que exerceu o Ator Owner no contexto atual
-* Status atual: `EM_PROJETO`
-* Projeto originado: `P-001 — Jornada Inicial do NAAMIVE`, em `dados/projetos/P-001/projeto.md`
+* Projeto: ainda não criado
+* Transição obrigatória atual: `APROVADO` aciona o Especialista em Formação do Projeto; ele deverá executar o bootstrap do Projeto 1:1 e, somente após sua criação bem-sucedida em `EM_FORMACAO`, registrar a Necessidade em `EM_PROJETO`
 
-`QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` somente assumiu `EM_PROJETO` após a criação bem-sucedida e verificável de `P-001` em `EM_FORMACAO`.
-
-## Projeto ativo
-
-`P-001 — Jornada Inicial do NAAMIVE`
-
-* Localização: `dados/projetos/P-001/projeto.md`
-* Identificador técnico: `b4fbd5b9-7df7-45cf-a9ca-44c5e260a4f8`
-* Código: `P-001`
-* Nome inicial proposto: `Jornada Inicial do NAAMIVE`
-* Necessidade de origem: `N-001 — NAAMIVE` (relação 1:1)
-* Status: `EM_FORMACAO`
-* Formação: concluída pelo Especialista em Formação do Projeto até o handoff de auditoria; inclui enquadramento, descoberta, direção de solução e cinco Módulos identificados apenas conceitualmente.
-* Auditoria: ainda não executada; nenhum Resultado do Processo de auditoria foi produzido.
+`QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` não pode receber `EM_PROJETO` enquanto não existir o Projeto correspondente. A transição obrigatória ainda não foi materializada; não existe status intermediário para representar essa lacuna.
 
 ## Documentação definida
 
@@ -100,19 +87,19 @@ Existem seis Skills nesta versão:
 * Decisões humanas, conclusões de auditoria, recomendações e Resultados do Processo permanecem separados do catálogo de status.
 * O catálogo normativo de Resultados do Processo do Projeto está em `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md` e contém exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`; nenhum deles é status.
 * `FORMACAO_SUFICIENTE`, junto da materialização dos Módulos necessários, permite a transição para `EM_MODULOS`; a materialização em si não é Resultado do Processo. `COMPROMISSO_ATENDIDO` permite a transição para `CONCLUIDO`; `COMPROMISSO_NAO_ATENDIDO` mantém o Projeto em `EM_MODULOS` até novo trabalho descendente e nova verificação agregada.
-* A `N-001` originou exatamente o `P-001`; não existe outro Projeto materializado nem Módulo materializado.
+* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado. A `N-001` ainda não está em `EM_PROJETO`.
 
 ## Última atividade concluída
 
-O Especialista em Formação do Projeto confirmou `APROVADO` e a ausência de Projeto prévio, materializou `P-001` em `EM_FORMACAO`, atualizou a `N-001` para `EM_PROJETO` e produziu a formação conceitual completa para auditoria. Não alterou catálogos, não executou auditoria e não materializou Módulos.
+Foram alinhados os documentos de Necessidade e Projeto e a Skill `formacao-do-projeto` para que `APROVADO` acione o Especialista em Formação do Projeto, responsável pelo bootstrap do Projeto 1:1 quando necessário. Também foi definida a regra de nome inicial sugerido pelo agente e editável pelo Owner. Não foram criados `P-001` ou Módulos, não houve alteração nos catálogos nem na instância `N-001`.
 
 ## Próxima ação
 
-O Auditor do Projeto deve carregar `.agents/skills/projeto/auditoria-do-projeto/SKILL.md` e avaliar a formação registrada em `dados/projetos/P-001/projeto.md`. Ele é o único Ator autorizado a produzir `FORMACAO_SUFICIENTE` ou `FORMACAO_INSUFICIENTE`.
+Executar o teste de fogo real da vertical Projeto com a `N-001`, usando a Skill `formacao-do-projeto`. Nesse teste, o Especialista em Formação do Projeto deverá executar o bootstrap real de `P-001`, registrar a Necessidade em `EM_PROJETO` somente após a criação bem-sucedida e continuar a formação.
 
 ## Bloqueios ou decisões pendentes
 
-Não há bloqueio para a auditoria da formação. Há duas lacunas normativas registradas no Projeto: o mecanismo permanente de geração de código de Projeto e o modelo/ciclo/status/materialização de Módulo. A última impede a materialização segura de Módulos após eventual auditoria suficiente; não impediu sua identificação conceitual.
+Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse conceito separado nesta versão. Permanecem pendentes o teste de fogo real que materializará o Projeto 1:1 da `N-001` e a definição de Módulo.
 
 ## Arquivos mínimos para continuar
 
@@ -133,4 +120,3 @@ Não há bloqueio para a auditoria da formação. Há duas lacunas normativas re
 * `documentacao/projeto/06_STATUS_DO_PROJETO.md`
 * `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
 * `dados/necessidades/N-001/necessidade.md`
-* `dados/projetos/P-001/projeto.md`
