@@ -31,6 +31,7 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 ### Projeto
 
 * [Definição do Projeto](documentacao/projeto/01_DEFINICAO_DO_PROJETO.md)
+* [Modelo de Projeto](documentacao/projeto/02_MODELO_DE_PROJETO.md)
 * [Ciclo de Vida do Projeto](documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md)
 
 ## Dados operacionais
@@ -56,6 +57,7 @@ documentacao/
 │   └── RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md
 └── projeto/
     ├── 01_DEFINICAO_DO_PROJETO.md
+    ├── 02_MODELO_DE_PROJETO.md
     └── CICLO_DE_VIDA_DO_PROJETO.md
 
 dados/

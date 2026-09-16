@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A vertical Projeto possui sua definição conceitual e um ciclo de vida inicial que ainda precisa ser reorganizado posteriormente; não há modelo, status, Resultados do Processo ou instância materializados.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A vertical Projeto possui definição conceitual e modelo mínimo formalizados; seu ciclo de vida inicial continua pendente de reorganização. Não há status, Resultados do Processo ou instância materializados.
 
 ## Necessidade ativa
 
@@ -22,7 +22,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * Projeto: ainda não criado
 * Transição obrigatória atual: criação futura do Projeto 1:1 e, após sua existência, registro em `EM_PROJETO`
 
-`QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` não pode receber `EM_PROJETO` enquanto não existir o Projeto correspondente. A transição obrigatória não foi materializada por ausência da entidade Projeto e de seu modelo; não existe status intermediário para representar essa lacuna.
+`QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` não pode receber `EM_PROJETO` enquanto não existir o Projeto correspondente. A transição obrigatória não foi materializada por ausência da instância de Projeto correspondente; não existe status intermediário para representar essa lacuna.
 
 ## Documentação definida
 
@@ -33,6 +33,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
 * `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
+* `documentacao/projeto/02_MODELO_DE_PROJETO.md`
 * `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 
 ## Decisões estruturais atuais
@@ -50,6 +51,9 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * Nesta primeira versão, o usuário responsável é o criador da Necessidade; decisões humanas materiais registram a decisão e o usuário autenticado que as realizou, sem papéis ou matriz de permissões.
 * O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio.
 * A Necessidade permanece como fonte de verdade do compromisso de mudança; o Projeto não redefine silenciosamente seu problema, resultado, escopo, fora de escopo, critério de atendimento, valor, contexto ou restrições conhecidos.
+* O modelo mínimo atual do Projeto é composto por identificador técnico, código, nome e Necessidade de origem.
+* Ainda não existe instância de Projeto, inclusive `P-001`.
+* Não há decisão conceitual sobre responsável pelo Projeto.
 * O Projeto transforma o compromisso recebido em direção realizável, organiza sua realização e conduz a decomposição até o nível de Módulo.
 * O Projeto identifica, delimita e materializa Módulos, mas não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
 * A materialização dos Módulos encerra a responsabilidade direta do Projeto de formação e decomposição, sem encerrar a existência do Projeto como entidade pai, agregadora e referência do compromisso.
@@ -57,19 +61,19 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * O ciclo de vida atual do Projeto foi registrado antes de sua definição conceitual e deverá ser reorganizado em atividade posterior. `EM_MODULO` foi proposto apenas como equivalente conceitual de `EM_PROJETO` na Necessidade; não há catálogo de status do Projeto.
 * A ausência de informação não pode ser substituída por invenção: o agente deve distinguir conteúdo conhecido, inferido, proposto e desconhecido, e acionar a pessoa usuária para informação essencial indisponível ou decisão humana material.
 * Auditoria e verificação são controles transversais, não uma quinta fase do ciclo do Projeto.
-* Ainda não existe Projeto criado para `N-001`. Não há modelo ou instância de Projeto, o que impede materializar a transição obrigatória para `EM_PROJETO`.
+* Ainda não existe Projeto criado para `N-001`. Embora o modelo mínimo exista, a ausência de instância impede materializar a transição obrigatória para `EM_PROJETO`.
 
 ## Última atividade concluída
 
-A definição conceitual do Projeto foi criada. Ela formaliza sua origem obrigatória e 1:1 em Necessidade com compromisso aprovado, o compromisso que permanece sob fonte de verdade da Necessidade, a responsabilidade de direção e decomposição até Módulos, os limites diante das entidades descendentes, sua permanência como agregador e sua distinção de Produto. Não foram criados modelo, status, Resultados do Processo, instância de Projeto ou Módulo. O ciclo de vida já existente foi preservado e deverá ser reorganizado posteriormente.
+A definição do Projeto e seu modelo mínimo foram concluídos. O modelo registra somente identificador técnico único, código legível e rastreável, nome e Necessidade de origem. Não foram criados status, Resultados do Processo, instância de Projeto, `P-001`, responsável pelo Projeto ou Módulo. O ciclo de vida já existente foi preservado e continua pendente de reorganização.
 
 ## Próxima ação
 
-Definir o Modelo de Projeto, seguindo a mesma ordem usada na vertical Necessidade. A reorganização posterior de `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md` deverá considerar a definição conceitual agora formalizada, sem antecipar status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho.
+Voltar ao brainstorm antes de definir a formação do Projeto. A reorganização posterior de `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md` deverá considerar a definição conceitual e o modelo mínimo agora formalizados, sem antecipar status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho.
 
 ## Bloqueios ou decisões pendentes
 
-Nenhum bloqueio conhecido para definir o Modelo de Projeto. A reorganização do ciclo de vida atual permanece como trabalho posterior.
+Não há decisão sobre responsável pelo Projeto. A formação e a reorganização do ciclo de vida atual permanecem como trabalhos posteriores.
 
 ## Arquivos mínimos para continuar
 
@@ -83,5 +87,6 @@ Nenhum bloqueio conhecido para definir o Modelo de Projeto. A reorganização do
 * `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
 * `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
+* `documentacao/projeto/02_MODELO_DE_PROJETO.md`
 * `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 * `dados/necessidades/N-001/necessidade.md`
