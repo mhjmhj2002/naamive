@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A vertical Projeto possui definição conceitual e modelo mínimo formalizados; seu ciclo de vida inicial continua pendente de reorganização. Não há status, Resultados do Processo ou instância materializados.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Necessidade possui ciclo de vida, status e Resultados do Processo formalizados, inclusive os caminhos de não caracterização, recomendação negativa e cancelamento humano. A vertical Projeto possui definição conceitual, modelo mínimo e formação formalizados; seu ciclo de vida inicial continua pendente de reorganização. Não há status, Resultados do Processo, instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -34,6 +34,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
 * `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
 * `documentacao/projeto/02_MODELO_DE_PROJETO.md`
+* `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`
 * `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 
 ## Decisões estruturais atuais
@@ -58,6 +59,10 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 * O Projeto identifica, delimita e materializa Módulos, mas não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
 * A materialização dos Módulos encerra a responsabilidade direta do Projeto de formação e decomposição, sem encerrar a existência do Projeto como entidade pai, agregadora e referência do compromisso.
 * O ciclo inicial conceitual do Projeto é `ENQUADRAMENTO` → `DESCOBERTA` → `DIREÇÃO DA SOLUÇÃO` → `DECOMPOSIÇÃO EM MÓDULOS`; esses nomes ainda não são status formais.
+* A formação do Projeto é o motor operacional que conduz esse fluxo até a identificação, delimitação e materialização de Módulos, sem criar o Projeto.
+* Auditoria e verificação são controles transversais da formação, não uma quinta etapa; o avanço exige qualidade e suficiência verificadas após o tratamento de lacunas.
+* A pessoa usuária participa apenas quando houver informação essencial indisponível, esclarecimento de intenção ou compromisso material, decisão humana material ou alternativas relevantes cuja escolha seja material.
+* A ausência de informação não pode ser substituída por invenção. O material de formação deve distinguir conteúdo conhecido, inferido, proposto e desconhecido, e conclusões materiais tratadas como fatos devem ter suporte identificável.
 * O ciclo de vida atual do Projeto foi registrado antes de sua definição conceitual e deverá ser reorganizado em atividade posterior. `EM_MODULO` foi proposto apenas como equivalente conceitual de `EM_PROJETO` na Necessidade; não há catálogo de status do Projeto.
 * A ausência de informação não pode ser substituída por invenção: o agente deve distinguir conteúdo conhecido, inferido, proposto e desconhecido, e acionar a pessoa usuária para informação essencial indisponível ou decisão humana material.
 * Auditoria e verificação são controles transversais, não uma quinta fase do ciclo do Projeto.
@@ -65,15 +70,15 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. A vertical Neces
 
 ## Última atividade concluída
 
-A definição do Projeto e seu modelo mínimo foram concluídos. O modelo registra somente identificador técnico único, código legível e rastreável, nome e Necessidade de origem. Não foram criados status, Resultados do Processo, instância de Projeto, `P-001`, responsável pelo Projeto ou Módulo. O ciclo de vida já existente foi preservado e continua pendente de reorganização.
+A definição, o modelo mínimo e a formação do Projeto foram concluídos. A formação formaliza o fluxo `ENQUADRAMENTO` → `DESCOBERTA` → `DIREÇÃO DA SOLUÇÃO` → `DECOMPOSIÇÃO EM MÓDULOS`, com auditoria e verificação transversais, investigação autônoma e interação humana somente quando necessária. Não foram criados status, Resultados do Processo, instância de Projeto, `P-001`, responsável pelo Projeto ou Módulo. O ciclo de vida já existente foi preservado e continua pendente de reorganização.
 
 ## Próxima ação
 
-Voltar ao brainstorm antes de definir a formação do Projeto. A reorganização posterior de `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md` deverá considerar a definição conceitual e o modelo mínimo agora formalizados, sem antecipar status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho.
+Voltar ao brainstorm para reorganizar e definir corretamente `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`, considerando a definição conceitual, o modelo mínimo e a formação agora formalizados, sem antecipar status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho.
 
 ## Bloqueios ou decisões pendentes
 
-Não há decisão sobre responsável pelo Projeto. A formação e a reorganização do ciclo de vida atual permanecem como trabalhos posteriores.
+Não há decisão sobre responsável pelo Projeto. A reorganização do ciclo de vida atual permanece como trabalho posterior.
 
 ## Arquivos mínimos para continuar
 
@@ -88,5 +93,6 @@ Não há decisão sobre responsável pelo Projeto. A formação e a reorganizaç
 * `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
 * `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
 * `documentacao/projeto/02_MODELO_DE_PROJETO.md`
+* `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`
 * `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
 * `dados/necessidades/N-001/necessidade.md`
