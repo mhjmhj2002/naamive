@@ -19,23 +19,29 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 
 ## Documentação
 
+### Atores
+
+* [Conceito de Ator](documentacao/atores/01_CONCEITO_DE_ATOR.md)
+
 ### Necessidade
 
 * [Definição da Necessidade](documentacao/necessidade/01_DEFINICAO_DA_NECESSIDADE.md)
 * [Modelo de Necessidade](documentacao/necessidade/02_MODELO_DE_NECESSIDADE.md)
-* [Formação e qualificação da Necessidade](documentacao/necessidade/03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md)
-* [Ciclo de Vida da Necessidade](documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md)
-* [Status da Necessidade](documentacao/necessidade/STATUS_DA_NECESSIDADE.md)
-* [Resultados do Processo da Necessidade](documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md)
+* [Atores da Necessidade](documentacao/necessidade/03_ATORES_DA_NECESSIDADE.md)
+* [Formação e qualificação da Necessidade](documentacao/necessidade/04_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md)
+* [Ciclo de Vida da Necessidade](documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md)
+* [Status da Necessidade](documentacao/necessidade/06_STATUS_DA_NECESSIDADE.md)
+* [Resultados do Processo da Necessidade](documentacao/necessidade/07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md)
 
 ### Projeto
 
 * [Definição do Projeto](documentacao/projeto/01_DEFINICAO_DO_PROJETO.md)
 * [Modelo de Projeto](documentacao/projeto/02_MODELO_DE_PROJETO.md)
-* [Formação do Projeto](documentacao/projeto/03_FORMACAO_DO_PROJETO.md)
-* [Ciclo de Vida do Projeto](documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md)
-* [Status do Projeto](documentacao/projeto/STATUS_DO_PROJETO.md)
-* [Resultados do Processo do Projeto](documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md)
+* [Atores do Projeto](documentacao/projeto/03_ATORES_DO_PROJETO.md)
+* [Formação do Projeto](documentacao/projeto/04_FORMACAO_DO_PROJETO.md)
+* [Ciclo de Vida do Projeto](documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md)
+* [Status do Projeto](documentacao/projeto/06_STATUS_DO_PROJETO.md)
+* [Resultados do Processo do Projeto](documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md)
 
 ## Dados operacionais
 
@@ -51,20 +57,24 @@ README.md
 CONTINUIDADE_ATUAL.md
 
 documentacao/
+├── atores/
+│   └── 01_CONCEITO_DE_ATOR.md
 ├── necessidade/
 │   ├── 01_DEFINICAO_DA_NECESSIDADE.md
 │   ├── 02_MODELO_DE_NECESSIDADE.md
-│   ├── 03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md
-│   ├── CICLO_DE_VIDA_DA_NECESSIDADE.md
-│   ├── STATUS_DA_NECESSIDADE.md
-│   └── RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md
+│   ├── 03_ATORES_DA_NECESSIDADE.md
+│   ├── 04_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md
+│   ├── 05_CICLO_DE_VIDA_DA_NECESSIDADE.md
+│   ├── 06_STATUS_DA_NECESSIDADE.md
+│   └── 07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md
 └── projeto/
     ├── 01_DEFINICAO_DO_PROJETO.md
     ├── 02_MODELO_DE_PROJETO.md
-    ├── 03_FORMACAO_DO_PROJETO.md
-    ├── CICLO_DE_VIDA_DO_PROJETO.md
-    ├── STATUS_DO_PROJETO.md
-    └── RESULTADOS_DO_PROCESSO_DO_PROJETO.md
+    ├── 03_ATORES_DO_PROJETO.md
+    ├── 04_FORMACAO_DO_PROJETO.md
+    ├── 05_CICLO_DE_VIDA_DO_PROJETO.md
+    ├── 06_STATUS_DO_PROJETO.md
+    └── 07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md
 
 dados/
 └── necessidades/

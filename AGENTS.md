@@ -77,10 +77,20 @@ Histórico futuro, caso necessário, deverá possuir mecanismo próprio. O arqui
 
 ## 6. Organização de ciclo de vida, status e resultados do processo
 
-Toda entidade que possuir ciclo de vida próprio deve ter um arquivo específico com nome iniciado por `CICLO_DE_VIDA_`, como `CICLO_DE_VIDA_DA_NECESSIDADE.md` ou `CICLO_DE_VIDA_DO_PROJETO.md`.
+Toda entidade que possuir ciclo de vida próprio deve ter arquivo específico. Toda entidade que possuir status próprios deve ter arquivo específico; os status de entidades diferentes não devem ser misturados no mesmo arquivo. Quando uma entidade possuir Resultados do Processo formalizados, eles devem ter arquivo próprio.
 
-Toda entidade que possuir status próprios deve ter um arquivo específico com nome iniciado por `STATUS_`. Os status de entidades diferentes não devem ser misturados no mesmo arquivo.
+Para verticais estruturadas na convenção documental numerada, o prefixo numérico faz parte obrigatória do nome do arquivo e a sequência é:
 
-Quando uma entidade possuir Resultados do Processo formalizados, eles devem ter arquivo próprio com nome iniciado por `RESULTADOS_DO_PROCESSO_`.
+```text
+01_DEFINICAO
+02_MODELO
+03_ATORES
+04_FORMACAO
+05_CICLO_DE_VIDA
+06_STATUS
+07_RESULTADOS_DO_PROCESSO
+```
+
+Assim, os documentos de ciclo de vida, status e Resultados do Processo dessas verticais devem usar, respectivamente, os prefixos `05_CICLO_DE_VIDA_`, `06_STATUS_` e `07_RESULTADOS_DO_PROCESSO_`. Não devem ser criados, nesse padrão, arquivos sem numeração como `CICLO_DE_VIDA_...`, `STATUS_...` ou `RESULTADOS_DO_PROCESSO_...`.
 
 O catálogo oficial de status e o catálogo oficial de Resultados do Processo devem permanecer concentrados em seus arquivos próprios. Outros documentos podem referenciá-los, mas não devem manter listas normativas concorrentes.

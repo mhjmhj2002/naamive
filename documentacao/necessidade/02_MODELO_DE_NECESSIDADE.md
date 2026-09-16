@@ -96,4 +96,4 @@ Se for uma evolução, o produto afetado está identificado?
 
 ## Resultado da verificação inicial
 
-Registre o resultado da auditoria aplicável conforme o catálogo de [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). Esses resultados representam conclusões da verificação inicial; não são estados de ciclo de vida.
+Registre o resultado da auditoria aplicável conforme o catálogo de [Resultados do Processo da Necessidade](07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). Esses resultados representam conclusões da verificação inicial; não são estados de ciclo de vida.

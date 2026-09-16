@@ -35,18 +35,18 @@ Esclarecimento, brainstorm, reformulação e decomposição podem ser estratégi
 
 | Resultado | Significado |
 | --- | --- |
-| `ASSUMIR_COMPROMISSO` | O agente recomenda assumir compromisso com a Necessidade após a qualificação. |
-| `NAO_ASSUMIR_COMPROMISSO` | A qualificação concluiu que, nas condições atuais, o agente não recomenda assumir compromisso com a Necessidade. |
+| `ASSUMIR_COMPROMISSO` | O Especialista em Qualificação da Necessidade recomenda assumir compromisso com a Necessidade após a qualificação. |
+| `NAO_ASSUMIR_COMPROMISSO` | A qualificação concluiu que, nas condições atuais, o Especialista em Qualificação da Necessidade não recomenda assumir compromisso com a Necessidade. |
 
-Essas recomendações não são status nem decisões humanas. Em especial, `NAO_ASSUMIR_COMPROMISSO` não cancela a Necessidade automaticamente: a pessoa responsável pode decidir pelo cancelamento ou, quando houver informação, condição ou mudança que justifique nova análise, o processo pode retornar à formação ou à qualificação conforme a causa concreta.
+Essas recomendações não são status nem decisões humanas. Em especial, `NAO_ASSUMIR_COMPROMISSO` não cancela a Necessidade automaticamente: o Owner pode decidir pelo cancelamento ou, quando houver informação, condição ou mudança que justifique nova análise, o processo pode retornar à formação ou à qualificação conforme a causa concreta.
 
 ## Decisões humanas materiais
 
 | Resultado | Significado |
 | --- | --- |
-| `APROVADO` | O usuário autenticado responsável pela Necessidade aprovou o compromisso. Isso dispara obrigatoriamente a criação do Projeto correspondente. |
-| `CANCELAMENTO_APROVADO` | O usuário autenticado responsável pela Necessidade confirmou seu encerramento. Isso provoca a transição de um status não terminal para `CANCELADA`. |
+| `APROVADO` | O Owner aprovou o compromisso. Isso dispara obrigatoriamente a criação do Projeto correspondente. |
+| `CANCELAMENTO_APROVADO` | O Owner confirmou seu encerramento. Isso provoca a transição de um status não terminal para `CANCELADA`. |
 
-`APROVADO` e `CANCELAMENTO_APROVADO` são decisões humanas materiais, não status. Nesta primeira versão, o usuário responsável pela Necessidade é o usuário que a criou. Toda decisão humana material registra, no mínimo, a decisão e o usuário autenticado que a realizou. Não há papéis, configuração de autoridade, delegação ou matriz de permissões neste modelo.
+`APROVADO` e `CANCELAMENTO_APROVADO` são decisões humanas materiais, não status. Nesta primeira versão, o Owner é exercido pelo usuário autenticado. Toda decisão humana material registra, no mínimo, a decisão e o usuário autenticado que a realizou. Não há RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade ou modelo multiusuário neste modelo.
 
 O catálogo deve crescer somente quando novos Resultados do Processo forem efetivamente definidos; não antecipa resultados como reprovação, adiamento ou recusa.

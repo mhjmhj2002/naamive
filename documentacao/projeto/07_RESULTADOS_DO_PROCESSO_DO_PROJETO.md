@@ -12,7 +12,7 @@ Resultado do Processo
 → conclusão, determinação ou decisão produzida durante uma atividade do processo
 ```
 
-Nenhum Resultado do Processo é status. O catálogo oficial de status do Projeto está em [Status do Projeto](STATUS_DO_PROJETO.md).
+Nenhum Resultado do Processo é status. O catálogo oficial de status do Projeto está em [Status do Projeto](06_STATUS_DO_PROJETO.md).
 
 ## Resultados da auditoria e verificação de formação
 
@@ -23,7 +23,7 @@ Nenhum Resultado do Processo é status. O catálogo oficial de status do Projeto
 
 `FORMACAO_SUFICIENTE` permite concluir o processo de formação. Combinado à materialização dos Módulos necessários, permite a transição de `EM_FORMACAO` para `EM_MODULOS`. A materialização dos Módulos é uma condição e uma atividade da formação; não é Resultado do Processo.
 
-`FORMACAO_INSUFICIENTE` mantém o Projeto em `EM_FORMACAO`. O motor de formação trata as lacunas conforme a [Formação do Projeto](03_FORMACAO_DO_PROJETO.md) e, após esse tratamento, realiza nova verificação.
+`FORMACAO_INSUFICIENTE` mantém o Projeto em `EM_FORMACAO`. O Especialista em Formação do Projeto trata as lacunas conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md) e o Auditor do Projeto realiza nova verificação.
 
 ## Resultados da verificação agregada final
 
@@ -40,11 +40,11 @@ Nenhum Resultado do Processo é status. O catálogo oficial de status do Projeto
 
 | Resultado | Significado |
 | --- | --- |
-| `CANCELAMENTO_APROVADO` | Uma pessoa humana com autoridade válida aprovou o cancelamento do Projeto. |
+| `CANCELAMENTO_APROVADO` | O Owner aprovou o cancelamento do Projeto. |
 
-`CANCELAMENTO_APROVADO` é uma decisão humana material, não um status. O agente não pode produzi-la unilateralmente. Ela provoca a transição de um status não terminal do Projeto para `CANCELADO`.
+`CANCELAMENTO_APROVADO` é uma decisão humana material, não um status. Seu Executor é o usuário autenticado no exercício do Owner; nenhum Ator agêntico pode produzi-la unilateralmente. Ela provoca a transição de um status não terminal do Projeto para `CANCELADO`.
 
-Este catálogo não define responsável pelo Projeto, papéis, delegação, matriz de permissões ou mecanismo técnico de autorização.
+Este catálogo não define mecanismo técnico de autorização. Nesta versão, não há RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade ou modelo multiusuário.
 
 ## Efeitos na Necessidade de origem
 

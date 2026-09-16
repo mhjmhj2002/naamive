@@ -4,7 +4,7 @@
 
 Este documento define o motor operacional que conduz um Projeto recém-criado até haver compreensão, estrutura e coerência suficientes para identificar, delimitar e materializar seus Módulos.
 
-Ele não define ciclo de vida formal, catálogo de status ou catálogo de Resultados do Processo do Projeto. O [Ciclo de Vida do Projeto](CICLO_DE_VIDA_DO_PROJETO.md) permanece preservado e poderá ser reorganizado em trabalho posterior; esta é a fonte adequada para o processo de formação.
+Ele não define ciclo de vida formal, catálogo de status ou catálogo de Resultados do Processo do Projeto. O [Ciclo de Vida do Projeto](05_CICLO_DE_VIDA_DO_PROJETO.md) é a fonte adequada para o ciclo; este documento é a fonte adequada para o processo de formação. Os Atores e suas responsabilidades estão definidos em [Atores do Projeto](03_ATORES_DO_PROJETO.md).
 
 ## Ponto de entrada
 
@@ -34,7 +34,7 @@ Esses nomes representam etapas de formação. Eles não são status formais nest
 
 Pergunta central: **“O que este Projeto precisa realizar para cumprir a Necessidade de origem?”**
 
-Nesta etapa, o agente deve:
+Nesta etapa, o Especialista em Formação do Projeto deve:
 
 * interpretar o compromisso recebido;
 * compreender o objetivo e os limites do Projeto;
@@ -59,7 +59,7 @@ Conforme a necessidade, esta etapa pode:
 * identificar riscos relevantes; e
 * identificar incógnitas materiais.
 
-O agente deve investigar autonomamente sempre que a informação puder ser obtida por evidência disponível. A pessoa usuária não deve ser usada como substituta para investigação que o agente pode realizar.
+O Especialista em Formação do Projeto deve investigar autonomamente sempre que a informação puder ser obtida por evidência disponível. O Owner não deve ser usado como substituto para investigação que o Especialista pode realizar.
 
 ## Regra contra invenção
 
@@ -72,11 +72,11 @@ O conteúdo produzido durante a formação deve distinguir, quando aplicável, o
 * proposto; ou
 * desconhecido.
 
-Conclusões materiais tratadas como fatos devem ter suporte identificável. Quando houver uma lacuna, o agente deve, nesta ordem:
+Conclusões materiais tratadas como fatos devem ter suporte identificável. Quando houver uma lacuna, o Especialista em Formação do Projeto deve, nesta ordem:
 
 1. investigar quando ela puder ser resolvida por evidência disponível;
 2. registrar como proposta, e não como fato, uma alternativa possível; e
-3. interagir com a pessoa usuária quando depender de informação essencial indisponível ou de decisão humana material.
+3. recorrer ao Owner quando depender de informação essencial indisponível ou de decisão humana material.
 
 ## DIREÇÃO DA SOLUÇÃO
 
@@ -96,7 +96,7 @@ Ela não deve detalhar toda a implementação, criar Entregas de Valor, criar It
 
 Pergunta central: **“Quais Módulos precisam existir para realizar esta direção?”**
 
-Nesta etapa, o agente deve:
+Nesta etapa, o Especialista em Formação do Projeto deve:
 
 * identificar os Módulos necessários;
 * definir a responsabilidade geral de cada Módulo;
@@ -120,7 +120,7 @@ executar etapa
 → avançar somente quando houver condição suficiente
 ```
 
-A formação não depende de coordenação manual contínua da pessoa usuária. O agente conduz autonomamente o fluxo sempre que houver informação e autoridade suficientes.
+A formação não depende de coordenação manual contínua do Owner. O Especialista em Formação do Projeto conduz autonomamente o fluxo sempre que houver informação e autoridade suficientes.
 
 ### Tratamento de lacunas
 
@@ -131,7 +131,7 @@ Quando a verificação encontrar um problema, o motor deve distinguir se há:
 * hipótese que deve ser reclassificada como proposta;
 * ausência de informação que pode permanecer explicitamente desconhecida;
 * ausência de informação essencial que exige interação humana; ou
-* decisão material que exige pessoa responsável.
+* decisão material que exige o Owner.
 
 Após o tratamento, deve ocorrer nova verificação antes de qualquer avanço.
 
@@ -139,16 +139,16 @@ Após o tratamento, deve ocorrer nova verificação antes de qualquer avanço.
 
 A participação humana ocorre por necessidade, não por ritual. Não há confirmação humana obrigatória ao final de cada etapa.
 
-A pessoa usuária deve ser acionada quando:
+O Owner deve ser acionado quando:
 
 * possuir informação essencial que não possa ser descoberta;
 * for necessário esclarecer intenção ou compromisso material;
-* houver decisão que o agente não possa tomar legitimamente; ou
+* houver decisão que o Especialista em Formação do Projeto não possa tomar legitimamente; ou
 * existirem alternativas relevantes cuja escolha seja material.
 
 ### Auditoria e verificação
 
-Auditoria e verificação são controles transversais da formação, não uma quinta etapa. Elas avaliam se o material produzido é:
+Auditoria e verificação são controles transversais da formação, não uma quinta etapa. O Auditor do Projeto avalia a formação e produz seus Resultados do Processo; o Verificador Agregado do Projeto atua somente após a conclusão do trabalho necessário dos Módulos. Elas avaliam se o material produzido é:
 
 * coerente;
 * suficientemente sustentado;
@@ -178,7 +178,7 @@ Esta definição não estabelece:
 * status do Projeto;
 * Resultados do Processo formais;
 * nomes formais de resultados de auditoria;
-* responsável pelo Projeto;
+* Owner como campo da instância;
 * encerramento final do Projeto;
 * sucesso ou cancelamento;
 * aceite final;

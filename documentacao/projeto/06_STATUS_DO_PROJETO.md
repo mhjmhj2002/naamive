@@ -6,14 +6,14 @@ Status responde onde o Projeto está em seu ciclo de vida. Não representa etapa
 
 | Status | Definição |
 | --- | --- |
-| `EM_FORMACAO` | O Projeto já existe, foi criado a partir de uma Necessidade com compromisso aprovado e permanece sob responsabilidade direta de formação e decomposição. Sua condução ocorre conforme a [Formação do Projeto](03_FORMACAO_DO_PROJETO.md). O Projeto entra diretamente neste status após sua criação. |
+| `EM_FORMACAO` | O Projeto já existe, foi criado a partir de uma Necessidade com compromisso aprovado e permanece sob responsabilidade direta de formação e decomposição. Sua condução ocorre conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md). O Projeto entra diretamente neste status após sua criação. |
 | `EM_MODULOS` | O Resultado do Processo `FORMACAO_SUFICIENTE` foi produzido e os Módulos necessários foram materializados. O Projeto encerrou sua responsabilidade direta de formação e decomposição, e sua realização passa a ser conduzida pelos Módulos. Ele continua existindo como entidade pai, agregadora e referência do compromisso recebido da Necessidade. |
 | `CONCLUIDO` | Status terminal de sucesso. O Projeto somente o assume quando o trabalho necessário de seus Módulos estiver concluído e a verificação agregada produzir `COMPROMISSO_ATENDIDO`. Representa o encerramento bem-sucedido do Projeto. |
 | `CANCELADO` | Status terminal excepcional. O Projeto somente o assume por `CANCELAMENTO_APROVADO`, uma decisão humana material. Um Projeto cancelado não representa compromisso atendido. |
 
 ## `EM_FORMACAO`
 
-Em `EM_FORMACAO`, o Projeto é uma instância existente vinculada à sua Necessidade de origem com compromisso aprovado. Ele é conduzido conforme a [Formação do Projeto](03_FORMACAO_DO_PROJETO.md), até haver condições suficientes para identificar, delimitar e materializar os Módulos necessários.
+Em `EM_FORMACAO`, o Projeto é uma instância existente vinculada à sua Necessidade de origem com compromisso aprovado. Ele é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), até haver condições suficientes para identificar, delimitar e materializar os Módulos necessários.
 
 `ENQUADRAMENTO`, `DESCOBERTA`, `DIREÇÃO DA SOLUÇÃO` e `DECOMPOSIÇÃO EM MÓDULOS` são etapas internas da formação, não status.
 
@@ -34,9 +34,9 @@ A verificação agregada não é status. O efeito externo de `CONCLUIDO` é perm
 
 ## `CANCELADO`
 
-O agente não pode cancelar unilateralmente o Projeto. `CANCELADO` é distinto de `CONCLUIDO`: enquanto este representa encerramento bem-sucedido, aquele não representa compromisso atendido.
+Nenhum Ator agêntico pode cancelar unilateralmente o Projeto. `CANCELADO` é distinto de `CONCLUIDO`: enquanto este representa encerramento bem-sucedido, aquele não representa compromisso atendido.
 
-`CANCELAMENTO_APROVADO` é o Resultado do Processo e a decisão humana material que autoriza a transição para `CANCELADO`. Este catálogo não define responsável, permissões ou mecanismo de cancelamento.
+`CANCELAMENTO_APROVADO` é o Resultado do Processo e a decisão humana material do Owner que autoriza a transição para `CANCELADO`. Este catálogo não define mecanismo técnico de cancelamento.
 
 ## Status terminais
 
@@ -87,4 +87,4 @@ posição não terminal
 → CANCELADO
 ```
 
-O detalhamento das transições pertence ao [Ciclo de Vida do Projeto](CICLO_DE_VIDA_DO_PROJETO.md). O catálogo de Resultados do Processo pertence exclusivamente a [Resultados do Processo do Projeto](RESULTADOS_DO_PROCESSO_DO_PROJETO.md).
+O detalhamento das transições pertence ao [Ciclo de Vida do Projeto](05_CICLO_DE_VIDA_DO_PROJETO.md). O catálogo de Resultados do Processo pertence exclusivamente a [Resultados do Processo do Projeto](07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md).

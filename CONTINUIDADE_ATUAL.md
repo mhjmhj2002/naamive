@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem ciclo de vida, status e Resultados do Processo formalizados. Ainda não há instância de Projeto ou Módulo materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo e Atores formalizados. Ainda não há instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -18,7 +18,7 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Nec
 * Resultado da auditoria: `QUALIFICAVEL`
 * Qualificação: concluída
 * Recomendação: `ASSUMIR_COMPROMISSO`
-* Decisão humana de compromisso: `APROVADO`, registrada por `mhj`, usuário responsável e criador identificado no contexto atual
+* Decisão humana de compromisso: `APROVADO`, registrada por `mhj`, identificador histórico do usuário autenticado que exerceu o Ator Owner no contexto atual
 * Projeto: ainda não criado
 * Transição obrigatória atual: criação futura do Projeto 1:1 e, após sua existência, registro em `EM_PROJETO`
 
@@ -26,70 +26,75 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Nec
 
 ## Documentação definida
 
+* `documentacao/atores/01_CONCEITO_DE_ATOR.md`
 * `documentacao/necessidade/01_DEFINICAO_DA_NECESSIDADE.md`
 * `documentacao/necessidade/02_MODELO_DE_NECESSIDADE.md`
-* `documentacao/necessidade/03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md`
-* `documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md`
-* `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
-* `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
+* `documentacao/necessidade/03_ATORES_DA_NECESSIDADE.md`
+* `documentacao/necessidade/04_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md`
+* `documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md`
+* `documentacao/necessidade/06_STATUS_DA_NECESSIDADE.md`
+* `documentacao/necessidade/07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
 * `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
 * `documentacao/projeto/02_MODELO_DE_PROJETO.md`
-* `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`
-* `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
-* `documentacao/projeto/STATUS_DO_PROJETO.md`
-* `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
+* `documentacao/projeto/03_ATORES_DO_PROJETO.md`
+* `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`
+* `documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md`
+* `documentacao/projeto/06_STATUS_DO_PROJETO.md`
+* `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
 
 ## Decisões estruturais atuais
 
-* `documentacao/` contém definições e modelos; `dados/` contém instâncias reais administradas pelo NAAMIVE.
-* Entidades operacionais devem possuir coleções próprias, e relações futuras devem ocorrer por identificadores, evitando aninhamento físico indevido.
-* Todo vocabulário controlado pelo NAAMIVE usa Português do Brasil.
-* Produto, Necessidade e Projeto são conceitos distintos.
-* Uma Necessidade com compromisso aprovado origina obrigatoriamente um único Projeto. Não há estado permanente entre `APROVADO` e `EM_PROJETO`.
+* As verticais Necessidade e Projeto usam a sequência documental `01_DEFINICAO`, `02_MODELO`, `03_ATORES`, `04_FORMACAO`, `05_CICLO_DE_VIDA`, `06_STATUS` e `07_RESULTADOS_DO_PROCESSO`. A seção de organização documental em `AGENTS.md` formaliza que esses prefixos numéricos fazem parte obrigatória do nome dos arquivos das verticais estruturadas nesse padrão.
+* `documentacao/atores/01_CONCEITO_DE_ATOR.md` define transversalmente Ator, Executor e Skill. Ator é o papel especializado responsável; Executor é quem o exerce concretamente; Skill é a capacidade especializada necessária para exercer um Ator agêntico.
+* Agentes exercem responsabilidades especializadas. Não existe agente genérico responsável por toda a cadeia do NAAMIVE: cada Ator agêntico possui fronteira clara, Skill principal correspondente, entrega seu resultado e encerra sua atuação naquele trabalho.
+* O princípio é “pastelero a tus pasteles”: cada agente sabe qual responsabilidade exerce e não acumula papéis especializados sem necessidade. A aproximação atual é Ator agêntico especializado ≈ agente especializado ≈ Skill principal correspondente, sem impedir capacidades auxiliares futuras.
+* `Owner` é Ator humano transversal, executado nesta versão pelo usuário autenticado. Não é papel configurável, grupo, perfil RBAC, ownership por entidade, permissão delegável, hierarquia, matriz de autoridade, aprovação por maioria nem modelo multiusuário.
+* RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade e multiusuário estão fora do escopo atual. Sua introdução exige revisão explícita do modelo de Owner.
+* Os Atores da Necessidade são: Owner; Especialista em Formação da Necessidade; Auditor da Necessidade; e Especialista em Qualificação da Necessidade.
+* Os Atores do Projeto são: Owner; Especialista em Formação do Projeto; Auditor do Projeto; e Verificador Agregado do Projeto.
+* Não há conceito separado de responsável pelo Projeto nesta versão; a pendência anterior foi resolvida pelo modelo `Owner → usuário autenticado`.
+* `documentacao/` contém definições e modelos; `dados/` contém instâncias reais administradas pelo NAAMIVE. Entidades operacionais devem possuir coleções próprias, e relações futuras devem ocorrer por identificadores, evitando aninhamento físico indevido.
+* Produto, Necessidade e Projeto são conceitos distintos. Uma Necessidade com compromisso aprovado origina obrigatoriamente um único Projeto. Não há estado permanente entre `APROVADO` e `EM_PROJETO`.
 * O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio. A Necessidade permanece como fonte de verdade do compromisso de mudança.
 * O Projeto transforma o compromisso recebido em direção realizável, organiza sua realização e conduz a decomposição até o nível de Módulo. Ele não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
-* A formação do Projeto conduz a compreensão e a decomposição até a materialização dos Módulos. Suas etapas e controles transversais estão concentrados em `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`; o ciclo de vida não os duplica.
+* A formação do Projeto conduz a compreensão e a decomposição até a materialização dos Módulos. Suas etapas e controles transversais estão concentrados em `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`; o ciclo de vida não os duplica.
 * O catálogo normativo de status do Projeto é composto exclusivamente por `EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO`.
 * O fluxo principal do Projeto é: criação → `EM_FORMACAO` → Módulos necessários materializados → `EM_MODULOS` → conclusão do trabalho necessário dos Módulos → verificação agregada → `CONCLUIDO`.
-* `EM_MODULOS` substitui a proposta anterior `EM_MODULO`, pois um Projeto pode originar N Módulos e sua realização passa a ser conduzida por eles.
-* Em `EM_MODULOS`, o Projeto permanece como entidade pai, agregadora e referência do compromisso. Ele não replica os status internos dos Módulos.
+* `EM_MODULOS` substitui a proposta anterior `EM_MODULO`, pois um Projeto pode originar N Módulos e sua realização passa a ser conduzida por eles. Em `EM_MODULOS`, o Projeto permanece como entidade pai, agregadora e referência do compromisso; ele não replica os status internos dos Módulos.
 * A conclusão dos Módulos não conclui automaticamente o Projeto: a verificação agregada deve confirmar que o resultado atende ao compromisso da Necessidade. Se insuficiente, o Projeto permanece na condução pelos Módulos.
-* A verificação agregada não é status; ela é condição para que o Projeto assuma `CONCLUIDO` depois da conclusão do trabalho necessário dos Módulos.
-* `CONCLUIDO` e `CANCELADO` são terminais. `CONCLUIDO` é terminal de sucesso e permite que a Necessidade de origem transicione de `EM_PROJETO` para `ATENDIDA`.
-* `CANCELADO` é terminal excepcional, dependente de decisão humana válida; o agente não pode cancelar unilateralmente.
+* A verificação agregada não é status; é condição para que o Projeto assuma `CONCLUIDO` depois da conclusão do trabalho necessário dos Módulos. `CONCLUIDO` e `CANCELADO` são terminais; `CONCLUIDO` permite que a Necessidade de origem transicione de `EM_PROJETO` para `ATENDIDA`.
+* `CANCELADO` é terminal excepcional, dependente da decisão humana material `CANCELAMENTO_APROVADO` pelo Owner; nenhum Ator agêntico pode cancelar unilateralmente.
 * Decisões humanas, conclusões de auditoria, recomendações e Resultados do Processo permanecem separados do catálogo de status.
-* O catálogo normativo de Resultados do Processo do Projeto está em `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md` e contém exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`; nenhum deles é status.
-* `FORMACAO_SUFICIENTE`, junto da materialização dos Módulos necessários, permite a transição para `EM_MODULOS`; a materialização em si não é Resultado do Processo.
-* `FORMACAO_INSUFICIENTE` mantém o Projeto em `EM_FORMACAO` e aciona o tratamento de lacunas pelo motor de formação, seguido de nova verificação.
-* `COMPROMISSO_ATENDIDO` permite a transição para `CONCLUIDO`; `COMPROMISSO_NAO_ATENDIDO` mantém o Projeto em `EM_MODULOS` até novo trabalho descendente e nova verificação agregada.
-* `CANCELAMENTO_APROVADO` é decisão humana material e permite a transição de status não terminal para `CANCELADO`.
-* Pela relação 1:1, `Projeto CONCLUIDO → Necessidade ATENDIDA` e `Projeto CANCELADO → Necessidade CANCELADA`. Não deve existir segundo Projeto para contornar um cancelamento.
-* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado. Não há decisão conceitual sobre responsável pelo Projeto.
+* O catálogo normativo de Resultados do Processo do Projeto está em `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md` e contém exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`; nenhum deles é status.
+* `FORMACAO_SUFICIENTE`, junto da materialização dos Módulos necessários, permite a transição para `EM_MODULOS`; a materialização em si não é Resultado do Processo. `COMPROMISSO_ATENDIDO` permite a transição para `CONCLUIDO`; `COMPROMISSO_NAO_ATENDIDO` mantém o Projeto em `EM_MODULOS` até novo trabalho descendente e nova verificação agregada.
+* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado.
 
 ## Última atividade concluída
 
-Foi criado `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md` como a fonte normativa única do catálogo de Resultados do Processo do Projeto. O catálogo formaliza exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`, sem criar instâncias ou Módulos. O ciclo de vida e o catálogo de status passaram a referenciar esses resultados sem alterar seus status ou fluxo; a `N-001` não foi alterada.
+Foi eliminada a incompatibilidade entre `AGENTS.md` e a estrutura documental numerada: a convenção obrigatória para verticais estruturadas agora formaliza `01` a `07`, incluindo `05_CICLO_DE_VIDA_`, `06_STATUS_` e `07_RESULTADOS_DO_PROCESSO_`. A estrutura, os catálogos, os status, a `N-001`, Projetos e Módulos não foram alterados nesta correção.
 
 ## Próxima ação
 
-Voltar ao brainstorm antes de criar a instância `P-001` ou avançar para a definição de Módulo.
+Voltar ao brainstorm para preparar o teste de fogo da vertical Projeto com a `N-001`, sem criar automaticamente `P-001` nesta atividade.
 
 ## Bloqueios ou decisões pendentes
 
-Não há decisão sobre responsável pelo Projeto. Permanecem pendentes a criação futura do Projeto 1:1 para a `N-001` e a definição de Módulo.
+Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse conceito separado nesta versão. Permanecem pendentes a criação futura do Projeto 1:1 para a `N-001`, após o teste de fogo, e a definição de Módulo.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md`
-* `documentacao/necessidade/STATUS_DA_NECESSIDADE.md`
-* `documentacao/necessidade/RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
-* `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
-* `documentacao/projeto/02_MODELO_DE_PROJETO.md`
-* `documentacao/projeto/03_FORMACAO_DO_PROJETO.md`
-* `documentacao/projeto/CICLO_DE_VIDA_DO_PROJETO.md`
-* `documentacao/projeto/STATUS_DO_PROJETO.md`
-* `documentacao/projeto/RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
+* `documentacao/atores/01_CONCEITO_DE_ATOR.md`
+* `documentacao/necessidade/03_ATORES_DA_NECESSIDADE.md`
+* `documentacao/necessidade/04_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md`
+* `documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md`
+* `documentacao/necessidade/06_STATUS_DA_NECESSIDADE.md`
+* `documentacao/necessidade/07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
+* `documentacao/projeto/03_ATORES_DO_PROJETO.md`
+* `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`
+* `documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md`
+* `documentacao/projeto/06_STATUS_DO_PROJETO.md`
+* `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
 * `dados/necessidades/N-001/necessidade.md`

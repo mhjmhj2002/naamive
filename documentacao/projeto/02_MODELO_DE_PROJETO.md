@@ -54,7 +54,7 @@ Não pertencem a este modelo inicial:
 * status;
 * fases;
 * agentes;
-* responsável pelo Projeto;
+* Owner como campo da instância;
 * datas;
 * estimativas;
 * arquitetura;
@@ -69,6 +69,6 @@ Não pertencem a este modelo inicial:
 * regras físicas de banco de dados; e
 * regras de unicidade do nome.
 
-Em particular, a definição de responsável pelo Projeto permanece em aberto e não deve ser inferida neste modelo.
+Em particular, Owner é Ator humano transversal, executado pelo usuário autenticado, e não um campo atribuível individualmente ao Projeto. Suas responsabilidades estão definidas em [Atores do Projeto](03_ATORES_DO_PROJETO.md).
 
 Este documento é um modelo da entidade, não um formulário de entrada, processo, ciclo de vida ou especificação de persistência técnica.

@@ -160,20 +160,20 @@ Justificativa: há valor e prioridade altos, aderência ao NAAMIVE e não há re
 | --- | --- |
 | `APROVADO` | `mhj` |
 
-Esta foi uma decisão humana material, ocorrida após a recomendação do agente. O identificador `mhj` é o único identificador de usuário comprovável no contexto atual: ele consta como autor do histórico versionado do registro da N-001. Nesta primeira versão, o criador é o usuário responsável pela Necessidade. `APROVADO` é Resultado do Processo e não é nome de status formal da Necessidade.
+Esta foi uma decisão humana material, ocorrida após a recomendação do Especialista em Qualificação da Necessidade. O identificador `mhj` é o único identificador de usuário comprovável no contexto atual: ele consta como autor do histórico versionado do registro da N-001. Nesta primeira versão, o usuário autenticado exerce o Ator humano Owner. `APROVADO` é Resultado do Processo e não é nome de status formal da Necessidade.
 
 ### Projeto originado
 
 `AINDA NÃO`.
 
-Motivo: a entidade Projeto e seu modelo ainda não foram definidos.
+Motivo: a instância de Projeto 1:1 correspondente ainda não foi materializada.
 
 ## Situação no ciclo de vida
 
 O ciclo de formação está concluído, com auditoria `QUALIFICAVEL`. A qualificação também está concluída, com recomendação `ASSUMIR_COMPROMISSO` e decisão humana de compromisso `APROVADO`.
 
-Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/CICLO_DE_VIDA_DA_NECESSIDADE.md), `APROVADO` exige a criação obrigatória do Projeto correspondente antes que a Necessidade possa assumir formalmente `EM_PROJETO`.
+Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), `APROVADO` exige a criação obrigatória do Projeto correspondente antes que a Necessidade possa assumir formalmente `EM_PROJETO`.
 
-Essa transição ainda não foi materializada porque a entidade Projeto e seu modelo não estão definidos. Trata-se de lacuna de implementação e modelagem, não de um novo status intermediário. Enquanto a lacuna existir, não há status oficial atribuível que represente corretamente este instante entre a decisão já ocorrida e a criação obrigatória do Projeto.
+Essa transição ainda não foi materializada porque a instância de Projeto 1:1 correspondente ainda não foi criada. Trata-se de lacuna de materialização, não de um novo status intermediário. Enquanto a lacuna existir, não há status oficial atribuível que represente corretamente este instante entre a decisão já ocorrida e a criação obrigatória do Projeto.
 
 Próximo evento obrigatório: criar o Projeto 1:1 correspondente à `N-001` e, então, registrar `EM_PROJETO`.

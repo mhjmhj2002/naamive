@@ -2,7 +2,7 @@
 
 ## Finalidade
 
-Este documento define o fluxo, os eventos e as transições da Necessidade desde sua criação até o encerramento. O catálogo de posições possíveis no ciclo está em [Status da Necessidade](STATUS_DA_NECESSIDADE.md). As conclusões, recomendações e decisões produzidas durante o processo estão em [Resultados do Processo da Necessidade](RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md).
+Este documento define o fluxo, os eventos e as transições da Necessidade desde sua criação até o encerramento. O catálogo de posições possíveis no ciclo está em [Status da Necessidade](06_STATUS_DA_NECESSIDADE.md). As conclusões, recomendações e decisões produzidas durante o processo estão em [Resultados do Processo da Necessidade](07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md). Os responsáveis por atividades e decisões estão definidos em [Atores da Necessidade](03_ATORES_DA_NECESSIDADE.md).
 
 ## Fluxo principal
 
@@ -41,9 +41,9 @@ NAO_ASSUMIR_COMPROMISSO
 | Evento ou condição | Transição | Regra |
 | --- | --- | --- |
 | Criação da Necessidade | `EM_FORMACAO` | A Necessidade entra diretamente nesse status. Não há status de registro. |
-| Formação concluída | `EM_FORMACAO` → `EM_QUALIFICACAO` | Exige auditoria com formação suficiente e confirmação da intenção pela pessoa usuária, conforme o processo de formação. |
-| Auditoria com `NAO_CARACTERIZA_NECESSIDADE` | permanece em `EM_FORMACAO` ou segue para decisão humana de cancelamento | O agente trata a demanda quando ainda for possível compreendê-la ou reformulá-la. Se o diagnóstico for definitivo, não pode encerrá-la unilateralmente: depende de `CANCELAMENTO_APROVADO`. |
-| Qualificação concluída e recomendação emitida | `EM_QUALIFICACAO` → `AGUARDANDO_DECISAO` | A decisão material passa a aguardar o usuário autenticado responsável pela Necessidade. |
+| Formação concluída | `EM_FORMACAO` → `EM_QUALIFICACAO` | Exige auditoria com formação suficiente e confirmação da intenção pelo Owner, conforme o processo de formação. |
+| Auditoria com `NAO_CARACTERIZA_NECESSIDADE` | permanece em `EM_FORMACAO` ou segue para decisão humana de cancelamento | O Especialista em Formação da Necessidade trata a demanda quando ainda for possível compreendê-la ou reformulá-la. Se o diagnóstico for definitivo, o Auditor da Necessidade não pode encerrá-la unilateralmente: depende de `CANCELAMENTO_APROVADO` pelo Owner. |
+| Qualificação concluída e recomendação emitida | `EM_QUALIFICACAO` → `AGUARDANDO_DECISAO` | A decisão material passa a aguardar o Owner. |
 | Recomendação `NAO_ASSUMIR_COMPROMISSO` | `EM_QUALIFICACAO` → `AGUARDANDO_DECISAO` | A recomendação não cancela a Necessidade. Havendo informação, condição ou mudança que justifique nova análise, o processo pode retornar à formação ou à qualificação conforme a causa concreta. |
 | Decisão humana `APROVADO` | `AGUARDANDO_DECISAO` → criação do Projeto → `EM_PROJETO` | A criação do Projeto correspondente é obrigatória. |
 | Projeto concluído com sucesso | `EM_PROJETO` → `ATENDIDA` | O sucesso do Projeto 1:1 encerra com sucesso a Necessidade. |
@@ -51,11 +51,11 @@ NAO_ASSUMIR_COMPROMISSO
 
 ## Formação e qualificação
 
-A formação segue o processo definido em [Formação e qualificação da Necessidade](03_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md). A conclusão `QUALIFICAVEL` é Resultado do Processo, não status. `NAO_CARACTERIZA_NECESSIDADE` também é Resultado do Processo e requer tratamento na formação ou decisão humana de cancelamento; não determina encerramento unilateral pelo agente. Da mesma forma, `ASSUMIR_COMPROMISSO` e `NAO_ASSUMIR_COMPROMISSO` são recomendações, não status. A recomendação negativa não cancela automaticamente a Necessidade.
+A formação segue o processo definido em [Formação e qualificação da Necessidade](04_FORMACAO_E_QUALIFICACAO_DA_NECESSIDADE.md). A conclusão `QUALIFICAVEL` é Resultado do Processo, não status. `NAO_CARACTERIZA_NECESSIDADE` também é Resultado do Processo e requer tratamento na formação ou decisão humana de cancelamento; não determina encerramento unilateral pelo Auditor da Necessidade. Da mesma forma, `ASSUMIR_COMPROMISSO` e `NAO_ASSUMIR_COMPROMISSO` são recomendações, não status. A recomendação negativa não cancela automaticamente a Necessidade.
 
 ## Decisão humana e relação com Projeto
 
-`APROVADO` é uma decisão humana de compromisso e um Resultado do Processo, não um status. `CANCELAMENTO_APROVADO` também é uma decisão humana material e um Resultado do Processo, não um status. Nesta primeira versão, ambas as decisões somente podem ser realizadas pelo usuário autenticado responsável pela Necessidade, que é o usuário que a criou. O registro de cada decisão deve identificar, no mínimo, a decisão e o usuário autenticado que a realizou. Não há papéis, delegação ou matriz de permissões neste modelo.
+`APROVADO` é uma decisão humana de compromisso e um Resultado do Processo, não um status. `CANCELAMENTO_APROVADO` também é uma decisão humana material e um Resultado do Processo, não um status. Nesta primeira versão, ambas as decisões são realizadas pelo Owner, cujo Executor é o usuário autenticado. O registro de cada decisão deve identificar, no mínimo, a decisão e o usuário autenticado que a realizou. Não há RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade ou modelo multiusuário neste modelo.
 
 O efeito de `APROVADO` é atômico no modelo: dispara a criação obrigatória de exatamente um Projeto para exatamente uma Necessidade.
 
