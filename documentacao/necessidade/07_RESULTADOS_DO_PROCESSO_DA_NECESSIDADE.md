@@ -44,7 +44,7 @@ Essas recomendações não são status nem decisões humanas. Em especial, `NAO_
 
 | Resultado | Significado |
 | --- | --- |
-| `APROVADO` | O Owner aprovou o compromisso. Isso dispara obrigatoriamente a criação do Projeto correspondente. |
+| `APROVADO` | O Owner aprovou o compromisso. Isso aciona obrigatoriamente o Especialista em Formação do Projeto; se ainda não existir o Projeto 1:1, o Ator realiza seu bootstrap e materializa a instância correspondente. |
 | `CANCELAMENTO_APROVADO` | O Owner confirmou seu encerramento. Isso provoca a transição de um status não terminal para `CANCELADA`. |
 
 `APROVADO` e `CANCELAMENTO_APROVADO` são decisões humanas materiais, não status. Nesta primeira versão, o Owner é exercido pelo usuário autenticado. Toda decisão humana material registra, no mínimo, a decisão e o usuário autenticado que a realizou. Não há RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade ou modelo multiusuário neste modelo.

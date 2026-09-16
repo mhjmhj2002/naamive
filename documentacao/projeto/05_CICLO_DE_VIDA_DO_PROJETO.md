@@ -14,13 +14,14 @@ Uma Necessidade com compromisso humano `APROVADO` origina obrigatoriamente exata
 
 ```text
 1 Necessidade com compromisso aprovado
-→ criação obrigatória de 1 Projeto
-→ Projeto entra em formação
+→ acionamento do Especialista em Formação do Projeto
+→ bootstrap e criação obrigatória de 1 Projeto, se ele ainda não existir
+→ Projeto nasce em EM_FORMACAO
 ```
 
-O Projeto não nasce de formulário independente nem de criação manual desvinculada da Necessidade. A criação futura deve preservar a relação 1:1 de forma atômica ou recuperável, sem que este documento defina sua implementação técnica.
+O Projeto não nasce de formulário independente nem de criação manual desvinculada da Necessidade. O bootstrap é responsabilidade inicial do Especialista em Formação do Projeto; não há Ator específico para criação ou materialização. Após o bootstrap, o mesmo Ator continua a formação e, ao final, entrega o handoff ao Auditor do Projeto. A criação futura deve preservar a relação 1:1 de forma atômica ou recuperável, sem que este documento defina sua implementação técnica.
 
-A existência do Projeto correspondente permite que a Necessidade de origem assuma `EM_PROJETO`, conforme o [Ciclo de Vida da Necessidade](../necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md).
+A existência real do Projeto correspondente em `EM_FORMACAO`, após materialização bem-sucedida, permite que a Necessidade de origem assuma `EM_PROJETO`, conforme o [Ciclo de Vida da Necessidade](../necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md). Se o bootstrap falhar, a Necessidade não pode assumir esse status antecipadamente.
 
 ## Fluxo principal
 
@@ -93,7 +94,7 @@ Há um caminho excepcional de encerramento:
 
 | Evento ou condição | Transição | Regra |
 | --- | --- | --- |
-| Criação obrigatória do Projeto a partir de Necessidade com compromisso humano `APROVADO` | criação → `EM_FORMACAO` | A criação preserva a relação 1:1 com a Necessidade de origem. A existência do Projeto permite que a Necessidade assuma `EM_PROJETO`. |
+| `APROVADO` aciona o Especialista em Formação do Projeto; ausência do Projeto 1:1 | bootstrap e criação obrigatória → `EM_FORMACAO` | O mesmo Ator materializa o Projeto, com código, nome inicial proposto ou gerado e vínculo 1:1 com a Necessidade. Somente a criação bem-sucedida permite que a Necessidade assuma `EM_PROJETO`. |
 | `FORMACAO_SUFICIENTE` e Módulos necessários materializados | `EM_FORMACAO` → `EM_MODULOS` | A formação e a decomposição deixam de ser responsabilidade direta do Projeto; sua existência como pai, agregador e referência do compromisso permanece. |
 | Conclusão do trabalho necessário dos Módulos | `EM_MODULOS` → verificação agregada | A conclusão dos Módulos não conclui automaticamente o Projeto. |
 | `COMPROMISSO_ATENDIDO` | verificação agregada → `CONCLUIDO` | Exige confirmação de que o resultado agregado atende ao compromisso recebido da Necessidade. |

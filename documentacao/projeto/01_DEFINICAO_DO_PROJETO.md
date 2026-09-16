@@ -20,6 +20,8 @@ Uma Necessidade com compromisso aprovado origina um único Projeto:
 
 A relação é 1:1. Projeto não nasce diretamente de formulário independente nem de criação manual desvinculada de uma Necessidade.
 
+Após `APROVADO`, o primeiro Ator agêntico da vertical é o Especialista em Formação do Projeto. Se a instância 1:1 ainda não existir, o bootstrap faz parte da responsabilidade inicial desse mesmo Ator: ele materializa o Projeto em `EM_FORMACAO` e continua sua formação. Não há Ator separado para criação ou materialização de Projeto.
+
 ## Compromisso recebido da Necessidade
 
 A Necessidade continua sendo a fonte de verdade para:

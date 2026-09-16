@@ -34,7 +34,25 @@ O código não substitui o identificador técnico. Este modelo não define ainda
 
 Todo Projeto possui um nome amigável para exibição e uso pela pessoa usuária. O nome permite a identificação semântica e visual do Projeto na aplicação.
 
-O nome existe no modelo, mas não precisa ser digitado manualmente pela pessoa usuária. Ainda não está definido se o sistema o gera, sugere ou deriva, nem existem regras de unicidade, escopo de duplicidade ou restrições de banco de dados para ele.
+Durante o bootstrap, o Especialista em Formação do Projeto propõe ou gera o nome inicial. O nome não precisa ser fornecido previamente pelo Owner nem exige aprovação humana específica para ser aceito. O Owner pode alterá-lo posteriormente.
+
+Alterar o nome não modifica o identificador técnico, o código nem a Necessidade de origem. Assim, esses elementos preservam papéis distintos:
+
+```text
+identificador técnico
+→ identidade técnica da instância
+
+código
+→ referência operacional estável
+
+nome
+→ identificação humana e editável
+
+necessidade de origem
+→ vínculo 1:1 estável
+```
+
+Esta definição não estabelece regras de unicidade, escopo de duplicidade, persistência ou interface. Em futura interface, o nome inicialmente sugerido deve ser apresentado de forma editável ao Owner.
 
 ### Necessidade de origem
 

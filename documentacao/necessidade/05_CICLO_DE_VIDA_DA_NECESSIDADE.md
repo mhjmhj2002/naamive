@@ -14,7 +14,8 @@ criação
 → qualificação concluída e recomendação emitida
 → AGUARDANDO_DECISAO
 → decisão humana APROVADO
-→ criação obrigatória do Projeto 1:1
+→ acionamento do Especialista em Formação do Projeto
+→ materialização obrigatória do Projeto 1:1
 → EM_PROJETO
 → Projeto concluído com sucesso
 → ATENDIDA
@@ -45,7 +46,7 @@ NAO_ASSUMIR_COMPROMISSO
 | Auditoria com `NAO_CARACTERIZA_NECESSIDADE` | permanece em `EM_FORMACAO` ou segue para decisão humana de cancelamento | O Especialista em Formação da Necessidade trata a demanda quando ainda for possível compreendê-la ou reformulá-la. Se o diagnóstico for definitivo, o Auditor da Necessidade não pode encerrá-la unilateralmente: depende de `CANCELAMENTO_APROVADO` pelo Owner. |
 | Qualificação concluída e recomendação emitida | `EM_QUALIFICACAO` → `AGUARDANDO_DECISAO` | A decisão material passa a aguardar o Owner. |
 | Recomendação `NAO_ASSUMIR_COMPROMISSO` | `EM_QUALIFICACAO` → `AGUARDANDO_DECISAO` | A recomendação não cancela a Necessidade. Havendo informação, condição ou mudança que justifique nova análise, o processo pode retornar à formação ou à qualificação conforme a causa concreta. |
-| Decisão humana `APROVADO` | `AGUARDANDO_DECISAO` → criação do Projeto → `EM_PROJETO` | A criação do Projeto correspondente é obrigatória. |
+| Decisão humana `APROVADO` | `AGUARDANDO_DECISAO` → acionamento da formação do Projeto → materialização do Projeto → `EM_PROJETO` | `APROVADO` aciona o Especialista em Formação do Projeto. Quando ainda não houver Projeto 1:1, esse Ator realiza o bootstrap e materializa a instância em `EM_FORMACAO`. A Necessidade somente assume `EM_PROJETO` após a materialização bem-sucedida. |
 | Projeto concluído com sucesso | `EM_PROJETO` → `ATENDIDA` | O sucesso do Projeto 1:1 encerra com sucesso a Necessidade. |
 | Decisão humana `CANCELAMENTO_APROVADO`, antes do atendimento | status não terminal → `CANCELADA` | Encerramento excepcional; uma Necessidade cancelada não é atendida. |
 
@@ -57,16 +58,16 @@ A formação segue o processo definido em [Formação e qualificação da Necess
 
 `APROVADO` é uma decisão humana de compromisso e um Resultado do Processo, não um status. `CANCELAMENTO_APROVADO` também é uma decisão humana material e um Resultado do Processo, não um status. Nesta primeira versão, ambas as decisões são realizadas pelo Owner, cujo Executor é o usuário autenticado. O registro de cada decisão deve identificar, no mínimo, a decisão e o usuário autenticado que a realizou. Não há RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade ou modelo multiusuário neste modelo.
 
-O efeito de `APROVADO` é atômico no modelo: dispara a criação obrigatória de exatamente um Projeto para exatamente uma Necessidade.
+O efeito de `APROVADO` é acionar o Especialista em Formação do Projeto para iniciar a formação. Se ainda não existir o Projeto 1:1, o bootstrap inicial dessa formação materializa obrigatoriamente exatamente um Projeto para exatamente uma Necessidade.
 
 ```text
 1 Necessidade com compromisso aprovado
 → 1 Projeto
 ```
 
-Não existe estado permanente entre `APROVADO` e `EM_PROJETO`. Somente após a existência do Projeto correspondente a Necessidade assume formalmente `EM_PROJETO`. A Necessidade não replica os status internos de execução do Projeto.
+Não existe estado permanente entre `APROVADO` e `EM_PROJETO`. Somente após a materialização bem-sucedida e a existência real do Projeto correspondente em `EM_FORMACAO`, a Necessidade assume formalmente `EM_PROJETO`. Se a materialização falhar, `EM_PROJETO` não pode ser registrado antecipadamente. A Necessidade não replica os status internos de execução do Projeto.
 
-Se a aprovação já ocorreu, mas o Projeto não puder ser criado porque a entidade Projeto ainda não está definida, isso é uma lacuna de implementação ou modelagem. Deve-se registrar a transição obrigatória ainda não materializada, sem criar status intermediário.
+Se a aprovação já ocorreu, mas o bootstrap não puder materializar o Projeto, isso é uma lacuna de implementação ou execução. Deve-se registrar a transição obrigatória ainda não materializada, sem criar status intermediário.
 
 ## Encerramento
 

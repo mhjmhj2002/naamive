@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo, Atores e Skills agênticas materializadas. Ainda não há instância de Projeto ou Módulo materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo, Atores e Skills agênticas materializadas. A documentação e a Skill de Formação do Projeto agora formalizam o bootstrap do Projeto após `APROVADO`. Ainda não há instância de Projeto ou Módulo materializado.
 
 ## Necessidade ativa
 
@@ -20,9 +20,9 @@ O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Nec
 * Recomendação: `ASSUMIR_COMPROMISSO`
 * Decisão humana de compromisso: `APROVADO`, registrada por `mhj`, identificador histórico do usuário autenticado que exerceu o Ator Owner no contexto atual
 * Projeto: ainda não criado
-* Transição obrigatória atual: criação futura do Projeto 1:1 e, após sua existência, registro em `EM_PROJETO`
+* Transição obrigatória atual: `APROVADO` aciona o Especialista em Formação do Projeto; ele deverá executar o bootstrap do Projeto 1:1 e, somente após sua criação bem-sucedida em `EM_FORMACAO`, registrar a Necessidade em `EM_PROJETO`
 
-`QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` não pode receber `EM_PROJETO` enquanto não existir o Projeto correspondente. A transição obrigatória não foi materializada por ausência da instância de Projeto correspondente; não existe status intermediário para representar essa lacuna.
+`QUALIFICAVEL`, `ASSUMIR_COMPROMISSO` e `APROVADO` são Resultados do Processo, não status. A `N-001` não pode receber `EM_PROJETO` enquanto não existir o Projeto correspondente. A transição obrigatória ainda não foi materializada; não existe status intermediário para representar essa lacuna.
 
 ## Documentação definida
 
@@ -73,7 +73,9 @@ Existem seis Skills nesta versão:
 * Não há conceito separado de responsável pelo Projeto nesta versão; a pendência anterior foi resolvida pelo modelo `Owner → usuário autenticado`.
 * `documentacao/` contém definições e modelos; `dados/` contém instâncias reais administradas pelo NAAMIVE. Entidades operacionais devem possuir coleções próprias, e relações futuras devem ocorrer por identificadores, evitando aninhamento físico indevido.
 * Produto, Necessidade e Projeto são conceitos distintos. Uma Necessidade com compromisso aprovado origina obrigatoriamente um único Projeto. Não há estado permanente entre `APROVADO` e `EM_PROJETO`.
-* O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio. A Necessidade permanece como fonte de verdade do compromisso de mudança.
+* O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio. `APROVADO` aciona o Especialista em Formação do Projeto, que é o primeiro Ator agêntico da vertical e realiza o bootstrap quando ainda não houver Projeto correspondente. Não existe Ator específico para criação, materialização ou transição de Projeto.
+* O bootstrap é parte inicial da formação do Projeto. Ele materializa a instância em `EM_FORMACAO`; somente após a criação bem-sucedida a Necessidade assume `EM_PROJETO`. Se a materialização falhar, não há registro antecipado de `EM_PROJETO` nem status intermediário.
+* No bootstrap, o Especialista em Formação do Projeto atribui o código conforme a convenção aplicável e propõe ou gera o nome inicial. O nome é editável pelo Owner e sua alteração não modifica o identificador técnico, o código nem o vínculo 1:1 com a Necessidade de origem.
 * O Projeto transforma o compromisso recebido em direção realizável, organiza sua realização e conduz a decomposição até o nível de Módulo. Ele não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
 * A formação do Projeto conduz a compreensão e a decomposição até a materialização dos Módulos. Suas etapas e controles transversais estão concentrados em `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`; o ciclo de vida não os duplica.
 * O catálogo normativo de status do Projeto é composto exclusivamente por `EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO`.
@@ -85,24 +87,19 @@ Existem seis Skills nesta versão:
 * Decisões humanas, conclusões de auditoria, recomendações e Resultados do Processo permanecem separados do catálogo de status.
 * O catálogo normativo de Resultados do Processo do Projeto está em `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md` e contém exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`; nenhum deles é status.
 * `FORMACAO_SUFICIENTE`, junto da materialização dos Módulos necessários, permite a transição para `EM_MODULOS`; a materialização em si não é Resultado do Processo. `COMPROMISSO_ATENDIDO` permite a transição para `CONCLUIDO`; `COMPROMISSO_NAO_ATENDIDO` mantém o Projeto em `EM_MODULOS` até novo trabalho descendente e nova verificação agregada.
-* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado.
+* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado. A `N-001` ainda não está em `EM_PROJETO`.
 
 ## Última atividade concluída
 
-Foram materializadas as seis Skills dos Atores agênticos de Necessidade e Projeto, atualizados os documentos de Atores, o conceito transversal de Ator, `AGENTS.md` e `README.md`. Não foram criados `P-001` ou Módulos, nem houve alteração em catálogos, status ou na instância `N-001`.
+Foram alinhados os documentos de Necessidade e Projeto e a Skill `formacao-do-projeto` para que `APROVADO` acione o Especialista em Formação do Projeto, responsável pelo bootstrap do Projeto 1:1 quando necessário. Também foi definida a regra de nome inicial sugerido pelo agente e editável pelo Owner. Não foram criados `P-001` ou Módulos, não houve alteração nos catálogos nem na instância `N-001`.
 
 ## Próxima ação
 
-Executar o teste de fogo da vertical Projeto com a `N-001`, utilizando efetivamente, nesta ordem:
-
-1. `formacao-do-projeto`;
-2. `auditoria-do-projeto`.
-
-Não criar automaticamente `P-001` nesta atividade.
+Executar o teste de fogo real da vertical Projeto com a `N-001`, usando a Skill `formacao-do-projeto`. Nesse teste, o Especialista em Formação do Projeto deverá executar o bootstrap real de `P-001`, registrar a Necessidade em `EM_PROJETO` somente após a criação bem-sucedida e continuar a formação.
 
 ## Bloqueios ou decisões pendentes
 
-Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse conceito separado nesta versão. Permanecem pendentes a criação futura do Projeto 1:1 para a `N-001`, após o teste de fogo, e a definição de Módulo.
+Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse conceito separado nesta versão. Permanecem pendentes o teste de fogo real que materializará o Projeto 1:1 da `N-001` e a definição de Módulo.
 
 ## Arquivos mínimos para continuar
 

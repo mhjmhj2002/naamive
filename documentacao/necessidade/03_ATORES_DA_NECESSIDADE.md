@@ -17,6 +17,8 @@ Responsabilidades na Necessidade:
 
 Os Resultados do Processo associados à sua autoridade humana são `APROVADO` e `CANCELAMENTO_APROVADO`, definidos normativamente em [Resultados do Processo da Necessidade](07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md).
 
+Ao produzir `APROVADO`, o Owner aciona o Especialista em Formação do Projeto. Esse Ator realiza o bootstrap do Projeto quando ainda não existir a instância 1:1 correspondente; a Necessidade somente assume `EM_PROJETO` após a materialização bem-sucedida dessa instância.
+
 O Owner não executa a auditoria agêntica, não substitui pesquisa ou investigação que cabe ao agente, não produz recomendação agêntica e não é obrigado a coordenar manualmente cada etapa do processo.
 
 ## Especialista em Formação da Necessidade

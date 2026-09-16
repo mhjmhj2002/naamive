@@ -25,6 +25,9 @@ Não existe um segundo conceito concorrente de responsável pelo Projeto nesta v
 
 Responsabilidades:
 
+* atuar como primeiro Ator agêntico após a Necessidade receber `APROVADO`;
+* realizar o bootstrap inicial quando ainda não existir o Projeto 1:1 da Necessidade aprovada, materializando-o em `EM_FORMACAO`;
+* atribuir o código conforme a convenção aplicável, propor ou gerar o nome inicial e preservar o vínculo estável com a Necessidade de origem;
 * conduzir enquadramento, descoberta, direção da solução e decomposição em Módulos;
 * investigar evidências;
 * distinguir conhecido, inferido, proposto e desconhecido;
@@ -39,7 +42,7 @@ Limites:
 * não cancela Projeto; e
 * não exerce auditoria sobre o próprio trabalho como substituto do Ator especializado.
 
-Não há Ator separado para cada etapa da formação nesta versão.
+O bootstrap é parte inicial da formação, não uma responsabilidade de Ator distinto. Não há Ator separado para criação, materialização ou transição de Projeto, nem para cada etapa da formação nesta versão. Após o bootstrap, este mesmo Ator continua a formação normalmente; a auditoria permanece responsabilidade separada do Auditor do Projeto.
 
 ## Auditor do Projeto
 

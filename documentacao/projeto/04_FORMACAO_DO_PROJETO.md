@@ -8,9 +8,14 @@ Ele não define ciclo de vida formal, catálogo de status ou catálogo de Result
 
 ## Ponto de entrada
 
-A formação começa com um Projeto já existente, criado obrigatoriamente a partir de uma Necessidade com compromisso aprovado. A formação não cria o Projeto: ela amadurece uma instância já criada.
+A formação é acionada pelo `APROVADO` de uma Necessidade. O Especialista em Formação do Projeto é o primeiro Ator agêntico nessa passagem e atua em um de dois cenários:
 
-Na entrada, o Projeto possui no mínimo:
+* **Bootstrap:** a Necessidade possui `APROVADO` e ainda não existe o Projeto 1:1. O Especialista confirma essas condições, materializa o Projeto, atribui código conforme a convenção aplicável, propõe ou gera o nome inicial, preserva o vínculo com a Necessidade de origem e faz o Projeto nascer em `EM_FORMACAO`. Somente após essa materialização bem-sucedida a Necessidade assume `EM_PROJETO`.
+* **Formação existente:** o Projeto já existe em `EM_FORMACAO`. O Especialista segue diretamente com a formação ordinária.
+
+O bootstrap é parte inicial da responsabilidade de formação, não uma etapa formal, status, Resultado do Processo ou responsabilidade de outro Ator. Se a materialização falhar, não se registra antecipadamente `EM_PROJETO` na Necessidade.
+
+Depois do bootstrap, ou na entrada de uma formação já existente, o Projeto possui no mínimo:
 
 * identificador técnico;
 * código;
