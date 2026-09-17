@@ -65,6 +65,10 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 
 * [N-001 — NAAMIVE](dados/necessidades/N-001/necessidade.md)
 
+### Projetos
+
+* [P-001 — Jornada Autônoma do NAAMIVE](dados/projetos/P-001/projeto.md)
+
 ## Estrutura atual
 
 ```text
@@ -110,9 +114,12 @@ documentacao/
     └── 07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md
 
 dados/
-└── necessidades/
-    └── N-001/
-        └── necessidade.md
+├── necessidades/
+│   └── N-001/
+│       └── necessidade.md
+└── projetos/
+    └── P-001/
+        └── projeto.md
 ```
 
 O `README.md` responde onde está cada coisa. O `CONTINUIDADE_ATUAL.md` responde onde o trabalho está agora.

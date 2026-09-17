@@ -164,16 +164,19 @@ Esta foi uma decisão humana material, ocorrida após a recomendação do Especi
 
 ### Projeto originado
 
-`AINDA NÃO`.
+| Campo | Valor |
+| --- | --- |
+| Projeto | [P-001 — Jornada Autônoma do NAAMIVE](../../projetos/P-001/projeto.md) |
+| Identificador técnico | `5575efa1-c68e-464f-8393-07be8c9bc93a` |
+| Vínculo | exclusivo e 1:1 com esta Necessidade |
+| Status do Projeto | `EM_FORMACAO` |
 
-Motivo: a instância de Projeto 1:1 correspondente ainda não foi materializada.
+O Projeto foi materializado após a confirmação do `APROVADO` e antes da transição desta Necessidade para `EM_PROJETO`.
 
 ## Situação no ciclo de vida
 
 O ciclo de formação está concluído, com auditoria `QUALIFICAVEL`. A qualificação também está concluída, com recomendação `ASSUMIR_COMPROMISSO` e decisão humana de compromisso `APROVADO`.
 
-Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), `APROVADO` exige a criação obrigatória do Projeto correspondente antes que a Necessidade possa assumir formalmente `EM_PROJETO`.
+Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), o Projeto 1:1 foi materializado com sucesso em `EM_FORMACAO`; por isso, esta Necessidade está formalmente em `EM_PROJETO`.
 
-Essa transição ainda não foi materializada porque a instância de Projeto 1:1 correspondente ainda não foi criada. Trata-se de lacuna de materialização, não de um novo status intermediário. Enquanto a lacuna existir, não há status oficial atribuível que represente corretamente este instante entre a decisão já ocorrida e a criação obrigatória do Projeto.
-
-Próximo evento obrigatório: criar o Projeto 1:1 correspondente à `N-001` e, então, registrar `EM_PROJETO`.
+A formação de P-001 foi entregue para auditoria independente e seu status permanece `EM_FORMACAO`. O próximo Ator é o Auditor do Projeto; a N-001 não replica as etapas internas dessa formação.
