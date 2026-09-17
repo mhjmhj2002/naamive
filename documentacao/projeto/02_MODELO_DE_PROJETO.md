@@ -77,7 +77,7 @@ Não pertencem a este modelo inicial:
 * estimativas;
 * arquitetura;
 * direção da solução;
-* Módulos;
+* entidades descendentes;
 * Entregas de Valor;
 * Itens de Trabalho;
 * tarefas;

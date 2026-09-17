@@ -28,12 +28,12 @@ Responsabilidades:
 * atuar como primeiro Ator agêntico após a Necessidade receber `APROVADO`;
 * realizar o bootstrap inicial quando ainda não existir o Projeto 1:1 da Necessidade aprovada, materializando-o em `EM_FORMACAO`;
 * atribuir o código conforme a convenção aplicável, propor ou gerar o nome inicial e preservar o vínculo estável com a Necessidade de origem;
-* conduzir enquadramento, descoberta, direção da solução e decomposição em Módulos;
+* conduzir enquadramento, descoberta e direção da solução;
 * investigar evidências;
 * distinguir conhecido, inferido, proposto e desconhecido;
 * tratar lacunas;
 * recorrer ao Owner quando houver decisão material humana; e
-* preparar a materialização adequada dos Módulos.
+* entregar a formação ao Auditor do Projeto.
 
 Limites:
 
@@ -53,7 +53,7 @@ O bootstrap é parte inicial da formação, não uma responsabilidade de Ator di
 Responsabilidades:
 
 * verificar qualidade e suficiência da formação do Projeto;
-* avaliar coerência, sustentação, direção e decomposição;
+* avaliar coerência, sustentação e direção da solução;
 * identificar lacunas; e
 * produzir os Resultados do Processo formais da auditoria e da verificação de formação.
 
@@ -67,7 +67,7 @@ Sua atuação se relaciona conceitualmente a `FORMACAO_SUFICIENTE` e `FORMACAO_I
 
 Responsabilidades:
 
-* atuar após a conclusão do trabalho necessário dos Módulos;
+* atuar, quando a continuação operacional do Projeto for definida, após haver evidências suficientes do resultado produzido;
 * verificar o resultado agregado produzido;
 * comparar o resultado com o compromisso recebido da Necessidade;
 * decidir tecnicamente se o compromisso foi atendido no nível do Projeto; e
@@ -79,7 +79,7 @@ Limites:
 
 * não cancela Projeto;
 * não substitui decisão humana;
-* não executa diretamente o trabalho corretivo dos Módulos; e
+* não executa diretamente trabalho corretivo; e
 * não redefine a Necessidade de origem.
 
-Este Ator permanece separado do Auditor do Projeto porque auditoria de formação e verificação agregada final possuem momentos, entradas e responsabilidades diferentes. A especialização é preferível a um agente genérico acumulando funções.
+Este Ator permanece separado do Auditor do Projeto porque auditoria de formação e verificação agregada possuem responsabilidades diferentes. Seu ponto de entrada e seus efeitos no ciclo dependem de camada operacional ainda não definida. A especialização é preferível a um agente genérico acumulando funções.

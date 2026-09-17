@@ -6,31 +6,19 @@ Status responde onde o Projeto está em seu ciclo de vida. Não representa etapa
 
 | Status | Definição |
 | --- | --- |
-| `EM_FORMACAO` | O Projeto já existe, foi criado a partir de uma Necessidade com compromisso aprovado e permanece sob responsabilidade direta de formação e decomposição. Sua condução ocorre conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md). O Projeto entra diretamente neste status após sua criação. |
-| `EM_MODULOS` | O Resultado do Processo `FORMACAO_SUFICIENTE` foi produzido e os Módulos necessários foram materializados. O Projeto encerrou sua responsabilidade direta de formação e decomposição, e sua realização passa a ser conduzida pelos Módulos. Ele continua existindo como entidade pai, agregadora e referência do compromisso recebido da Necessidade. |
-| `CONCLUIDO` | Status terminal de sucesso. O Projeto somente o assume quando o trabalho necessário de seus Módulos estiver concluído e a verificação agregada produzir `COMPROMISSO_ATENDIDO`. Representa o encerramento bem-sucedido do Projeto. |
+| `EM_FORMACAO` | O Projeto já existe, foi criado a partir de uma Necessidade com compromisso aprovado e está sob responsabilidade direta de formação. Sua condução ocorre conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md). O Projeto entra diretamente neste status após sua criação. |
+| `CONCLUIDO` | Status terminal conceitual futuro de sucesso. O caminho operacional e as condições de transição para ele ainda não estão definidos. |
 | `CANCELADO` | Status terminal excepcional. O Projeto somente o assume por `CANCELAMENTO_APROVADO`, uma decisão humana material. Um Projeto cancelado não representa compromisso atendido. |
 
 ## `EM_FORMACAO`
 
-Em `EM_FORMACAO`, o Projeto é uma instância existente vinculada à sua Necessidade de origem com compromisso aprovado. Ele é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), até haver condições suficientes para identificar, delimitar e materializar os Módulos necessários.
+Em `EM_FORMACAO`, o Projeto é uma instância existente vinculada à sua Necessidade de origem com compromisso aprovado. Ele é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), até que sua formação seja entregue para auditoria e o Auditor produza `FORMACAO_SUFICIENTE`.
 
-`ENQUADRAMENTO`, `DESCOBERTA`, `DIREÇÃO DA SOLUÇÃO` e `DECOMPOSIÇÃO EM MÓDULOS` são etapas internas da formação, não status.
-
-## `EM_MODULOS`
-
-`EM_MODULOS` substitui a proposta anterior `EM_MODULO`. Um Projeto pode possuir N Módulos; por isso, este status representa que sua realização é conduzida por seus Módulos, e não que o Projeto esteja associado a um único Módulo.
-
-O Projeto não replica os status internos dos Módulos. A conclusão dos Módulos, isoladamente, não altera automaticamente o Projeto para `CONCLUIDO`: ela é condição necessária para a verificação agregada, mas não suficiente para o encerramento bem-sucedido.
+`ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO` são etapas internas da formação, não status.
 
 ## `CONCLUIDO`
 
-`CONCLUIDO` exige, cumulativamente:
-
-* conclusão do trabalho necessário dos Módulos; e
-* verificação agregada que produza `COMPROMISSO_ATENDIDO`.
-
-A verificação agregada não é status. O efeito externo de `CONCLUIDO` é permitir que a Necessidade de origem siga de `EM_PROJETO` para `ATENDIDA`, conforme o próprio ciclo de vida dela.
+`CONCLUIDO` é terminal conceitual futuro de sucesso. A vertical Projeto ainda não define o trecho operacional, as evidências, a verificação ou a transição que poderão levá-lo a esse status.
 
 ## `CANCELADO`
 
@@ -54,18 +42,14 @@ Não são status do Projeto:
 * `ENQUADRAMENTO`;
 * `DESCOBERTA`;
 * `DIREÇÃO DA SOLUÇÃO`;
-* `DECOMPOSIÇÃO EM MÓDULOS`;
 * `FORMACAO_SUFICIENTE`;
 * `FORMACAO_INSUFICIENTE`;
-* Módulos materializados;
-* conclusão de Módulos;
 * verificação agregada;
 * `COMPROMISSO_ATENDIDO`;
 * `COMPROMISSO_NAO_ATENDIDO`;
 * `CANCELAMENTO_APROVADO`;
 * decisões humanas;
-* conclusões de auditoria;
-* recomendações; e
+* conclusões de auditoria; e
 * Resultados do Processo.
 
 Esses elementos são etapas, eventos, condições, verificações, decisões ou resultados e permanecem separados do catálogo de status.
@@ -75,10 +59,9 @@ Esses elementos são etapas, eventos, condições, verificações, decisões ou 
 ```text
 criação
 → EM_FORMACAO
-→ FORMACAO_SUFICIENTE + Módulos materializados
-→ EM_MODULOS
-→ COMPROMISSO_ATENDIDO
-→ CONCLUIDO
+→ FORMACAO_SUFICIENTE
+→ formação do Projeto aprovada
+→ continuação operacional ainda não definida
 ```
 
 ```text

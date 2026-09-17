@@ -2,7 +2,7 @@
 
 ## Finalidade e escopo
 
-Este documento define o motor operacional que conduz um Projeto recém-criado até haver compreensão, estrutura e coerência suficientes para identificar, delimitar e materializar seus Módulos.
+Este documento define o motor operacional que conduz um Projeto recém-criado até haver compreensão, direção e coerência suficientes para auditoria de sua formação.
 
 Ele não define ciclo de vida formal, catálogo de status ou catálogo de Resultados do Processo do Projeto. O [Ciclo de Vida do Projeto](05_CICLO_DE_VIDA_DO_PROJETO.md) é a fonte adequada para o ciclo; este documento é a fonte adequada para o processo de formação. Os Atores e suas responsabilidades estão definidos em [Atores do Projeto](03_ATORES_DO_PROJETO.md).
 
@@ -30,10 +30,10 @@ A Necessidade de origem é a fonte de verdade do compromisso recebido. A formaç
 ENQUADRAMENTO
 → DESCOBERTA
 → DIREÇÃO DA SOLUÇÃO
-→ DECOMPOSIÇÃO EM MÓDULOS
+→ handoff para Auditor do Projeto
 ```
 
-Esses nomes representam etapas de formação. Eles não são status formais nesta definição.
+Os três primeiros nomes representam etapas de formação. O handoff é a entrega do material formado para avaliação independente. Nenhum desses elementos é status formal nesta definição.
 
 ## ENQUADRAMENTO
 
@@ -47,7 +47,7 @@ Nesta etapa, o Especialista em Formação do Projeto deve:
 * identificar o que ainda precisa ser compreendido; e
 * estabelecer a fronteira inicial do Projeto.
 
-O enquadramento não deve fechar arquitetura, detalhar solução, criar Módulos prematuramente, criar Entregas de Valor ou criar Itens de Trabalho.
+O enquadramento não deve fechar arquitetura, detalhar toda a solução, criar trabalho descendente prematuramente nem criar itens de execução.
 
 ## DESCOBERTA
 
@@ -87,30 +87,15 @@ Conclusões materiais tratadas como fatos devem ter suporte identificável. Quan
 
 Pergunta central: **“Qual direção de solução permite atender o compromisso da Necessidade?”**
 
-Esta etapa estabelece direção suficiente para a decomposição, sem pretender uma definição completa da solução. Ela pode:
+Esta etapa estabelece direção suficiente para orientar a realização do Projeto, sem pretender uma definição completa da solução. Ela pode:
 
 * estabelecer a abordagem geral;
 * registrar decisões estruturais necessárias;
-* identificar grandes fronteiras;
+* identificar fronteiras relevantes;
 * tratar restrições e dependências relevantes; e
-* estabelecer princípios suficientes para permitir a decomposição.
+* registrar riscos, propostas e incógnitas que permaneçam.
 
-Ela não deve detalhar toda a implementação, criar Entregas de Valor, criar Itens de Trabalho nem realizar a decomposição interna dos futuros Módulos.
-
-## DECOMPOSIÇÃO EM MÓDULOS
-
-Pergunta central: **“Quais Módulos precisam existir para realizar esta direção?”**
-
-Nesta etapa, o Especialista em Formação do Projeto deve:
-
-* identificar os Módulos necessários;
-* definir a responsabilidade geral de cada Módulo;
-* definir as fronteiras entre Módulos;
-* identificar relações ou dependências relevantes entre eles;
-* preparar sua materialização; e
-* materializar os Módulos quando a formação estiver adequada.
-
-O Projeto para na fronteira conceitual de Módulo. Ele não define Entregas de Valor internas, Itens de Trabalho, tarefas nem o detalhamento interno de implementação de um Módulo.
+Ela não deve detalhar toda a implementação, criar trabalho descendente, definir estruturas de entidades futuras nem antecipar itens de execução.
 
 ## Motor transversal de condução
 
@@ -153,28 +138,32 @@ O Owner deve ser acionado quando:
 
 ### Auditoria e verificação
 
-Auditoria e verificação são controles transversais da formação, não uma quinta etapa. O Auditor do Projeto avalia a formação e produz seus Resultados do Processo; o Verificador Agregado do Projeto atua somente após a conclusão do trabalho necessário dos Módulos. Elas avaliam se o material produzido é:
+Auditoria e verificação são controles distintos. O Auditor do Projeto avalia a formação entregue e produz seus Resultados do Processo. O ponto de entrada futuro do Verificador Agregado do Projeto não é definido por esta formação nem pelo trecho atual do ciclo.
+
+A auditoria de formação avalia se o material produzido é:
 
 * coerente;
 * suficientemente sustentado;
 * compatível com a Necessidade de origem;
-* suficiente para avançar;
+* suficiente para aprovar a formação;
 * livre de invenções tratadas como fatos; e
-* adequado ao limite da etapa atual.
+* adequado às fronteiras do Projeto.
 
 Esta definição não cria nomes formais para resultados de auditoria nem catálogo de Resultados do Processo.
 
 ## Condição de saída da formação
 
-A formação pode ser considerada concluída quando houver informação suficiente e coerente para:
+A formação pode ser entregue ao Auditor do Projeto quando houver informação suficiente e coerente para responder:
 
-* compreender como o compromisso será realizado em nível adequado;
-* sustentar a direção da solução;
-* identificar os Módulos necessários;
-* compreender a responsabilidade geral e as fronteiras desses Módulos; e
-* materializar os Módulos sem antecipar seu trabalho interno.
+* qual compromisso da Necessidade este Projeto recebe;
+* o que o Projeto precisa realizar;
+* quais são suas fronteiras;
+* qual contexto precisa ser compreendido;
+* quais restrições e dependências existem;
+* qual direção de solução é adequada; e
+* quais decisões, propostas, incógnitas e riscos permanecem.
 
-Quando os Módulos são materializados, o Projeto encerra sua responsabilidade direta de formação e decomposição. Isso não encerra a existência do Projeto: ele permanece como entidade pai, agregadora e referência do compromisso recebido da Necessidade.
+A formação não exige a definição, a identificação, a decomposição, a materialização, o status ou o ciclo de vida de qualquer entidade descendente. O Especialista encerra sua atuação com o handoff ao Auditor do Projeto.
 
 ## Limites desta definição
 
@@ -187,8 +176,7 @@ Esta definição não estabelece:
 * encerramento final do Projeto;
 * sucesso ou cancelamento;
 * aceite final;
-* modelo de Módulo;
-* ciclo interno do Módulo;
+* modelo, ciclo ou status de entidade descendente;
 * Entregas de Valor;
 * Itens de Trabalho;
 * tarefas; ou

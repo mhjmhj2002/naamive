@@ -4,9 +4,9 @@
 
 Projeto é o esforço finito criado obrigatoriamente para atender uma única Necessidade com compromisso aprovado.
 
-Ele transforma o compromisso definido pela Necessidade em uma direção realizável, organiza sua realização e conduz sua decomposição até o nível de Módulo.
+Ele transforma o compromisso definido pela Necessidade em compreensão e direção de solução suficientes para auditoria de formação.
 
-Projeto não é a Necessidade: a Necessidade define a mudança a ser atendida; o Projeto assume a responsabilidade de compreender como realizar o compromisso recebido.
+Projeto não é a Necessidade: a Necessidade define a mudança a ser atendida; o Projeto assume a responsabilidade de compreender esse compromisso e formar uma direção de solução para ele.
 
 ## Relação entre Necessidade e Projeto
 
@@ -40,35 +40,25 @@ O Projeto usa essas informações como compromisso e referência, mas não deve 
 
 ## Responsabilidade do Projeto
 
-O Projeto é responsável por compreender como o compromisso será realizado. Em seu domínio conceitual podem existir:
+O Projeto é responsável por:
 
-* investigação do contexto necessário à execução;
-* direção de solução;
-* decisões estruturais;
-* restrições e dependências de execução;
-* organização da realização;
-* decomposição em Módulos;
-* acompanhamento agregado do trabalho descendente; e
-* verificação de que o resultado produzido continua alinhado ao compromisso recebido.
+* enquadrar o compromisso recebido e suas fronteiras;
+* investigar o contexto necessário à realização;
+* definir uma direção de solução adequada;
+* registrar decisões, propostas, incógnitas, restrições, dependências e riscos relevantes;
+* entregar sua formação para auditoria independente.
 
-## Relação entre Projeto e Módulo
+## Fronteira com trabalho descendente futuro
 
-O Projeto identifica os Módulos necessários, define a responsabilidade geral de cada Módulo, define as fronteiras entre eles e materializa os Módulos.
+O Projeto pode futuramente originar trabalho descendente quando uma vertical própria para esse trabalho estiver definida. Essa possibilidade não integra a formação, o ciclo de vida, os status, os Resultados do Processo nem as responsabilidades atualmente definidos para Projeto.
 
-O Projeto não define internamente:
+Projeto não identifica, decompõe formalmente, materializa ou conduz o ciclo de vida de entidades descendentes ainda não definidas. Também não antecipa suas estruturas internas, entregas, itens de trabalho, tarefas ou detalhamento de implementação.
 
-* Entregas de Valor dos Módulos;
-* Itens de Trabalho;
-* tarefas; ou
-* detalhamento interno de implementação pertencente ao Módulo.
+## Fronteira da responsabilidade direta de formação
 
-A definição interna de cada Módulo pertence ao próprio Módulo. Esta decisão estabelece uma fronteira conceitual e não cria, por enquanto, modelo de Módulo.
+A responsabilidade direta do Especialista em Formação do Projeto termina quando ele entrega ao Auditor do Projeto material suficiente para auditoria. A formação não depende da existência física de trabalho descendente nem de sua constituição normativa.
 
-## Fronteira da responsabilidade direta
-
-Quando os Módulos são materializados, o Projeto encerra sua responsabilidade direta de formação e decomposição. A partir desse ponto, o trabalho é conduzido pelos Módulos, enquanto o Projeto permanece existente como entidade agregadora e referência do compromisso recebido da Necessidade.
-
-Essa fronteira não significa que o Projeto deixa de existir quando surgem os Módulos. Embora finito, ele permanece como entidade pai e agregadora até o encerramento de seu compromisso. Esta definição não estabelece ainda como ocorrem encerramento, sucesso, cancelamento ou aceite final.
+`FORMACAO_SUFICIENTE` significa somente que a formação do Projeto foi aprovada. O estado e a continuação operacional posteriores ainda não estão definidos; esta definição não infere caminho até `CONCLUIDO`.
 
 ## Projeto, Necessidade e Produto
 
@@ -86,7 +76,6 @@ Projeto não é:
 
 * Produto;
 * Necessidade;
-* Módulo;
 * backlog permanente;
 * repositório;
 * aplicação;
@@ -95,15 +84,3 @@ Projeto não é:
 * conjunto de tarefas.
 
 Esses elementos podem existir no contexto do Projeto, mas não definem o conceito de Projeto.
-
-## Hierarquia conceitual de referência
-
-```text
-Necessidade (1)
-→ Projeto (1)
-→ Módulo (N)
-→ Entrega de Valor (N)
-→ Item de Trabalho (N)
-```
-
-Esta hierarquia serve somente como referência. As entidades abaixo de Projeto não são definidas neste documento.

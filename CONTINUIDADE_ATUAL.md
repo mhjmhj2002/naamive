@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo, Atores e Skills agênticas materializadas. A documentação e a Skill de Formação do Projeto agora formalizam o bootstrap do Projeto após `APROVADO`. Ainda não há instância de Projeto ou Módulo materializado.
+O NAAMIVE está sendo reconstruído a partir de uma base limpa. As verticais Necessidade e Projeto possuem documentação numerada, ciclo de vida, status, Resultados do Processo, Atores e Skills agênticas materializadas. A vertical Projeto foi desacoplada de qualquer vertical futura de trabalho descendente: sua formação é autocontida e termina no handoff ao Auditor do Projeto. Ainda não há instância de Projeto materializada.
 
 ## Necessidade ativa
 
@@ -76,30 +76,26 @@ Existem seis Skills nesta versão:
 * O Projeto nasce obrigatoriamente da Necessidade com compromisso humano `APROVADO`, em relação 1:1, e não de formulário vazio. `APROVADO` aciona o Especialista em Formação do Projeto, que é o primeiro Ator agêntico da vertical e realiza o bootstrap quando ainda não houver Projeto correspondente. Não existe Ator específico para criação, materialização ou transição de Projeto.
 * O bootstrap é parte inicial da formação do Projeto. Ele materializa a instância em `EM_FORMACAO`; somente após a criação bem-sucedida a Necessidade assume `EM_PROJETO`. Se a materialização falhar, não há registro antecipado de `EM_PROJETO` nem status intermediário.
 * No bootstrap, o Especialista em Formação do Projeto atribui o código conforme a convenção aplicável e propõe ou gera o nome inicial. O nome é editável pelo Owner e sua alteração não modifica o identificador técnico, o código nem o vínculo 1:1 com a Necessidade de origem.
-* O Projeto transforma o compromisso recebido em direção realizável, organiza sua realização e conduz a decomposição até o nível de Módulo. Ele não define Entregas de Valor, Itens de Trabalho, tarefas ou o detalhamento interno de implementação de cada Módulo.
-* A formação do Projeto conduz a compreensão e a decomposição até a materialização dos Módulos. Suas etapas e controles transversais estão concentrados em `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`; o ciclo de vida não os duplica.
-* O catálogo normativo de status do Projeto é composto exclusivamente por `EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO`.
-* O fluxo principal do Projeto é: criação → `EM_FORMACAO` → Módulos necessários materializados → `EM_MODULOS` → conclusão do trabalho necessário dos Módulos → verificação agregada → `CONCLUIDO`.
-* `EM_MODULOS` substitui a proposta anterior `EM_MODULO`, pois um Projeto pode originar N Módulos e sua realização passa a ser conduzida por eles. Em `EM_MODULOS`, o Projeto permanece como entidade pai, agregadora e referência do compromisso; ele não replica os status internos dos Módulos.
-* A conclusão dos Módulos não conclui automaticamente o Projeto: a verificação agregada deve confirmar que o resultado atende ao compromisso da Necessidade. Se insuficiente, o Projeto permanece na condução pelos Módulos.
-* A verificação agregada não é status; é condição para que o Projeto assuma `CONCLUIDO` depois da conclusão do trabalho necessário dos Módulos. `CONCLUIDO` e `CANCELADO` são terminais; `CONCLUIDO` permite que a Necessidade de origem transicione de `EM_PROJETO` para `ATENDIDA`.
-* `CANCELADO` é terminal excepcional, dependente da decisão humana material `CANCELAMENTO_APROVADO` pelo Owner; nenhum Ator agêntico pode cancelar unilateralmente.
-* Decisões humanas, conclusões de auditoria, recomendações e Resultados do Processo permanecem separados do catálogo de status.
-* O catálogo normativo de Resultados do Processo do Projeto está em `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md` e contém exclusivamente `FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`, `COMPROMISSO_ATENDIDO`, `COMPROMISSO_NAO_ATENDIDO` e `CANCELAMENTO_APROVADO`; nenhum deles é status.
-* `FORMACAO_SUFICIENTE`, junto da materialização dos Módulos necessários, permite a transição para `EM_MODULOS`; a materialização em si não é Resultado do Processo. `COMPROMISSO_ATENDIDO` permite a transição para `CONCLUIDO`; `COMPROMISSO_NAO_ATENDIDO` mantém o Projeto em `EM_MODULOS` até novo trabalho descendente e nova verificação agregada.
-* Ainda não existe instância de Projeto, inclusive `P-001`, nem Módulo materializado. A `N-001` ainda não está em `EM_PROJETO`.
+* A formação do Projeto é autocontida: conduz `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO`, distinguindo fatos, inferências, propostas e incógnitas. Sua saída é o handoff ao Auditor do Projeto, sem exigir entidade, ciclo, status, decomposição ou materialização de trabalho descendente.
+* `EM_MODULOS` foi removido. `EM_REALIZACAO` não existe e nenhum status substituto foi criado.
+* O catálogo normativo de status do Projeto é composto exclusivamente por `EM_FORMACAO`, `CONCLUIDO` e `CANCELADO`. `CONCLUIDO` permanece como terminal conceitual futuro; `CANCELADO` é o terminal excepcional.
+* O trecho atualmente definido do ciclo é: criação → `EM_FORMACAO` → formação → Auditor do Projeto → `FORMACAO_SUFICIENTE` → formação do Projeto aprovada → continuação operacional ainda não definida.
+* `FORMACAO_SUFICIENTE` apenas aprova a formação do Projeto. Não cria status nem transição operacional; o próximo estado operacional do Projeto ainda será definido. `FORMACAO_INSUFICIENTE` mantém o Projeto em formação. Nenhum dos dois depende de entidade descendente.
+* A verificação agregada não é status. `COMPROMISSO_ATENDIDO` e `COMPROMISSO_NAO_ATENDIDO` permanecem Resultados do Processo, mas seus efeitos operacionais ainda não foram definidos.
+* Uma vertical futura poderá definir trabalho descendente que um Projeto possa originar. Ela não é pressuposta nem controlada pela vertical Projeto atual.
+* Ainda não existe instância de Projeto, inclusive `P-001`. A `N-001` ainda não está em `EM_PROJETO`.
 
 ## Última atividade concluída
 
-Foram alinhados os documentos de Necessidade e Projeto e a Skill `formacao-do-projeto` para que `APROVADO` acione o Especialista em Formação do Projeto, responsável pelo bootstrap do Projeto 1:1 quando necessário. Também foi definida a regra de nome inicial sugerido pelo agente e editável pelo Owner. Não foram criados `P-001` ou Módulos, não houve alteração nos catálogos nem na instância `N-001`.
+Foi corrigida a fronteira estrutural da vertical Projeto para remover seu acoplamento com trabalho descendente ainda não definido. A formação termina após `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO`, com handoff ao Auditor do Projeto. `EM_MODULOS` foi removido; `EM_REALIZACAO` não existe e nenhum status substituto foi criado. `FORMACAO_SUFICIENTE` apenas aprova a formação, e a continuação operacional permanece deliberadamente indefinida. Não foram criados `P-001` nem novos artefatos operacionais.
 
 ## Próxima ação
 
-Executar o teste de fogo real da vertical Projeto com a `N-001`, usando a Skill `formacao-do-projeto`. Nesse teste, o Especialista em Formação do Projeto deverá executar o bootstrap real de `P-001`, registrar a Necessidade em `EM_PROJETO` somente após a criação bem-sucedida e continuar a formação.
+Executar o teste de fogo real da vertical Projeto com a `N-001`, usando a Skill `formacao-do-projeto`. Nesse teste, o Especialista em Formação do Projeto deverá executar o bootstrap real de `P-001`, registrar a Necessidade em `EM_PROJETO` somente após a criação bem-sucedida e conduzir `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO` até o handoff ao Auditor do Projeto.
 
 ## Bloqueios ou decisões pendentes
 
-Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse conceito separado nesta versão. Permanecem pendentes o teste de fogo real que materializará o Projeto 1:1 da `N-001` e a definição de Módulo.
+Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse conceito separado nesta versão. Permanecem pendentes o teste de fogo real que materializará o Projeto 1:1 da `N-001` e a definição independente de uma vertical para trabalho descendente, se ela vier a ser necessária.
 
 ## Arquivos mínimos para continuar
 
@@ -114,6 +110,7 @@ Não há bloqueio atual sobre responsável pelo Projeto, pois não existe esse c
 * `documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md`
 * `documentacao/necessidade/06_STATUS_DA_NECESSIDADE.md`
 * `documentacao/necessidade/07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md`
+* `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
 * `documentacao/projeto/03_ATORES_DO_PROJETO.md`
 * `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`
 * `documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md`

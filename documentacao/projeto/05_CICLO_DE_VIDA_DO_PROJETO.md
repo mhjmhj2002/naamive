@@ -2,9 +2,9 @@
 
 ## Finalidade
 
-Este documento define o fluxo, os eventos e as transições do Projeto desde sua criação obrigatória, a partir de uma Necessidade com compromisso aprovado, até seu encerramento.
+Este documento define o trecho atualmente modelado do ciclo do Projeto, desde sua criação obrigatória, a partir de uma Necessidade com compromisso aprovado, até a aprovação de sua formação.
 
-Ele não define o modelo da entidade, os detalhes internos da formação, o catálogo normativo de status, Resultados do Processo, Módulos, Entregas de Valor ou Itens de Trabalho. A formação do Projeto é definida em [Formação do Projeto](04_FORMACAO_DO_PROJETO.md).
+Ele não define o modelo da entidade, os detalhes internos da formação, o catálogo normativo de status, Resultados do Processo, mecanismos de realização ou entidades descendentes. A formação do Projeto é definida em [Formação do Projeto](04_FORMACAO_DO_PROJETO.md).
 
 O catálogo normativo de status do Projeto está em [Status do Projeto](06_STATUS_DO_PROJETO.md). O catálogo normativo de Resultados do Processo está em [Resultados do Processo do Projeto](07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md). Os Atores estão definidos em [Atores do Projeto](03_ATORES_DO_PROJETO.md). Conclusões de auditoria, decisões e verificações não devem ser tratados como status.
 
@@ -29,53 +29,27 @@ A existência real do Projeto correspondente em `EM_FORMACAO`, após materializa
 criação do Projeto
 → EM_FORMACAO
 → formação conduzida
-→ `FORMACAO_SUFICIENTE` e Módulos necessários materializados
-→ EM_MODULOS
-→ trabalho conduzido pelos Módulos
-→ trabalho necessário dos Módulos concluído
-→ verificação agregada do compromisso do Projeto
-→ `COMPROMISSO_ATENDIDO`
-→ CONCLUIDO
+→ Auditor do Projeto
+→ `FORMACAO_SUFICIENTE`
+→ formação do Projeto aprovada
+→ continuação operacional ainda não definida
 ```
 
-`EM_FORMACAO`, `EM_MODULOS`, `CONCLUIDO` e `CANCELADO` são as posições usadas neste ciclo. Seus significados normativos pertencem exclusivamente ao [Status do Projeto](06_STATUS_DO_PROJETO.md).
+`EM_FORMACAO` é o único status usado no trecho atualmente definido. `CONCLUIDO` permanece como terminal conceitual futuro e `CANCELADO` como terminal excepcional; seus significados normativos pertencem exclusivamente ao [Status do Projeto](06_STATUS_DO_PROJETO.md).
 
-## Formação e entrada em `EM_MODULOS`
+## Formação aprovada
 
-Após sua criação, o Projeto está em `EM_FORMACAO` e sob responsabilidade direta de formação e decomposição. Esse trabalho é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), que define as etapas, os controles e as condições para a materialização dos Módulos. O Auditor do Projeto produz os Resultados do Processo de formação.
+Após sua criação, o Projeto está em `EM_FORMACAO`. Esse trabalho é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), que define as etapas, os controles e a condição de entrega ao Auditor do Projeto. O Auditor produz os Resultados do Processo de formação.
 
-A transição para `EM_MODULOS` ocorre somente quando o Resultado do Processo `FORMACAO_SUFICIENTE` tiver sido produzido e os Módulos necessários nela definidos tiverem sido materializados adequadamente. Nesse ponto, o Projeto encerra sua responsabilidade direta de formação e decomposição, mas não é encerrado.
+Quando o Resultado do Processo `FORMACAO_SUFICIENTE` é produzido, a formação está concluída e aprovada pelo Auditor. Esse resultado não produz transição para outro status: o próximo estado operacional do Projeto ainda não foi definido. A aprovação não depende da criação, da definição ou do status de entidade descendente alguma.
 
-`EM_MODULOS` substitui a proposta anterior `EM_MODULO`: um Projeto pode originar N Módulos, e essa posição representa que sua realização passa a ser conduzida por eles, não que o Projeto esteja dentro de um único Módulo.
+## Continuação operacional futura
 
-## Condução pelos Módulos
-
-Em `EM_MODULOS`, o Projeto permanece existente como entidade pai, agregador e referência do compromisso recebido da Necessidade. O trabalho direto passa para os Módulos e seus futuros descendentes.
-
-O Projeto não replica os status internos de seus Módulos, e este documento não define o ciclo interno deles. Para explicitar apenas a fronteira conceitual, a hierarquia de referência é:
-
-```text
-Necessidade (1)
-→ Projeto (1)
-→ Módulo (N)
-→ Entrega de Valor (N)
-→ Item de Trabalho (N)
-```
+O trecho operacional posterior à formação aprovada será definido em camada futura. Esta vertical não prescreve, antecipa ou pressupõe mecanismos, entidades, ciclos internos, executores, transições ou status para ele. Não há caminho normativo atualmente definido até `CONCLUIDO`.
 
 ## Verificação agregada e conclusão
 
-A conclusão do trabalho dos Módulos é condição necessária, mas não suficiente, para concluir o Projeto. Após esse trabalho estar concluído, o Projeto deve verificar em nível agregado se o resultado produzido:
-
-* permanece coerente com a Necessidade de origem;
-* atende ao resultado comprometido;
-* respeita as fronteiras relevantes do compromisso; e
-* permite considerar o Projeto efetivamente realizado.
-
-A pergunta conceitual dessa verificação é: **“O resultado agregado produzido atende ao compromisso que originou este Projeto?”** O Verificador Agregado do Projeto produz `COMPROMISSO_ATENDIDO` na conclusão positiva e `COMPROMISSO_NAO_ATENDIDO` na conclusão negativa.
-
-Com `COMPROMISSO_NAO_ATENDIDO`, o Projeto não avança para `CONCLUIDO`: permanece no trecho de condução pelos Módulos, com trabalho adicional ou correção antes de nova verificação. Este documento não define como um Módulo retorna, reabre ou altera seu próprio ciclo.
-
-`CONCLUIDO` é a posição terminal de sucesso. O Projeto somente chega a ela quando o trabalho necessário dos Módulos estiver concluído e a verificação agregada produzir `COMPROMISSO_ATENDIDO`. Como efeito externo, a Necessidade de origem pode transicionar de `EM_PROJETO` para `ATENDIDA`, conforme seu próprio ciclo de vida.
+`COMPROMISSO_ATENDIDO` e `COMPROMISSO_NAO_ATENDIDO` permanecem Resultados do Processo normativos, mas sua ocasião, entradas e efeitos operacionais serão definidos com a camada posterior. `CONCLUIDO` permanece o terminal conceitual futuro; este ciclo não inventa seu caminho de alcance.
 
 ## Caminho excepcional de cancelamento
 
@@ -95,8 +69,8 @@ Há um caminho excepcional de encerramento:
 | Evento ou condição | Transição | Regra |
 | --- | --- | --- |
 | `APROVADO` aciona o Especialista em Formação do Projeto; ausência do Projeto 1:1 | bootstrap e criação obrigatória → `EM_FORMACAO` | O mesmo Ator materializa o Projeto, com código, nome inicial proposto ou gerado e vínculo 1:1 com a Necessidade. Somente a criação bem-sucedida permite que a Necessidade assuma `EM_PROJETO`. |
-| `FORMACAO_SUFICIENTE` e Módulos necessários materializados | `EM_FORMACAO` → `EM_MODULOS` | A formação e a decomposição deixam de ser responsabilidade direta do Projeto; sua existência como pai, agregador e referência do compromisso permanece. |
-| Conclusão do trabalho necessário dos Módulos | `EM_MODULOS` → verificação agregada | A conclusão dos Módulos não conclui automaticamente o Projeto. |
-| `COMPROMISSO_ATENDIDO` | verificação agregada → `CONCLUIDO` | Exige confirmação de que o resultado agregado atende ao compromisso recebido da Necessidade. |
-| `COMPROMISSO_NAO_ATENDIDO` | verificação agregada → permanece em `EM_MODULOS` | Trabalho adicional ou correção deve ocorrer antes de nova verificação. |
+| `FORMACAO_SUFICIENTE` | `EM_FORMACAO` → formação aprovada | Não cria novo status nem define a continuação operacional. |
+| `FORMACAO_INSUFICIENTE` | permanece em `EM_FORMACAO` | O Especialista em Formação do Projeto trata as lacunas antes de nova auditoria. |
+| `COMPROMISSO_ATENDIDO` | efeito operacional ainda não definido | Resultado preservado; não há transição atual para `CONCLUIDO`. |
+| `COMPROMISSO_NAO_ATENDIDO` | efeito operacional ainda não definido | Resultado preservado; não há status de permanência definido. |
 | `CANCELAMENTO_APROVADO` | posição não terminal → `CANCELADO` | Caminho excepcional produzido pelo Owner; nenhum Ator agêntico pode produzi-lo unilateralmente. |
