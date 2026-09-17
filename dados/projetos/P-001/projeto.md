@@ -127,3 +127,23 @@ O Especialista em Formação do Projeto encerra sua responsabilidade com a entre
 **Skill a carregar pelo próximo Ator:** `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`.
 
 O Auditor deve avaliar independentemente a coerência, a sustentação e a suficiência desta formação, incluindo as propostas e incógnitas registradas. Nenhum Resultado do Processo de auditoria foi produzido neste documento, e P-001 permanece em `EM_FORMACAO`.
+
+## Resultado do Processo — Auditoria independente
+
+| Campo | Registro |
+| --- | --- |
+| Ator | Auditor do Projeto |
+| Resultado do Processo | `FORMACAO_SUFICIENTE` |
+| Status do Projeto após a auditoria | `EM_FORMACAO` |
+
+### Parecer independente
+
+A formação é aprovada. O enquadramento identifica o compromisso recebido da N-001, o que o Projeto precisa realizar e suas fronteiras, mantendo a Necessidade como fonte de verdade. A descoberta apresenta evidências consultadas, contexto, restrições, dependências e riscos relevantes; as limitações técnicas e a continuação operacional posterior à formação são explicitamente tratadas como desconhecidas, e não como fatos.
+
+A direção de solução é proposta de modo proporcional e rastreável: preserva a separação entre status, Resultados do Processo, decisões humanas e evidências, sem antecipar arquitetura, implementação, entidades descendentes ou trabalho de realização. As afirmações materiais estão classificadas como conhecidas, inferidas, propostas ou desconhecidas e mantêm vínculo identificável com as evidências registradas.
+
+Não foi encontrada lacuna concreta pertencente à formação do Projeto que impeça sua aprovação. A ausência de camada operacional posterior, de entidade descendente e de detalhamento técnico não impede este resultado, pois esses elementos estão fora da responsabilidade atualmente definida para a formação do Projeto.
+
+### Handoff da auditoria
+
+A formação do P-001 está aprovada. O Projeto permanece em `EM_FORMACAO`; a continuação operacional posterior à formação aprovada ainda não está definida pela vertical Projeto. Não há próximo Ator a acionar até que essa continuação seja modelada.
