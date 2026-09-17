@@ -24,6 +24,8 @@ Após `APROVADO`, o primeiro Ator agêntico da vertical é o Especialista em For
 
 ## Compromisso recebido da Necessidade
 
+A entrada do Projeto é o **Compromisso da Necessidade**, artefato consolidado disponível após `APROVADO`. Ele permite receber o que foi assumido sem reconstruir o processo interno da Necessidade. A Necessidade completa continua sendo a fonte de verdade, e o Projeto não pode redefinir silenciosamente o compromisso recebido.
+
 A Necessidade continua sendo a fonte de verdade para:
 
 * o que precisa mudar;
@@ -37,6 +39,31 @@ A Necessidade continua sendo a fonte de verdade para:
 * contexto e restrições já conhecidos.
 
 O Projeto usa essas informações como compromisso e referência, mas não deve redefini-las silenciosamente. Alterações materiais nesse compromisso pertencem à relação com a Necessidade e exigem tratamento explícito.
+
+## Artefato de saída: Direção do Projeto
+
+A **Direção do Projeto** é a representação formal, consolidada e rastreável, mantida no registro do Projeto, do resultado aprovado de sua formação. Ela permite que uma vertical posterior compreenda o que recebeu sem assumir as responsabilidades internas de enquadramento, descoberta, direção da solução ou auditoria do Projeto.
+
+Ela deve apresentar, de forma suficientemente autocontida:
+
+* o Compromisso da Necessidade recebido;
+* o que o Projeto precisa realizar e suas fronteiras;
+* o contexto descoberto;
+* restrições, dependências e riscos relevantes;
+* a direção geral proposta; e
+* o que é conhecido, inferido, proposto e legitimamente desconhecido.
+
+A Direção do Projeto não é uma especificação técnica detalhada: não exige banco de dados, tabelas, endpoints, diagramas de sequência, componentes internos, entidades descendentes, módulos, Entregas de Valor, Itens de Trabalho ou tarefas. Também não é uma nova entidade de domínio, novo arquivo, histórico, status, Resultado do Processo ou decisão humana.
+
+Ela somente está aprovada e disponível para consumo posterior após o Resultado do Processo `FORMACAO_SUFICIENTE`. Esse Resultado confirma a suficiência da formação, mas não é a Direção do Projeto. A entidade Projeto completa preserva o contexto, o processo, os resultados, o estado e as evidências.
+
+```text
+Necessidade
+→ Compromisso da Necessidade
+→ Projeto
+→ Direção do Projeto
+→ próxima vertical
+```
 
 ## Responsabilidade do Projeto
 

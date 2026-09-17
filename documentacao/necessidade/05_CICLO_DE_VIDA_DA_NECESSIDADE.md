@@ -14,6 +14,7 @@ criação
 → qualificação concluída e recomendação emitida
 → AGUARDANDO_DECISAO
 → decisão humana APROVADO
+→ Compromisso da Necessidade disponível
 → acionamento do Especialista em Formação do Projeto
 → materialização obrigatória do Projeto 1:1
 → EM_PROJETO
@@ -59,6 +60,8 @@ A formação segue o processo definido em [Formação e qualificação da Necess
 `APROVADO` é uma decisão humana de compromisso e um Resultado do Processo, não um status. `CANCELAMENTO_APROVADO` também é uma decisão humana material e um Resultado do Processo, não um status. Nesta primeira versão, ambas as decisões são realizadas pelo Owner, cujo Executor é o usuário autenticado. O registro de cada decisão deve identificar, no mínimo, a decisão e o usuário autenticado que a realizou. Não há RBAC, ACL, delegação, grupos, papéis configuráveis, ownership por entidade, matriz de autoridade ou modelo multiusuário neste modelo.
 
 O efeito de `APROVADO` é acionar o Especialista em Formação do Projeto para iniciar a formação. Se ainda não existir o Projeto 1:1, o bootstrap inicial dessa formação materializa obrigatoriamente exatamente um Projeto para exatamente uma Necessidade.
+
+A mesma decisão torna disponível o **Compromisso da Necessidade**, artefato de saída consolidado no registro da entidade. Ele é a referência de entrada do Projeto e não substitui a Necessidade, que continua fonte de verdade. A disponibilidade do artefato não cria status, Resultado do Processo ou entidade adicional.
 
 ```text
 1 Necessidade com compromisso aprovado

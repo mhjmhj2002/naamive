@@ -32,6 +32,7 @@ criação do Projeto
 → Auditor do Projeto
 → `FORMACAO_SUFICIENTE`
 → formação do Projeto aprovada
+→ Direção do Projeto disponível
 → continuação operacional ainda não definida
 ```
 
@@ -42,6 +43,8 @@ criação do Projeto
 Após sua criação, o Projeto está em `EM_FORMACAO`. Esse trabalho é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), que define as etapas, os controles e a condição de entrega ao Auditor do Projeto. O Auditor produz os Resultados do Processo de formação.
 
 Quando o Resultado do Processo `FORMACAO_SUFICIENTE` é produzido, a formação está concluída e aprovada pelo Auditor. Esse resultado não produz transição para outro status: o próximo estado operacional do Projeto ainda não foi definido. A aprovação não depende da criação, da definição ou do status de entidade descendente alguma.
+
+`FORMACAO_SUFICIENTE` torna disponível a **Direção do Projeto**, artefato de saída consolidado no próprio registro do Projeto. Ele pode ser consumido por vertical posterior sem substituir a entidade completa, e não é status, Resultado do Processo, decisão humana ou nova entidade.
 
 ## Continuação operacional futura
 

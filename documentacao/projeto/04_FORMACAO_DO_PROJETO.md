@@ -165,6 +165,8 @@ A formação pode ser entregue ao Auditor do Projeto quando houver informação 
 
 A formação não exige a definição, a identificação, a decomposição, a materialização, o status ou o ciclo de vida de qualquer entidade descendente. O Especialista encerra sua atuação com o handoff ao Auditor do Projeto.
 
+Quando o Resultado do Processo `FORMACAO_SUFICIENTE` for produzido pelo Auditor, a formação aprovada deve estar identificável no registro como **Direção do Projeto**. Esse artefato consolida o compromisso recebido, objetivo, fronteiras, contexto, restrições, dependências, riscos, direção proposta e classificações entre conhecido, inferido, proposto e desconhecido. Ele é o contrato de passagem para vertical posterior, não o próprio Resultado do Processo e não uma especificação detalhada de realização.
+
 ## Limites desta definição
 
 Esta definição não estabelece:

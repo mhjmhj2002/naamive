@@ -45,6 +45,32 @@ Os conceitos não devem ser confundidos:
 * **Necessidade** representa uma mudança entregável.
 * **Projeto** é o esforço finito criado para atender uma Necessidade.
 
+## Artefato de saída: Compromisso da Necessidade
+
+O **Compromisso da Necessidade** é a representação formal, consolidada e rastreável, mantida no registro da Necessidade, do que foi legitimamente assumido. Ele torna consumível pela vertical Projeto o resultado útil de formação, auditoria, qualificação, recomendação e decisão humana, sem obrigá-la a reconstruir o raciocínio interno dessas atividades.
+
+O artefato deve apresentar, de forma suficientemente autocontida:
+
+* o problema ou oportunidade assumido;
+* o resultado pretendido;
+* o escopo e o fora de escopo;
+* o critério de atendimento;
+* as restrições e dependências conhecidas que devem ser preservadas;
+* o contexto relevante; e
+* a decisão humana que tornou o compromisso válido.
+
+Ele é uma visão consolidada da entidade, e não uma nova entidade de domínio, novo arquivo, histórico, status, Resultado do Processo ou decisão humana. A Necessidade completa continua sendo a fonte de verdade de seu contexto, processo, resultados, estado e evidências.
+
+O Compromisso da Necessidade somente está disponível para consumo após a decisão humana `APROVADO`. Material de formação, auditoria ou qualificação anterior não constitui compromisso assumido. O Projeto o recebe como referência de entrada e não pode redefini-lo silenciosamente.
+
+```text
+Necessidade
+→ Compromisso da Necessidade
+→ Projeto
+→ Direção do Projeto
+→ próxima vertical
+```
+
 ## Limites da Necessidade
 
 A Necessidade não deve definir ou antecipar:

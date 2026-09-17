@@ -162,6 +162,23 @@ Justificativa: há valor e prioridade altos, aderência ao NAAMIVE e não há re
 
 Esta foi uma decisão humana material, ocorrida após a recomendação do Especialista em Qualificação da Necessidade. O identificador `mhj` é o único identificador de usuário comprovável no contexto atual: ele consta como autor do histórico versionado do registro da N-001. Nesta primeira versão, o usuário autenticado exerce o Ator humano Owner. `APROVADO` é Resultado do Processo e não é nome de status formal da Necessidade.
 
+## Compromisso da Necessidade
+
+Representação consolidada do compromisso tornado disponível pela decisão humana `APROVADO`. Não substitui este registro completo, seus resultados, estado, processo ou evidências.
+
+| Elemento | Compromisso consolidado |
+| --- | --- |
+| Problema ou oportunidade assumido | O desenvolvimento de software com apoio de inteligência artificial depende de coordenação humana excessiva para preservar contexto, organizar e preparar trabalho, determinar próximos passos, acionar competências adequadas e manter decisões e rastreabilidade. |
+| Resultado pretendido | Permitir que uma pessoa ou equipe conduza uma necessidade de negócio até um resultado de software verificável, com estado, próximo trabalho válido, competência, executor, contexto e decisões humanas necessárias claramente identificáveis. |
+| Escopo assumido | Registro, formação e avaliação da Necessidade; compromisso humano e criação de Projeto; decomposição e atribuição de trabalho executável; preservação de contexto; decisões humanas; acompanhamento; e rastreabilidade até resultado verificável. A primeira jornada deve ser utilizável, sem pretensão de cobrir todas as possibilidades futuras. |
+| Fora de escopo | Substituir todas as ferramentas de desenvolvimento, administrar todo trabalho corporativo, eliminar pessoas, automatizar decisões materiais, escala ilimitada, todas as integrações, todos os cenários de grandes organizações e funcionalidades futuras incorporadas automaticamente ao mesmo Projeto. |
+| Critério de atendimento | Uma necessidade real, limitada e entregável percorre jornada completa até resultado verificável, permitindo saber posição, próximo trabalho, competência, executor, contexto, decisões pendentes, separação entre estado e histórico e vínculo com a Necessidade original. Trabalho declarado pronto deve poder ser delegado por instrução simples, sem reconstrução manual do contexto. |
+| Restrições e dependências a preservar | Decisões materiais exigem autoridade adequada; agentes atuam conforme suas competências; informação essencial não é inventada; estado e histórico permanecem separados; rastreabilidade é proporcional; o processo é compreensível; a primeira solução pode ter limitações de escala, concorrência e integração. Não há dependência impeditiva conhecida para o compromisso. |
+| Contexto relevante | A Necessidade surgiu da experiência prática com desenvolvimento apoiado por inteligência artificial e da necessidade de preservar contexto, continuidade, coordenação, rastreabilidade, divisão de trabalho e autonomia de agentes. |
+| Decisão que o validou | `APROVADO`, por `mhj`. |
+
+O Projeto P-001 recebe este Compromisso da Necessidade como referência de entrada. A N-001 continua sendo a fonte de verdade; o Projeto não pode redefinir silenciosamente o que foi assumido.
+
 ### Projeto originado
 
 | Campo | Valor |
@@ -179,4 +196,4 @@ O ciclo de formação está concluído, com auditoria `QUALIFICAVEL`. A qualific
 
 Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), o Projeto 1:1 foi materializado com sucesso em `EM_FORMACAO`; por isso, esta Necessidade está formalmente em `EM_PROJETO`.
 
-A formação de P-001 foi entregue para auditoria independente e seu status permanece `EM_FORMACAO`. O próximo Ator é o Auditor do Projeto; a N-001 não replica as etapas internas dessa formação.
+A auditoria independente aprovou a formação de P-001 com `FORMACAO_SUFICIENTE`; seu status permanece `EM_FORMACAO`. A continuação operacional posterior ainda não está definida, e a N-001 não replica as etapas internas ou o estado do Projeto.

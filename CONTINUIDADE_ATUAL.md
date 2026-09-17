@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-A auditoria independente da formação do Projeto `P-001 — Jornada Autônoma do NAAMIVE` foi concluída e aprovada. A continuação operacional posterior à formação aprovada permanece deliberadamente indefinida pela vertical Projeto.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A continuação operacional posterior à formação aprovada do Projeto permanece deliberadamente indefinida pela vertical Projeto.
 
 ## Entidades ativas
 
@@ -16,6 +16,7 @@ A auditoria independente da formação do Projeto `P-001 — Jornada Autônoma d
 * Compromisso: aprovado pelo Owner (`APROVADO`, usuário autenticado `mhj`)
 * Status: `EM_PROJETO`
 * Projeto de origem: `P-001`, em vínculo exclusivo 1:1
+* Artefato de saída: `Compromisso da Necessidade` disponível para consumo pelo Projeto
 
 ### Projeto P-001
 
@@ -26,10 +27,11 @@ A auditoria independente da formação do Projeto `P-001 — Jornada Autônoma d
 * Status: `EM_FORMACAO`
 * Formação: aprovada pela auditoria independente, cobrindo `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO`
 * Resultado de auditoria: `FORMACAO_SUFICIENTE`
+* Artefato de saída: `Direção do Projeto` disponível para consumo posterior
 
 ## Próxima ação
 
-Nenhum próximo Ator deve ser acionado ou inventado até que a continuação operacional posterior à formação aprovada seja modelada. P-001 continua em `EM_FORMACAO`, e N-001 continua em `EM_PROJETO`.
+Nenhum próximo Ator deve ser acionado ou inventado até que a continuação operacional posterior à formação aprovada seja modelada. Essa futura vertical deve receber a `Direção do Projeto` como contrato de passagem, sem assumir a responsabilidade interna da formação do P-001. P-001 continua em `EM_FORMACAO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -37,14 +39,17 @@ Nenhum próximo Ator deve ser acionado ou inventado até que a continuação ope
 * Tecnologia, persistência física, orquestração e seleção concreta de executores ainda não estão definidas.
 * A continuação operacional após `FORMACAO_SUFICIENTE` permanece deliberadamente indefinida.
 * Nenhuma entidade descendente foi criada, identificada ou decomposta; sua eventual vertical não integra a formação atual do Projeto.
+* Os artefatos de saída não substituem as entidades completas, seus status, Resultados do Processo, decisões humanas, histórico ou evidências.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`
+* `documentacao/necessidade/01_DEFINICAO_DA_NECESSIDADE.md`
+* `documentacao/necessidade/02_MODELO_DE_NECESSIDADE.md`
 * `documentacao/projeto/01_DEFINICAO_DO_PROJETO.md`
+* `documentacao/projeto/02_MODELO_DE_PROJETO.md`
 * `documentacao/projeto/03_ATORES_DO_PROJETO.md`
 * `documentacao/projeto/04_FORMACAO_DO_PROJETO.md`
 * `documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md`

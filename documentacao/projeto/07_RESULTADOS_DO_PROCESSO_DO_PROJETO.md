@@ -21,7 +21,7 @@ Nenhum Resultado do Processo é status. O catálogo oficial de status do Projeto
 | `FORMACAO_SUFICIENTE` | O Auditor do Projeto aprovou a formação: ela possui compreensão, sustentação e direção de solução suficientes. |
 | `FORMACAO_INSUFICIENTE` | A formação ainda possui lacuna, inconsistência, ausência de sustentação ou insuficiência relevante para sua aprovação. |
 
-`FORMACAO_SUFICIENTE` conclui e aprova o processo de formação. Não cria status, não produz transição operacional e não exige a definição, a decomposição, a materialização, o status ou o ciclo de vida de entidade descendente alguma.
+`FORMACAO_SUFICIENTE` conclui e aprova o processo de formação. Ele torna disponível a Direção do Projeto, que é o artefato de saída consolidado dessa vertical, mas não se confunde com ela. Não cria status, não produz transição operacional e não exige a definição, a decomposição, a materialização, o status ou o ciclo de vida de entidade descendente alguma.
 
 `FORMACAO_INSUFICIENTE` mantém o Projeto em `EM_FORMACAO`. O Especialista em Formação do Projeto trata as lacunas conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md) e o Auditor do Projeto realiza nova verificação.
 
@@ -81,3 +81,5 @@ Não são Resultados do Processo do Projeto:
 * interação humana em si.
 
 Esses conceitos são status, etapas, atividades, verificações, condições, decisões ou elementos internos de outras entidades e permanecem separados deste catálogo.
+
+A Direção do Projeto também não é Resultado do Processo: é a representação consolidada aprovada que se torna disponível em decorrência de `FORMACAO_SUFICIENTE`.

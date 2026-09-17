@@ -129,4 +129,6 @@ O Especialista em Qualificação da Necessidade não assume sozinho compromisso 
 
 Quando a recomendação for `ASSUMIR_COMPROMISSO`, a decisão humana positiva `APROVADO` exige que a Necessidade origine um único Projeto. Quando a recomendação for `NAO_ASSUMIR_COMPROMISSO`, ela não cancela a Necessidade: o Owner pode confirmar `CANCELAMENTO_APROVADO` ou, se informação, condição ou mudança justificar nova análise, o processo pode retornar à formação ou à qualificação conforme a causa concreta. Não há, nesta definição, status ou Resultado do Processo para espera, adiamento ou reconsideração.
 
+Ao produzir `APROVADO`, a decisão humana torna disponível o **Compromisso da Necessidade**: a representação consolidada, no próprio registro, do que foi assumido. O Projeto recebe esse artefato como referência de entrada, enquanto a entidade Necessidade completa continua fonte de verdade e preserva o processo, o estado, os resultados e as evidências. O artefato não é a decisão `APROVADO` nem um Resultado do Processo.
+
 Este documento não cria Projeto, não define seu modelo e não define sua estrutura.

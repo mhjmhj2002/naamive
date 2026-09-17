@@ -62,6 +62,19 @@ Nenhuma conhecida neste momento.
 
 Registre de onde surgiu a Necessidade.
 
+## Compromisso da Necessidade
+
+Após a qualificação, recomendação e decisão humana `APROVADO`, o registro deve identificar em seção própria o **Compromisso da Necessidade**. Essa seção consolida, sem duplicar todo o histórico:
+
+* problema ou oportunidade assumido;
+* resultado pretendido;
+* escopo assumido e fora de escopo;
+* critério de atendimento;
+* restrições, dependências e contexto relevantes; e
+* decisão humana `APROVADO` que o validou, com o usuário autenticado que a realizou.
+
+Essa representação é o contrato de passagem para o Projeto. Não é novo formulário, entidade, status nem Resultado do Processo; antes de `APROVADO`, ela ainda não está disponível para consumo.
+
 ## Verificação inicial
 
 Registre a avaliação inicial dos aspectos abaixo.
