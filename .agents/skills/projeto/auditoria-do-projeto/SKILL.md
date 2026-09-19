@@ -55,7 +55,7 @@ Entregue resultado formal, evidências, lacunas concretas quando existirem e ind
 ## Handoff
 
 * `FORMACAO_INSUFICIENTE` → **Especialista em Formação do Projeto**.
-* `FORMACAO_SUFICIENTE` → formação do Projeto aprovada. O próximo estado operacional ainda não está definido.
+* `FORMACAO_SUFICIENTE` → Projeto em `FORMADO`, formação aprovada e Direção do Projeto disponível ao Especialista em Delimitação de Módulos. O próximo estado operacional ainda não está definido.
 
 ## Critério de encerramento
 

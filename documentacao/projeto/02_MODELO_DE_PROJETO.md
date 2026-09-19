@@ -69,7 +69,7 @@ A Necessidade continua sendo a fonte de verdade do compromisso. Por isso, o Proj
 
 O Projeto recebe o **Compromisso da Necessidade** como referência de entrada. Após a aprovação da formação, seu registro deve identificar em seção própria a **Direção do Projeto**, resumo consolidado e rastreável do que foi formado e aprovado.
 
-A Direção do Projeto deve cobrir compromisso recebido, objetivo, fronteiras, contexto, restrições, dependências, riscos, direção geral e a classificação entre conhecido, inferido, proposto e desconhecido. Ela não substitui o registro completo do Projeto nem antecipa detalhamento técnico ou trabalho de verticais posteriores. Antes de `FORMACAO_SUFICIENTE`, existe material de formação, mas ainda não há Direção do Projeto aprovada e disponível para consumo.
+A Direção do Projeto deve cobrir compromisso recebido, objetivo, fronteiras, contexto, restrições, dependências, riscos, direção geral e a classificação entre conhecido, inferido, proposto e desconhecido. Ela não substitui o registro completo do Projeto nem antecipa detalhamento técnico ou trabalho de verticais posteriores. Antes de `FORMACAO_SUFICIENTE`, existe material de formação, mas ainda não há Direção do Projeto aprovada e disponível para consumo. Depois desse Resultado, o Projeto está em `FORMADO`.
 
 ## Limites deste modelo inicial
 

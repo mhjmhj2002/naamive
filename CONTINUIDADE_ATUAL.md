@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A vertical Módulo está normativamente definida: recebe a Direção do Projeto, delimita e materializa Módulos e forma tecnicamente cada instância até sua auditoria. Nenhuma instância de Módulo foi criada.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. Os seis achados da auditoria da vertical Módulo foram corrigidos normativamente: há `FORMADO`, redelimitação normal executável, regra de código, Mapa de Módulos canônico, núcleo invariável da Especificação Técnica e protocolo de lacunas e decisões materiais. A vertical Módulo recebe a Direção do Projeto de um Projeto `FORMADO`, delimita e materializa Módulos e forma tecnicamente cada instância até auditoria. Nenhuma instância de Módulo foi criada.
 
 ## Entidades ativas
 
@@ -24,7 +24,7 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * Identificador técnico: `5575efa1-c68e-464f-8393-07be8c9bc93a`
 * Nome inicial: Jornada Autônoma do NAAMIVE
 * Necessidade de origem: `N-001`
-* Status: `EM_FORMACAO`
+* Status: `FORMADO`
 * Formação: aprovada pela auditoria independente, cobrindo `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO`
 * Resultado de auditoria: `FORMACAO_SUFICIENTE`
 * Artefato de saída: `Direção do Projeto` aprovada e disponível para a vertical Módulo
@@ -35,18 +35,19 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * Entrada: `Direção do Projeto` aprovada por `FORMACAO_SUFICIENTE`
 * Primeiro Ator elegível: Especialista em Delimitação de Módulos
 * Política de qualidade: heurística 10 / 15 / 20, sem limite normativo de Módulos por Projeto
-* Saída de cada instância formada: `Especificação Técnica do Módulo` aprovada
+* Delimitação: exige Mapa de Módulos do Projeto como evidência canônica e códigos `M-<sequencial>` atribuídos pelo Especialista em Delimitação
+* Saída de cada instância formada: `Especificação Técnica do Módulo` aprovada; status `FORMADO`
 
 ## Próxima ação
 
-Executar o teste de fogo da delimitação de Módulos do P-001: o Especialista em Delimitação de Módulos deve consumir a Direção do Projeto e avaliar as capacidades coesas necessárias. Essa ação ainda não foi executada. P-001 continua em `EM_FORMACAO`, e N-001 continua em `EM_PROJETO`.
+Executar o teste de fogo da delimitação de Módulos do P-001: o Especialista em Delimitação de Módulos deve consumir a Direção do Projeto e avaliar as capacidades coesas necessárias. Essa ação ainda não foi executada. P-001 está em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
 * O mecanismo normativo permanente de geração de códigos de Projeto ainda não está definido; `P-001` foi aplicado pela convenção exemplificada e pela inexistência verificada de Projetos anteriores.
 * Tecnologia, persistência física, orquestração e seleção concreta de executores ainda não estão definidas.
-* O mecanismo normativo permanente de geração de códigos de Módulo ainda não está definido.
-* A mecânica de divisão ou fusão de Módulos permanece lacuna deliberada, a ser refinada pelo teste de fogo quando necessário.
+* A regra de atribuição de códigos de Módulo é `M-<sequencial>` por consulta aos registros existentes; a persistência e concorrência físicas dessa regra ainda não estão definidas.
+* Casos de redelimitação que exijam encerrar, fundir ou substituir identidades de Módulo ainda não possuem mecanismo normativo completo e devem provocar decisão estrutural específica quando aparecerem na prática.
 * A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada; Entrega de Valor não foi definida.
 * A heurística 10 / 15 / 20 gera atenção e revisão, nunca reprovação automática, e é candidata a parametrização futura.
 * Os artefatos de saída não substituem as entidades completas, seus status, Resultados do Processo, decisões humanas, histórico ou evidências.

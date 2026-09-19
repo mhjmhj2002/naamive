@@ -38,6 +38,8 @@ A pergunta principal é:
 
 A resposta deve considerar responsabilidade, coesão, fronteira, relação com a Direção do Projeto, valor ou capacidade habilitada, dependências, sobreposições, lacunas entre Módulos e granularidade excessiva.
 
+O resultado dessa análise é preservado no **Mapa de Módulos do Projeto**, seção canônica do registro do Projeto. O Mapa não é nova entidade, status nem Resultado do Processo: ele mantém a evidência de que o conjunto de Módulos foi escolhido de modo deliberado e permite revisar a delimitação sem perder sua justificativa de origem.
+
 ## Heurística de qualidade 10 / 15 / 20
 
 Esta é a fonte central da heurística de modularização. Ela é política de qualidade, não invariante de domínio nem limite máximo de Módulos por Projeto. É candidata a parametrização futura, sem configuração técnica nesta versão.
@@ -53,5 +55,16 @@ Ultrapassar `15` ou `20` não reprova automaticamente a delimitação. A revisã
 ## Artefato de saída
 
 A saída aprovada da vertical é a **Especificação Técnica do Módulo**. Ela consolida, no registro do Módulo, a origem no Projeto e sua Direção, capacidade, responsabilidade, fronteiras, valor habilitado, dependências, decisões e desenho técnico proporcionais, contratos, dados, integrações, fluxos, segurança, riscos e classificações entre conhecido, inferido, proposto e desconhecido legítimo.
+
+Seu núcleo invariável contém, no mínimo:
+
+* identificação do Módulo, do Projeto de origem, da Direção consumida e do item correspondente no Mapa de Módulos;
+* capacidade, responsabilidade, valor habilitado e fronteiras — o que está dentro e fora;
+* evidências que sustentam as afirmações materiais e sua classificação entre conhecido, inferido, proposto e desconhecido;
+* relações, dependências, sobreposições e lacunas relevantes com outros Módulos;
+* direção de realização e decisões técnicas necessárias, ou o registro explícito de que determinado aspecto técnico não se aplica ou permanece desconhecido; e
+* riscos, restrições, lacunas legítimas e decisões pendentes relevantes.
+
+Contratos, dados, integrações, diagramas, fluxos, segurança, persistência, concorrência, observabilidade e demais detalhamentos continuam condicionais: entram quando necessários para tornar a capacidade realizável e auditável, nunca por ritual.
 
 Ela não é nova entidade, status, Resultado do Processo, decisão humana nem arquivo obrigatoriamente separado. Pode ser uma seção do `modulo.md` e referenciar artefatos técnicos auxiliares quando existirem.

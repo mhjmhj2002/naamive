@@ -55,7 +55,7 @@ Responsabilidades:
 * verificar qualidade e suficiência da formação do Projeto;
 * avaliar coerência, sustentação e direção da solução;
 * identificar lacunas; e
-* produzir os Resultados do Processo formais da auditoria e da verificação de formação.
+* produzir os Resultados do Processo formais da auditoria e da verificação de formação, transicionando o Projeto para `FORMADO` quando produzir `FORMACAO_SUFICIENTE`.
 
 Sua atuação se relaciona conceitualmente a `FORMACAO_SUFICIENTE` e `FORMACAO_INSUFICIENTE`. As definições normativas desses resultados pertencem exclusivamente a [Resultados do Processo do Projeto](07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md).
 

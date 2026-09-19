@@ -7,6 +7,7 @@ Status responde onde o Projeto está em seu ciclo de vida. Não representa etapa
 | Status | Definição |
 | --- | --- |
 | `EM_FORMACAO` | O Projeto já existe, foi criado a partir de uma Necessidade com compromisso aprovado e está sob responsabilidade direta de formação. Sua condução ocorre conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md). O Projeto entra diretamente neste status após sua criação. |
+| `FORMADO` | A formação da entidade foi concluída e aprovada por `FORMACAO_SUFICIENTE`. O Projeto não está mais sob formação, mas isso não significa realização, entrega, conclusão ou encerramento. |
 | `CONCLUIDO` | Status terminal conceitual futuro de sucesso. O caminho operacional e as condições de transição para ele ainda não estão definidos. |
 | `CANCELADO` | Status terminal excepcional. O Projeto somente o assume por `CANCELAMENTO_APROVADO`, uma decisão humana material. Um Projeto cancelado não representa compromisso atendido. |
 
@@ -15,6 +16,10 @@ Status responde onde o Projeto está em seu ciclo de vida. Não representa etapa
 Em `EM_FORMACAO`, o Projeto é uma instância existente vinculada à sua Necessidade de origem com compromisso aprovado. Ele é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), até que sua formação seja entregue para auditoria e o Auditor produza `FORMACAO_SUFICIENTE`.
 
 `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO` são etapas internas da formação, não status.
+
+## `FORMADO`
+
+O Projeto entra em `FORMADO` quando o Auditor produz `FORMACAO_SUFICIENTE`. A Direção do Projeto fica aprovada e disponível para o Especialista em Delimitação de Módulos. Esse status separa a formação já aprovada da formação ainda ativa; não declara realização, Entrega de Valor, conclusão, encerramento ou atendimento do compromisso.
 
 ## `CONCLUIDO`
 
@@ -60,6 +65,7 @@ Esses elementos são etapas, eventos, condições, verificações, decisões ou 
 criação
 → EM_FORMACAO
 → FORMACAO_SUFICIENTE
+→ FORMADO
 → formação do Projeto aprovada
 → Direção do Projeto disponível para o Especialista em Delimitação de Módulos
 ```

@@ -30,19 +30,19 @@ criação do Projeto
 → EM_FORMACAO
 → formação conduzida
 → Auditor do Projeto
-→ `FORMACAO_SUFICIENTE`
+→ `FORMACAO_SUFICIENTE` → `FORMADO`
 → formação do Projeto aprovada
 → Direção do Projeto disponível
 → handoff ao Especialista em Delimitação de Módulos
 ```
 
-`EM_FORMACAO` é o único status usado no trecho atualmente definido. `CONCLUIDO` permanece como terminal conceitual futuro e `CANCELADO` como terminal excepcional; seus significados normativos pertencem exclusivamente ao [Status do Projeto](06_STATUS_DO_PROJETO.md).
+`EM_FORMACAO` e `FORMADO` são os status usados no trecho atualmente definido. `CONCLUIDO` permanece como terminal conceitual futuro e `CANCELADO` como terminal excepcional; seus significados normativos pertencem exclusivamente ao [Status do Projeto](06_STATUS_DO_PROJETO.md).
 
 ## Formação aprovada
 
 Após sua criação, o Projeto está em `EM_FORMACAO`. Esse trabalho é conduzido pelo Especialista em Formação do Projeto conforme a [Formação do Projeto](04_FORMACAO_DO_PROJETO.md), que define as etapas, os controles e a condição de entrega ao Auditor do Projeto. O Auditor produz os Resultados do Processo de formação.
 
-Quando o Resultado do Processo `FORMACAO_SUFICIENTE` é produzido, a formação está concluída e aprovada pelo Auditor. Esse resultado não produz transição para outro status: o próximo estado operacional do Projeto ainda não foi definido. A aprovação não depende da criação, da definição ou do status de entidade descendente alguma.
+Quando o Resultado do Processo `FORMACAO_SUFICIENTE` é produzido, a formação está concluída e aprovada pelo Auditor e o Projeto transiciona de `EM_FORMACAO` para `FORMADO`. `FORMADO` não representa realização, entrega, conclusão ou encerramento; o próximo estado operacional do Projeto ainda não foi definido. A aprovação não depende da criação, da definição ou do status de entidade descendente alguma.
 
 `FORMACAO_SUFICIENTE` torna disponível a **Direção do Projeto**, artefato de saída consolidado no próprio registro do Projeto. O próximo Ator elegível é o Especialista em Delimitação de Módulos, que a consome como entrada da vertical Módulo sem substituir a entidade completa. A Direção não é status, Resultado do Processo, decisão humana ou nova entidade.
 
@@ -72,7 +72,7 @@ Há um caminho excepcional de encerramento:
 | Evento ou condição | Transição | Regra |
 | --- | --- | --- |
 | `APROVADO` aciona o Especialista em Formação do Projeto; ausência do Projeto 1:1 | bootstrap e criação obrigatória → `EM_FORMACAO` | O mesmo Ator materializa o Projeto, com código, nome inicial proposto ou gerado e vínculo 1:1 com a Necessidade. Somente a criação bem-sucedida permite que a Necessidade assuma `EM_PROJETO`. |
-| `FORMACAO_SUFICIENTE` | `EM_FORMACAO` → formação aprovada | Não cria novo status; torna a Direção disponível ao Especialista em Delimitação de Módulos. |
+| `FORMACAO_SUFICIENTE` | `EM_FORMACAO` → `FORMADO` | Aprova a formação e torna a Direção disponível ao Especialista em Delimitação de Módulos. |
 | `FORMACAO_INSUFICIENTE` | permanece em `EM_FORMACAO` | O Especialista em Formação do Projeto trata as lacunas antes de nova auditoria. |
 | `COMPROMISSO_ATENDIDO` | efeito operacional ainda não definido | Resultado preservado; não há transição atual para `CONCLUIDO`. |
 | `COMPROMISSO_NAO_ATENDIDO` | efeito operacional ainda não definido | Resultado preservado; não há status de permanência definido. |

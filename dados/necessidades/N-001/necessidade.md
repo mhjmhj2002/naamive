@@ -186,7 +186,7 @@ O Projeto P-001 recebe este Compromisso da Necessidade como referência de entra
 | Projeto | [P-001 — Jornada Autônoma do NAAMIVE](../../projetos/P-001/projeto.md) |
 | Identificador técnico | `5575efa1-c68e-464f-8393-07be8c9bc93a` |
 | Vínculo | exclusivo e 1:1 com esta Necessidade |
-| Status do Projeto | `EM_FORMACAO` |
+| Status do Projeto | `FORMADO` |
 
 O Projeto foi materializado após a confirmação do `APROVADO` e antes da transição desta Necessidade para `EM_PROJETO`.
 
@@ -196,4 +196,4 @@ O ciclo de formação está concluído, com auditoria `QUALIFICAVEL`. A qualific
 
 Pelo [Ciclo de Vida da Necessidade](../../../documentacao/necessidade/05_CICLO_DE_VIDA_DA_NECESSIDADE.md), o Projeto 1:1 foi materializado com sucesso em `EM_FORMACAO`; por isso, esta Necessidade está formalmente em `EM_PROJETO`.
 
-A auditoria independente aprovou a formação de P-001 com `FORMACAO_SUFICIENTE`; seu status permanece `EM_FORMACAO`. A continuação operacional posterior ainda não está definida, e a N-001 não replica as etapas internas ou o estado do Projeto.
+A auditoria independente aprovou a formação de P-001 com `FORMACAO_SUFICIENTE`; seu status é `FORMADO`. A continuação operacional posterior ainda não está definida, e a N-001 não replica as etapas internas ou o estado do Projeto.

@@ -8,7 +8,7 @@
 | Código | `P-001` |
 | Nome inicial | Jornada Autônoma do NAAMIVE |
 | Necessidade de origem | [N-001 — NAAMIVE](../../necessidades/N-001/necessidade.md) |
-| Status | `EM_FORMACAO` |
+| Status | `FORMADO` |
 
 O nome inicial foi proposto pelo Especialista em Formação do Projeto e permanece editável pelo Owner. Ele não altera o identificador técnico, o código nem o vínculo 1:1 com a Necessidade de origem.
 
@@ -108,7 +108,7 @@ Essa direção atende ao núcleo do compromisso sem escolher prematuramente tecn
 | Item | Classificação | Registro |
 | --- | --- | --- |
 | Vínculo de origem | Conhecido | P-001 referencia exclusivamente N-001, que permanece fonte de verdade do compromisso. |
-| Status atual | Conhecido | P-001 permanece em `EM_FORMACAO`; as etapas de formação e este handoff não são status. |
+| Status atual | Conhecido | P-001 está em `FORMADO`; as etapas de formação e o handoff não são status. |
 | Nome inicial | Proposto | “Jornada Autônoma do NAAMIVE”; pode ser alterado pelo Owner sem alterar a identidade do Projeto. |
 | Direção de primeira jornada | Proposto | Fluxo rastreável, orientado por estado, evidência, especialização e decisões humanas explícitas. |
 | Detalhamento técnico | Desconhecido | Não foi escolhido por falta de evidência e por não ser necessário para a formação atual. |
@@ -126,7 +126,7 @@ O Especialista em Formação do Projeto encerra sua responsabilidade com a entre
 
 **Skill a carregar pelo próximo Ator:** `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`.
 
-O Auditor deve avaliar independentemente a coerência, a sustentação e a suficiência desta formação, incluindo as propostas e incógnitas registradas. Nenhum Resultado do Processo de auditoria foi produzido neste documento, e P-001 permanece em `EM_FORMACAO`.
+O Auditor deve avaliar independentemente a coerência, a sustentação e a suficiência desta formação, incluindo as propostas e incógnitas registradas. Até a produção de um Resultado do Processo de auditoria, P-001 permanece em `EM_FORMACAO`.
 
 ## Resultado do Processo — Auditoria independente
 
@@ -134,7 +134,7 @@ O Auditor deve avaliar independentemente a coerência, a sustentação e a sufic
 | --- | --- |
 | Ator | Auditor do Projeto |
 | Resultado do Processo | `FORMACAO_SUFICIENTE` |
-| Status do Projeto após a auditoria | `EM_FORMACAO` |
+| Status do Projeto após a auditoria | `FORMADO` |
 
 ### Parecer independente
 
@@ -146,7 +146,7 @@ Não foi encontrada lacuna concreta pertencente à formação do Projeto que imp
 
 ### Handoff da auditoria
 
-A formação do P-001 está aprovada. O Projeto permanece em `EM_FORMACAO`; a Direção do Projeto está disponível para o **Especialista em Delimitação de Módulos**, conforme `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`. Esse Ator é o próximo elegível, mas não é executado neste registro; nenhuma instância de Módulo foi criada.
+A formação do P-001 está aprovada e o Projeto está em `FORMADO`; a Direção do Projeto está disponível para o **Especialista em Delimitação de Módulos**, conforme `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`. Esse Ator é o próximo elegível, mas não é executado neste registro; nenhuma instância de Módulo foi criada.
 
 ## Direção do Projeto
 
@@ -161,9 +161,9 @@ Representação consolidada da formação aprovada por `FORMACAO_SUFICIENTE`. N�
 | Restrições e dependências | **Conhecido.** Decisões humanas devem ser explicitáveis; trabalho respeita competência; estado, Resultados do Processo, decisões e evidências permanecem distintos; rastreabilidade é proporcional. Escala, concorrência e integrações são limitações iniciais. **Conhecido.** A Direção do Projeto pode ser consumida pela vertical Módulo; a continuação operacional após a Especificação Técnica do Módulo permanece desconhecida. |
 | Riscos relevantes | **Conhecido e inferido.** Evitar tratar suposições técnicas como fatos, confundir etapas com status, resultados ou decisões, perder contexto entre Atores, avançar para trabalho descendente sem vertical definida e não demonstrar uma jornada limitada de ponta a ponta. |
 | Direção geral proposta | **Proposto.** Orientar a primeira jornada como fluxo rastreável centrado em entidades e transições explícitas: a Necessidade preserva seu compromisso; o Projeto 1:1 o recebe; cada avanço identifica Ator especializado, Skill e contexto; status, Resultados do Processo, decisões humanas e evidências ficam separados; e a evidência final permanece relacionada à Necessidade de origem. |
-| Conhecidos | Compromisso e vínculo 1:1 com N-001; status `EM_FORMACAO`; fronteiras normativas; evidências E-001 a E-003; e responsabilidades humanas e agênticas separadas. |
+| Conhecidos | Compromisso e vínculo 1:1 com N-001; status `FORMADO`; fronteiras normativas; evidências E-001 a E-003; e responsabilidades humanas e agênticas separadas. |
 | Inferidos | A necessidade de preservar e recuperar informações para permitir avanço legítimo sem coordenação contínua; o risco de perda de contexto; e a prioridade por uma jornada verificável e limitada. |
 | Propostos | O nome “Jornada Autônoma do NAAMIVE” e a direção de primeira jornada rastreável, orientada por estado, evidência, especialização e decisões humanas explícitas. |
 | Desconhecidos relevantes | Tecnologia, persistência, orquestração, seleção concreta de executores, detalhamento técnico e a camada operacional posterior à Especificação Técnica do Módulo. |
 
-Este artefato está disponível para consumo posterior porque o Auditor do Projeto produziu `FORMACAO_SUFICIENTE`. O Projeto permanece em `EM_FORMACAO`; a disponibilidade da Direção do Projeto não cria novo status nem aciona vertical ainda não modelada.
+Este artefato está disponível para consumo posterior porque o Auditor do Projeto produziu `FORMACAO_SUFICIENTE` e o Projeto transicionou para `FORMADO`. A disponibilidade da Direção não aciona vertical ainda não modelada.

@@ -26,7 +26,9 @@ Todo Módulo possui identidade técnica única. O modelo não define tecnologia,
 
 ### Código legível e estável
 
-Todo Módulo possui código legível e estável para referência operacional. Esta versão não inventa mecanismo permanente de geração de códigos; essa é uma lacuna futura a tratar quando houver sustentação.
+Todo Módulo possui código legível e estável para referência operacional, no formato `M-<número sequencial com ao menos três algarismos>`, como `M-001`.
+
+Antes de materializar um Módulo, o Especialista em Delimitação de Módulos consulta todos os códigos já registrados em `dados/modulos/`. Ele atribui o próximo número inteiro positivo acima do maior sufixo numérico já usado; na ausência de Módulos, atribui `M-001`. O código atribuído não pode ser reutilizado. Se uma verificação imediatamente anterior à materialização identificar colisão, o Especialista repete a consulta e atribui o próximo código disponível antes de registrar a instância.
 
 ### Nome
 
@@ -42,11 +44,24 @@ O registro declara a capacidade habilitada, a responsabilidade assumida e o que 
 
 ### Relações e dependências relevantes
 
-O registro identifica relações, dependências, possíveis sobreposições e lacunas relevantes com outros Módulos do mesmo Projeto. Não modela mecanismos de divisão, fusão ou reatribuição de Módulos nesta versão.
+O registro identifica relações, dependências, possíveis sobreposições e lacunas relevantes com outros Módulos do mesmo Projeto. Enquanto preservada a identidade de cada Módulo, a revisão de delimitação pode corrigir capacidades, responsabilidades, fronteiras, nomes e relações, bem como materializar Módulo adicional. Caso a correção exija encerrar, fundir, eliminar conceitualmente ou substituir uma identidade, esse tratamento permanece lacuna normativa e exige decisão estrutural específica antes de prosseguir.
+
+## Mapa de Módulos do Projeto
+
+Antes da primeira materialização — e em toda revisão de delimitação posterior — o registro do Projeto deve conter uma seção única intitulada **Mapa de Módulos do Projeto**. Ela é a fonte canônica da delimitação daquele Projeto e deve conter:
+
+* referência à Direção do Projeto e às evidências consultadas;
+* capacidades candidatas consideradas e a decisão de incluir, agrupar ou separar cada uma;
+* o conjunto de Módulos delimitados, com a capacidade, fronteira inicial e justificativa de cada um;
+* dependências, sobreposições e lacunas entre os Módulos;
+* aplicação da heurística 10 / 15 / 20 e eventual justificativa fora da curva; e
+* lacunas, decisões materiais e retornos estruturais, com seu tratamento ou encaminhamento.
+
+Cada `modulo.md` referencia o item que o justifica nesse Mapa. Um resumo em Módulo não substitui o Mapa canônico do Projeto.
 
 ## Formação e artefatos de apoio
 
-Após materializado em `EM_FORMACAO`, o Módulo mantém a formação técnica e, quando aprovada, sua **Especificação Técnica do Módulo** em seção consolidada do `modulo.md`.
+Após materializado em `EM_FORMACAO`, o Módulo mantém a formação técnica e, quando aprovada, sua **Especificação Técnica do Módulo** em seção consolidada do `modulo.md`. A seção deve conter o núcleo invariável definido em [Definição do Módulo](01_DEFINICAO_DO_MODULO.md#artefato-de-saída).
 
 Artefatos auxiliares — como diagramas, contratos, modelos de dados, decisões técnicas e especificações complementares — podem existir próximos ao registro quando necessários. Não há árvore rígida nem arquivos vazios obrigatórios; cada artefato deve ser referenciado pelo registro do Módulo e justificar sua utilidade.
 

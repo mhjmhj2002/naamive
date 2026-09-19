@@ -17,21 +17,25 @@ Direção do Projeto aprovada
 → descoberta e desenho técnico
 → Auditor do Módulo
 → FORMACAO_INSUFICIENTE
-   → retorno ao responsável adequado
+   → insuficiência técnica: Especialista em Formação do Módulo
+   → problema de delimitação: revisão pelo Especialista em Delimitação de Módulos
 ou
 → FORMACAO_SUFICIENTE
-→ Especificação Técnica do Módulo aprovada
+→ FORMADO
+→ Especificação Técnica do Módulo aprovada e disponível
 → continuação operacional ainda não definida
 ```
 
-`FORMACAO_INSUFICIENTE` por insuficiência técnica retorna ao Especialista em Formação do Módulo. Quando a auditoria revelar problema estrutural de delimitação, ela indica retorno ao Especialista em Delimitação de Módulos. A mecânica de divisão ou fusão é lacuna deliberada desta versão.
+`FORMACAO_INSUFICIENTE` por insuficiência técnica retorna ao Especialista em Formação do Módulo. Quando a auditoria revelar problema de delimitação, ela registra o retorno e o entrega ao Especialista em Delimitação de Módulos, que revisa o Mapa de Módulos do Projeto. A revisão normal corrige capacidade, responsabilidade, fronteira, nome, relações ou dependências e pode materializar Módulo adicional. Caso exija alteração de identidade, a alteração afetada é interrompida e registrada como lacuna que demanda decisão normativa específica. O procedimento completo está em [Formação do Módulo](04_FORMACAO_DO_MODULO.md#retorno-estrutural-de-delimitação).
 
 ## Transições conhecidas
 
 | Evento ou condição | Efeito | Regra |
 | --- | --- | --- |
 | Delimitação justificada | materialização → `EM_FORMACAO` | Todo Módulo materializado pertence a um único Projeto. |
-| `FORMACAO_INSUFICIENTE` | permanece em `EM_FORMACAO` | O retorno é ao responsável adequado conforme a natureza da lacuna. |
-| `FORMACAO_SUFICIENTE` | permanece em `EM_FORMACAO` | Aprova a Especificação Técnica do Módulo, sem criar status posterior. |
+| `FORMACAO_INSUFICIENTE` técnico | permanece em `EM_FORMACAO` | O Especialista em Formação do Módulo trata as lacunas antes de nova auditoria. |
+| `FORMACAO_INSUFICIENTE` por delimitação com identidade preservada | permanece em `EM_FORMACAO` | O Especialista em Delimitação de Módulos atualiza o Mapa e devolve os Módulos afetados à formação. |
+| `FORMACAO_INSUFICIENTE` por delimitação com impacto de identidade | permanece em `EM_FORMACAO` | Registra a lacuna e interrompe somente a alteração afetada até decisão normativa específica; não apaga instância nem cria transição adicional. |
+| `FORMACAO_SUFICIENTE` | `EM_FORMACAO` → `FORMADO` | Aprova e disponibiliza a Especificação Técnica do Módulo. |
 
-Não há neste ciclo status pós-formação, caminho para conclusão, cancelamento, realização, Entrega de Valor ou qualquer regra da vertical posterior.
+Não há neste ciclo caminho para conclusão, cancelamento, realização, Entrega de Valor ou qualquer regra da vertical posterior. `FORMADO` significa somente formação aprovada; não existe status para encerrar, fundir ou substituir identidades de Módulo.

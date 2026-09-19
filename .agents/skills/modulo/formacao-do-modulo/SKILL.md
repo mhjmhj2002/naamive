@@ -15,7 +15,7 @@ Transformar a capacidade delimitada de um Módulo em entendimento e desenho téc
 
 ## Condições de entrada
 
-Receba um Módulo materializado em `EM_FORMACAO`, sua Direção de Projeto de origem, delimitação registrada e evidências disponíveis.
+Receba um Módulo materializado em `EM_FORMACAO`, sua Direção de Projeto de origem, o item correspondente no Mapa de Módulos do Projeto e evidências disponíveis.
 
 ## Fontes normativas
 
@@ -33,11 +33,11 @@ Consulte:
 
 ## Responsabilidades
 
-Refine a compreensão da capacidade e fronteira, conduza descoberta técnica, produza desenho técnico proporcional e consolide a Especificação Técnica do Módulo. Investigue conforme necessário código, arquitetura, contratos, integrações, segurança, desempenho, concorrência, observabilidade, decisões e limitações existentes.
+Refine a compreensão da capacidade e fronteira, conduza descoberta técnica, produza desenho técnico proporcional e consolide a Especificação Técnica do Módulo. Garanta seu núcleo invariável: origem e item de delimitação, capacidade e fronteiras, evidências classificadas, relações relevantes, direção de realização ou inaplicabilidade explícita, e riscos, restrições, lacunas e decisões pendentes. Investigue conforme necessário código, arquitetura, contratos, integrações, segurança, desempenho, concorrência, observabilidade, decisões e limitações existentes.
 
 ## Limites
 
-Não audite a própria formação, não crie Entregas de Valor, Itens de Trabalho ou tarefas e não implemente software. Não produza banco, API, persistência, diagramas ou tecnologia por ritual. Se descobrir problema estrutural de delimitação, não altere silenciosamente o conjunto de Módulos: registre a evidência e devolva ao Especialista em Delimitação de Módulos.
+Não audite a própria formação, não crie Entregas de Valor, Itens de Trabalho ou tarefas e não implemente software. Não produza banco, API, persistência, diagramas ou tecnologia por ritual. Se descobrir problema de delimitação, não altere silenciosamente o conjunto de Módulos: registre no Módulo a evidência, os Módulos afetados e a mudança necessária, e devolva ao Especialista em Delimitação de Módulos. Se a mudança exigir alteração de identidade, o retorno deve registrar a lacuna e a necessidade de decisão normativa específica.
 
 ## Modo de trabalho
 
@@ -45,7 +45,7 @@ Distinga conhecido, inferido, proposto e desconhecido. Investigue lacunas resolv
 
 ## Saída e handoff
 
-Entregue ao **Auditor do Módulo** a formação, suas evidências, riscos, lacunas legítimas e Especificação Técnica do Módulo consolidada. Quando houver problema estrutural de fronteira, entregue-o ao **Especialista em Delimitação de Módulos** em vez de encaminhá-lo à auditoria como se fosse mera lacuna técnica.
+Entregue ao **Auditor do Módulo** a formação, suas evidências, riscos, lacunas legítimas e Especificação Técnica do Módulo consolidada. Quando houver problema estrutural de fronteira, entregue o retorno documentado ao **Especialista em Delimitação de Módulos** em vez de encaminhá-lo à auditoria como se fosse mera lacuna técnica.
 
 ## Critério de encerramento
 
@@ -53,4 +53,4 @@ Encerre ao entregar a formação ao Auditor do Módulo. Não produza Resultado d
 
 ## Verificação final
 
-Confirme que capacidade, fronteiras e desenho estão claros para realização posterior sem redesenho; que artefatos são proporcionais; que a Especificação separa fatos, inferências, propostas e desconhecidos; e que nenhuma vertical posterior foi definida.
+Confirme que capacidade, fronteiras e desenho estão claros para realização posterior sem redesenho; que o núcleo invariável da Especificação está presente; que artefatos adicionais são proporcionais; que a Especificação separa fatos, inferências, propostas e desconhecidos; e que nenhuma vertical posterior foi definida.
