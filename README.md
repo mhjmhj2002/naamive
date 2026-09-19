@@ -33,6 +33,12 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 * [Auditoria do Projeto](.agents/skills/projeto/auditoria-do-projeto/SKILL.md)
 * [Verificação Agregada do Projeto](.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md)
 
+### Módulo
+
+* [Delimitação de Módulos](.agents/skills/modulo/delimitacao-de-modulos/SKILL.md)
+* [Formação do Módulo](.agents/skills/modulo/formacao-do-modulo/SKILL.md)
+* [Auditoria do Módulo](.agents/skills/modulo/auditoria-do-modulo/SKILL.md)
+
 ## Documentação
 
 ### Atores
@@ -58,6 +64,16 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 * [Ciclo de Vida do Projeto](documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md)
 * [Status do Projeto](documentacao/projeto/06_STATUS_DO_PROJETO.md)
 * [Resultados do Processo do Projeto](documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md)
+
+### Módulo
+
+* [Definição do Módulo](documentacao/modulo/01_DEFINICAO_DO_MODULO.md)
+* [Modelo de Módulo](documentacao/modulo/02_MODELO_DE_MODULO.md)
+* [Atores do Módulo](documentacao/modulo/03_ATORES_DO_MODULO.md)
+* [Formação do Módulo](documentacao/modulo/04_FORMACAO_DO_MODULO.md)
+* [Ciclo de Vida do Módulo](documentacao/modulo/05_CICLO_DE_VIDA_DO_MODULO.md)
+* [Status do Módulo](documentacao/modulo/06_STATUS_DO_MODULO.md)
+* [Resultados do Processo do Módulo](documentacao/modulo/07_RESULTADOS_DO_PROCESSO_DO_MODULO.md)
 
 ## Dados operacionais
 
@@ -85,12 +101,19 @@ CONTINUIDADE_ATUAL.md
     │   │   └── SKILL.md
     │   └── qualificacao-da-necessidade/
     │       └── SKILL.md
-    └── projeto/
+    ├── projeto/
         ├── formacao-do-projeto/
         │   └── SKILL.md
         ├── auditoria-do-projeto/
         │   └── SKILL.md
         └── verificacao-agregada-do-projeto/
+            └── SKILL.md
+    └── modulo/
+        ├── delimitacao-de-modulos/
+        │   └── SKILL.md
+        ├── formacao-do-modulo/
+        │   └── SKILL.md
+        └── auditoria-do-modulo/
             └── SKILL.md
 
 documentacao/
@@ -104,7 +127,7 @@ documentacao/
 │   ├── 05_CICLO_DE_VIDA_DA_NECESSIDADE.md
 │   ├── 06_STATUS_DA_NECESSIDADE.md
 │   └── 07_RESULTADOS_DO_PROCESSO_DA_NECESSIDADE.md
-└── projeto/
+├── projeto/
     ├── 01_DEFINICAO_DO_PROJETO.md
     ├── 02_MODELO_DE_PROJETO.md
     ├── 03_ATORES_DO_PROJETO.md
@@ -112,6 +135,14 @@ documentacao/
     ├── 05_CICLO_DE_VIDA_DO_PROJETO.md
     ├── 06_STATUS_DO_PROJETO.md
     └── 07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md
+└── modulo/
+    ├── 01_DEFINICAO_DO_MODULO.md
+    ├── 02_MODELO_DE_MODULO.md
+    ├── 03_ATORES_DO_MODULO.md
+    ├── 04_FORMACAO_DO_MODULO.md
+    ├── 05_CICLO_DE_VIDA_DO_MODULO.md
+    ├── 06_STATUS_DO_MODULO.md
+    └── 07_RESULTADOS_DO_PROCESSO_DO_MODULO.md
 
 dados/
 ├── necessidades/

@@ -62,7 +62,7 @@ Necessidade
 → Compromisso da Necessidade
 → Projeto
 → Direção do Projeto
-→ próxima vertical
+→ Especialista em Delimitação de Módulos
 ```
 
 ## Responsabilidade do Projeto
@@ -85,7 +85,7 @@ Projeto não identifica, decompõe formalmente, materializa ou conduz o ciclo de
 
 A responsabilidade direta do Especialista em Formação do Projeto termina quando ele entrega ao Auditor do Projeto material suficiente para auditoria. A formação não depende da existência física de trabalho descendente nem de sua constituição normativa.
 
-`FORMACAO_SUFICIENTE` significa somente que a formação do Projeto foi aprovada. O estado e a continuação operacional posteriores ainda não estão definidos; esta definição não infere caminho até `CONCLUIDO`.
+`FORMACAO_SUFICIENTE` significa somente que a formação do Projeto foi aprovada. A Direção do Projeto é entregue ao Especialista em Delimitação de Módulos, da vertical Módulo, sem transferir a esta vertical responsabilidades internas do Projeto. O estado operacional posterior do Projeto e seu caminho até `CONCLUIDO` continuam não definidos.
 
 ## Projeto, Necessidade e Produto
 

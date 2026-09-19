@@ -33,7 +33,7 @@ criação do Projeto
 → `FORMACAO_SUFICIENTE`
 → formação do Projeto aprovada
 → Direção do Projeto disponível
-→ continuação operacional ainda não definida
+→ handoff ao Especialista em Delimitação de Módulos
 ```
 
 `EM_FORMACAO` é o único status usado no trecho atualmente definido. `CONCLUIDO` permanece como terminal conceitual futuro e `CANCELADO` como terminal excepcional; seus significados normativos pertencem exclusivamente ao [Status do Projeto](06_STATUS_DO_PROJETO.md).
@@ -44,11 +44,11 @@ Após sua criação, o Projeto está em `EM_FORMACAO`. Esse trabalho é conduzid
 
 Quando o Resultado do Processo `FORMACAO_SUFICIENTE` é produzido, a formação está concluída e aprovada pelo Auditor. Esse resultado não produz transição para outro status: o próximo estado operacional do Projeto ainda não foi definido. A aprovação não depende da criação, da definição ou do status de entidade descendente alguma.
 
-`FORMACAO_SUFICIENTE` torna disponível a **Direção do Projeto**, artefato de saída consolidado no próprio registro do Projeto. Ele pode ser consumido por vertical posterior sem substituir a entidade completa, e não é status, Resultado do Processo, decisão humana ou nova entidade.
+`FORMACAO_SUFICIENTE` torna disponível a **Direção do Projeto**, artefato de saída consolidado no próprio registro do Projeto. O próximo Ator elegível é o Especialista em Delimitação de Módulos, que a consome como entrada da vertical Módulo sem substituir a entidade completa. A Direção não é status, Resultado do Processo, decisão humana ou nova entidade.
 
-## Continuação operacional futura
+## Handoff para Módulo e continuação futura
 
-O trecho operacional posterior à formação aprovada será definido em camada futura. Esta vertical não prescreve, antecipa ou pressupõe mecanismos, entidades, ciclos internos, executores, transições ou status para ele. Não há caminho normativo atualmente definido até `CONCLUIDO`.
+Após a formação aprovada, o Especialista em Delimitação de Módulos pode receber a Direção do Projeto. O Projeto não delimita nem forma Módulos; apenas disponibiliza seu artefato de saída e faz o handoff. A continuação operacional após a Especificação Técnica de cada Módulo permanece futura. Esta vertical não prescreve mecanismos, entidades, ciclos internos, executores, transições ou status para esse trecho, nem há caminho normativo definido até `CONCLUIDO`.
 
 ## Verificação agregada e conclusão
 
@@ -72,7 +72,7 @@ Há um caminho excepcional de encerramento:
 | Evento ou condição | Transição | Regra |
 | --- | --- | --- |
 | `APROVADO` aciona o Especialista em Formação do Projeto; ausência do Projeto 1:1 | bootstrap e criação obrigatória → `EM_FORMACAO` | O mesmo Ator materializa o Projeto, com código, nome inicial proposto ou gerado e vínculo 1:1 com a Necessidade. Somente a criação bem-sucedida permite que a Necessidade assuma `EM_PROJETO`. |
-| `FORMACAO_SUFICIENTE` | `EM_FORMACAO` → formação aprovada | Não cria novo status nem define a continuação operacional. |
+| `FORMACAO_SUFICIENTE` | `EM_FORMACAO` → formação aprovada | Não cria novo status; torna a Direção disponível ao Especialista em Delimitação de Módulos. |
 | `FORMACAO_INSUFICIENTE` | permanece em `EM_FORMACAO` | O Especialista em Formação do Projeto trata as lacunas antes de nova auditoria. |
 | `COMPROMISSO_ATENDIDO` | efeito operacional ainda não definido | Resultado preservado; não há transição atual para `CONCLUIDO`. |
 | `COMPROMISSO_NAO_ATENDIDO` | efeito operacional ainda não definido | Resultado preservado; não há status de permanência definido. |

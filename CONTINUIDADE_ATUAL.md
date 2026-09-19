@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A continuação operacional posterior à formação aprovada do Projeto permanece deliberadamente indefinida pela vertical Projeto.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A vertical Módulo está normativamente definida: recebe a Direção do Projeto, delimita e materializa Módulos e forma tecnicamente cada instância até sua auditoria. Nenhuma instância de Módulo foi criada.
 
 ## Entidades ativas
 
@@ -27,18 +27,28 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * Status: `EM_FORMACAO`
 * Formação: aprovada pela auditoria independente, cobrindo `ENQUADRAMENTO`, `DESCOBERTA` e `DIREÇÃO DA SOLUÇÃO`
 * Resultado de auditoria: `FORMACAO_SUFICIENTE`
-* Artefato de saída: `Direção do Projeto` disponível para consumo posterior
+* Artefato de saída: `Direção do Projeto` aprovada e disponível para a vertical Módulo
+
+### Módulo
+
+* Estado normativo: vertical definida, sem instâncias materializadas
+* Entrada: `Direção do Projeto` aprovada por `FORMACAO_SUFICIENTE`
+* Primeiro Ator elegível: Especialista em Delimitação de Módulos
+* Política de qualidade: heurística 10 / 15 / 20, sem limite normativo de Módulos por Projeto
+* Saída de cada instância formada: `Especificação Técnica do Módulo` aprovada
 
 ## Próxima ação
 
-Nenhum próximo Ator deve ser acionado ou inventado até que a continuação operacional posterior à formação aprovada seja modelada. Essa futura vertical deve receber a `Direção do Projeto` como contrato de passagem, sem assumir a responsabilidade interna da formação do P-001. P-001 continua em `EM_FORMACAO`, e N-001 continua em `EM_PROJETO`.
+Executar o teste de fogo da delimitação de Módulos do P-001: o Especialista em Delimitação de Módulos deve consumir a Direção do Projeto e avaliar as capacidades coesas necessárias. Essa ação ainda não foi executada. P-001 continua em `EM_FORMACAO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
 * O mecanismo normativo permanente de geração de códigos de Projeto ainda não está definido; `P-001` foi aplicado pela convenção exemplificada e pela inexistência verificada de Projetos anteriores.
 * Tecnologia, persistência física, orquestração e seleção concreta de executores ainda não estão definidas.
-* A continuação operacional após `FORMACAO_SUFICIENTE` permanece deliberadamente indefinida.
-* Nenhuma entidade descendente foi criada, identificada ou decomposta; sua eventual vertical não integra a formação atual do Projeto.
+* O mecanismo normativo permanente de geração de códigos de Módulo ainda não está definido.
+* A mecânica de divisão ou fusão de Módulos permanece lacuna deliberada, a ser refinada pelo teste de fogo quando necessário.
+* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada; Entrega de Valor não foi definida.
+* A heurística 10 / 15 / 20 gera atenção e revisão, nunca reprovação automática, e é candidata a parametrização futura.
 * Os artefatos de saída não substituem as entidades completas, seus status, Resultados do Processo, decisões humanas, histórico ou evidências.
 
 ## Arquivos mínimos para continuar
@@ -55,5 +65,15 @@ Nenhum próximo Ator deve ser acionado ou inventado até que a continuação ope
 * `documentacao/projeto/05_CICLO_DE_VIDA_DO_PROJETO.md`
 * `documentacao/projeto/06_STATUS_DO_PROJETO.md`
 * `documentacao/projeto/07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md`
+* `documentacao/modulo/01_DEFINICAO_DO_MODULO.md`
+* `documentacao/modulo/02_MODELO_DE_MODULO.md`
+* `documentacao/modulo/03_ATORES_DO_MODULO.md`
+* `documentacao/modulo/04_FORMACAO_DO_MODULO.md`
+* `documentacao/modulo/05_CICLO_DE_VIDA_DO_MODULO.md`
+* `documentacao/modulo/06_STATUS_DO_MODULO.md`
+* `documentacao/modulo/07_RESULTADOS_DO_PROCESSO_DO_MODULO.md`
+* `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`
+* `.agents/skills/modulo/formacao-do-modulo/SKILL.md`
+* `.agents/skills/modulo/auditoria-do-modulo/SKILL.md`
 * `dados/necessidades/N-001/necessidade.md`
 * `dados/projetos/P-001/projeto.md`

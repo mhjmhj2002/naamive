@@ -146,7 +146,7 @@ Não foi encontrada lacuna concreta pertencente à formação do Projeto que imp
 
 ### Handoff da auditoria
 
-A formação do P-001 está aprovada. O Projeto permanece em `EM_FORMACAO`; a continuação operacional posterior à formação aprovada ainda não está definida pela vertical Projeto. Não há próximo Ator a acionar até que essa continuação seja modelada.
+A formação do P-001 está aprovada. O Projeto permanece em `EM_FORMACAO`; a Direção do Projeto está disponível para o **Especialista em Delimitação de Módulos**, conforme `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`. Esse Ator é o próximo elegível, mas não é executado neste registro; nenhuma instância de Módulo foi criada.
 
 ## Direção do Projeto
 
@@ -158,12 +158,12 @@ Representação consolidada da formação aprovada por `FORMACAO_SUFICIENTE`. N�
 | Objetivo do Projeto | **Inferido de E-001.** Transformar esse compromisso em uma primeira jornada utilizável do NAAMIVE, na qual as informações necessárias ao avanço legítimo permaneçam preservadas e recuperáveis sem coordenação humana contínua. |
 | Fronteiras | **Conhecido.** Preservar integralmente o compromisso da N-001; não redefinir seus elementos materiais; não criar ou definir entidades descendentes, ciclo futuro ou itens de realização; e não antecipar arquitetura, tecnologia, persistência, integrações, interface ou implementação detalhada. |
 | Contexto relevante | **Conhecido.** O repositório contém documentação normativa, Skills e a N-001, sem artefato executável do produto ou Projeto anterior. A N-001 já foi formada, qualificada e aprovada; decisões materiais pertencem ao Owner e os Atores agênticos permanecem especializados. |
-| Restrições e dependências | **Conhecido.** Decisões humanas devem ser explicitáveis; trabalho respeita competência; estado, Resultados do Processo, decisões e evidências permanecem distintos; rastreabilidade é proporcional. Escala, concorrência e integrações são limitações iniciais. A continuação operacional após a formação aprovada permanece desconhecida. |
+| Restrições e dependências | **Conhecido.** Decisões humanas devem ser explicitáveis; trabalho respeita competência; estado, Resultados do Processo, decisões e evidências permanecem distintos; rastreabilidade é proporcional. Escala, concorrência e integrações são limitações iniciais. **Conhecido.** A Direção do Projeto pode ser consumida pela vertical Módulo; a continuação operacional após a Especificação Técnica do Módulo permanece desconhecida. |
 | Riscos relevantes | **Conhecido e inferido.** Evitar tratar suposições técnicas como fatos, confundir etapas com status, resultados ou decisões, perder contexto entre Atores, avançar para trabalho descendente sem vertical definida e não demonstrar uma jornada limitada de ponta a ponta. |
 | Direção geral proposta | **Proposto.** Orientar a primeira jornada como fluxo rastreável centrado em entidades e transições explícitas: a Necessidade preserva seu compromisso; o Projeto 1:1 o recebe; cada avanço identifica Ator especializado, Skill e contexto; status, Resultados do Processo, decisões humanas e evidências ficam separados; e a evidência final permanece relacionada à Necessidade de origem. |
 | Conhecidos | Compromisso e vínculo 1:1 com N-001; status `EM_FORMACAO`; fronteiras normativas; evidências E-001 a E-003; e responsabilidades humanas e agênticas separadas. |
 | Inferidos | A necessidade de preservar e recuperar informações para permitir avanço legítimo sem coordenação contínua; o risco de perda de contexto; e a prioridade por uma jornada verificável e limitada. |
 | Propostos | O nome “Jornada Autônoma do NAAMIVE” e a direção de primeira jornada rastreável, orientada por estado, evidência, especialização e decisões humanas explícitas. |
-| Desconhecidos relevantes | Tecnologia, persistência, orquestração, seleção concreta de executores, detalhamento técnico e a camada operacional posterior à formação aprovada. |
+| Desconhecidos relevantes | Tecnologia, persistência, orquestração, seleção concreta de executores, detalhamento técnico e a camada operacional posterior à Especificação Técnica do Módulo. |
 
 Este artefato está disponível para consumo posterior porque o Auditor do Projeto produziu `FORMACAO_SUFICIENTE`. O Projeto permanece em `EM_FORMACAO`; a disponibilidade da Direção do Projeto não cria novo status nem aciona vertical ainda não modelada.

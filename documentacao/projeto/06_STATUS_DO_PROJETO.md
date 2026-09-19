@@ -61,7 +61,7 @@ criação
 → EM_FORMACAO
 → FORMACAO_SUFICIENTE
 → formação do Projeto aprovada
-→ continuação operacional ainda não definida
+→ Direção do Projeto disponível para o Especialista em Delimitação de Módulos
 ```
 
 ```text
