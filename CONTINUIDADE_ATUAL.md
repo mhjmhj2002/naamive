@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial de Módulos do P-001 foi executada: o Mapa de Módulos foi materializado e cinco Módulos foram criados em `EM_FORMACAO`. A vertical Módulo agora segue com a formação técnica individual; nenhuma formação, auditoria ou Especificação Técnica foi produzida.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial de Módulos do P-001 foi executada: o Mapa de Módulos foi materializado e cinco Módulos foram criados em `EM_FORMACAO`. A formação técnica do M-001 foi aprovada por auditoria independente; os demais Módulos ainda não receberam formação técnica.
 
 ## Entidades ativas
 
@@ -36,22 +36,24 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * Delimitação executada pelo Especialista em Delimitação de Módulos, com cinco capacidades coesas e sem divisão por camada tecnológica
 * Política de qualidade: heurística 10 / 15 / 20, sem limite normativo de Módulos por Projeto
 * Heurística: cinco Módulos; abaixo da referência aproximada de 10 e sem alcançar os limiares de atenção (15) ou revisão estrutural forte (20)
-* M-001 — Condução da Necessidade: `EM_FORMACAO`
+* M-001 — Condução da Necessidade: `FORMADO`
 * M-002 — Formação do Projeto: `EM_FORMACAO`
 * M-003 — Coordenação do Trabalho: `EM_FORMACAO`
 * M-004 — Contexto e Rastreabilidade: `EM_FORMACAO`
 * M-005 — Verificação do Resultado de Software: `EM_FORMACAO`
-* Saída de cada instância formada: `Especificação Técnica do Módulo` aprovada; status `FORMADO`
+* M-001: Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior; a continuação operacional não está modelada
+* Saída de cada instância aprovada: `Especificação Técnica do Módulo` aprovada; status `FORMADO`
 
 ## Próxima ação
 
-O próximo trabalho é a formação técnica de cada Módulo materializado, pelo Especialista em Formação do Módulo. P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+O próximo trabalho elegível é a formação técnica de M-002, M-003, M-004 ou M-005, pelo Especialista em Formação do Módulo. M-001 não possui continuação operacional modelada. P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
 * O mecanismo normativo permanente de geração de códigos de Projeto ainda não está definido; `P-001` foi aplicado pela convenção exemplificada e pela inexistência verificada de Projetos anteriores.
 * Tecnologia, persistência física, orquestração e seleção concreta de executores ainda não estão definidas.
 * A regra de atribuição de códigos de Módulo é `M-<sequencial>` por consulta aos registros existentes; a persistência e concorrência físicas dessa regra ainda não estão definidas.
+* A Necessidade pode receber `CANCELAMENTO_APROVADO` enquanto está em `EM_PROJETO`, mas o efeito sobre o Projeto ativo ainda não tem regra normativa; não há propagação, novo status ou cancelamento automático definido.
 * Casos de redelimitação que exijam encerrar, fundir ou substituir identidades de Módulo ainda não possuem mecanismo normativo completo e devem provocar decisão estrutural específica quando aparecerem na prática.
 * A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada; Entrega de Valor não foi definida.
 * A heurística 10 / 15 / 20 gera atenção e revisão, nunca reprovação automática, e é candidata a parametrização futura.

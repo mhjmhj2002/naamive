@@ -166,7 +166,7 @@ Representação consolidada da formação aprovada por `FORMACAO_SUFICIENTE`. N�
 | Propostos | O nome “Jornada Autônoma do NAAMIVE” e a direção de primeira jornada rastreável, orientada por estado, evidência, especialização e decisões humanas explícitas. |
 | Desconhecidos relevantes | Tecnologia, persistência, orquestração, seleção concreta de executores, detalhamento técnico e a camada operacional posterior à Especificação Técnica do Módulo. |
 
-Este artefato está disponível para consumo posterior porque o Auditor do Projeto produziu `FORMACAO_SUFICIENTE` e o Projeto transicionou para `FORMADO`. A disponibilidade da Direção não aciona vertical ainda não modelada.
+Este artefato está disponível para consumo pela vertical Módulo porque o Auditor do Projeto produziu `FORMACAO_SUFICIENTE` e o Projeto transicionou para `FORMADO`. A Direção foi consumida pelo Especialista em Delimitação de Módulos, que materializou o Mapa de Módulos e os cinco Módulos iniciais. Esse consumo não altera as responsabilidades do Projeto nem seu status `FORMADO`.
 
 ## Mapa de Módulos do Projeto
 
