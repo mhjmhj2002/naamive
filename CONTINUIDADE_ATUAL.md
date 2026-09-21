@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. Os seis achados da auditoria da vertical Módulo foram corrigidos normativamente: há `FORMADO`, redelimitação normal executável, regra de código, Mapa de Módulos canônico, núcleo invariável da Especificação Técnica e protocolo de lacunas e decisões materiais. A vertical Módulo recebe a Direção do Projeto de um Projeto `FORMADO`, delimita e materializa Módulos e forma tecnicamente cada instância até auditoria. Nenhuma instância de Módulo foi criada.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial de Módulos do P-001 foi executada: o Mapa de Módulos foi materializado e cinco Módulos foram criados em `EM_FORMACAO`. A vertical Módulo agora segue com a formação técnica individual; nenhuma formação, auditoria ou Especificação Técnica foi produzida.
 
 ## Entidades ativas
 
@@ -31,16 +31,21 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 
 ### Módulo
 
-* Estado normativo: vertical definida, sem instâncias materializadas
+* Mapa canônico do P-001: `dados/projetos/P-001/mapa-de-modulos.md`
 * Entrada: `Direção do Projeto` aprovada por `FORMACAO_SUFICIENTE`
-* Primeiro Ator elegível: Especialista em Delimitação de Módulos
+* Delimitação executada pelo Especialista em Delimitação de Módulos, com cinco capacidades coesas e sem divisão por camada tecnológica
 * Política de qualidade: heurística 10 / 15 / 20, sem limite normativo de Módulos por Projeto
-* Delimitação: exige Mapa de Módulos do Projeto como evidência canônica e códigos `M-<sequencial>` atribuídos pelo Especialista em Delimitação
+* Heurística: cinco Módulos; abaixo da referência aproximada de 10 e sem alcançar os limiares de atenção (15) ou revisão estrutural forte (20)
+* M-001 — Condução da Necessidade: `EM_FORMACAO`
+* M-002 — Formação do Projeto: `EM_FORMACAO`
+* M-003 — Coordenação do Trabalho: `EM_FORMACAO`
+* M-004 — Contexto e Rastreabilidade: `EM_FORMACAO`
+* M-005 — Verificação do Resultado de Software: `EM_FORMACAO`
 * Saída de cada instância formada: `Especificação Técnica do Módulo` aprovada; status `FORMADO`
 
 ## Próxima ação
 
-Executar o teste de fogo da delimitação de Módulos do P-001: o Especialista em Delimitação de Módulos deve consumir a Direção do Projeto e avaliar as capacidades coesas necessárias. Essa ação ainda não foi executada. P-001 está em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+O próximo trabalho é a formação técnica de cada Módulo materializado, pelo Especialista em Formação do Módulo. P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -78,3 +83,9 @@ Executar o teste de fogo da delimitação de Módulos do P-001: o Especialista e
 * `.agents/skills/modulo/auditoria-do-modulo/SKILL.md`
 * `dados/necessidades/N-001/necessidade.md`
 * `dados/projetos/P-001/projeto.md`
+* `dados/projetos/P-001/mapa-de-modulos.md`
+* `dados/modulos/M-001/modulo.md`
+* `dados/modulos/M-002/modulo.md`
+* `dados/modulos/M-003/modulo.md`
+* `dados/modulos/M-004/modulo.md`
+* `dados/modulos/M-005/modulo.md`

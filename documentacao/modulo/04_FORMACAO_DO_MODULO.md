@@ -10,7 +10,7 @@ A vertical começa antes da existência dos Módulos individuais. O Especialista
 
 A delimitação avalia responsabilidade, coesão, fronteiras, valor habilitado, relação com a Direção, dependências, sobreposições, lacunas e granularidade. Não divide automaticamente por interface, API, domínio, persistência ou qualquer outra camada técnica. A análise deve registrar justificativa para quantidade fora da curva, sem tratar `10`, `15` ou `20` como limites.
 
-Antes de materializar, o Especialista em Delimitação consolida o **Mapa de Módulos do Projeto** no `projeto.md`, com os elementos mínimos do [Modelo de Módulo](02_MODELO_DE_MODULO.md#mapa-de-módulos-do-projeto). Cada Módulo referencia esse Mapa e recebe seu código pela regra de atribuição do modelo. Não há delimitação aprovada apenas por resumos distribuídos nos registros individuais.
+Antes de materializar, o Especialista em Delimitação cria ou atualiza o **Mapa de Módulos do Projeto** em `dados/projetos/<codigo-projeto>/mapa-de-modulos.md`, com os elementos mínimos do [Modelo de Módulo](02_MODELO_DE_MODULO.md#mapa-de-módulos-do-projeto). O `projeto.md` apenas referencia o arquivo canônico. Cada Módulo referencia esse Mapa e recebe seu código pela regra de atribuição do modelo. Não há delimitação aprovada apenas por resumos distribuídos nos registros individuais.
 
 ### Retorno estrutural de delimitação
 

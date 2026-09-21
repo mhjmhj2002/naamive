@@ -33,7 +33,7 @@ Consulte os documentos de Projeto relevantes, especialmente sua Direção aprova
 
 ## Responsabilidades
 
-Identifique capacidades e responsabilidades coesas, defina fronteiras iniciais, avalie dependências, sobreposições, lacunas e granularidade. Aplique a heurística 10 / 15 / 20 como política de análise, justificando casos fora da curva sem transformá-la em limite. Antes de materializar, consolide o Mapa de Módulos do Projeto. Materialize cada Módulo com os elementos mínimos do modelo, código atribuído pela regra normativa e status `EM_FORMACAO`.
+Identifique capacidades e responsabilidades coesas, defina fronteiras iniciais, avalie dependências, sobreposições, lacunas e granularidade. Aplique a heurística 10 / 15 / 20 como política de análise, justificando casos fora da curva sem transformá-la em limite. Antes de materializar, crie ou atualize o arquivo canônico do Mapa de Módulos em `dados/projetos/<codigo-projeto>/mapa-de-modulos.md`. Use esse arquivo como referência do conjunto; cada `modulo.md` deve apontar para o item que o justifica no Mapa. Materialize cada Módulo com os elementos mínimos do modelo, código atribuído pela regra normativa e status `EM_FORMACAO`.
 
 ## Limites
 
@@ -47,13 +47,13 @@ Analise a Direção como contrato de passagem e consulte o Projeto completo some
 
 Para cada lacuna, nesta ordem: investigue evidências disponíveis; se houver alternativa viável, registre-a como proposta; mantenha como desconhecida a informação não essencial; e acione o Owner quando faltar informação essencial ou a escolha entre alternativas for decisão humana material. Não materialize Módulo, nem conclua revisão estrutural, enquanto houver lacuna essencial ou decisão material sem tratamento explícito.
 
-Quando receber retorno de delimitação, registre a evidência no Módulo e no Mapa de Módulos e avalie todo o conjunto afetado. Se a identidade for preservada, revise capacidade, responsabilidade, fronteira, nome, relações ou dependências, ou materialize Módulo adicional; atualize o Mapa e devolva os Módulos afetados em `EM_FORMACAO` à formação técnica.
+Quando receber retorno de delimitação, registre a evidência no Módulo e no arquivo canônico do Mapa de Módulos e avalie todo o conjunto afetado. Se a identidade for preservada, revise capacidade, responsabilidade, fronteira, nome, relações ou dependências, ou materialize Módulo adicional; atualize o Mapa canônico e devolva os Módulos afetados em `EM_FORMACAO` à formação técnica.
 
 Se o retorno exigir fusão que torne uma identidade inadequada, substituição completa de capacidade, eliminação conceitual de Módulo materializado ou transformação que exija encerrar uma identidade e criar outra, não execute essa alteração. Registre a evidência, os Módulos afetados e a necessidade de decisão normativa específica; preserve identidade, código e histórico, não reutilize código, não apague instância e não crie status ou Resultado do Processo. Interrompa somente a alteração afetada. Isso não bloqueia revisões normais nem a materialização de Módulo adicional.
 
 ## Saída e handoff
 
-Entregue o Mapa de Módulos do Projeto e Módulos materializados, cada qual em `EM_FORMACAO`, com referência ao item canônico que o justifica e relações relevantes. O handoff de cada instância é para o **Especialista em Formação do Módulo**.
+Entregue o arquivo canônico `dados/projetos/<codigo-projeto>/mapa-de-modulos.md` e Módulos materializados, cada qual em `EM_FORMACAO`, com referência ao item canônico que o justifica e relações relevantes. O handoff de cada instância é para o **Especialista em Formação do Módulo**.
 
 ## Critério de encerramento
 
@@ -61,4 +61,4 @@ Encerre quando a delimitação estiver justificada, os Módulos necessários tiv
 
 ## Verificação final
 
-Confirme vínculo exclusivo com um Projeto, código atribuído sem colisão, Mapa de Módulos canônico completo, coesão por capacidade e não por tecnologia, ausência de teto normativo, análise da heurística quando aplicável e ausência de criação de entidade ou regra da vertical posterior.
+Confirme vínculo exclusivo com um Projeto, código atribuído sem colisão, arquivo canônico do Mapa de Módulos completo, coesão por capacidade e não por tecnologia, ausência de teto normativo, análise da heurística quando aplicável e ausência de criação de entidade ou regra da vertical posterior.

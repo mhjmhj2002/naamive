@@ -15,7 +15,7 @@ O Owner fornece contexto ou toma decisão humana material quando ela não puder 
 * **Executor:** agente especializado.
 * **Skill principal:** [.agents/skills/modulo/delimitacao-de-modulos/SKILL.md](../../.agents/skills/modulo/delimitacao-de-modulos/SKILL.md).
 
-Recebe a Direção do Projeto aprovada, identifica capacidades coesas, propõe e justifica a divisão em Módulos, verifica sobreposições e lacunas, aplica a [heurística 10 / 15 / 20](01_DEFINICAO_DO_MODULO.md#heurística-de-qualidade-10--15--20), registra o Mapa de Módulos canônico no Projeto, materializa os Módulos necessários e preserva o vínculo com o Projeto de origem. Também executa a revisão de delimitação devolvida pela formação ou auditoria enquanto ela preservar as identidades existentes.
+Recebe a Direção do Projeto aprovada, identifica capacidades coesas, propõe e justifica a divisão em Módulos, verifica sobreposições e lacunas, aplica a [heurística 10 / 15 / 20](01_DEFINICAO_DO_MODULO.md#heurística-de-qualidade-10--15--20), cria e mantém o Mapa de Módulos canônico em `dados/projetos/<codigo-projeto>/mapa-de-modulos.md`, materializa os Módulos necessários e preserva o vínculo com o Projeto de origem. Também executa a revisão de delimitação devolvida pela formação ou auditoria enquanto ela preservar as identidades existentes.
 
 Não especifica tecnicamente cada Módulo em profundidade, não audita, não cria Entregas de Valor, Itens de Trabalho ou tarefas, e não implementa software.
 

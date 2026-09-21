@@ -37,7 +37,7 @@ Avalie coesão da capacidade, clareza da responsabilidade e fronteiras, aderênc
 
 ## Limites
 
-Não corrija silenciosamente a formação, não execute papel de delimitação ou formação, não invente evidências, não implemente software e não crie Entregas de Valor, Itens de Trabalho, tarefas ou regras da próxima vertical. Não crie mecânica de divisão ou fusão de Módulos.
+Não corrija silenciosamente a formação, não execute papel de delimitação ou formação, não invente evidências, não implemente software e não crie Entregas de Valor, Itens de Trabalho, tarefas ou regras da próxima vertical. Pode consultar o arquivo canônico do Mapa de Módulos, mas não o mantém nem o altera. Não crie mecânica de divisão ou fusão de Módulos.
 
 ## Modo de trabalho
 

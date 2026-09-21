@@ -84,6 +84,15 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 ### Projetos
 
 * [P-001 — Jornada Autônoma do NAAMIVE](dados/projetos/P-001/projeto.md)
+  * [Mapa de Módulos do P-001](dados/projetos/P-001/mapa-de-modulos.md)
+
+### Módulos
+
+* [M-001 — Condução da Necessidade](dados/modulos/M-001/modulo.md)
+* [M-002 — Formação do Projeto](dados/modulos/M-002/modulo.md)
+* [M-003 — Coordenação do Trabalho](dados/modulos/M-003/modulo.md)
+* [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md)
+* [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)
 
 ## Estrutura atual
 
@@ -148,9 +157,21 @@ dados/
 ├── necessidades/
 │   └── N-001/
 │       └── necessidade.md
-└── projetos/
+├── projetos/
     └── P-001/
+        ├── mapa-de-modulos.md
         └── projeto.md
+└── modulos/
+    ├── M-001/
+    │   └── modulo.md
+    ├── M-002/
+    │   └── modulo.md
+    ├── M-003/
+    │   └── modulo.md
+    ├── M-004/
+    │   └── modulo.md
+    └── M-005/
+        └── modulo.md
 ```
 
 O `README.md` responde onde está cada coisa. O `CONTINUIDADE_ATUAL.md` responde onde o trabalho está agora.

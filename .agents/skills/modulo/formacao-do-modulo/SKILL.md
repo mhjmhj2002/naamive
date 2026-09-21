@@ -15,7 +15,7 @@ Transformar a capacidade delimitada de um Módulo em entendimento e desenho téc
 
 ## Condições de entrada
 
-Receba um Módulo materializado em `EM_FORMACAO`, sua Direção de Projeto de origem, o item correspondente no Mapa de Módulos do Projeto e evidências disponíveis.
+Receba um Módulo materializado em `EM_FORMACAO`, sua Direção de Projeto de origem, o item correspondente no arquivo canônico do Mapa de Módulos do Projeto e evidências disponíveis.
 
 ## Fontes normativas
 
@@ -37,7 +37,7 @@ Refine a compreensão da capacidade e fronteira, conduza descoberta técnica, pr
 
 ## Limites
 
-Não audite a própria formação, não crie Entregas de Valor, Itens de Trabalho ou tarefas e não implemente software. Não produza banco, API, persistência, diagramas ou tecnologia por ritual. Se descobrir problema de delimitação, não altere silenciosamente o conjunto de Módulos: registre no Módulo a evidência, os Módulos afetados e a mudança necessária, e devolva ao Especialista em Delimitação de Módulos. Se a mudança exigir alteração de identidade, o retorno deve registrar a lacuna e a necessidade de decisão normativa específica.
+Não audite a própria formação, não crie Entregas de Valor, Itens de Trabalho ou tarefas e não implemente software. Não produza banco, API, persistência, diagramas ou tecnologia por ritual. Pode consultar o arquivo canônico do Mapa de Módulos, mas não o mantém nem o altera. Se descobrir problema de delimitação, não altere silenciosamente o conjunto de Módulos: registre no Módulo a evidência, os Módulos afetados e a mudança necessária, e devolva ao Especialista em Delimitação de Módulos. Se a mudança exigir alteração de identidade, o retorno deve registrar a lacuna e a necessidade de decisão normativa específica.
 
 ## Modo de trabalho
 

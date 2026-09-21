@@ -26,7 +26,7 @@ ou
 → continuação operacional ainda não definida
 ```
 
-`FORMACAO_INSUFICIENTE` por insuficiência técnica retorna ao Especialista em Formação do Módulo. Quando a auditoria revelar problema de delimitação, ela registra o retorno e o entrega ao Especialista em Delimitação de Módulos, que revisa o Mapa de Módulos do Projeto. A revisão normal corrige capacidade, responsabilidade, fronteira, nome, relações ou dependências e pode materializar Módulo adicional. Caso exija alteração de identidade, a alteração afetada é interrompida e registrada como lacuna que demanda decisão normativa específica. O procedimento completo está em [Formação do Módulo](04_FORMACAO_DO_MODULO.md#retorno-estrutural-de-delimitação).
+`FORMACAO_INSUFICIENTE` por insuficiência técnica retorna ao Especialista em Formação do Módulo. Quando a auditoria revelar problema de delimitação, ela registra o retorno e o entrega ao Especialista em Delimitação de Módulos, que revisa o arquivo canônico do Mapa de Módulos do Projeto em `dados/projetos/<codigo-projeto>/mapa-de-modulos.md`. A revisão normal corrige capacidade, responsabilidade, fronteira, nome, relações ou dependências e pode materializar Módulo adicional. Caso exija alteração de identidade, a alteração afetada é interrompida e registrada como lacuna que demanda decisão normativa específica. O procedimento completo está em [Formação do Módulo](04_FORMACAO_DO_MODULO.md#retorno-estrutural-de-delimitação).
 
 ## Transições conhecidas
 

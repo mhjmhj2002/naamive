@@ -48,7 +48,7 @@ O registro identifica relações, dependências, possíveis sobreposições e la
 
 ## Mapa de Módulos do Projeto
 
-Antes da primeira materialização — e em toda revisão de delimitação posterior — o registro do Projeto deve conter uma seção única intitulada **Mapa de Módulos do Projeto**. Ela é a fonte canônica da delimitação daquele Projeto e deve conter:
+Antes da primeira materialização — e em toda revisão de delimitação posterior — o Especialista em Delimitação de Módulos cria ou atualiza o artefato próprio **Mapa de Módulos do Projeto**, localizado em `dados/projetos/<codigo-projeto>/mapa-de-modulos.md`. Esse arquivo é a fonte canônica da delimitação daquele Projeto e deve conter:
 
 * referência à Direção do Projeto e às evidências consultadas;
 * capacidades candidatas consideradas e a decisão de incluir, agrupar ou separar cada uma;
@@ -57,7 +57,7 @@ Antes da primeira materialização — e em toda revisão de delimitação poste
 * aplicação da heurística 10 / 15 / 20 e eventual justificativa fora da curva; e
 * lacunas, decisões materiais e retornos estruturais, com seu tratamento ou encaminhamento.
 
-Cada `modulo.md` referencia o item que o justifica nesse Mapa. Um resumo em Módulo não substitui o Mapa canônico do Projeto.
+O `projeto.md` referencia o arquivo canônico e pode registrar estado factual resumido, mas não duplica integralmente o Mapa. Cada `modulo.md` referencia o item que o justifica nesse arquivo. Um resumo em Módulo não substitui o Mapa canônico do Projeto.
 
 ## Formação e artefatos de apoio
 

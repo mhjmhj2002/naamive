@@ -38,7 +38,7 @@ A pergunta principal é:
 
 A resposta deve considerar responsabilidade, coesão, fronteira, relação com a Direção do Projeto, valor ou capacidade habilitada, dependências, sobreposições, lacunas entre Módulos e granularidade excessiva.
 
-O resultado dessa análise é preservado no **Mapa de Módulos do Projeto**, seção canônica do registro do Projeto. O Mapa não é nova entidade, status nem Resultado do Processo: ele mantém a evidência de que o conjunto de Módulos foi escolhido de modo deliberado e permite revisar a delimitação sem perder sua justificativa de origem.
+O resultado dessa análise é preservado no **Mapa de Módulos do Projeto**, artefato próprio associado ao Projeto e localizado canonicamente em `dados/projetos/<codigo-projeto>/mapa-de-modulos.md`. O `projeto.md` apenas referencia esse artefato e pode registrar estado factual resumido da delimitação, sem duplicar seu conteúdo. O Mapa não é nova entidade, status nem Resultado do Processo: ele mantém a evidência de que o conjunto de Módulos foi escolhido de modo deliberado e permite revisar a delimitação sem perder sua justificativa de origem.
 
 ## Heurística de qualidade 10 / 15 / 20
 

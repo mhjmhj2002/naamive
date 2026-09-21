@@ -167,3 +167,7 @@ Representação consolidada da formação aprovada por `FORMACAO_SUFICIENTE`. N�
 | Desconhecidos relevantes | Tecnologia, persistência, orquestração, seleção concreta de executores, detalhamento técnico e a camada operacional posterior à Especificação Técnica do Módulo. |
 
 Este artefato está disponível para consumo posterior porque o Auditor do Projeto produziu `FORMACAO_SUFICIENTE` e o Projeto transicionou para `FORMADO`. A disponibilidade da Direção não aciona vertical ainda não modelada.
+
+## Mapa de Módulos do Projeto
+
+O Mapa de Módulos canônico deste Projeto existe em [`dados/projetos/P-001/mapa-de-modulos.md`](mapa-de-modulos.md). Esta referência factual não altera o status, a Direção, o Resultado do Processo, o vínculo com a N-001 nem a responsabilidade do Projeto.
