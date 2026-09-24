@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial de Módulos do P-001 foi executada: o Mapa de Módulos foi materializado e cinco Módulos foram criados em `EM_FORMACAO`. As formações técnicas de M-001, M-002 e M-003 foram aprovadas por auditoria independente; M-004 e M-005 ainda não receberam formação técnica.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial de Módulos do P-001 foi executada: o Mapa de Módulos foi materializado e cinco Módulos foram criados em `EM_FORMACAO`. As formações técnicas de M-001 a M-004 foram aprovadas por auditoria independente; M-005 ainda não recebeu formação técnica.
 
 ## Entidades ativas
 
@@ -39,16 +39,17 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * M-001 — Condução da Necessidade: `FORMADO`
 * M-002 — Formação do Projeto: `FORMADO`
 * M-003 — Coordenação do Trabalho: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior
-* M-004 — Contexto e Rastreabilidade: `EM_FORMACAO`
+* M-004 — Contexto e Rastreabilidade: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior
 * M-005 — Verificação do Resultado de Software: `EM_FORMACAO`
 * M-001: Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior; a continuação operacional não está modelada
 * M-002: Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior; a continuação operacional não está modelada
 * M-003: coordenação lógica de trabalho aprovada, sem tecnologia física de orquestração, sem catálogo concreto de Executores e sem modelar verticais futuras de trabalho
+* M-004: preservação, recuperação proporcional e correlação de contexto aprovadas, sem se tornar fonte de verdade das demais capacidades e sem tecnologia física definida
 * Saída de cada instância aprovada: `Especificação Técnica do Módulo` aprovada; status `FORMADO`
 
 ## Próxima ação
 
-Os próximos trabalhos elegíveis são as formações técnicas de M-004 ou M-005, pelo Especialista em Formação do Módulo. M-001, M-002 e M-003 não possuem continuação operacional modelada. P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+O próximo Ator elegível é o Especialista em Formação do Módulo para M-005. M-001 a M-004 não possuem continuação operacional modelada. P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -61,6 +62,7 @@ Os próximos trabalhos elegíveis são as formações técnicas de M-004 ou M-00
 * Casos de redelimitação que exijam encerrar, fundir ou substituir identidades de Módulo ainda não possuem mecanismo normativo completo e devem provocar decisão estrutural específica quando aparecerem na prática.
 * A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada; Entrega de Valor não foi definida.
 * M-003 definiu somente contratos lógicos de coordenação: a seleção concreta e disponibilidade de Executor, persistência, comunicação, orquestração, concorrência física, retry, timeout, escala, observabilidade, autenticação concreta e modelo físico de histórico permanecem desconhecidos. A ausência de Executor compatível bloqueia o despacho, mas não a formação técnica do Módulo.
+* M-004 definiu contratos lógicos aprovados de preservação, recuperação proporcional e correlação de contexto sem se tornar fonte de verdade das demais capacidades. Persistência, busca, indexação, formato de referências, armazenamento de evidências externas, retenção, versionamento físico, autenticação, autorização, confidencialidade, concorrência, escala, cache e observabilidade permanecem desconhecidos; não bloqueiam a realização futura.
 * A heurística 10 / 15 / 20 gera atenção e revisão, nunca reprovação automática, e é candidata a parametrização futura.
 * Os artefatos de saída não substituem as entidades completas, seus status, Resultados do Processo, decisões humanas, histórico ou evidências.
 
