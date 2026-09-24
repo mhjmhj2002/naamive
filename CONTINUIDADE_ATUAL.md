@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial de Módulos do P-001 foi executada: o Mapa de Módulos foi materializado e cinco Módulos foram criados em `EM_FORMACAO`. As formações técnicas de M-001 a M-004 foram aprovadas por auditoria independente; M-005 ainda não recebeu formação técnica.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente; a continuação operacional posterior aos Módulos permanece não modelada.
 
 ## Entidades ativas
 
@@ -40,16 +40,17 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * M-002 — Formação do Projeto: `FORMADO`
 * M-003 — Coordenação do Trabalho: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior
 * M-004 — Contexto e Rastreabilidade: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior
-* M-005 — Verificação do Resultado de Software: `EM_FORMACAO`
+* M-005 — Verificação do Resultado de Software: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior
 * M-001: Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior; a continuação operacional não está modelada
 * M-002: Especificação Técnica aprovada por `FORMACAO_SUFICIENTE` e disponível para consumo posterior; a continuação operacional não está modelada
 * M-003: coordenação lógica de trabalho aprovada, sem tecnologia física de orquestração, sem catálogo concreto de Executores e sem modelar verticais futuras de trabalho
 * M-004: preservação, recuperação proporcional e correlação de contexto aprovadas, sem se tornar fonte de verdade das demais capacidades e sem tecnologia física definida
+* M-005: critérios verificáveis derivados da origem, evidências e conclusões técnicas proporcionais, tratamento de incerteza, rastreabilidade, repetição e atualidade aprovados; não implementa, não coordena retrabalho, não decide humanamente nem produz conclusão agregada
 * Saída de cada instância aprovada: `Especificação Técnica do Módulo` aprovada; status `FORMADO`
 
 ## Próxima ação
 
-O próximo Ator elegível é o Especialista em Formação do Módulo para M-005. M-001 a M-004 não possuem continuação operacional modelada. P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+A próxima ação esperada é análise normativa/conceitual da continuação posterior aos Módulos. Não há Ator operacional elegível nem vertical de realização definida. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -63,6 +64,8 @@ O próximo Ator elegível é o Especialista em Formação do Módulo para M-005.
 * A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada; Entrega de Valor não foi definida.
 * M-003 definiu somente contratos lógicos de coordenação: a seleção concreta e disponibilidade de Executor, persistência, comunicação, orquestração, concorrência física, retry, timeout, escala, observabilidade, autenticação concreta e modelo físico de histórico permanecem desconhecidos. A ausência de Executor compatível bloqueia o despacho, mas não a formação técnica do Módulo.
 * M-004 definiu contratos lógicos aprovados de preservação, recuperação proporcional e correlação de contexto sem se tornar fonte de verdade das demais capacidades. Persistência, busca, indexação, formato de referências, armazenamento de evidências externas, retenção, versionamento físico, autenticação, autorização, confidencialidade, concorrência, escala, cache e observabilidade permanecem desconhecidos; não bloqueiam a realização futura.
+* M-005 definiu verificabilidade técnica proporcional, mas não há código, resultado executável, testes, CI, ambiente ou evidência real de comportamento no repositório versionado. A forma física do resultado, método e ambiente de observação, automação, armazenamento de evidência, autenticação, retenção, versionamento físico e observabilidade permanecem desconhecidos e não bloqueiam a auditoria da formação.
+* A relação operacional entre a conclusão técnica de M-005 e o Verificador Agregado do Projeto não está definida. M-005 pode fornecer evidências a esse Ator futuro, mas não produz `COMPROMISSO_ATENDIDO` ou `COMPROMISSO_NAO_ATENDIDO`; os efeitos desses Resultados, o caminho de P-001 para `CONCLUIDO` e, por consequência, a transição de N-001 para `ATENDIDA` continuam sem mecanismo normativo atual.
 * A heurística 10 / 15 / 20 gera atenção e revisão, nunca reprovação automática, e é candidata a parametrização futura.
 * Os artefatos de saída não substituem as entidades completas, seus status, Resultados do Processo, decisões humanas, histórico ou evidências.
 
