@@ -75,6 +75,10 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 * [Status do Módulo](documentacao/modulo/06_STATUS_DO_MODULO.md)
 * [Resultados do Processo do Módulo](documentacao/modulo/07_RESULTADOS_DO_PROCESSO_DO_MODULO.md)
 
+### Entrega de Valor
+
+* [Definição da Entrega de Valor](documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md)
+
 ## Dados operacionais
 
 ### Necessidades
@@ -144,7 +148,7 @@ documentacao/
     ├── 05_CICLO_DE_VIDA_DO_PROJETO.md
     ├── 06_STATUS_DO_PROJETO.md
     └── 07_RESULTADOS_DO_PROCESSO_DO_PROJETO.md
-└── modulo/
+├── modulo/
     ├── 01_DEFINICAO_DO_MODULO.md
     ├── 02_MODELO_DE_MODULO.md
     ├── 03_ATORES_DO_MODULO.md
@@ -152,6 +156,8 @@ documentacao/
     ├── 05_CICLO_DE_VIDA_DO_MODULO.md
     ├── 06_STATUS_DO_MODULO.md
     └── 07_RESULTADOS_DO_PROCESSO_DO_MODULO.md
+└── entrega-de-valor/
+    └── 01_DEFINICAO_DA_ENTREGA_DE_VALOR.md
 
 dados/
 ├── necessidades/
