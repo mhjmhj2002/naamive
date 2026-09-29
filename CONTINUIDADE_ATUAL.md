@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A vertical Entrega de Valor possui Definição, Modelo, Atores normativos e Catálogo de Baselines Técnicas; sua formação, realização e demais mecanismos posteriores aos Módulos permanecem não definidos.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A vertical Entrega de Valor possui Definição, Modelo, Atores, Formação normativa e Catálogo de Baselines Técnicas; realização e mecanismos posteriores permanecem não definidos.
 
 ## Entidades ativas
 
@@ -58,16 +58,19 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * Separação vigente: Delimitador identifica e materializa evoluções coesas; Formador prepara produto e solução técnica de alto nível; Auditor avalia a suficiência da formação; Verificador avalia futuramente o resultado integrado de software. Nenhum deles decompõe ou executa Work Item.
 * Relações de verificação: M-005 é capacidade de software do NAAMIVE e não substitui o Verificador da EV; este pode oferecer evidências ao Verificador Agregado do Projeto, sem concluir Projeto ou atender Necessidade
 * Papel: ponte entre intenção de produto e execução técnica; decisões técnicas de alto nível pertencem à futura Formação da Entrega de Valor ou são herdadas de nível superior, sem redescoberta sistemática por Work Item
+* Formação formalizada: `documentacao/entrega-de-valor/04_FORMACAO_DA_ENTREGA_DE_VALOR.md`; atua sobre EV já delimitada, aprofunda produto e solução técnica de alto nível e consolida conceitualmente a `Especificação da Entrega de Valor`, sem criar instância ou forma física obrigatória
 * Catálogo de referência: `documentacao/entrega-de-valor/referencias/CATALOGO_DE_BASELINES_TECNICAS.md`; não é entidade, Skill, Ciclo de Vida, Status, Resultado do Processo nem instância
-* Baselines: a Essencial é o padrão inicial; a Equilibrada e a Avançada são níveis posteriores de escalada explícita. A proposta inicial parte de monólito modular, sem sugerir inicialmente microserviços ou grandes provedores de nuvem
-* Custo: a futura proposta técnica informa custo total proporcional e estimativa mensal quando houver infraestrutura executável, sem congelar preços no catálogo
+* Baselines: a Essencial é o ponto da proposta inicial concreta; a Equilibrada e a Avançada são níveis posteriores de escalada explícita. Para solução nova, a proposta parte de monólito modular, sem sugerir inicialmente microserviços ou grandes provedores de nuvem
+* Interação cíclica com Owner: a Formação recupera contexto, investiga, propõe, explica, estima, colhe reação e refina; não começa por questionário técnico nem transfere arquitetura ao Owner
+* Custo: a proposta considera custo técnico-operacional total proporcional e informa estimativa mensal quando houver infraestrutura executável, sem congelar preços na normativa
+* Decisões: decisões superiores válidas são herdadas; decisões restritas à EV podem ser tomadas pelo Formador quando sustentadas; decisões locais legítimas permanecem para execução; alcance superior retorna ao nível competente, cujo mecanismo formal de armazenamento continua lacuna
 * Jornada e Fluxo: conceitos relacionados descritivos, sem se tornarem entidades formais
-* Escopo ainda não definido: Skills, Formação, Ciclo de Vida, Status, Resultados do Processo, Work Item, realização, homologação, mecanismos de implementação e armazenamento formal de decisões técnicas de alcance superior
+* Escopo ainda não definido: Skills, Ciclo de Vida, Status, Resultados do Processo, Work Item, realização, homologação, mecanismos de implementação e armazenamento formal de decisões técnicas de alcance superior; Auditoria ainda não possui Skill
 * Não existem instâncias de Entrega de Valor, registros em dados, Item de Trabalho, tarefa ou continuação operacional automática dos Módulos
 
 ## Próxima ação
 
-A próxima ação conceitual esperada é definir 04 — Formação da Entrega de Valor. O futuro Formador usará e adaptará o Catálogo de Baselines Técnicas, iniciando pela Baseline Essencial, mas ainda não há Skill, Ator operacional elegível, vertical Work Item ou vertical de realização definida. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+A próxima ação conceitual esperada é definir 05 — Ciclo de Vida da Entrega de Valor. A Formação já define a Especificação conceitual, a proposta inicial baseada na Baseline Essencial, a interação cíclica com Owner e a fronteira com a execução, mas não há Skill, auditoria formal, vertical Work Item ou vertical de realização definida. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -78,7 +81,7 @@ A próxima ação conceitual esperada é definir 04 — Formação da Entrega de
 * A regra de atribuição de códigos de Módulo é `M-<sequencial>` por consulta aos registros existentes; a persistência e concorrência físicas dessa regra ainda não estão definidas.
 * A Necessidade pode receber `CANCELAMENTO_APROVADO` enquanto está em `EM_PROJETO`, mas o efeito sobre o Projeto ativo ainda não tem regra normativa; não há propagação, novo status ou cancelamento automático definido.
 * Casos de redelimitação que exijam encerrar, fundir ou substituir identidades de Módulo ainda não possuem mecanismo normativo completo e devem provocar decisão estrutural específica quando aparecerem na prática.
-* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada. A Definição, o Modelo, os Atores e o Catálogo de Baselines Técnicas da Entrega de Valor existem, mas Skills, formação, ciclo de vida, status, Resultados do Processo, instâncias, Work Item e mecanismos de realização ainda não foram definidos.
+* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada. A Definição, o Modelo, os Atores, a Formação e o Catálogo de Baselines Técnicas da Entrega de Valor existem, mas Skills, auditoria formal, ciclo de vida, status, Resultados do Processo, instâncias, Work Item e mecanismos de realização ainda não foram definidos.
 * O Catálogo de Baselines Técnicas não define armazenamento, aprovação ou recuperação formal de decisões de arquitetura de alcance superior; esse mecanismo continua lacuna para tratamento posterior.
 * M-003 definiu somente contratos lógicos de coordenação: a seleção concreta e disponibilidade de Executor, persistência, comunicação, orquestração, concorrência física, retry, timeout, escala, observabilidade, autenticação concreta e modelo físico de histórico permanecem desconhecidos. A ausência de Executor compatível bloqueia o despacho, mas não a formação técnica do Módulo.
 * M-004 definiu contratos lógicos aprovados de preservação, recuperação proporcional e correlação de contexto sem se tornar fonte de verdade das demais capacidades. Persistência, busca, indexação, formato de referências, armazenamento de evidências externas, retenção, versionamento físico, autenticação, autorização, confidencialidade, concorrência, escala, cache e observabilidade permanecem desconhecidos; não bloqueiam a realização futura.
@@ -111,6 +114,7 @@ A próxima ação conceitual esperada é definir 04 — Formação da Entrega de
 * `documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md`
 * `documentacao/entrega-de-valor/02_MODELO_DE_ENTREGA_DE_VALOR.md`
 * `documentacao/entrega-de-valor/03_ATORES_DA_ENTREGA_DE_VALOR.md`
+* `documentacao/entrega-de-valor/04_FORMACAO_DA_ENTREGA_DE_VALOR.md`
 * `documentacao/entrega-de-valor/referencias/CATALOGO_DE_BASELINES_TECNICAS.md`
 * `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`
 * `.agents/skills/modulo/formacao-do-modulo/SKILL.md`
