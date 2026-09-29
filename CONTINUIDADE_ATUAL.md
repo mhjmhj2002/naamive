@@ -6,7 +6,16 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A vertical Entrega de Valor possui Definição, Modelo, Atores, Formação, Ciclo de Vida, Status normativos e Catálogo de Baselines Técnicas; Resultados do Processo, realização e mecanismos posteriores permanecem não definidos.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A vertical Entrega de Valor possui Definição, Modelo, Atores, Formação, Ciclo de Vida, Status normativos e Catálogo de Baselines Técnicas; Resultados do Processo, realização e mecanismos posteriores permanecem não definidos. A governança transversal agora formaliza continuidade progressiva e o tratamento conceitual de lacunas por Débitos.
+
+## Governança transversal
+
+* Localização normativa: `documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md`
+* Descoberta tardia de lacuna não faz a condução retornar automaticamente a vertical ou Status anterior; marcos validamente alcançados e o histórico permanecem preservados.
+* Ator agêntico pode identificar e propor Débito, mas sua validade depende de revisão e decisão humana competente.
+* As naturezas conceituais iniciais são `Débito de Governança` e `Débito da Demanda`; Débito reconhecido pode ser bloqueante ou não bloqueante.
+* Um Débito bloqueante impede o avanço pelo próximo marco dele dependente, sem provocar regressão; origem ou competência de tratamento é distinta da posição atual do ciclo.
+* Entidade física, ciclo de vida, Status, armazenamento, fluxo de resolução e mecanismos de bloqueio de Débitos continuam não modelados.
 
 ## Entidades ativas
 
@@ -120,6 +129,7 @@ A próxima ação conceitual esperada é definir 07 — Resultados do Processo d
 * `documentacao/entrega-de-valor/05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md`
 * `documentacao/entrega-de-valor/06_STATUS_DA_ENTREGA_DE_VALOR.md`
 * `documentacao/entrega-de-valor/referencias/CATALOGO_DE_BASELINES_TECNICAS.md`
+* `documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md`
 * `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`
 * `.agents/skills/modulo/formacao-do-modulo/SKILL.md`
 * `.agents/skills/modulo/auditoria-do-modulo/SKILL.md`

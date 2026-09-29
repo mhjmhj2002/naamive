@@ -115,18 +115,13 @@ O token formal da conclusão produzida pela Verificação pertence exclusivament
 
 Cancelamento não se confunde com conclusão, evolução entregue, atendimento da Necessidade ou conclusão de Módulo ou Projeto. O mecanismo de registro da decisão, seus efeitos sobre identidade, exclusão, substituição ou realização já iniciada permanecem fora do escopo deste catálogo.
 
-## Lacunas e débitos descobertos posteriormente
+## Lacunas e Débitos descobertos posteriormente
 
-Descobertas posteriores podem revelar dois tipos de lacuna conceitual:
+Descoberta posterior de lacuna pode originar proposta de Débito de Governança ou de Débito da Demanda. A proposta depende de revisão e decisão humana competente antes que o Débito seja reconhecido e produza efeito. O local da descoberta não determina a origem nem a competência de tratamento.
 
-| Tipo | Significado e destino conceitual |
-| --- | --- |
-| Lacuna de governança | Ausência, insuficiência ou ambiguidade na normativa ou documentação do NAAMIVE. Gera débito para evolução da governança ou da documentação. |
-| Lacuna do desenvolvimento da Necessidade estabelecida | Insuficiência ou problema em algo produzido ou decidido durante o desenvolvimento concreto da Necessidade e de seus desdobramentos. Gera débito para tratamento no ponto competente. |
+Débito reconhecido não provoca regressão automática de Status. Se for bloqueante, pode impedir o avanço ao próximo marco dele dependente, sem obrigar a Entrega de Valor a retornar a Status anterior. Seu tratamento ocorre no ponto competente, conforme a regra transversal de [Débitos e Continuidade Progressiva](../governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md).
 
-A existência desses débitos não provoca regressão automática de Status. Um débito bloqueante pode impedir o avanço ao próximo marco até seu tratamento, sem obrigar a Entrega de Valor a retornar a Status anterior.
-
-Este catálogo não cria entidade Débito, estrutura de persistência, fluxo de trabalho, Status de débito ou mecanismo operacional equivalente.
+Este catálogo não cria entidade Débito, estrutura de persistência, fluxo de trabalho, Status de Débito ou mecanismo operacional equivalente.
 
 ## Conceitos que não são Status
 

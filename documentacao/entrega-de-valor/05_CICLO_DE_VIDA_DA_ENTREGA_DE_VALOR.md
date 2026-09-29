@@ -11,7 +11,7 @@ Os nomes normativos e os significados das posições possíveis nesse fluxo pert
 1. A Entrega de Valor pertence a exatamente um Módulo e preserva a cadeia `Entrega de Valor → Módulo → Projeto → Necessidade` durante todo o ciclo.
 2. Ela somente nasce da delimitação conduzida pelo Especialista em Delimitação de Entregas de Valor sobre Módulo com formação técnica aprovada.
 3. Formação, auditoria, realização e verificação têm objetos e responsabilidades distintos; nenhum Ator os funde unilateralmente.
-4. Um retorno é determinado pela causa identificada, e não pela ideia genérica de “voltar uma etapa”.
+4. Um retorno é encaminhamento causal para tratamento, determinado pela causa identificada e não pela ideia genérica de “voltar uma etapa”; ele não provoca regressão automática de Status ou da posição da demanda no ciclo, conforme [Débitos e Continuidade Progressiva](../governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md).
 5. A conclusão depende de verificação positiva do software integrado, não da existência isolada de código, artefato técnico ou ambiente.
 6. Questão cujo alcance exceda a Entrega de Valor retorna ao nível competente; ela não é redefinida silenciosamente nesta vertical.
 

@@ -41,6 +41,10 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 
 ## Documentação
 
+### Governança
+
+* [Débitos e Continuidade Progressiva](documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md)
+
 ### Atores
 
 * [Conceito de Ator](documentacao/atores/01_CONCEITO_DE_ATOR.md)
@@ -139,6 +143,8 @@ CONTINUIDADE_ATUAL.md
             └── SKILL.md
 
 documentacao/
+├── governanca/
+│   └── 01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md
 ├── atores/
 │   └── 01_CONCEITO_DE_ATOR.md
 ├── necessidade/
