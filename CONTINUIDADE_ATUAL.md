@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. O conceito normativo de Entrega de Valor foi formalizado como nova vertical; sua continuação de modelagem e a realização posterior aos Módulos permanecem não definidas.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A vertical Entrega de Valor possui Definição e Modelo normativos formalizados; sua continuação de Atores e sua realização posterior aos Módulos permanecem não definidas.
 
 ## Entidades ativas
 
@@ -52,13 +52,16 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 
 * Localização normativa: `documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md`
 * Conceito formalizado: evolução finita de software, pertencente a exatamente um Módulo, que materializa parte de sua capacidade em resultado utilizável, perceptível, demonstrável e verificável pelo usuário
-* Escopo atual: existe somente o documento `01_DEFINICAO_DA_ENTREGA_DE_VALOR.md`; Modelo, Atores, Formação, Ciclo de Vida, Status, Resultados do Processo e Skills não foram definidos
-* Jornada e Fluxo foram preservados como conceitos relacionados e lentes de produto, sem se tornarem verticais ou entidades formais
+* Modelo formalizado: `documentacao/entrega-de-valor/02_MODELO_DE_ENTREGA_DE_VALOR.md`
+* Modelo: identidade própria, vínculo obrigatório com exatamente um Módulo, intenção de valor, beneficiário, resultado observável esperado, fronteira finita, rastreabilidade e conteúdo capaz de receber formação técnica progressiva
+* Papel: ponte entre intenção de produto e execução técnica; decisões técnicas de alto nível pertencem à futura Formação da Entrega de Valor ou são herdadas de nível superior, sem redescoberta sistemática por Work Item
+* Jornada e Fluxo: conceitos relacionados descritivos, sem se tornarem entidades formais
+* Escopo ainda não definido: Atores, Formação, Auditoria, Ciclo de Vida, Status, Resultados do Processo, Skills, Work Item, realização, homologação e mecanismos de implementação
 * Não existem instâncias de Entrega de Valor, registros em dados, Item de Trabalho, tarefa ou continuação operacional automática dos Módulos
 
 ## Próxima ação
 
-A próxima ação conceitual esperada é definir o Modelo de Entrega de Valor. Não há Ator operacional elegível nem vertical de realização definida. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+A próxima ação conceitual esperada é definir 03 — Atores da Entrega de Valor. Não há Ator operacional elegível nem vertical de realização definida. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -69,7 +72,7 @@ A próxima ação conceitual esperada é definir o Modelo de Entrega de Valor. N
 * A regra de atribuição de códigos de Módulo é `M-<sequencial>` por consulta aos registros existentes; a persistência e concorrência físicas dessa regra ainda não estão definidas.
 * A Necessidade pode receber `CANCELAMENTO_APROVADO` enquanto está em `EM_PROJETO`, mas o efeito sobre o Projeto ativo ainda não tem regra normativa; não há propagação, novo status ou cancelamento automático definido.
 * Casos de redelimitação que exijam encerrar, fundir ou substituir identidades de Módulo ainda não possuem mecanismo normativo completo e devem provocar decisão estrutural específica quando aparecerem na prática.
-* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada. A definição conceitual de Entrega de Valor existe, mas seu modelo, Atores, formação, ciclo de vida, status, Resultados do Processo, Skills, instâncias e mecanismos de realização ainda não foram definidos.
+* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada. A definição e o modelo conceitual de Entrega de Valor existem, mas Atores, formação, ciclo de vida, status, Resultados do Processo, Skills, instâncias, Work Item e mecanismos de realização ainda não foram definidos.
 * M-003 definiu somente contratos lógicos de coordenação: a seleção concreta e disponibilidade de Executor, persistência, comunicação, orquestração, concorrência física, retry, timeout, escala, observabilidade, autenticação concreta e modelo físico de histórico permanecem desconhecidos. A ausência de Executor compatível bloqueia o despacho, mas não a formação técnica do Módulo.
 * M-004 definiu contratos lógicos aprovados de preservação, recuperação proporcional e correlação de contexto sem se tornar fonte de verdade das demais capacidades. Persistência, busca, indexação, formato de referências, armazenamento de evidências externas, retenção, versionamento físico, autenticação, autorização, confidencialidade, concorrência, escala, cache e observabilidade permanecem desconhecidos; não bloqueiam a realização futura.
 * M-005 definiu verificabilidade técnica proporcional, mas não há código, resultado executável, testes, CI, ambiente ou evidência real de comportamento no repositório versionado. A forma física do resultado, método e ambiente de observação, automação, armazenamento de evidência, autenticação, retenção, versionamento físico e observabilidade permanecem desconhecidos e não bloqueiam a auditoria da formação.
@@ -99,6 +102,7 @@ A próxima ação conceitual esperada é definir o Modelo de Entrega de Valor. N
 * `documentacao/modulo/06_STATUS_DO_MODULO.md`
 * `documentacao/modulo/07_RESULTADOS_DO_PROCESSO_DO_MODULO.md`
 * `documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md`
+* `documentacao/entrega-de-valor/02_MODELO_DE_ENTREGA_DE_VALOR.md`
 * `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`
 * `.agents/skills/modulo/formacao-do-modulo/SKILL.md`
 * `.agents/skills/modulo/auditoria-do-modulo/SKILL.md`
