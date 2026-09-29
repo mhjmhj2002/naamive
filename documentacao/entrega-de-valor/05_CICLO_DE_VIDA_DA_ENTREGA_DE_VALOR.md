@@ -86,7 +86,7 @@ O retorno estrutural não autoriza, por si, alterar identidade, substituir, excl
 
 ### Formação suficiente não é conclusão
 
-A aprovação da formação torna disponível a Especificação e permite o handoff para a camada posterior, mas não significa que a evolução foi entregue. Ela não significa que exista software, que o software esteja integrado, que tenha ocorrido homologação ou que a Entrega de Valor esteja concluída. O token formal da conclusão de auditoria será definido somente em Resultados do Processo.
+A aprovação da formação torna disponível a Especificação e permite o handoff para a camada posterior, mas não significa que a evolução foi entregue. Ela não significa que exista software, que o software esteja integrado, que tenha ocorrido homologação ou que a Entrega de Valor esteja concluída. O token formal da conclusão de auditoria é `FORMACAO_SUFICIENTE`, definido em [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md).
 
 ## Posição durante a realização futura
 
@@ -146,7 +146,7 @@ Verificação negativa não produz retorno automático a uma etapa genérica. A 
 | A própria evolução possui problema estrutural de fronteira, coesão, propriedade ou caracterização de valor | Retorno ao Especialista em Delimitação de Entregas de Valor. |
 | A causa exige decisão de alcance superior | Retorno ao Módulo, Projeto ou outro nível competente, sem a apropriação silenciosa da decisão pela Entrega de Valor. |
 
-O Verificador não implementa a correção, não forma a Especificação, não redelimita a evolução e não decide questão humana ou superior. Ele produz a evidência e a conclusão a serem formalizadas em Resultados do Processo, permitindo que a causa seja tratada pelo responsável competente.
+O Verificador não implementa a correção, não forma a Especificação, não redelimita a evolução e não decide questão humana ou superior. Ele produz evidência e a conclusão formalizada em [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md), permitindo que a causa seja tratada pelo responsável competente.
 
 ## Encerramentos
 
@@ -158,7 +158,7 @@ A conclusão encerra com sucesso apenas a Entrega de Valor verificada positivame
 
 Uma decisão humana material válida pode encerrar excepcionalmente a Entrega de Valor em qualquer posição não terminal. Essa decisão pertence ao Owner, cujo Executor é o usuário autenticado; nenhum Ator agêntico pode produzi-la unilateralmente.
 
-O cancelamento encerra a Entrega de Valor sem caracterizar evolução entregue, conclusão, atendimento de Necessidade ou conclusão de Módulo e Projeto. Este documento não formaliza o token da decisão, RBAC, ACL, delegação, mecanismo de registro, efeitos sobre identidade, exclusão, substituição ou reversão de realização já iniciada; tais definições não podem ser presumidas.
+O cancelamento encerra a Entrega de Valor sem caracterizar evolução entregue, conclusão, atendimento de Necessidade ou conclusão de Módulo e Projeto. O token da decisão é `CANCELAMENTO_APROVADO`, definido em [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md). RBAC, ACL, delegação, mecanismo de registro, efeitos sobre identidade, exclusão, substituição ou reversão de realização já iniciada permanecem fora do escopo.
 
 ## Posições conceituais e relação com os documentos posteriores
 

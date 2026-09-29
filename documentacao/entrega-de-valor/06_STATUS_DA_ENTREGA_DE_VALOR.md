@@ -107,7 +107,7 @@ Uma Verificação negativa também não provoca regressão de Status. Sua causa 
 * evolução utilizável e perceptível no contexto definido; e
 * Verificação positiva com evidência adequada de que a evolução prometida foi materializada.
 
-O token formal da conclusão produzida pela Verificação pertence exclusivamente ao futuro catálogo de Resultados do Processo. A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
+O token formal da conclusão produzida pela Verificação é `EVOLUCAO_MATERIALIZADA`, pertencente exclusivamente aos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md). A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
 
 ## `CANCELADA`
 
@@ -132,7 +132,7 @@ Não são Status da Entrega de Valor:
 * Especificação da Entrega de Valor, software integrado, critério verificável, evidência, homologação, débito ou lacuna; e
 * `EM_AUDITORIA`, `AGUARDANDO_AUDITORIA`, `PRONTA_PARA_REALIZACAO`, `AGUARDANDO_REALIZACAO`, `EM_VERIFICACAO`, `AGUARDANDO_VERIFICACAO`, `EM_CORRECAO`, `EM_AJUSTE` ou `BLOQUEADA`.
 
-Status identifica a posição no ciclo. Resultados do Processo, a serem formalizados no documento `07`, identificam conclusões, decisões ou determinações produzidas por atividades relevantes do processo.
+Status identifica a posição no ciclo. [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md) identificam conclusões, decisões ou determinações produzidas por atividades relevantes do processo.
 
 ## Status terminais e fronteiras
 

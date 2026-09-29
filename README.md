@@ -87,6 +87,7 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 * [Formação da Entrega de Valor](documentacao/entrega-de-valor/04_FORMACAO_DA_ENTREGA_DE_VALOR.md)
 * [Ciclo de Vida da Entrega de Valor](documentacao/entrega-de-valor/05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md)
 * [Status da Entrega de Valor](documentacao/entrega-de-valor/06_STATUS_DA_ENTREGA_DE_VALOR.md)
+* [Resultados do Processo da Entrega de Valor](documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md)
 
 #### Referências
 
@@ -178,6 +179,7 @@ documentacao/
     ├── 04_FORMACAO_DA_ENTREGA_DE_VALOR.md
     ├── 05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md
     ├── 06_STATUS_DA_ENTREGA_DE_VALOR.md
+    ├── 07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md
     └── referencias/
         └── CATALOGO_DE_BASELINES_TECNICAS.md
 
