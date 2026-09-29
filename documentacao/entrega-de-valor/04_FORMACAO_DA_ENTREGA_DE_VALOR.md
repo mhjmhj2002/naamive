@@ -235,12 +235,12 @@ O teste conceitual central é:
 
 Se a resposta for negativa, a Formação ainda não está preparada para Auditoria, salvo se o impedimento for estrutural e exigir retorno ao Delimitador ou ao nível competente.
 
-Quando considerar a Especificação consolidada, o Formador encerra sua atividade e a entrega, com evidências, classificações, riscos, lacunas legítimas e decisões, ao **Auditor da Entrega de Valor**. O Formador não declara a própria formação aprovada nem antecipa o parecer independente. A auditoria avalia posteriormente a suficiência da preparação; seus resultados formais permanecem para documento futuro.
+Quando considerar a Especificação consolidada, o Formador encerra sua atividade e a entrega, com evidências, classificações, riscos, lacunas legítimas e decisões, ao **Auditor da Entrega de Valor**. O Formador não declara a própria formação aprovada nem antecipa o parecer independente. A Auditoria avalia a suficiência da preparação e produz os Resultados formais definidos em [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md).
 
 ## Fronteiras posteriores
 
 Work Item continua vertical futura. A Formação prepara produto, comportamento, solução técnica de alto nível, contratos, restrições e critérios proporcionais para que a futura decomposição não redesenhe a evolução. A execução poderá decidir aspectos locais de implementação, inclusive atravessando múltiplas camadas técnicas quando isso for coeso, mas não é o lugar sistemático para redescobrir produto ou arquitetura.
 
-O Verificador da Entrega de Valor atua somente após futura realização integrada. A Formação define critérios verificáveis; a Verificação futura confrontará software integrado, critérios e evolução prometida. M-005 é capacidade de software do NAAMIVE e não se confunde com Formador, Auditor ou Verificador, embora possa futuramente consumir critérios ou suportar evidências.
+O Verificador da Entrega de Valor atua somente após a Realização integrada. A Formação define critérios verificáveis; a Verificação confronta software integrado, critérios e evolução prometida. M-005 é capacidade de software do NAAMIVE e não se confunde com Formador, Auditor ou Verificador, embora possa futuramente consumir critérios ou suportar evidências.
 
-Permanecem deliberadamente posteriores: Skill, agentes concretos, Ciclo de Vida, Status, Resultados do Processo, eventos, transições, forma física da Especificação, mecanismos de armazenamento e aprovação de decisões superiores, redelimitação operacional, instâncias, Work Item, decomposição, execução, ambientes, homologação, aceite, mecanismos de implementação e custos reais.
+Permanecem deliberadamente posteriores: agentes concretos, eventos e mecanismos operacionais de transição, forma física da Especificação, mecanismos de armazenamento e aprovação de decisões superiores, redelimitação operacional, instâncias, Work Item, decomposição, execução, ambientes, homologação, aceite, mecanismos de implementação e custos reais.

@@ -2,9 +2,9 @@
 
 ## Conceito
 
-**Módulo é uma unidade coesa de capacidade da solução, pertencente a exatamente um Projeto, dentro da qual podem ser realizadas uma ou mais futuras Entregas de Valor relacionadas.**
+**Módulo é uma unidade coesa de capacidade da solução, pertencente a exatamente um Projeto, dentro da qual podem ser realizadas uma ou mais Entregas de Valor relacionadas.**
 
-O Módulo recebe a **Direção do Projeto** como referência de origem. Ele concentra uma responsabilidade compreensível, com fronteiras explícitas e razão funcional ou de valor para existir. A sua coesão é definida pela capacidade que habilita, e não pelo número de futuras Entregas de Valor nem pela tecnologia empregada.
+O Módulo recebe a **Direção do Projeto** como referência de origem. Ele concentra uma responsabilidade compreensível, com fronteiras explícitas e razão funcional ou de valor para existir. A sua coesão é definida pela capacidade que habilita, e não pelo número de Entregas de Valor nem pela tecnologia empregada.
 
 Um Módulo pode atravessar interface, API, regras de domínio, persistência, integrações, processamento e eventos quando esses elementos participarem da mesma capacidade coesa. Ele não deve ser delimitado automaticamente por camada técnica.
 
@@ -12,7 +12,7 @@ Um Módulo pode atravessar interface, API, regras de domínio, persistência, in
 
 Módulo não é backend, frontend, banco de dados, API, microserviço, repositório, pasta, tabela, componente técnico isolado, equipe, sprint, Entrega de Valor, Item de Trabalho ou tarefa. Esses elementos podem existir dentro ou ao redor de um Módulo, mas não definem o conceito.
 
-## Relação com Projeto e futura Entrega de Valor
+## Relação com Projeto e Entrega de Valor
 
 ```text
 1 Projeto
@@ -21,14 +21,14 @@ Módulo não é backend, frontend, banco de dados, API, microserviço, repositó
 
 1 Módulo
 → pode comportar
-→ 1 ou N futuras Entregas de Valor relacionadas
+→ 1 ou N Entregas de Valor relacionadas
 ```
 
 Cada Módulo pertence a exatamente um Projeto. Um Projeto pode possuir tantos Módulos quanto sua capacidade exigir; não há teto normativo.
 
-Uma única futura Entrega de Valor pode justificar um Módulo quando sua capacidade tiver fronteira própria. Porém, uma relação sistemática de 1 Módulo para 1 futura Entrega de Valor é sinal de possível fragmentação excessiva e deve motivar análise. A quantidade de futuras Entregas de Valor não define a existência do Módulo.
+Uma única Entrega de Valor pode justificar um Módulo quando sua capacidade tiver fronteira própria. Porém, uma relação sistemática de 1 Módulo para 1 Entrega de Valor é sinal de possível fragmentação excessiva e deve motivar análise. A quantidade de Entregas de Valor não define a existência do Módulo.
 
-Esta vertical não define Entrega de Valor, seu modelo, ciclo, status, Atores, Skills ou decomposição interna. A vertical posterior que a consumir permanece não modelada.
+Esta vertical não redefine Entrega de Valor, seu modelo, ciclo, Status, Atores, Skills ou decomposição interna. A vertical posterior de Entrega de Valor está formalizada em sua [documentação normativa própria](../entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md) e materializa partes dessa capacidade em evoluções finitas de software. Work Item e os mecanismos operacionais de Realização permanecem não definidos.
 
 ## Delimitação
 
@@ -47,7 +47,7 @@ Esta é a fonte central da heurística de modularização. Ela é política de q
 | Referência | Significado e tratamento |
 | --- | --- |
 | Aproximadamente `10` | Referência central de Projeto saudável, não objetivo obrigatório. Favorece visão compreensível das principais capacidades. |
-| `15` ou mais | Limiar de atenção. Deve provocar revisão da modularização: há fragmentação excessiva, Módulos pequenos demais, praticamente um Módulo por futura Entrega de Valor ou capacidades que deveriam estar agrupadas? |
+| `15` ou mais | Limiar de atenção. Deve provocar revisão da modularização: há fragmentação excessiva, Módulos pequenos demais, praticamente um Módulo por Entrega de Valor ou capacidades que deveriam estar agrupadas? |
 | `20` ou mais | Limiar de revisão estrutural forte. Além das perguntas anteriores, verificar se o Projeto ainda representa um único compromisso coeso ou se há mais de uma Necessidade ou Projeto escondido. |
 
 Ultrapassar `15` ou `20` não reprova automaticamente a delimitação. A revisão produz análise e justificativa proporcional para casos legítimos fora da curva; não cria barreira matemática.

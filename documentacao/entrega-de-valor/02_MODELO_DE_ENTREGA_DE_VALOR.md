@@ -2,7 +2,7 @@
 
 ## Finalidade
 
-Este documento define as informações e relações que tornam uma Entrega de Valor uma entidade identificável, coerente e rastreável, capaz de receber formação posterior suficiente para sua decomposição em trabalho executável.
+Este documento define as informações e relações que tornam uma Entrega de Valor uma entidade identificável, coerente e rastreável, capaz de receber Formação suficiente para sua decomposição em trabalho executável.
 
 O modelo preserva a Entrega de Valor como a ponte principal entre a intenção de produto e a realização técnica. Ele não define como a entidade é criada, formada, auditada, realizada, verificada, homologada ou encerrada.
 
@@ -176,7 +176,7 @@ Esses dois lados não se substituem: a solução deve servir à evolução de va
 
 ## Decisões técnicas e nível competente
 
-Decisões técnicas de alto nível necessárias à realização pertencem à futura formação da Entrega de Valor ou são herdadas de contexto técnico superior já aprovado. Não devem ser sistematicamente redescobertas por cada futuro Work Item.
+Decisões técnicas de alto nível necessárias à realização pertencem à Formação da Entrega de Valor ou são herdadas de contexto técnico superior já aprovado. Não devem ser sistematicamente redescobertas por cada futuro Work Item.
 
 Podem ser relevantes, conforme a evolução concreta, decisões sobre persistência, modelo de dados, integração, contrato, protocolo, distribuição de responsabilidades, fronteira arquitetural, consistência, plataforma ou requisitos técnicos estruturais. Nenhuma delas é campo obrigatório por ritual.
 
@@ -185,7 +185,7 @@ Uma decisão deve ser tomada no nível mais baixo capaz de decidir legitimamente
 | Classe de decisão | Alcance e tratamento conceitual |
 | --- | --- |
 | Estrutural ou ampla | Afeta Projeto, vários Módulos, várias Entregas de Valor ou a arquitetura geral. Pode ser herdada de contexto superior e não deve ser reinventada isoladamente. |
-| Técnica da Entrega de Valor | Afeta a realização daquela evolução e precisa estar resolvida antes dos trabalhos que dela dependem. Pertence à futura Formação da Entrega de Valor. |
+| Técnica da Entrega de Valor | Afeta a realização daquela evolução e precisa estar resolvida antes dos trabalhos que dela dependem. Pertence à Formação da Entrega de Valor. |
 | Local de implementação | Tem impacto restrito ao trabalho técnico local e não altera valor, comportamento esperado, contrato, arquitetura de alto nível, fronteira ou decisão superior. Pode ser tomada futuramente na execução. |
 
 O modelo não define processo de escalonamento de decisão.
@@ -198,17 +198,17 @@ O modelo distingue três conjuntos de informação:
 | --- | --- | --- |
 | Núcleo de identidade e origem | identificador técnico, código, nome e Módulo de origem | Reconhece a Entrega de Valor como entidade e preserva sua cadeia estrutural. |
 | Intenção de valor | declaração de valor, beneficiário, resultado observável esperado, fronteira e, quando relevantes, Jornada e Fluxo | Explica por que a evolução existe e o que pretende tornar verdadeiro. |
-| Conteúdo progressivamente formado | comportamento, solução técnica, decisões, contratos, dados ou estado, integrações, riscos, restrições, critérios verificáveis e dependências | É aprofundado proporcionalmente durante a futura Formação. |
+| Conteúdo progressivamente formado | comportamento, solução técnica, decisões, contratos, dados ou estado, integrações, riscos, restrições, critérios verificáveis e dependências | É aprofundado proporcionalmente durante a Formação. |
 
-Não se presume que o terceiro conjunto esteja completo no primeiro instante de existência da entidade. Quando materialmente relevante, a futura Especificação pode distinguir informação conhecida, inferida, proposta e desconhecida; essa classificação não é status.
+Não se presume que o terceiro conjunto esteja completo no primeiro instante de existência da entidade. Quando materialmente relevante, a Especificação da Entrega de Valor pode distinguir informação conhecida, inferida, proposta e desconhecida; essa classificação não é Status.
 
-## Futura Especificação da Entrega de Valor
+## Especificação da Entrega de Valor
 
-A futura Formação pode consolidar a **Especificação da Entrega de Valor** como artefato de saída. Ela poderá reunir, proporcionalmente, intenção de valor, comportamento, fronteiras, solução técnica, decisões, contratos, riscos, critérios verificáveis e a informação necessária para decomposição.
+A Formação consolida conceitualmente a **Especificação da Entrega de Valor** como seu artefato de saída. Ela reúne, proporcionalmente, intenção de valor, comportamento, fronteiras, solução técnica, decisões, contratos, riscos, critérios verificáveis e a informação necessária para decomposição.
 
-Esse artefato não é nova entidade, status, Resultado do Processo ou aprovação. Este modelo não define quando ele é produzido, como é avaliado, quem o produz, que efeito provoca ou como é armazenado.
+Esse artefato não é nova entidade, Status, Resultado do Processo ou aprovação. Sua produção, auditoria e efeitos no ciclo estão definidos nos documentos próprios da [Formação](04_FORMACAO_DA_ENTREGA_DE_VALOR.md), do [Ciclo de Vida](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md) e dos [Resultados do Processo](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md); sua forma física e armazenamento permanecem não definidos.
 
-## Critérios verificáveis e verificação integrada futura
+## Critérios verificáveis e verificação integrada
 
 Uma Entrega de Valor formada pode conter critérios verificáveis ligados à evolução prometida. Eles permitem confrontar posteriormente intenção de valor, comportamento esperado e resultado integrado.
 
@@ -228,7 +228,7 @@ Pull Request pode relacionar-se à realização futura: uma Entrega de Valor pod
 
 Não são atributos essenciais da Entrega de Valor prioridade, sprint, estimativa, pontos, previsão, percentual, responsável de desenvolvimento, branch, commit, Pull Request, ambiente, ferramenta, pipeline, ticket externo, banco ou linguagem específicos.
 
-Também não são definidos neste documento Atores, Skills, Formação, Auditoria, Ciclo de Vida, Status, Resultados do Processo, transições, eventos, cancelamento, conclusão, instâncias, Work Items, tarefas, Pull Requests concretos, mecanismo de homologação ou tecnologia de implementação.
+Também não são definidos neste documento os detalhes normativos próprios de Atores, Skills, Formação, Auditoria, Ciclo de Vida, Status, Resultados do Processo, transições, eventos, cancelamento ou conclusão, que possuem documentos normativos próprios. Permanecem fora de definição Work Items, tarefas, Pull Requests concretos, mecanismo de homologação, tecnologia de implementação e mecanismos físicos de instâncias.
 
 ## Invariantes
 
@@ -245,4 +245,4 @@ Também não são definidos neste documento Atores, Skills, Formação, Auditori
 
 ## Questões deliberadamente posteriores
 
-Permanecem para documentos posteriores a criação e a formação da entidade; Atores e Skills; auditoria; ciclo de vida; catálogo de status; Resultados do Processo; regras de transição; realização; decomposição; Work Item; homologação; verificação operacional; relação com planejamento; persistência; geração de códigos; tecnologia; e instâncias reais de Entrega de Valor.
+Permanecem deliberadamente posteriores a decomposição em Work Item, a homologação, os mecanismos operacionais de Realização e Verificação, a relação com planejamento, a persistência, a geração de códigos, a tecnologia de implementação e as instâncias reais de Entrega de Valor.

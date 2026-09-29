@@ -2,7 +2,7 @@
 
 ## Finalidade
 
-Este documento define o fluxo completo, os eventos conceituais, as condições, os retornos e os encerramentos da Entrega de Valor, desde sua materialização até sua conclusão ou cancelamento. Ele conecta a delimitação, a formação, a auditoria independente, a futura realização integrada e a verificação da evolução prometida.
+Este documento define o fluxo completo, os eventos conceituais, as condições, os retornos e os encerramentos da Entrega de Valor, desde sua materialização até sua conclusão ou cancelamento. Ele conecta a delimitação, a formação, a auditoria independente, a Realização integrada e a Verificação da evolução prometida.
 
 Os nomes normativos e os significados das posições possíveis nesse fluxo pertencem ao [Status da Entrega de Valor](06_STATUS_DA_ENTREGA_DE_VALOR.md). As conclusões, determinações e decisões produzidas pelas atividades pertencem aos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md). As responsabilidades de cada Ator estão em [Atores da Entrega de Valor](03_ATORES_DA_ENTREGA_DE_VALOR.md). Resultado do Processo não é Status, e nenhum dos dois deve representar apenas um handoff burocrático.
 
@@ -61,7 +61,7 @@ Quando a delimitação for justificada, o Especialista em Delimitação de Entre
 
 Ela não nasce de formulário independente, criação manual arbitrária ou vínculo direto concorrente com Projeto ou Necessidade. O ciclo não define formato físico de instância, diretório, arquivo, persistência, geração de código ou mecanismo de atribuição de identidade.
 
-Após materializada, a Entrega de Valor ocupa provisoriamente a posição conceitual de formação. O nome normativo dessa posição será definido somente no documento de Status.
+Após materializada, a Entrega de Valor ocupa a posição conceitual de formação, formalizada como `EM_FORMACAO` no [Status da Entrega de Valor](06_STATUS_DA_ENTREGA_DE_VALOR.md).
 
 ## Formação e auditoria independente
 
@@ -100,7 +100,7 @@ Especificação da Entrega de Valor disponível
 → software integrado correspondente à Entrega de Valor
 ```
 
-Não são definidos aqui Work Item, tarefas, implementação, Executor de Work Item, estratégia de execução, Pull Requests, commits, branches, pipelines, ambientes, deploy ou o ciclo da futura vertical de realização. A Entrega de Valor permanece a referência de valor, comportamento, fronteira, solução de alto nível e critérios verificáveis enquanto esse trabalho futuro ocorre.
+Não são definidos aqui Work Item, tarefas, implementação, Executor de Work Item, estratégia de execução, Pull Requests, commits, branches, pipelines, ambientes, deploy ou os mecanismos operacionais de Realização. A Entrega de Valor permanece a referência de valor, comportamento, fronteira, solução de alto nível e critérios verificáveis enquanto esse trabalho futuro ocorre.
 
 Descoberta durante a realização que afete somente a implementação local pode ser tratada naquela camada futura. Descoberta que demonstre insuficiência ou incorreção da Especificação retorna à Formação; descoberta de defeito estrutural da própria evolução retorna à Delimitação; e decisão que atinja Módulo, Projeto, várias Entregas de Valor ou outro alcance superior retorna ao nível competente. A realização não absorve silenciosamente essas mudanças.
 
@@ -174,7 +174,7 @@ terminal excepcional
 → cancelada
 ```
 
-O documento `06` consolidará somente os nomes formais, os significados e as condições de cada Status derivadas deste fluxo. O documento `07` consolidará somente as conclusões de auditoria e verificação, as determinações de retorno e as decisões humanas derivadas das atividades. Nenhum deles deve criar nova etapa, transição, loop, retorno ou encerramento material que este ciclo tenha deixado indefinido.
+Os documentos `06` e `07` consolidam, respectivamente, os nomes formais, significados e condições de cada Status e as conclusões de auditoria e verificação, determinações de retorno e decisões humanas derivadas das atividades. Nenhum deles cria nova etapa, transição, loop, retorno ou encerramento material que este ciclo tenha deixado indefinido.
 
 ## Fronteiras normativas
 

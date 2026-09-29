@@ -141,4 +141,4 @@ Os Status terminais são:
 * `CONCLUIDA`;
 * `CANCELADA`.
 
-Este documento não define Resultados do Processo, Skill, Work Item, decomposição, realização, mecanismo de transição, persistência física, arquivos de instância, ambiente, homologação ou mecanismo de débito. O detalhamento do fluxo e de suas condições pertence ao [Ciclo de Vida da Entrega de Valor](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md).
+Este documento não define Resultados do Processo, Skill, Work Item, decomposição, mecanismo operacional de Realização, mecanismo físico de transição, persistência física, arquivos de instância, ambiente, homologação ou mecanismo de débito. O detalhamento do fluxo e de suas condições pertence ao [Ciclo de Vida da Entrega de Valor](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md).

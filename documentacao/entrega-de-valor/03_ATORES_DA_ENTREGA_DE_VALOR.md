@@ -61,7 +61,7 @@ Este Ator avalia, entre outras questões:
 
 Pode analisar a capacidade do Módulo, separar evoluções independentes, definir a fronteira inicial, identificar intenção, beneficiário e resultado observável de forma proporcional, registrar contexto de Jornada ou Fluxo e dependências relevantes, materializar a entidade e preservar a rastreabilidade até Módulo, Projeto e Necessidade.
 
-Não forma a Entrega de Valor em profundidade, não decide sua solução técnica detalhada, não produz a futura Especificação da Entrega de Valor, não audita ou verifica, não cria Work Items e não implementa software.
+Não forma a Entrega de Valor em profundidade, não decide sua solução técnica detalhada, não produz a Especificação da Entrega de Valor, não audita ou verifica, não cria Work Items e não implementa software.
 
 ### Delimitação progressiva e retorno estrutural
 
@@ -90,7 +90,7 @@ Uma decisão deve ser tomada no nível mais baixo capaz de decidir legitimamente
 | Vários Módulos, várias Entregas de Valor, arquitetura geral ou Projeto | É registrada como dependência ou questão e retorna ao nível competente; não é apropriada silenciosamente. |
 | Restrito à implementação local | Pode ser tomada futuramente na execução, desde que não altere valor, comportamento principal, contrato, fronteira ou solução técnica de alto nível. |
 
-A futura **Especificação da Entrega de Valor** poderá consolidar intenção, beneficiário, comportamento, fronteira, resultado observável, solução técnica, decisões, contratos, riscos, restrições, dependências, critérios verificáveis, Jornada ou Fluxo relevantes e informação suficiente para a decomposição. Este documento não define sua estrutura formal, armazenamento, aprovação, efeito, Resultado do Processo ou posição no ciclo.
+A **Especificação da Entrega de Valor** consolida intenção, beneficiário, comportamento, fronteira, resultado observável, solução técnica, decisões, contratos, riscos, restrições, dependências, critérios verificáveis, Jornada ou Fluxo relevantes e informação suficiente para a decomposição. Sua formação, auditoria, efeitos no ciclo e Resultados do Processo estão definidos nos documentos normativos próprios; sua forma física e armazenamento permanecem não definidos.
 
 O Formador não implementa código, não cria Pull Request, não executa Work Item, não executa teste de implementação, não homologa software integrado e não audita sua própria formação. Ele também não recebe autoridade para alterar decisões de nível superior.
 
@@ -107,7 +107,7 @@ Seu teste central é:
 
 > A futura camada de execução consegue decompor e executar esta Entrega de Valor sem precisar redescobrir o valor de negócio ou redesenhar a solução técnica de alto nível?
 
-Se a resposta for negativa, o Auditor identifica se há problema de formação, problema estrutural de delimitação ou decisão que pertence a nível superior. Ele não corrige a Entrega de Valor, não completa a Especificação, não escolhe solução ausente, não toma decisão humana, não implementa, não homologa e não substitui o Delimitador nem o Formador. Seus Resultados do Processo próprios serão definidos em documento posterior.
+Se a resposta for negativa, o Auditor identifica se há problema de formação, problema estrutural de delimitação ou decisão que pertence a nível superior. Ele não corrige a Entrega de Valor, não completa a Especificação, não escolhe solução ausente, não toma decisão humana, não implementa, não homologa e não substitui o Delimitador nem o Formador. Seus Resultados do Processo próprios estão definidos em [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md).
 
 ### Delimitação e formação são problemas distintos
 
@@ -123,13 +123,13 @@ O Auditor indica o retorno competente sem definir transição, status, alteraç�
 * **Natureza:** agêntica.
 * **Executor:** agente especializado.
 
-O Verificador avalia, após futura realização e integração, se o software produzido materializa efetivamente a evolução prometida pela Entrega de Valor. Seu objeto é o resultado integrado de software, e não a qualidade da formação.
+O Verificador avalia, após a Realização e a integração, se o software produzido materializa efetivamente a evolução prometida pela Entrega de Valor. Seu objeto é o resultado integrado de software, e não a qualidade da formação.
 
 Pode confrontar declaração de valor, resultado observável esperado, comportamento especificado, critérios verificáveis, software integrado, evidências produzidas, Jornadas e Fluxos relevantes e limitações conhecidas. A avaliação é da Entrega de Valor como conjunto integrado; não se limita à validação de um Work Item isolado.
 
-Não implementa correções, não cria Work Items, não escolhe Executor, não define prioridade, não despacha retrabalho, não altera silenciosamente a Especificação, não redefine valor nem toma decisão humana material. Diante de divergência, produz futuramente evidência e conclusão para tratamento pela camada competente. O documento não define Resultado do Processo, ambiente, aceite, fluxo de homologação ou efeitos operacionais.
+Não implementa correções, não cria Work Items, não escolhe Executor, não define prioridade, não despacha retrabalho, não altera silenciosamente a Especificação, não redefine valor nem toma decisão humana material. Diante de divergência, produz evidência e a conclusão definida nos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md) para tratamento pela camada competente. Ambiente, aceite, fluxo de homologação e efeitos operacionais permanecem não definidos.
 
-Homologação pode ser mencionada como linguagem de negócio ou produto relacionada a essa verificação. Ela não cria Ator Homologador, processo, ambiente, status ou decisão humana obrigatória. Quando a evolução puder ser verificada objetivamente, o Verificador poderá produzir sua conclusão técnica futura; o Owner somente pode ser acionado para decisão material não resolvível por evidência.
+Homologação pode ser mencionada como linguagem de negócio ou produto relacionada a essa verificação. Ela não cria Ator Homologador, processo, ambiente, Status ou decisão humana obrigatória. Quando a evolução puder ser verificada objetivamente, o Verificador produz sua conclusão técnica; o Owner somente pode ser acionado para decisão material não resolvível por evidência.
 
 ## Auditor e Verificador não se substituem
 
@@ -145,7 +145,7 @@ São responsabilidades distintas, em momentos distintos e com evidências distin
 
 ## Fronteira com Work Item e com a execução
 
-Work Item permanece uma vertical futura, inclusive quanto à sua decomposição, Atores, Executor e realização. Nenhum Ator desta vertical é responsável normativo por decompor Entregas de Valor em Work Items, nem executa Work Item por definição.
+Work Item permanece uma vertical futura, inclusive quanto à sua decomposição, Atores e Executor. O mecanismo operacional de Realização também permanece não definido. Nenhum Ator desta vertical é responsável normativo por decompor Entregas de Valor em Work Items, nem executa Work Item por definição.
 
 A Entrega de Valor suficientemente formada e auditada entrega à vertical futura o negócio, o comportamento, a solução técnica de alto nível, os contratos, as restrições e os critérios técnicos proporcionais. A execução pode decidir aspectos locais de implementação, mas não deve ser o lugar sistemático para definir valor, comportamento principal, arquitetura de alto nível, contratos centrais ou decisões técnicas estruturais da Entrega de Valor.
 
@@ -170,7 +170,7 @@ Módulo com formação técnica aprovada
 → Especialista em Delimitação de Entregas de Valor
 → Entrega de Valor identificada e materializada
 → Especialista em Formação da Entrega de Valor
-→ futura Especificação da Entrega de Valor
+→ Especificação da Entrega de Valor
 → Auditor da Entrega de Valor
 → futura vertical Work Item e realização integrada
 → Verificador da Entrega de Valor
@@ -181,4 +181,4 @@ O Owner pode ser acionado em qualquer ponto apenas para decisão humana material
 
 ## Questões deliberadamente posteriores
 
-Permanecem fora deste documento agentes concretos, eventos, orquestração, Ciclo de Vida, catálogo de status, Resultados do Processo, transições, cancelamento, redelimitação operacional, efeitos sobre identidade, persistência, geração de código, arquivos de instância, mapa formal de Entregas de Valor, estrutura da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação.
+Permanecem fora deste documento agentes concretos, eventos e orquestração operacionais, redelimitação operacional, efeitos sobre identidade, persistência, geração de código, arquivos de instância, mapa formal de Entregas de Valor, forma física da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação.

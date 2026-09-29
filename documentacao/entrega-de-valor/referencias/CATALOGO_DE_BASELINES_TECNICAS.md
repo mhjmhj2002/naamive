@@ -2,9 +2,9 @@
 
 ## Finalidade e fronteiras
 
-Este catálogo é uma referência operacional reutilizável para a futura Formação da Entrega de Valor. Ele oferece pontos de partida técnicos proporcionais para que o Especialista em Formação da Entrega de Valor não precise iniciar cada proposta do zero.
+Este catálogo é uma referência operacional reutilizável para a Formação da Entrega de Valor. Ele oferece pontos de partida técnicos proporcionais para que o Especialista em Formação da Entrega de Valor não precise iniciar cada proposta do zero.
 
-O catálogo não é uma entidade, instância, Ator, Skill, Ciclo de Vida, Status, Resultado do Processo ou mecanismo de persistência. Também não substitui a análise concreta da Entrega de Valor, sua formação futura, a futura Especificação da Entrega de Valor ou as decisões técnicas já aceitas em nível competente.
+O catálogo não é uma entidade, instância, Ator, Skill, Ciclo de Vida, Status, Resultado do Processo ou mecanismo de persistência. Também não substitui a análise concreta da Entrega de Valor, sua Formação, a Especificação da Entrega de Valor ou as decisões técnicas já aceitas em nível competente.
 
 As três baselines são níveis de referência progressivos. A Baseline Essencial é o padrão inicial do NAAMIVE; as demais ampliam o espaço de solução quando houver motivo explícito e aceito. Elas não são um menu a ser entregue inicialmente ao Owner.
 
@@ -29,7 +29,7 @@ O comportamento de referência é:
 9. refinar a mesma baseline quando isso bastar;
 10. discutir a escalada quando uma necessidade material a justificar;
 11. consolidar as decisões materiais aceitas no nível competente; e
-12. disponibilizar tais decisões à futura Especificação da Entrega de Valor.
+12. disponibilizar tais decisões à Especificação da Entrega de Valor.
 
 Assim, a apresentação inicial deve ser identificada como **Proposta inicial — Baseline Essencial**, e não como uma lista para o Owner escolher entre níveis. As baselines posteriores permanecem disponíveis internamente para refinamento e escalada.
 
@@ -53,7 +53,7 @@ O catálogo não registra valores fixos nem preços atuais de provedores. Preço
 
 Uma decisão técnica aceita, fundamentada e de alcance superior é contexto herdável. Caso Java 21, Spring Boot, PostgreSQL e monólito modular já tenham sido consolidados para uma solução, a formação de uma nova Entrega de Valor parte dessas decisões e não reabre, por rotina, a escolha de linguagem ou arquitetura. Revisão exige evidência nova ou decisão explícita competente.
 
-Decisão específica da Entrega de Valor pode ser consolidada em sua formação futura quando afetar somente a evolução em questão. Já uma decisão que afete várias Entregas de Valor, vários Módulos, o Projeto, a arquitetura geral ou a solução como um todo não deve permanecer escondida como escolha privada da primeira Entrega de Valor que a revelar. Ela é registrada como dependência ou questão e tratada no nível competente, para então poder tornar-se contexto herdável.
+Decisão específica da Entrega de Valor pode ser consolidada em sua Formação quando afetar somente a evolução em questão. Já uma decisão que afete várias Entregas de Valor, vários Módulos, o Projeto, a arquitetura geral ou a solução como um todo não deve permanecer escondida como escolha privada da primeira Entrega de Valor que a revelar. Ela é registrada como dependência ou questão e tratada no nível competente, para então poder tornar-se contexto herdável.
 
 O mecanismo formal de armazenamento, aprovação e recuperação dessas decisões de alcance superior permanece deliberadamente não definido.
 
@@ -188,4 +188,4 @@ As referências técnicas deste catálogo podem evoluir se a experiência real d
 
 Ele é especialmente compatível com aplicações pessoais, projetos pequenos, novos produtos em estágio inicial, orçamentos limitados e usuários que não dominam arquitetura de software. Isso não limita permanentemente o NAAMIVE: cenários maiores podem justificar as referências posteriores.
 
-Permanecem fora deste catálogo a Formação completa da Entrega de Valor, Skills de seus Atores, Ciclo de Vida, Status, Resultados do Processo, eventos, Work Items, tarefas, instâncias, preços fixos, fornecedor obrigatório, framework obrigatório de frontend, formato definitivo de decisões de alcance superior e mecanismo de persistência das baselines.
+Permanecem fora deste catálogo Work Items, tarefas, instâncias, preços fixos, fornecedor obrigatório, framework obrigatório de frontend, formato definitivo de decisões de alcance superior e mecanismo de persistência das baselines. A Formação, as Skills de seus Atores, o Ciclo de Vida, os Status e os Resultados do Processo já possuem documentação normativa própria.
