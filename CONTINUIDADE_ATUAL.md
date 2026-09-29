@@ -6,7 +6,7 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor está completa: Definição, Modelo, Atores, Formação, Ciclo de Vida, Status, Resultados do Processo e Catálogo de Baselines Técnicas. Realização, Work Item, Skills e mecanismos posteriores permanecem não definidos. A governança transversal agora formaliza continuidade progressiva e o tratamento conceitual de lacunas por Débitos.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas. As Especificações Técnicas de M-001 a M-005 foram aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor está completa: Definição, Modelo, Atores, Formação, Ciclo de Vida, Status, Resultados do Processo e Catálogo de Baselines Técnicas. As Skills principais dos seus quatro Atores agênticos estão materializadas. Realização, Work Item e mecanismos posteriores permanecem não definidos. A governança transversal agora formaliza continuidade progressiva e o tratamento conceitual de lacunas por Débitos.
 
 ## Governança transversal
 
@@ -77,12 +77,13 @@ Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e 
 * Custo: a proposta considera custo técnico-operacional total proporcional e informa estimativa mensal quando houver infraestrutura executável, sem congelar preços na normativa
 * Decisões: decisões superiores válidas são herdadas; decisões restritas à EV podem ser tomadas pelo Formador quando sustentadas; decisões locais legítimas permanecem para execução; alcance superior retorna ao nível competente, cujo mecanismo formal de armazenamento continua lacuna
 * Jornada e Fluxo: conceitos relacionados descritivos, sem se tornarem entidades formais
-* Escopo ainda não definido: Skills, Work Item, realização, homologação, mecanismos de implementação e armazenamento formal de decisões técnicas de alcance superior; Auditoria ainda não possui Skill
+* Skills principais materializadas: Delimitação, Formação, Auditoria e Verificação da Entrega de Valor; cada uma operacionaliza exclusivamente seu Ator agêntico formal e não cria instâncias, Work Item, realização ou mecanismos físicos
+* Escopo ainda não definido: Work Item, realização, homologação, mecanismos de implementação e armazenamento formal de decisões técnicas de alcance superior
 * Não existem instâncias de Entrega de Valor, registros em dados, Item de Trabalho, tarefa ou continuação operacional automática dos Módulos
 
 ## Próxima ação
 
-A sequência normativa principal `01–07` da Entrega de Valor está completa. Realização, Work Item, Skills e demais mecanismos posteriores permanecem não definidos; nenhuma próxima vertical ou tarefa é inferida automaticamente deste fechamento documental. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
+A sequência normativa principal `01–07` da Entrega de Valor está completa e seus quatro Atores agênticos possuem Skills principais materializadas. Realização, Work Item e demais mecanismos posteriores permanecem não definidos; nenhuma próxima vertical ou tarefa é inferida automaticamente deste fechamento documental. M-001 a M-005 permanecem em `FORMADO`; P-001 permanece em `FORMADO`, e N-001 continua em `EM_PROJETO`.
 
 ## Lacunas e limites vigentes
 
@@ -93,7 +94,7 @@ A sequência normativa principal `01–07` da Entrega de Valor está completa. R
 * A regra de atribuição de códigos de Módulo é `M-<sequencial>` por consulta aos registros existentes; a persistência e concorrência físicas dessa regra ainda não estão definidas.
 * A Necessidade pode receber `CANCELAMENTO_APROVADO` enquanto está em `EM_PROJETO`, mas o efeito sobre o Projeto ativo ainda não tem regra normativa; não há propagação, novo status ou cancelamento automático definido.
 * Casos de redelimitação que exijam encerrar, fundir ou substituir identidades de Módulo ainda não possuem mecanismo normativo completo e devem provocar decisão estrutural específica quando aparecerem na prática.
-* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada. A Definição, o Modelo, os Atores, a Formação, o Ciclo de Vida, os Status, os Resultados do Processo e o Catálogo de Baselines Técnicas da Entrega de Valor existem; Skills, instâncias, Work Item e mecanismos de realização ainda não foram definidos.
+* A continuação operacional posterior à `Especificação Técnica do Módulo` permanece deliberadamente não modelada. A Definição, o Modelo, os Atores, a Formação, o Ciclo de Vida, os Status, os Resultados do Processo, o Catálogo de Baselines Técnicas e as quatro Skills principais da Entrega de Valor existem; instâncias, Work Item e mecanismos de realização ainda não foram definidos.
 * O Catálogo de Baselines Técnicas não define armazenamento, aprovação ou recuperação formal de decisões de arquitetura de alcance superior; esse mecanismo continua lacuna para tratamento posterior.
 * M-003 definiu somente contratos lógicos de coordenação: a seleção concreta e disponibilidade de Executor, persistência, comunicação, orquestração, concorrência física, retry, timeout, escala, observabilidade, autenticação concreta e modelo físico de histórico permanecem desconhecidos. A ausência de Executor compatível bloqueia o despacho, mas não a formação técnica do Módulo.
 * M-004 definiu contratos lógicos aprovados de preservação, recuperação proporcional e correlação de contexto sem se tornar fonte de verdade das demais capacidades. Persistência, busca, indexação, formato de referências, armazenamento de evidências externas, retenção, versionamento físico, autenticação, autorização, confidencialidade, concorrência, escala, cache e observabilidade permanecem desconhecidos; não bloqueiam a realização futura.
@@ -135,6 +136,10 @@ A sequência normativa principal `01–07` da Entrega de Valor está completa. R
 * `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`
 * `.agents/skills/modulo/formacao-do-modulo/SKILL.md`
 * `.agents/skills/modulo/auditoria-do-modulo/SKILL.md`
+* `.agents/skills/entrega-de-valor/delimitacao-de-entregas-de-valor/SKILL.md`
+* `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`
+* `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`
+* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
 * `dados/necessidades/N-001/necessidade.md`
 * `dados/projetos/P-001/projeto.md`
 * `dados/projetos/P-001/mapa-de-modulos.md`

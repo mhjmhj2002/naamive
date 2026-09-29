@@ -39,6 +39,13 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 * [Formação do Módulo](.agents/skills/modulo/formacao-do-modulo/SKILL.md)
 * [Auditoria do Módulo](.agents/skills/modulo/auditoria-do-modulo/SKILL.md)
 
+### Entrega de Valor
+
+* [Delimitação de Entregas de Valor](.agents/skills/entrega-de-valor/delimitacao-de-entregas-de-valor/SKILL.md)
+* [Formação da Entrega de Valor](.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md)
+* [Auditoria da Entrega de Valor](.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md)
+* [Verificação da Entrega de Valor](.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md)
+
 ## Documentação
 
 ### Governança
@@ -135,12 +142,21 @@ CONTINUIDADE_ATUAL.md
         │   └── SKILL.md
         └── verificacao-agregada-do-projeto/
             └── SKILL.md
-    └── modulo/
+    ├── modulo/
         ├── delimitacao-de-modulos/
         │   └── SKILL.md
         ├── formacao-do-modulo/
         │   └── SKILL.md
         └── auditoria-do-modulo/
+            └── SKILL.md
+    └── entrega-de-valor/
+        ├── delimitacao-de-entregas-de-valor/
+        │   └── SKILL.md
+        ├── formacao-da-entrega-de-valor/
+        │   └── SKILL.md
+        ├── auditoria-da-entrega-de-valor/
+        │   └── SKILL.md
+        └── verificacao-da-entrega-de-valor/
             └── SKILL.md
 
 documentacao/

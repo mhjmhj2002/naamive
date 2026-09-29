@@ -114,3 +114,16 @@ Um agente não deve usar a Skill de outro Ator para acumular responsabilidades i
 * `formacao-do-projeto` → `.agents/skills/projeto/formacao-do-projeto/SKILL.md`
 * `auditoria-do-projeto` → `.agents/skills/projeto/auditoria-do-projeto/SKILL.md`
 * `verificacao-agregada-do-projeto` → `.agents/skills/projeto/verificacao-agregada-do-projeto/SKILL.md`
+
+#### Módulo
+
+* `delimitacao-de-modulos` → `.agents/skills/modulo/delimitacao-de-modulos/SKILL.md`
+* `formacao-do-modulo` → `.agents/skills/modulo/formacao-do-modulo/SKILL.md`
+* `auditoria-do-modulo` → `.agents/skills/modulo/auditoria-do-modulo/SKILL.md`
+
+#### Entrega de Valor
+
+* `delimitacao-de-entregas-de-valor` → `.agents/skills/entrega-de-valor/delimitacao-de-entregas-de-valor/SKILL.md`
+* `formacao-da-entrega-de-valor` → `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`
+* `auditoria-da-entrega-de-valor` → `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`
+* `verificacao-da-entrega-de-valor` → `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`

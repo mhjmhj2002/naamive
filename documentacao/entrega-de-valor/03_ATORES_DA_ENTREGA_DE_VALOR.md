@@ -17,7 +17,14 @@ Skill
 → capacidade operacional especializada que pode orientar um agente no exercício de um Ator agêntico
 ```
 
-Ator não é Executor, e Ator não é Skill. Os quatro Atores especializados desta vertical são agênticos; poderão receber Skills principais em momento posterior, sem que este documento defina agente concreto, diretório, caminho, prompt ou Skill.
+Ator não é Executor, e Ator não é Skill. Os quatro Atores especializados desta vertical são agênticos e possuem Skills principais materializadas, que os orientam operacionalmente sem alterar as responsabilidades definidas neste documento:
+
+| Ator agêntico | Skill principal |
+| --- | --- |
+| Especialista em Delimitação de Entregas de Valor | `.agents/skills/entrega-de-valor/delimitacao-de-entregas-de-valor/SKILL.md` |
+| Especialista em Formação da Entrega de Valor | `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md` |
+| Auditor da Entrega de Valor | `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md` |
+| Verificador da Entrega de Valor | `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md` |
 
 Não há agente genérico responsável por toda a vertical. Um mesmo Executor pode, futuramente e quando permitido, exercer Atores distintos em momentos distintos, sem fundir as respectivas responsabilidades.
 
@@ -138,7 +145,7 @@ São responsabilidades distintas, em momentos distintos e com evidências distin
 
 ## Fronteira com Work Item e com a execução
 
-Work Item permanece uma vertical futura, inclusive quanto à sua decomposição, Atores, Executor, Skills e realização. Nenhum Ator desta vertical é responsável normativo por decompor Entregas de Valor em Work Items, nem executa Work Item por definição.
+Work Item permanece uma vertical futura, inclusive quanto à sua decomposição, Atores, Executor e realização. Nenhum Ator desta vertical é responsável normativo por decompor Entregas de Valor em Work Items, nem executa Work Item por definição.
 
 A Entrega de Valor suficientemente formada e auditada entrega à vertical futura o negócio, o comportamento, a solução técnica de alto nível, os contratos, as restrições e os critérios técnicos proporcionais. A execução pode decidir aspectos locais de implementação, mas não deve ser o lugar sistemático para definir valor, comportamento principal, arquitetura de alto nível, contratos centrais ou decisões técnicas estruturais da Entrega de Valor.
 
@@ -174,4 +181,4 @@ O Owner pode ser acionado em qualquer ponto apenas para decisão humana material
 
 ## Questões deliberadamente posteriores
 
-Permanecem fora deste documento Skills, agentes concretos, eventos, orquestração, Ciclo de Vida, catálogo de status, Resultados do Processo, transições, cancelamento, redelimitação operacional, efeitos sobre identidade, persistência, geração de código, arquivos de instância, mapa formal de Entregas de Valor, estrutura da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação.
+Permanecem fora deste documento agentes concretos, eventos, orquestração, Ciclo de Vida, catálogo de status, Resultados do Processo, transições, cancelamento, redelimitação operacional, efeitos sobre identidade, persistência, geração de código, arquivos de instância, mapa formal de Entregas de Valor, estrutura da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação.
