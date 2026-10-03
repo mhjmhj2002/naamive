@@ -59,7 +59,7 @@ Este Ator avalia, entre outras questões:
 * qual é o Módulo proprietário, quais capacidades externas são dependências e quais Jornadas ou Fluxos são impactados quando conhecidos; e
 * se a fronteira é finita, coesa e não foi fragmentada por camadas técnicas.
 
-Pode analisar a capacidade do Módulo, separar evoluções independentes, definir a fronteira inicial, identificar intenção, beneficiário e resultado observável de forma proporcional, registrar contexto de Jornada ou Fluxo e dependências relevantes, materializar a entidade e preservar a rastreabilidade até Módulo, Projeto e Necessidade.
+Pode analisar a capacidade do Módulo, separar evoluções independentes, definir a fronteira inicial, identificar intenção, beneficiário e resultado observável de forma proporcional, registrar contexto de Jornada ou Fluxo e dependências relevantes, criar ou atualizar o Mapa de Entregas de Valor canônico do Módulo, atribuir identidade e código conforme o Modelo, materializar a entidade e preservar a rastreabilidade até Módulo, Projeto e Necessidade. A materialização usa exclusivamente a regra e a estrutura mínima de [Modelo de Entrega de Valor](02_MODELO_DE_ENTREGA_DE_VALOR.md#materialização-no-modelo-operacional-atual).
 
 Não forma a Entrega de Valor em profundidade, não decide sua solução técnica detalhada, não produz a Especificação da Entrega de Valor, não audita ou verifica, não cria Work Items e não implementa software.
 
@@ -67,7 +67,7 @@ Não forma a Entrega de Valor em profundidade, não decide sua solução técnic
 
 A delimitação pode ocorrer progressivamente. Não se exige antecipar, de uma vez, todas as futuras Entregas de Valor de um Módulo. Novas Entregas de Valor podem ser identificadas durante a evolução da capacidade, desde que preservem sua fronteira e a propriedade por um único Módulo.
 
-Poderá existir, futuramente, artefato agregador da delimitação de Entregas de Valor de um Módulo. Esta possibilidade não cria nome canônico, arquivo, estrutura, mapa formal, regra de redelimitação, versionamento, substituição, cancelamento ou mecanismo de persistência.
+O artefato agregador canônico é o **Mapa de Entregas de Valor do Módulo**, definido no Modelo. Ele permite revisar o conjunto sem transformar Jornada, Fluxo, Status, Resultado do Processo, decisão humana ou evidência em nova entidade. A revisão pode corrigir a delimitação enquanto preservar a identidade existente; substituição, fusão, exclusão ou reutilização de identidade continuam fora do escopo e exigem regra normativa específica.
 
 Quando a formação ou a auditoria identificar intenção incoesa, amplitude excessiva, fragmentação técnica, Módulo proprietário incorreto, sobreposição estrutural, fronteira inadequada ou ausência de valor perceptível, a questão retorna conceitualmente a este Ator. Os efeitos sobre identidade, dados ou posição no ciclo permanecem para definição posterior.
 
@@ -181,4 +181,4 @@ O Owner pode ser acionado em qualquer ponto apenas para decisão humana material
 
 ## Questões deliberadamente posteriores
 
-Permanecem fora deste documento agentes concretos, eventos e orquestração operacionais, redelimitação operacional, efeitos sobre identidade, persistência, geração de código, arquivos de instância, mapa formal de Entregas de Valor, forma física da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação.
+Permanecem fora deste documento agentes concretos, eventos e orquestração operacionais, redelimitação que exija alterar identidade, persistência tecnológica, controle físico de concorrência, forma física da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação. A materialização documental atual, seu Mapa e seus arquivos de instância são definidos no Modelo.

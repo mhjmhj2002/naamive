@@ -75,7 +75,7 @@ Esse percurso não é admitido como consequência automática do retorno. Cada p
 
 ## `EM_FORMACAO`
 
-A Entrega de Valor ingressa em `EM_FORMACAO` quando é validamente materializada pelo Especialista em Delimitação de Entregas de Valor. A materialização pressupõe a evolução delimitada dentro de Módulo com formação técnica aprovada, com identidade, vínculo ao Módulo, intenção de valor, beneficiário, resultado observável inicial e fronteira inicial suficientes para iniciar a Formação.
+A Entrega de Valor ingressa em `EM_FORMACAO` quando é validamente materializada pelo Especialista em Delimitação de Entregas de Valor. A materialização pressupõe a evolução delimitada dentro de Módulo com formação técnica aprovada, com identidade, vínculo ao Módulo, intenção de valor, beneficiário, resultado observável inicial e fronteira inicial suficientes para iniciar a Formação. O identificador, o código, o Mapa canônico, o registro principal e a estrutura mínima obrigatória são os definidos no [Modelo de Entrega de Valor](02_MODELO_DE_ENTREGA_DE_VALOR.md#materialização-no-modelo-operacional-atual).
 
 Nesse Status ocorrem a Formação da Entrega de Valor, a Auditoria independente e as novas avaliações necessárias. Problema de formação é tratado pelo Especialista em Formação da Entrega de Valor; problema estrutural de delimitação retorna ao Especialista em Delimitação de Entregas de Valor; e questão de alcance superior retorna ao nível competente. Nenhum desses encaminhamentos cria Status próprio.
 
@@ -141,4 +141,4 @@ Os Status terminais são:
 * `CONCLUIDA`;
 * `CANCELADA`.
 
-Este documento não define Resultados do Processo, Skill, Work Item, decomposição, mecanismo operacional de Realização, mecanismo físico de transição, persistência física, arquivos de instância, ambiente, homologação ou mecanismo de débito. O detalhamento do fluxo e de suas condições pertence ao [Ciclo de Vida da Entrega de Valor](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md).
+Este documento não define Resultados do Processo, Skill, Work Item, decomposição, mecanismo operacional de Realização, mecanismo físico de transição, persistência tecnológica, ambiente, homologação ou mecanismo de débito. A persistência documental mínima de instância é definida exclusivamente no Modelo. O detalhamento do fluxo e de suas condições pertence ao [Ciclo de Vida da Entrega de Valor](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md).

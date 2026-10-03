@@ -45,7 +45,7 @@ em qualquer posição não terminal
 → cancelamento
 ```
 
-O fluxo descreve a ordem conceitual e não define orquestração, persistência, arquivos de instância, tecnologia, agentes concretos nem mecanismo automático de despacho entre Atores.
+O fluxo descreve a ordem conceitual e não define orquestração, persistência tecnológica, agentes concretos nem mecanismo automático de despacho entre Atores. A estrutura documental dos arquivos de instância é definida pelo Modelo, sem converter-se em mecanismo de despacho.
 
 ## Nascimento e materialização
 
@@ -59,7 +59,7 @@ O Especialista em Delimitação de Entregas de Valor identifica uma evolução f
 
 Quando a delimitação for justificada, o Especialista em Delimitação de Entregas de Valor materializa a entidade com identidade própria, vínculo com exatamente um Módulo, intenção de valor, beneficiário, resultado observável inicial e fronteira inicial suficientes para iniciar sua formação. A materialização é o evento de nascimento da Entrega de Valor.
 
-Ela não nasce de formulário independente, criação manual arbitrária ou vínculo direto concorrente com Projeto ou Necessidade. O ciclo não define formato físico de instância, diretório, arquivo, persistência, geração de código ou mecanismo de atribuição de identidade.
+Ela não nasce de formulário independente, criação manual arbitrária ou vínculo direto concorrente com Projeto ou Necessidade. Sua materialização segue obrigatoriamente o [Modelo de Entrega de Valor](02_MODELO_DE_ENTREGA_DE_VALOR.md#materialização-no-modelo-operacional-atual): Mapa canônico do Módulo, identificador técnico `UUID` versão 4 único, código global não reutilizável, registro principal em `dados/entregas-de-valor/<codigo>/entrega-de-valor.md` e estrutura mínima completa. O Mapa e o registro devem concordar antes de a materialização ser considerada concluída.
 
 Após materializada, a Entrega de Valor ocupa a posição conceitual de formação, formalizada como `EM_FORMACAO` no [Status da Entrega de Valor](06_STATUS_DA_ENTREGA_DE_VALOR.md).
 
@@ -178,6 +178,6 @@ Os documentos `06` e `07` consolidam, respectivamente, os nomes formais, signifi
 
 ## Fronteiras normativas
 
-Este documento não define Skills, agentes concretos, arquivos de instância, diretórios operacionais, persistência, Work Item, decomposição interna da realização, implementação, execução técnica, Pull Request, ambientes, deploy, mecanismo detalhado de homologação, RBAC, ACL, versionamento, substituição, exclusão ou mecanismo físico de evidências.
+Este documento não define Skills, agentes concretos, persistência tecnológica, Work Item, decomposição interna da realização, implementação, execução técnica, Pull Request, ambientes, deploy, mecanismo detalhado de homologação, RBAC, ACL, versionamento, substituição, exclusão ou mecanismo físico de evidências. A estrutura documental de instância e de Mapa do modelo operacional atual está definida no Modelo; ela não cria mecanismo de realização.
 
 Também não altera a Especificação Técnica do Módulo, a Direção do Projeto, o Compromisso da Necessidade, a fronteira do Módulo proprietário nem as competências de seus níveis de origem. Quando uma alteração necessária ultrapassar a Entrega de Valor, ela deve ser explicitada e devolvida ao nível competente.

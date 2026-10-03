@@ -2,9 +2,9 @@
 
 ## Finalidade
 
-Este documento define as informações e relações que tornam uma Entrega de Valor uma entidade identificável, coerente e rastreável, capaz de receber Formação suficiente para sua decomposição em trabalho executável.
+Este documento define as informações e relações que tornam uma Entrega de Valor uma entidade identificável, coerente e rastreável, capaz de receber Formação suficiente para sua decomposição em trabalho executável. Ele também estabelece a materialização mínima no modelo operacional atual do repositório.
 
-O modelo preserva a Entrega de Valor como a ponte principal entre a intenção de produto e a realização técnica. Ele não define como a entidade é criada, formada, auditada, realizada, verificada, homologada ou encerrada.
+O modelo preserva a Entrega de Valor como a ponte principal entre a intenção de produto e a realização técnica. Ele define somente sua materialização documental mínima; Formação, Auditoria, Realização, Verificação, homologação e encerramento permanecem nos documentos normativos próprios.
 
 ## Estrutura conceitual
 
@@ -22,7 +22,7 @@ Entrega de Valor
 └── conteúdo progressivamente formado
 ```
 
-Essa estrutura não é formulário, esquema de persistência nem definição de que todos os elementos estejam completos no primeiro registro da entidade.
+Essa estrutura não é formulário universal nem definição de que todos os elementos estejam completos no primeiro registro da entidade. O núcleo de identidade, origem e intenção inicial é obrigatório na materialização; o conteúdo técnico é formado progressivamente.
 
 ## Identidade própria
 
@@ -45,7 +45,21 @@ nome
 → comunicação breve da evolução pretendida
 ```
 
-O nome pode ser refinado sem alterar o identificador técnico, o código ou o Módulo de origem. Um código como `EV-001` é apenas exemplo conceitual; este modelo não define formato de identificador, geração de código, sequência, persistência, concorrência, reutilização ou regra operacional de materialização.
+O nome pode ser refinado sem alterar o identificador técnico, o código ou o Módulo de origem.
+
+### Identificador técnico
+
+O identificador técnico é um `UUID` versão 4, em formato canônico e minúsculo. Ele é atribuído na materialização e não pode ser alterado, reutilizado ou compartilhado por duas Entregas de Valor. Sua unicidade é global no conjunto de Entregas de Valor materializadas.
+
+Antes de gravar uma nova instância, o Especialista em Delimitação consulta os identificadores técnicos registrados em `dados/entregas-de-valor/*/entrega-de-valor.md`. Se o identificador escolhido já existir, deve gerar outro e repetir a verificação. Inconsistência de identificador já persistida não autoriza criar nova instância até que seja tratada no ponto competente.
+
+### Código humano
+
+O código humano tem o formato normativo `EV-<número sequencial com ao menos três algarismos>`, por exemplo `EV-001`. Essa regra é estabelecida por este modelo; o exemplo antes usado na documentação não é sua fonte de autoridade.
+
+Antes de materializar, o Especialista em Delimitação consulta todos os códigos registrados em `dados/entregas-de-valor/*/entrega-de-valor.md`. Atribui o próximo número inteiro positivo acima do maior sufixo numérico já usado; na ausência de Entregas de Valor materializadas, atribui `EV-001`. O código é único globalmente entre Entregas de Valor, estável e não reutilizável, inclusive após cancelamento. Se uma verificação imediatamente anterior à gravação do registro identificar colisão, o Especialista repete a consulta e atribui o próximo código disponível.
+
+O repositório atual não fornece transação, bloqueio ou controle físico de concorrência. As consultas e a verificação final tornam a atribuição determinística para a operação serial do modelo atual, mas não são substituto de garantia transacional futura. Uma implementação futura deve preservar a unicidade normativa por mecanismo equivalente.
 
 ## Vínculo estrutural com o Módulo
 
@@ -79,6 +93,73 @@ Entrega de Valor
 Por ela, também são recuperáveis a Especificação Técnica do Módulo, a Direção do Projeto e o Compromisso da Necessidade. O Módulo é a referência estrutural direta da Entrega de Valor; Projeto e Necessidade não devem ser copiados como fontes concorrentes quando puderem ser recuperados por essa cadeia.
 
 Referências derivadas ou convenientes podem existir para facilitar a recuperação proporcional de contexto, desde que não substituam as entidades de origem como fontes de verdade.
+
+## Materialização no modelo operacional atual
+
+No modelo operacional atual, a instância é persistida no registro principal:
+
+```text
+dados/entregas-de-valor/<codigo-da-entrega-de-valor>/entrega-de-valor.md
+```
+
+Assim, a primeira Entrega de Valor receberia um diretório `dados/entregas-de-valor/EV-001/` e um registro `entrega-de-valor.md`, somente se a delimitação justificar sua materialização. Este exemplo decorre da regra de atribuição acima; não autoriza criar a instância sem essa justificativa.
+
+Antes da primeira materialização para um Módulo — e em toda revisão estrutural de sua delimitação — o Especialista em Delimitação cria ou atualiza o **Mapa de Entregas de Valor do Módulo**, em:
+
+```text
+dados/modulos/<codigo-do-modulo>/mapa-de-entregas-de-valor.md
+```
+
+O Mapa é a fonte canônica da delimitação das evoluções daquele Módulo, mas não é entidade, Status, Resultado do Processo, decisão humana ou evidência substituta. Ele deve registrar:
+
+* referência ao Módulo proprietário, à sua Especificação Técnica aprovada e ao contexto de origem consultado;
+* evoluções candidatas consideradas e a decisão de incluir, separar, não materializar ou encaminhar cada uma;
+* cada Entrega de Valor materializada, com código, identificador técnico, nome, intenção inicial, beneficiário, resultado observável, fronteira e referência ao seu registro principal;
+* dependências, sobreposições, incertezas e retornos estruturais relevantes; e
+* a justificativa de que não há duplicação de evolução já materializada no Módulo.
+
+O registro principal é a fonte da identidade, do Status vigente e do conteúdo da Entrega de Valor. O Mapa é a fonte da justificativa e do conjunto delimitado. Ambos devem apontar um ao outro e concordar em código, identificador técnico e Módulo proprietário. Uma entrada apenas planejada no Mapa não constitui Entrega de Valor materializada; a entidade somente existe quando o registro principal completo também existir.
+
+### Estrutura mínima do registro principal
+
+No momento da materialização, `entrega-de-valor.md` deve conter, no mínimo:
+
+```text
+# <código> — <nome>
+
+## Identificação
+
+| Campo | Valor |
+| --- | --- |
+| Identificador técnico | <UUID versão 4> |
+| Código | <código> |
+| Módulo proprietário | <referência ao modulo.md> |
+| Status | EM_FORMACAO |
+
+## Delimitação inicial
+
+* Item canônico: <referência ao Mapa de Entregas de Valor do Módulo>
+* Declaração de valor: <intenção principal de valor>
+* Beneficiário relevante: <beneficiário>
+* Resultado observável esperado: <resultado inicial>
+* Dentro da fronteira: <incluído>
+* Fora da fronteira: <excluído>
+* Dependências, relações e incertezas relevantes: <informação proporcional>
+```
+
+O cabeçalho contém o nome; o Status inicial deve ser exatamente `EM_FORMACAO`. A estrutura não antecipa Especificação da Entrega de Valor, Work Item, resultado de auditoria, decisão humana, evidência, histórico, mecanismo de realização ou tecnologia. Esses elementos pertencem a documentos, artefatos ou mecanismos próprios quando forem definidos.
+
+### Regra de materialização e unicidade de evolução
+
+O Especialista em Delimitação somente materializa após confirmar o Módulo proprietário formado, preparar ou atualizar o Mapa canônico e verificar os registros já materializados daquele Módulo. Se a evolução já estiver representada por Entrega de Valor existente, deve revisar ou encaminhar a delimitação existente, sem criar duplicata. Se a distinção não puder ser fundamentada pelas evidências, a evolução não é materializada até que a lacuna seja tratada no ponto competente.
+
+Em seguida, atribui e verifica identificador técnico e código conforme estas regras, cria o registro principal completo em `EM_FORMACAO` e atualiza o Mapa com a referência correspondente. A materialização somente está concluída quando Mapa e registro concordam; não se cria Status intermediário para a operação de escrita incompleta.
+
+### Norma e convenção física
+
+São normas da entidade: identidade técnica própria e imutável, código humano no formato e escopo definidos, não reutilização, vínculo com exatamente um Módulo, núcleo mínimo de delimitação, Status inicial `EM_FORMACAO` e a rastreabilidade entre Mapa e registro.
+
+Os diretórios `dados/`, os nomes `mapa-de-entregas-de-valor.md` e `entrega-de-valor.md`, Markdown e links relativos são a convenção física obrigatória do modelo operacional atual do repositório. Não são tecnologia ou essência conceitual da Entrega de Valor. Uma persistência futura pode substituí-los somente se conservar as normas anteriores, a recuperação do Mapa e do registro, a unicidade e a cadeia de origem, sem confundir Status, Resultados do Processo, decisões humanas e evidências.
 
 ## Nome e intenção principal de valor
 
@@ -206,7 +287,7 @@ Não se presume que o terceiro conjunto esteja completo no primeiro instante de 
 
 A Formação consolida conceitualmente a **Especificação da Entrega de Valor** como seu artefato de saída. Ela reúne, proporcionalmente, intenção de valor, comportamento, fronteiras, solução técnica, decisões, contratos, riscos, critérios verificáveis e a informação necessária para decomposição.
 
-Esse artefato não é nova entidade, Status, Resultado do Processo ou aprovação. Sua produção, auditoria e efeitos no ciclo estão definidos nos documentos próprios da [Formação](04_FORMACAO_DA_ENTREGA_DE_VALOR.md), do [Ciclo de Vida](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md) e dos [Resultados do Processo](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md); sua forma física e armazenamento permanecem não definidos.
+Esse artefato não é nova entidade, Status, Resultado do Processo ou aprovação. Sua produção, auditoria e efeitos no ciclo estão definidos nos documentos próprios da [Formação](04_FORMACAO_DA_ENTREGA_DE_VALOR.md), do [Ciclo de Vida](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md) e dos [Resultados do Processo](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md); sua forma física e armazenamento continuam não definidos.
 
 ## Critérios verificáveis e verificação integrada
 
@@ -245,4 +326,4 @@ Também não são definidos neste documento os detalhes normativos próprios de 
 
 ## Questões deliberadamente posteriores
 
-Permanecem deliberadamente posteriores a decomposição em Work Item, a homologação, os mecanismos operacionais de Realização e Verificação, a relação com planejamento, a persistência, a geração de códigos, a tecnologia de implementação e as instâncias reais de Entrega de Valor.
+Permanecem deliberadamente posteriores a decomposição em Work Item, a homologação, os mecanismos operacionais de Realização e Verificação, a relação com planejamento, a persistência tecnológica, o controle físico de concorrência, a forma física da Especificação e a tecnologia de implementação. A materialização de instâncias no modelo operacional atual é definida neste documento.

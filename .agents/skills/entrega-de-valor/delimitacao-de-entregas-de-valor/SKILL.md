@@ -47,6 +47,19 @@ Para cada evolução identificada:
 
 Evoluções independentes, utilizáveis e perceptíveis separadamente são sinal de possível separação. Camadas técnicas isoladas não são Entregas de Valor por si só.
 
+## Materialização obrigatória
+
+Execute a materialização exclusivamente conforme o [Modelo de Entrega de Valor](../../../../documentacao/entrega-de-valor/02_MODELO_DE_ENTREGA_DE_VALOR.md#materialização-no-modelo-operacional-atual):
+
+1. confirme que o Módulo está `FORMADO`, tem Especificação Técnica aprovada e é o único proprietário da evolução;
+2. crie ou atualize `dados/modulos/<codigo-do-modulo>/mapa-de-entregas-de-valor.md`, registrando a análise e verificando se a evolução já está materializada;
+3. consulte os registros em `dados/entregas-de-valor/*/entrega-de-valor.md`, gere identificador técnico `UUID` versão 4 ainda não usado e atribua o próximo código `EV-<sequencial>` global não reutilizado;
+4. imediatamente antes de gravar, repita a verificação de identificador e código; se houver colisão ou inconsistência persistida, não materialize até o tratamento competente;
+5. crie `dados/entregas-de-valor/<codigo>/entrega-de-valor.md` com toda a estrutura mínima normativa, inclusive `EM_FORMACAO`; e
+6. atualize o Mapa com a referência ao registro e confirme que ambos concordam em código, identificador e Módulo proprietário.
+
+Uma entrada planejada apenas no Mapa não é instância. Não use `EV-001` por exemplo ou convenção implícita: ele só será o primeiro código quando a consulta normativa não encontrar registro materializado. Esta regra não cria Work Item, Resultado do Processo, decisão humana, evidência, mecanismo de Realização ou Status adicional.
+
 ## Limites
 
 Não forme tecnicamente a Entrega de Valor, não escolha sua solução técnica de alto nível, não crie Work Items, não implemente, não audite, não verifique software integrado, não cancele, não produza `CANCELAMENTO_APROVADO` e não decida questões humanas materiais. Não redefina silenciosamente Módulo, Projeto, Necessidade, Direção do Projeto ou Compromisso da Necessidade.
@@ -67,4 +80,4 @@ Encerre quando a delimitação suficiente e seu handoff estiverem entregues. Nã
 
 ## Verificação final
 
-Confirme vínculo com exatamente um Módulo, evolução coesa e finita para beneficiário identificável, fronteira explícita, ausência de divisão por camada técnica e ausência de criação de entidade além da Entrega de Valor delimitada, de Status, de Resultado do Processo ou de mecanismo posterior.
+Confirme vínculo com exatamente um Módulo, evolução coesa e finita para beneficiário identificável, fronteira explícita, código e identificador únicos, Mapa e registro principal coerentes, ausência de divisão por camada técnica e ausência de criação de entidade além da Entrega de Valor delimitada, de Status, de Resultado do Processo ou de mecanismo posterior.

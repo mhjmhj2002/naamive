@@ -117,7 +117,7 @@ Resultado técnico produzido pelo Auditor ou pelo Verificador não é apenas um 
 * quando negativo, causa identificada; e
 * quando negativo e aplicável, determinação de tratamento.
 
-Este documento não define formato físico obrigatório, JSON, esquema, banco de dados, tabela, arquivo de instância, campos persistidos, API, timestamp obrigatório, identificador ou mecanismo de histórico.
+Este documento não define formato físico obrigatório para Resultados, JSON, esquema, banco de dados, tabela, API, timestamp obrigatório, identificador de Resultado ou mecanismo de histórico. A estrutura da instância e sua identidade pertencem exclusivamente ao Modelo; este catálogo não cria campos concorrentes para elas.
 
 ## Relação com Débitos
 
