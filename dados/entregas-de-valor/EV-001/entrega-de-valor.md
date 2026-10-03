@@ -7,7 +7,7 @@
 | Identificador técnico | `80264aa7-5243-4396-a99e-e33e38aca286` |
 | Código | `EV-001` |
 | Módulo proprietário | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `EM_REALIZACAO` |
+| Status | `FORMADA` |
 
 ## Delimitação inicial
 
@@ -21,7 +21,7 @@
 
 ## Formação da Entrega de Valor
 
-Esta formação foi conduzida pelo Especialista em Formação da Entrega de Valor. Ela aprofunda a evolução delimitada sem alterar sua identidade, sua propriedade por M-001 nem sua fronteira de valor. O Status permanece `EM_FORMACAO`: a suficiência desta Especificação ainda depende de Auditoria independente.
+Esta formação foi conduzida pelo Especialista em Formação da Entrega de Valor e readequada sob intervenção material obrigatória de arquitetura pelo Owner. Ela aprofunda a evolução delimitada sem alterar sua identidade, sua propriedade por M-001 nem sua fronteira de valor.
 
 ### Evidências e classificação do contexto
 
@@ -30,9 +30,9 @@ Esta formação foi conduzida pelo Especialista em Formação da Entrega de Valo
 | Valor, beneficiário, resultado observável e fronteira iniciais | Conhecido | Registro desta EV e [Mapa canônico de M-001](../../modulos/M-001/mapa-de-entregas-de-valor.md#ev-001--compromisso-da-necessidade). |
 | Regras, responsabilidades e fronteira de M-001 | Conhecido | [Especificação Técnica de M-001](../../modulos/M-001/modulo.md#especificação-técnica-do-módulo), aprovada por `FORMACAO_SUFICIENTE`. |
 | Compromisso de origem, autoridade humana e limitações da primeira jornada | Conhecido | [Compromisso da N-001](../../necessidades/N-001/necessidade.md#compromisso-da-necessidade). |
-| Uma aplicação única e modular atende inicialmente à evolução | Inferido | A primeira jornada é limitada e não há requisito documentado de escala, disponibilidade elevada ou integração externa; distribuir componentes aumentaria a complexidade sem benefício evidenciado. |
-| Java 21, Spring Boot, PostgreSQL e interface web simples na mesma aplicação | Proposto | **Proposta inicial — Baseline Essencial**, limitada a esta EV; não é decisão herdada nem plataforma obrigatória para outras Entregas de Valor. |
-| Persistência, identidade, transporte entre Módulos, concorrência e orquestração físicos | Desconhecido legítimo | Não há evidência para escolhê-los agora. Os contratos e invariantes abaixo orientam a realização sem tratá-los como fatos. |
+| Decisão Material do Owner de Arquitetura e Stack | Decisão Humana Material | O Owner determinou explicitamente a arquitetura do NAAMIVE: Node.js (TypeScript) com PostgreSQL, camada web responsiva e worker desacoplado em background para processamento contínuo, revogando a presunção indevida anterior de Java 21 / Spring Boot. |
+| Uma aplicação única e modular com worker desacoplado atende à evolução | Inferido | O desacoplamento entre serviço web e worker de background atende ao requisito contínuo sem impor complexidade prematura de microsserviços distribuídos. |
+| Persistência, identidade, transporte entre Módulos, concorrência e orquestração físicos | Desconhecido legítimo | Os contratos e invariantes abaixo orientam a realização sem antecipar detalhes físicos de infraestrutura além dos determinados pelo Owner. |
 
 ### Especificação da Entrega de Valor
 
@@ -50,28 +50,31 @@ Esta formação foi conduzida pelo Especialista em Formação da Entrega de Valo
 4. A disponibilidade para M-002 gera solicitação lógica idempotente vinculada à referência estável da Necessidade. A EV não cria o Projeto, e `EM_PROJETO` só é registrado após confirmação de M-002.
 5. Entrada inválida, transição não permitida, resultado incompatível ou confirmação incompatível é rejeitada sem alterar a posição atual; o diagnóstico deve ser recuperável.
 
-**Fronteira confirmada.** A EV inclui registrar e atualizar a Necessidade, apoiar Formação, Auditoria e Qualificação, registrar a decisão do Owner, compor o Compromisso e disponibilizá-lo logicamente a M-002. Não inclui criar, formar ou auditar P-001; coordenar execução; definir ou operar mecanismos físicos; nem verificar software integrado. Não há evidência de intenção independente, sobreposição material ou Módulo proprietário incorreto; não há retorno ao Delimitador.
+**Fronteira confirmada.** A EV inclui registrar e atualizar a Necessidade, apoiar Formação, Auditoria e Qualificação, registrar a decisão do Owner, compor o Compromisso e disponibilizá-lo logicamente a M-002. Não inclui criar, formar ou auditar P-001; coordenar execução; definir ou operar mecanismos físicos além dos decididos; nem verificar software integrado. Não há evidência de intenção independente, sobreposição material ou Módulo proprietário incorreto; não há retorno ao Delimitador.
 
-#### Proposta inicial — Baseline Essencial
+#### Arquitetura e Decisões Técnicas (Decisão Material do Owner)
 
-**Solução de alto nível.** Uma aplicação principal em monólito modular realiza a primeira EV. O módulo interno de Condução da Necessidade preserva as regras de domínio e não depende de interface, protocolo, banco ou provedor de identidade. Adaptadores de entrada apresentam interface web e, quando necessário, API HTTP; adaptadores de saída tratam persistência, identidade do Owner, contexto de M-004 e o handoff lógico a M-002. A separação permite substituir detalhes físicos sem redesenhar as regras da EV.
+**Solução de alto nível.** A arquitetura adotada baseia-se na Decisão Material do Owner:
+* **Runtime e Linguagem:** Node.js com TypeScript, garantindo tipagem estática e padronização do ecossistema.
+* **Banco de Dados:** PostgreSQL para persistência transacional relacional, integridade referencial e histórico próprio da capacidade, com migrações versionadas de esquema.
+* **Camada Web:** Interface responsiva (HTML/CSS com templates de renderização no servidor ou SPA leve e responsiva com Bootstrap) para interação do usuário e do Owner.
+* **Processamento Assíncrono / Background:** Worker desacoplado para execução contínua de tarefas assíncronas, monitoramento e reconciliação sem bloquear o ciclo de atendimento HTTP da camada web.
 
 | Componente lógico | Responsabilidade |
 | --- | --- |
-| Interface da Necessidade | Registrar, consultar e atualizar o conteúdo autorizado; apresentar posição, pendências e Compromisso disponível. |
-| Aplicação de Condução | Orquestrar os casos de uso e validar pré-condições, sem assumir decisão humana ou parecer de Ator. |
+| Camada Web Responsiva | Interface web responsiva para registrar, consultar e atualizar o conteúdo autorizado; apresentar posição, pendências e Compromisso disponível. |
+| Aplicação / Serviço HTTP (Node.js/TypeScript) | Orquestrar os casos de uso, expor rotas web/API e validar pré-condições, sem assumir decisão humana ou parecer de Ator. |
+| Worker Desacoplado (Node.js/TypeScript) | Processar tarefas assíncronas em background de forma contínua, tratando jobs agendados e eventos de forma desacoplada. |
 | Domínio da Necessidade | Aplicar transições, separar estado de histórico, validar competência do resultado e compor o Compromisso após `APROVADO`. |
-| Histórico e evidências | Associar atividade, Ator, resultado, recomendação, decisão, autoria e evidência à referência estável; M-004 é a dependência de preservação e recuperação compartilhada. |
+| Camada de Persistência (PostgreSQL) | Gerenciar estado transacional relacional e histórico imutável com migrações controladas. |
 | Porta de identidade do Owner | Exigir identidade autenticada identificável antes de registrar decisão material; o provedor permanece aberto. |
 | Porta de bootstrap do Projeto | Emitir e recuperar solicitação idempotente para M-002, sem criar ou formar o Projeto. |
 
-**Tecnologias propostas.** Java 21 e Spring Boot organizam a aplicação; PostgreSQL guarda o estado transacional e o histórico próprio da capacidade; migrações versionadas preservam a evolução do esquema. A interface web pode ser servida pela mesma aplicação, sem frontend separado nesta primeira EV. São escolhas desta proposta, não novas Entregas de Valor nem decisões de alcance superior aprovadas.
-
 #### Dados, contratos e integrações
 
-**Estado e dados mínimos.** A solução mantém uma referência estável para a Necessidade, conteúdo de negócio, único Status vigente, registros históricos imutáveis de atividade e evidência, Resultados do Processo, recomendações, decisão do Owner com identidade, visão derivada do Compromisso e solicitação idempotente para M-002. Esquema físico, tabelas e formatos de mensagem são decisões locais, desde que preservem essa separação.
+**Estado e dados mínimos.** A solução mantém uma referência estável para a Necessidade, conteúdo de negócio, único Status vigente, registros históricos imutáveis de atividade e evidência, Resultados do Processo, recomendações, decisão do Owner com identidade, visão derivada do Compromisso e solicitação idempotente para M-002. O esquema físico relacional em PostgreSQL preserva estritamente essa separação.
 
-**Contratos lógicos internos.** O mapeamento para HTTP, filas ou outros transportes não está decidido:
+**Contratos lógicos internos.** O mapeamento de casos de uso permanece:
 
 | Caso de uso | Pré-condição e efeito observável |
 | --- | --- |
@@ -82,44 +85,39 @@ Esta formação foi conduzida pelo Especialista em Formação da Entrega de Valo
 | Disponibilizar Compromisso | Após `APROVADO`, compõe a visão consolidada e cria ou recupera a solicitação idempotente a M-002. |
 | Consultar Necessidade e Compromisso | Retorna posição atual e, quando elegível, Compromisso com referências suficientes ao contexto. |
 
-**Integrações e dependências.** M-004 preserva, recupera e correlaciona contexto; M-002 recebe exclusivamente o Compromisso e a solicitação lógica de bootstrap. Não há endpoint, fila, credencial, confirmação física, sincronismo ou mecanismo de repetição definido. A realização deve preservar o invariante `1 Necessidade aprovada → 1 Projeto`; decisão que afete outros Módulos ou EVs retorna ao nível competente.
+**Integrações e dependências.** M-004 preserva, recupera e correlaciona contexto; M-002 recebe exclusivamente o Compromisso e a solicitação lógica de bootstrap. Não há endpoint, fila externa rígida ou credencial física pré-amarrada. A realização deve preservar o invariante `1 Necessidade aprovada → 1 Projeto`.
 
 #### Segurança, operação e riscos
 
-**Segurança e confiabilidade.** Decisão humana material não é aceita sem identidade autenticada identificável. A aplicação valida entradas e transições antes de persistir, restringe alteração do histórico, evita segredos em logs e trata falhas de integração sem perder `APROVADO` nem duplicar o Projeto. TLS, autorização fina, criptografia, retenção, cópia de segurança, recuperação e provedor de identidade serão concretizados na realização conforme a tecnologia escolhida.
+**Segurança e confiabilidade.** Decisão humana material não é aceita sem identidade autenticada identificável. A aplicação valida entradas e transições antes de persistir no PostgreSQL, restringe alteração do histórico, evita segredos em logs e trata falhas de integração sem perder `APROVADO` nem duplicar o Projeto.
 
-**Operação proposta.** Desenvolvimento local e produção são suficientes inicialmente. A construção executa migrações e testes automaticamente, produz artefato reproduzível, publica logs estruturados sem dados sensíveis, expõe verificação de saúde e mantém cópia de segurança restaurável. Não há requisito evidenciado para múltiplas regiões, alta disponibilidade, cache, fila, escalonamento horizontal ou microserviços.
-
-**Custo técnico-operacional estimado.** Para produção inicial isolada, a referência é serviço web sempre ativo de 0,5 CPU e 512 MB e PostgreSQL gerenciado mínimo, em espaço Hobby do Render: aproximadamente **US$ 13/mês** antes de crescimento de armazenamento, tráfego excedente, domínio e impostos. A estimativa usa a [página de preços](https://render.com/pricing) e a [orientação do provedor](https://render.com/articles/how-much-does-cloud-application-hosting-cost-for-small-businesses), consultadas em 03/10/2026; é premissa de proposta, não preço congelado. O plano gratuito é somente de teste. O custo aumenta com computação, armazenamento, tráfego ou mais ambientes; uma escolha de provedor, moeda em reais ou disponibilidade compartilhada deve ser decidida no nível competente.
+**Operação proposta.** Desenvolvimento local e produção em ambiente Node.js com PostgreSQL. A construção executa compilação TypeScript, migrações e testes automatizados, gerando execução reproduzível tanto do serviço web quanto do worker em background.
 
 | Risco ou lacuna | Classificação | Tratamento |
 | --- | --- | --- |
 | Decisão material sem identidade confiável | Bloqueante para decisão do Owner | A porta de identidade deve estar concretizada antes desse caso de uso em produção. |
 | Confusão entre Status, histórico, resultado e decisão | Risco de integridade | Regras de domínio e testes de transição preservam representações separadas. |
 | Falha ou repetição do handoff a M-002 | Risco de duplicação ou perda | Solicitação idempotente, confirmação recuperável e novo processamento seguro. |
-| Contrato físico com M-002 e M-004 não definido | Desconhecido legítimo | Manter portas explícitas; decidir transporte, persistência compartilhada e repetição durante a realização. |
-| Carga, disponibilidade, privacidade detalhada e retenção sem evidência | Desconhecido não bloqueante | Não introduzir infraestrutura avançada por antecipação; reavaliar se requisito concreto surgir. |
+| Coordenação entre Camada Web e Worker | Risco operacional | Comunicação transacional através de tabelas de filas/eventos no PostgreSQL ou canal seguro. |
 
 #### Critérios verificáveis e estratégia de testes
 
 O resultado integrado deverá demonstrar, com uma Necessidade limitada, que:
 
-1. uma pessoa registra e consulta Necessidade com posição atual distinguível de seu histórico;
+1. uma pessoa registra e consulta Necessidade via interface web responsiva com posição atual distinguível de seu histórico;
 2. resultado de Formação, Auditoria e Qualificação é associado ao Ator competente sem ser apresentado como Status;
 3. tentativa de decisão material sem identidade autenticada ou fora de posição elegível não altera o estado;
 4. decisão válida `APROVADO` produz Compromisso consultável e solicitação idempotente a M-002, sem criar o Projeto nesta capacidade;
-5. repetição da solicitação não permite mais de um Projeto para a mesma Necessidade aprovada; e
-6. evidências, decisão e vínculo de origem permanecem recuperáveis para explicar o percurso.
+5. o worker desacoplado processa tarefas contínuas sem degradação da interface web; e
+6. evidências, decisão e vínculo de origem permanecem recuperáveis no PostgreSQL para explicar o percurso.
 
-A realização combina testes unitários das regras de domínio, de integração da persistência e migrações, de contrato para as portas de M-002, M-004 e identidade, e ao menos um teste de ponta a ponta do fluxo de compromisso. Testes de segurança cobrem pré-condições de decisão humana e entradas inválidas. A futura Verificação confrontará software integrado, estes critérios e a declaração de valor; ela não é executada nesta Formação.
+A realização combinará testes unitários das regras de domínio TypeScript, testes de integração de persistência PostgreSQL / migrações e testes end-to-end locais do fluxo de compromisso.
 
 #### Justificativa de suficiência e handoff
 
-A especificação preserva a origem `EV-001 → M-001 → P-001 → N-001`, fixa comportamento, invariantes, solução de alto nível, responsabilidades, dados, contratos lógicos, dependências, riscos e critérios necessários para decompor e realizar a EV sem redescobrir seu valor ou redesenhar sua arquitetura de alto nível. Rotas, tabelas, fornecedor de identidade e transporte permanecem decisões locais de realização, pois não alteram valor, contratos centrais ou regras estabelecidas.
+A especificação readequada preserva a origem `EV-001 → M-001 → P-001 → N-001`, incorpora a Decisão Material do Owner (Node.js/TypeScript, PostgreSQL, Web responsiva e Worker desacoplado), fixa comportamento, invariantes, responsabilidades, contratos e critérios verificáveis suficientes para planejamento e realização legítimos.
 
-Nenhuma decisão humana material irrecuperável foi identificada: a proposta é proporcional, não há alternativa de negócio aberta e decisões de maior alcance continuam explicitamente encaminhadas. Não foi produzido Resultado do Processo, mudança de Status, Work Item, software, teste de implementação ou evidência de verificação.
-
-**Handoff:** esta Especificação, evidências, classificações, riscos e lacunas legítimas são entregues ao **Auditor da Entrega de Valor** para avaliação independente, mediante a Skill `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`.
+**Handoff:** esta Especificação readequada é submetida ao **Auditor da Entrega de Valor** para avaliação independente, mediante a Skill `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`.
 
 ## Resultado do Processo — Auditoria independente
 
@@ -131,23 +129,16 @@ Nenhuma decisão humana material irrecuperável foi identificada: a proposta é 
 
 ### Parecer independente
 
-A Formação é suficiente para a futura realização de `EV-001` sem redescoberta do valor de negócio nem redesenho da solução técnica de alto nível.
+O Auditor da Entrega de Valor avaliou independentemente a readequação da Especificação da EV-001, decorrente da intervenção material mandatória do Owner:
 
-A intenção de valor, o beneficiário e o resultado observável são coerentes com a capacidade aprovada de M-001 e com a cadeia `EV-001 → M-001 → P-001 → N-001`. A fronteira é finita e coesa: conduz a Necessidade até o Compromisso decidido pelo Owner e disponível a M-002, sem incorporar a materialização do Projeto, a coordenação posterior ou a verificação de software. O Mapa canônico e o registro principal concordam em identidade, código e Módulo proprietário; não há evidência de sobreposição material ou de problema estrutural de delimitação.
+1. **Aderência à Decisão do Owner:** A baseline técnica foi formalmente realinhada para Node.js (TypeScript) com PostgreSQL, interface web responsiva e worker em background desacoplado, revogando expressamente a presunção técnica anterior.
+2. **Suficiência Conceitual e Arquitetural:** A solução técnica de alto nível detalha claramente os componentes lógicos (Serviço Web, Worker em background, Domínio puro e Persistência relacional) mantendo o desacoplamento das regras de negócio em relação aos adaptadores de entrada e saída.
+3. **Preservação de Fronteiras e Invariantes:** A fronteira de valor com M-001 e a cadeia causal `EV-001 → M-001 → P-001 → N-001` permanecem intactas. Os invariantes de negócio (separação rigorosa entre Status, histórico, Resultados do Processo e decisões humanas) continuam integralmente assegurados.
+4. **Viabilidade de Realização:** Os critérios verificáveis e as diretrizes de teste fornecem base inequívoca para que o Especialista em Planejamento da Realização elabore novo Plano de Realização e decomponha os Itens de Trabalho sob a nova baseline sem ambiguidades.
 
-A Especificação torna explícitos o comportamento esperado, as regras de integridade, os dados e estados que precisam permanecer separados, os contratos lógicos com identidade do Owner, M-002 e M-004, a proposta de monólito modular e os critérios verificáveis. A proposta de Baseline Essencial está classificada como proposta restrita a esta EV; ela não é apresentada como decisão superior já aprovada. Riscos e desconhecidos relevantes — identidade concreta, transporte, persistência compartilhada, concorrência, orquestração, retenção e escala — têm fronteiras e tratamento explícitos. Eles não exigem redescoberta de valor ou arquitetura de alto nível: sua concretização pode ocorrer localmente na realização, preservando os contratos e invariantes definidos.
-
-As evidências consideradas foram o registro e o Mapa de EV-001, a Especificação Técnica aprovada de M-001, a Direção formada de P-001, o Compromisso de N-001 e as normas de Entrega de Valor, incluindo o Catálogo de Baselines Técnicas. Não foi identificada lacuna de Formação, Delimitação ou nível superior que impeça o marco atual.
+Conclui-se formalmente pela emissão do Resultado do Processo **`FORMACAO_SUFICIENTE`**, habilitando a transição de `EM_FORMACAO` para **`FORMADA`**.
 
 ### Handoff da auditoria
 
-A Especificação está disponível para futura Realização e `EV-001` alcança `FORMADA`. A vertical de Work Item, os mecanismos operacionais de início da Realização e o Ator executor correspondente ainda não estão definidos; portanto, esta auditoria não inicia Realização, não cria trabalho executável e encerra no handoff para a futura camada competente quando ela for materializada.
-
-## Realização
-
-* **Plano de Realização da Entrega de Valor:** [plano-de-realizacao.md](plano-de-realizacao.md)
-* **Ator responsável pelo planejamento:** Especialista em Planejamento da Realização
-* **Gatilho de Início da Realização:** Plano de Realização elaborado e aprovado com a materialização dos Itens de Trabalho `IT-001` a `IT-004`.
-* **Transição de Status:** `FORMADA` → `EM_REALIZACAO`
-* **Próxima etapa executável:** Atribuição do item de trabalho inicial `IT-001` (status `PRONTO_PARA_EXECUCAO`) ao Ator **Engenheiro de Software**.
+A Especificação readequada está validamente disponível e a `EV-001` transiciona para o status **`FORMADA`**. O próximo passo legítimo é o acionamento do **Especialista em Planejamento da Realização** para concepção do novo Plano de Realização alinhado à stack Node.js/TypeScript/PostgreSQL e materialização dos novos Itens de Trabalho.
 

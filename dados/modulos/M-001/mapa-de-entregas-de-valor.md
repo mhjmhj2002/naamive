@@ -23,9 +23,8 @@ Foram recuperados proporcionalmente a [Direção do P-001](../../projetos/P-001/
 | --- | --- |
 | Identificador técnico | `80264aa7-5243-4396-a99e-e33e38aca286` |
 | Módulo proprietário | [M-001 — Condução da Necessidade](modulo.md) |
-| Status | `EM_REALIZACAO` |
+| Status | `FORMADA` |
 | Registro principal | [EV-001 — Compromisso da Necessidade](../../entregas-de-valor/EV-001/entrega-de-valor.md) |
-| Plano de Realização | [Plano de Realização da EV-001](../../entregas-de-valor/EV-001/plano-de-realizacao.md) |
 
 * **Declaração de valor:** permitir que uma demanda seja conduzida até um Compromisso da Necessidade decidido explicitamente pelo Owner e disponível ao Projeto.
 * **Beneficiário relevante:** pessoa ou equipe que apresenta a demanda e o Owner responsável por decidir seu compromisso.

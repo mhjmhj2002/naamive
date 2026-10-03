@@ -6,22 +6,23 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas com Especificações Técnicas aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor e suas quatro Skills principais estão materializadas. A instância `EV-001 — Compromisso da Necessidade` foi formada e aprovada por auditoria independente com `FORMACAO_SUFICIENTE`.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas com Especificações Técnicas aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor e suas quatro Skills principais estão materializadas.
 
-A transição legítima da Entrega de Valor para a camada de Realização foi concluída com sucesso pelo Ator **Especialista em Planejamento da Realização** (conforme a Skill `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`):
-1. Foi elaborado e aprovado o **Plano de Realização da Entrega de Valor** (`dados/entregas-de-valor/EV-001/plano-de-realizacao.md`), baseado na Baseline Essencial (Java 21, Spring Boot, PostgreSQL);
-2. Foram materializados os 4 Itens de Trabalho da EV-001 (`IT-001` a `IT-004`) em `dados/itens-de-trabalho/`, com grafo DAG de dependências explícito;
-3. O status de `EV-001` foi formalmente atualizado de `FORMADA` para `EM_REALIZACAO` no registro principal da EV e no Mapa do Módulo M-001;
-4. O item de trabalho de fundação `IT-001` foi disponibilizado no status `PRONTO_PARA_EXECUCAO`.
+Ocorreu intervenção material obrigatória de arquitetura pelo **Owner**: o produto NAAMIVE deve ser desenvolvido em **Node.js (TypeScript)** com **PostgreSQL**, dotado de interface web responsiva e worker em background para execução contínua, revogando expressamente a presunção indevida anterior de Java 21 / Spring Boot.
+
+Em cumprimento legítimo a essa decisão soberana:
+1. Os artefatos da camada de realização atrelados à baseline anterior foram expurgados (`dados/entregas-de-valor/EV-001/plano-de-realizacao.md` e o diretório `dados/itens-de-trabalho/`);
+2. A instância `EV-001` retornou ao estado de formação e teve sua Especificação de Arquitetura e Decisões Técnicas formalmente readequada para a stack Node.js/TypeScript/PostgreSQL com worker desacoplado;
+3. O Ator independente **Auditor da Entrega de Valor** realizou novo rito de avaliação e emitiu o Resultado do Processo **`FORMACAO_SUFICIENTE`**;
+4. O status de `EV-001` foi transicionado para **`FORMADA`** no registro principal e no Mapa de Entregas de Valor de M-001.
 
 ## Governança transversal
 
 * Localização normativa: `documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md`
 * Descoberta tardia de lacuna não faz a condução retornar automaticamente a vertical ou Status anterior; marcos validamente alcançados e o histórico permanecem preservados.
+* Intervenções do Owner constituem Decisões Humanas Materiais de autoridade máxima, com poder vinculante e imediato sobre a direção técnica.
 * Ator agêntico pode identificar e propor Débito, mas sua validade depende de revisão e decisão humana competente.
 * As naturezas conceituais iniciais são `Débito de Governança` e `Débito da Demanda`; Débito reconhecido pode ser bloqueante ou não bloqueante.
-* Um Débito bloqueante impede o avanço pelo próximo marco dele dependente, sem provocar regressão; origem ou competência de tratamento é distinta da posição atual do ciclo.
-* Entidade física, ciclo de vida, Status, armazenamento, fluxo de resolução e mecanismos de bloqueio de Débitos continuam não modelados.
 
 ## Entidades ativas
 
@@ -49,7 +50,7 @@ A transição legítima da Entrega de Valor para a camada de Realização foi co
 * Mapa canônico do P-001: `dados/projetos/P-001/mapa-de-modulos.md`
 * Entrada: `Direção do Projeto` aprovada por `FORMACAO_SUFICIENTE`
 * M-001 — Condução da Necessidade: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-001/mapa-de-entregas-de-valor.md` (registra EV-001 em `EM_REALIZACAO`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-001/mapa-de-entregas-de-valor.md` (registra EV-001 em `FORMADA`)
 * M-002 — Formação do Projeto: `FORMADO`
 * M-003 — Coordenação do Trabalho: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE`
 * M-004 — Contexto e Rastreabilidade: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE`
@@ -62,41 +63,24 @@ A transição legítima da Entrega de Valor para a camada de Realização foi co
 * Módulo proprietário: `M-001`
 * Mapa canônico: `dados/modulos/M-001/mapa-de-entregas-de-valor.md`
 * Registro principal: `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
-* Plano de Realização: `dados/entregas-de-valor/EV-001/plano-de-realizacao.md`
-* Status atual: `EM_REALIZACAO`
-* Solução planejada: Baseline Essencial (Java 21, Spring Boot, PostgreSQL,Flyway, monólito modular).
-
-### Itens de Trabalho da EV-001 (Camada de Realização)
-
-* Localização normativa: `documentacao/item-de-trabalho/`
-* Catálogo de instâncias ativas:
-  - `IT-001`: Estrutura Base, Esquema de Persistência e Modelo Transacional — Status: `PRONTO_PARA_EXECUCAO` (disponível para execução)
-  - `IT-002`: Domínio da Necessidade, Regras de Transição e Composição do Compromisso — Status: `CRIADO` (depende de IT-001)
-  - `IT-003`: Adaptador de Autenticação do Owner e Portas de Integração — Status: `CRIADO` (depende de IT-002)
-  - `IT-004`: Adaptador Web/HTTP e Suíte de Verificação Local Integrada — Status: `CRIADO` (depende de IT-003)
+* Status atual: `FORMADA`
+* Decisão Material do Owner de Arquitetura: Node.js (TypeScript), PostgreSQL, interface web responsiva e worker contínuo em background.
+* Resultado do Processo vigente: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor.
 
 ## Estado do bloqueio
 
-**DESBLOQUEADO.** A camada de realização foi ativada legitimamente. O primeiro item técnico de trabalho (`IT-001`) está pronto e aguardando execução pelo Engenheiro de Software.
+**DESBLOQUEADO.** A especificação da EV-001 foi readequada e aprovada com sucesso. A Entrega de Valor está apta para um novo ciclo legítimo de Planejamento da Realização sob a stack determinada pelo Owner.
 
 ## Próxima ação legítima
 
-Acionar o Ator agêntico **Engenheiro de Software** (carregando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) sobre a instância `IT-001` (`dados/itens-de-trabalho/IT-001/item-de-trabalho.md`), para:
-1. Transicionar o status de `IT-001` de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO`;
-2. Inicializar a estrutura base do projeto Java 21 / Spring Boot com migrações Flyway e entidades de persistência conforme a Especificação de EV-001 e os critérios de aceitação de IT-001;
-3. Executar a compilação e a suíte de testes locais de IT-001;
-4. Registrar as evidências de execução e transicionar `IT-001` para `CONCLUIDO` (com `EXECUCAO_CONCLUIDA`), habilitando a prontidão de `IT-002`.
-
-## Débitos e Gaps Identificados no Teste de Fogo
-
-* **Débito de Governança — Baseline Técnica sem Decisão Humana Material do Owner**:
-  - **Contexto do achado**: A baseline técnica (stack/linguagem/frameworks) foi assumida diretamente na Formação da Entrega de Valor sem rito formal de Decisão Humana Material do Owner. No modelo do NAAMIVE em produção, a escolha ou restrição de stack deve pertencer ao Owner (nível Projeto/Módulo ou Formação da EV), não podendo ser imposta tacitamente por agente.
-  - **Tratamento previsto**: Não bloqueante para o teste de fogo em curso; a ser saneado no refinamento normativo da vertical Entrega de Valor (e/ou Projeto/Módulo) após o término do teste.
+Acionar o Ator agêntico **Especialista em Planejamento da Realização** (carregando a Skill `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) sobre a instância `EV-001` (`dados/entregas-de-valor/EV-001/entrega-de-valor.md`), para:
+1. Elaborar novo **Plano de Realização da Entrega de Valor** (`dados/entregas-de-valor/EV-001/plano-de-realizacao.md`) concebido para Node.js/TypeScript e PostgreSQL com interface web responsiva e worker em background;
+2. Decompor e materializar os novos Itens de Trabalho em `dados/itens-de-trabalho/` com grafo DAG de dependências explícito;
+3. Transicionar `EV-001` de `FORMADA` para `EM_REALIZACAO` e disponibilizar o primeiro item de trabalho técnico em `PRONTO_PARA_EXECUCAO`.
 
 ## Lacunas e limites vigentes
 
-* Nenhuma linha de código de software foi implementada ainda nesta atividade (respeitando o limite estrito da Skill do Especialista em Planejamento da Realização).
-* Persistência, infraestrutura física e pipeline CI/CD continuam no escopo local dos testes e da Baseline Essencial sem exigência de provisionamento externo antecipado.
+* Nenhuma linha de código de software foi implementada (respeito estrito aos papéis e à proibição de implementação direta).
 * O consumo final de evidências pelo Verificador Agregado do Projeto e os efeitos em `CONCLUIDO` do P-001 e `ATENDIDA` da N-001 continuam sem caminho operacional formalizado.
 
 ## Arquivos mínimos para continuar
@@ -105,7 +89,6 @@ Acionar o Ator agêntico **Engenheiro de Software** (carregando a Skill `.agents
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `documentacao/item-de-trabalho/01_DEFINICAO_DO_ITEM_DE_TRABALHO.md` a `07_RESULTADOS_DO_PROCESSO_DO_ITEM_DE_TRABALHO.md`
-* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+* `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
 * `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
-* `dados/entregas-de-valor/EV-001/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-001/item-de-trabalho.md`
+* `dados/modulos/M-001/mapa-de-entregas-de-valor.md`
