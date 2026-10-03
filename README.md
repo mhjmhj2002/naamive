@@ -46,6 +46,12 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 * [Auditoria da Entrega de Valor](.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md)
 * [Verificação da Entrega de Valor](.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md)
 
+### Item de Trabalho (Realização)
+
+* [Planejamento da Realização](.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md)
+* [Execução do Item de Trabalho](.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md)
+* [Integração da Realização](.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md)
+
 ## Documentação
 
 ### Governança
@@ -100,6 +106,16 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 
 * [Catálogo de Baselines Técnicas](documentacao/entrega-de-valor/referencias/CATALOGO_DE_BASELINES_TECNICAS.md)
 
+### Item de Trabalho (Realização)
+
+* [Definição do Item de Trabalho](documentacao/item-de-trabalho/01_DEFINICAO_DO_ITEM_DE_TRABALHO.md)
+* [Modelo de Item de Trabalho](documentacao/item-de-trabalho/02_MODELO_DE_ITEM_DE_TRABALHO.md)
+* [Atores do Item de Trabalho](documentacao/item-de-trabalho/03_ATORES_DO_ITEM_DE_TRABALHO.md)
+* [Planejamento e Decomposição](documentacao/item-de-trabalho/04_PLANEJAMENTO_E_DECOMPOSICAO.md)
+* [Ciclo de Vida do Item de Trabalho](documentacao/item-de-trabalho/05_CICLO_DE_VIDA_DO_ITEM_DE_TRABALHO.md)
+* [Status do Item de Trabalho](documentacao/item-de-trabalho/06_STATUS_DO_ITEM_DE_TRABALHO.md)
+* [Resultados do Processo do Item de Trabalho](documentacao/item-de-trabalho/07_RESULTADOS_DO_PROCESSO_DO_ITEM_DE_TRABALHO.md)
+
 ## Dados operacionais
 
 ### Necessidades
@@ -114,10 +130,15 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 ### Módulos
 
 * [M-001 — Condução da Necessidade](dados/modulos/M-001/modulo.md)
+  * [Mapa de Entregas de Valor de M-001](dados/modulos/M-001/mapa-de-entregas-de-valor.md)
 * [M-002 — Formação do Projeto](dados/modulos/M-002/modulo.md)
 * [M-003 — Coordenação do Trabalho](dados/modulos/M-003/modulo.md)
 * [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md)
 * [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)
+
+### Entregas de Valor
+
+* [EV-001 — Compromisso da Necessidade](dados/entregas-de-valor/EV-001/entrega-de-valor.md)
 
 ## Estrutura atual
 
@@ -149,14 +170,21 @@ CONTINUIDADE_ATUAL.md
         │   └── SKILL.md
         └── auditoria-do-modulo/
             └── SKILL.md
-    └── entrega-de-valor/
-        ├── delimitacao-de-entregas-de-valor/
+    ├── entrega-de-valor/
+    │   ├── delimitacao-de-entregas-de-valor/
+    │   │   └── SKILL.md
+    │   ├── formacao-da-entrega-de-valor/
+    │   │   └── SKILL.md
+    │   ├── auditoria-da-entrega-de-valor/
+    │   │   └── SKILL.md
+    │   └── verificacao-da-entrega-de-valor/
+    │       └── SKILL.md
+    └── item-de-trabalho/
+        ├── planejamento-da-realizacao/
         │   └── SKILL.md
-        ├── formacao-da-entrega-de-valor/
+        ├── execucao-do-item-de-trabalho/
         │   └── SKILL.md
-        ├── auditoria-da-entrega-de-valor/
-        │   └── SKILL.md
-        └── verificacao-da-entrega-de-valor/
+        └── integracao-da-realizacao/
             └── SKILL.md
 
 documentacao/
@@ -188,16 +216,24 @@ documentacao/
     ├── 05_CICLO_DE_VIDA_DO_MODULO.md
     ├── 06_STATUS_DO_MODULO.md
     └── 07_RESULTADOS_DO_PROCESSO_DO_MODULO.md
-└── entrega-de-valor/
-    ├── 01_DEFINICAO_DA_ENTREGA_DE_VALOR.md
-    ├── 02_MODELO_DE_ENTREGA_DE_VALOR.md
-    ├── 03_ATORES_DA_ENTREGA_DE_VALOR.md
-    ├── 04_FORMACAO_DA_ENTREGA_DE_VALOR.md
-    ├── 05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md
-    ├── 06_STATUS_DA_ENTREGA_DE_VALOR.md
-    ├── 07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md
-    └── referencias/
-        └── CATALOGO_DE_BASELINES_TECNICAS.md
+├── entrega-de-valor/
+│   ├── 01_DEFINICAO_DA_ENTREGA_DE_VALOR.md
+│   ├── 02_MODELO_DE_ENTREGA_DE_VALOR.md
+│   ├── 03_ATORES_DA_ENTREGA_DE_VALOR.md
+│   ├── 04_FORMACAO_DA_ENTREGA_DE_VALOR.md
+│   ├── 05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md
+│   ├── 06_STATUS_DA_ENTREGA_DE_VALOR.md
+│   ├── 07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md
+│   └── referencias/
+│       └── CATALOGO_DE_BASELINES_TECNICAS.md
+└── item-de-trabalho/
+    ├── 01_DEFINICAO_DO_ITEM_DE_TRABALHO.md
+    ├── 02_MODELO_DE_ITEM_DE_TRABALHO.md
+    ├── 03_ATORES_DO_ITEM_DE_TRABALHO.md
+    ├── 04_PLANEJAMENTO_E_DECOMPOSICAO.md
+    ├── 05_CICLO_DE_VIDA_DO_ITEM_DE_TRABALHO.md
+    ├── 06_STATUS_DO_ITEM_DE_TRABALHO.md
+    └── 07_RESULTADOS_DO_PROCESSO_DO_ITEM_DE_TRABALHO.md
 
 dados/
 ├── necessidades/
@@ -207,9 +243,10 @@ dados/
     └── P-001/
         ├── mapa-de-modulos.md
         └── projeto.md
-└── modulos/
+├── modulos/
     ├── M-001/
-    │   └── modulo.md
+    │   ├── modulo.md
+    │   └── mapa-de-entregas-de-valor.md
     ├── M-002/
     │   └── modulo.md
     ├── M-003/
@@ -218,6 +255,9 @@ dados/
     │   └── modulo.md
     └── M-005/
         └── modulo.md
+└── entregas-de-valor/
+    └── EV-001/
+        └── entrega-de-valor.md
 ```
 
 O `README.md` responde onde está cada coisa. O `CONTINUIDADE_ATUAL.md` responde onde o trabalho está agora.

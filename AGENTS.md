@@ -127,3 +127,10 @@ Um agente não deve usar a Skill de outro Ator para acumular responsabilidades i
 * `formacao-da-entrega-de-valor` → `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`
 * `auditoria-da-entrega-de-valor` → `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`
 * `verificacao-da-entrega-de-valor` → `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
+
+#### Item de Trabalho (Realização)
+
+* `planejamento-da-realizacao` → `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
+* `execucao-do-item-de-trabalho` → `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+* `integracao-da-realizacao` → `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
+
