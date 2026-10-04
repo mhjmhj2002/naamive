@@ -8,7 +8,7 @@
 | Código | `IT-018` |
 | Entrega de Valor proprietária | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Módulo de proveniência | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `CRIADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 
@@ -24,3 +24,7 @@
 2. **Invariante de Não Presunção:** Avaliação de critério sem evidências associadas produz estritamente a conclusão `EVIDENCIA_INSUFICIENTE`, sem presumir sucesso.
 3. **Detecção de Divergências e Inconsistências:** Evidências contraditórias ou que falham em satisfazer as condições do critério geram conclusões `CRITERIO_NAO_DEMONSTRADO` ou `DIVERGENCIA_ENCONTRADA` com fundamentação detalhada.
 4. **Verificação Estrita:** Aprovação em `npm run typecheck`, `npm run build` e suíte de testes unitários com 100% de cobertura das regras de domínio.
+
+## Handoff do IT-017
+
+Com a conclusão do `IT-017` (`EXECUCAO_CONCLUIDA`) e a consolidação do esquema relacional na migração `007_esquema_verificacao_software.sql`, a dependência prévia do `IT-018` foi plenamente satisfeita. O item avança para **`PRONTO_PARA_EXECUCAO`** e fica disponível para atuação do **Engenheiro de Software** na modelagem das entidades puras e motor de avaliação do núcleo de domínio de verificação.

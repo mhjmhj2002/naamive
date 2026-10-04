@@ -8,7 +8,7 @@
 | Código | `IT-017` |
 | Entrega de Valor proprietária | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Módulo de proveniência | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -25,6 +25,20 @@
 3. **Compatibilidade com pg-mem e PostgreSQL Real:** Execução bem-sucedida das migrações em ambiente real PostgreSQL e na biblioteca de emulação `pg-mem` utilizada nos testes unitários e de integração.
 4. **Verificação Estrita:** Aprovação em `npm run typecheck`, `npm run build` e suíte de testes com cobertura da migração.
 
-## Handoff do Planejamento da Realização
+## Execução e Evidências
 
-O **IT-017** foi ativado pelo **Especialista em Planejamento da Realização** com status **`PRONTO_PARA_EXECUCAO`**, uma vez que não possui dependências técnicas pendentes e a EV-005 encontra-se em `EM_REALIZACAO`. O item está formalmente liberado para ser assumido pelo Ator **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para início da implementação da migração `migrations/007_esquema_verificacao_software.sql` e seus testes automatizados associados.
+* **Executor:** Ator agêntico Engenheiro de Software (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`).
+* **Artefatos produzidos / alterados:**
+  - `migrations/007_esquema_verificacao_software.sql`: script DDL ANSI/PostgreSQL contendo a criação das tabelas `resultados_software`, `criterios_verificaveis`, `evidencias_verificacao` e `laudos_verificacao`, com restrições explícitas de chave primária, chaves estrangeiras com cascata controlada, constraints CHECK de métodos de observação e conclusões de verificação, colunas JSONB para telemetria/evidências e índices especializados.
+  - `tests/it017-esquema-relacional-verificacao.test.ts`: suíte de testes de migração cobrindo a execução da migração 007, verificação da existência de todas as tabelas, integridade de constraints de unicidade (`codigo_referencia`, par `resultado_software_id, criterio_id`), validação de enums/CHECK de métodos e conclusões técnicas, e integridade referencial com cascata.
+* **Resultado de testes locais:**
+  - `npm run typecheck`: 100% de sucesso sem erros de tipagem TypeScript.
+  - `npm run build`: compilação concluída com êxito (`tsc`).
+  - `vitest run tests/it017-esquema-relacional-verificacao.test.ts`: 2 testes aprovados com 100% de sucesso.
+  - Suíte completa (`npm test`): 17 arquivos de teste e 112 testes aprovados com 100% de sucesso sem regressões.
+* **Conclusão técnica:** Todos os 4 critérios técnicos de aceitação foram integralmente atendidos.
+
+## Resultado do Processo
+
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04
