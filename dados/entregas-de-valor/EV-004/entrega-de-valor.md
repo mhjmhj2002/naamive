@@ -181,8 +181,29 @@ A avaliação conclui que a Formação é **suficiente para permitir futura real
 
 Com a emissão de `FORMACAO_SUFICIENTE`, o marco de formação é superado. A Especificação da Entrega de Valor torna-se validamente disponível para consumo posterior e o status da EV-004 avança legitimamente de `EM_FORMACAO` para **`FORMADA`**.
 
-## Próximo passo e realização técnica
+## Realização da Entrega de Valor
 
-Com a aprovação do [Plano de Realização](plano-de-realizacao.md) pelo Especialista em Planejamento da Realização e a decomposição nos Itens de Trabalho `IT-013` a `IT-016`, a Entrega de Valor transicionou formalmente para **`EM_REALIZACAO`**. O item inicial [IT-013](../../itens-de-trabalho/IT-013/item-de-trabalho.md) está com status `PRONTO_PARA_EXECUCAO` e apto para atribuição ao Ator agêntico **Engenheiro de Software**.
+O **Especialista em Planejamento da Realização** elaborou formalmente o [Plano de Realização da EV-004](plano-de-realizacao.md), decompondo a realização técnica da EV-004 em quatro Itens de Trabalho ordenados em grafo acíclico (`IT-013`, `IT-014`, `IT-015` e `IT-016`).
+
+Com a aprovação do Plano de Realização e a disponibilização do primeiro item com status `PRONTO_PARA_EXECUCAO` (`IT-013`), a Entrega de Valor transicionou legitimamente para o status **`EM_REALIZACAO`**.
+
+### Conclusão dos Itens de Trabalho e Integração Técnica
+
+Todos os quatro Itens de Trabalho da cadeia de realização da EV-004 foram executados e concluídos com sucesso absoluto (`EXECUCAO_CONCLUIDA`):
+* [`IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações`](../../itens-de-trabalho/IT-013/item-de-trabalho.md): `CONCLUIDO`
+* [`IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional`](../../itens-de-trabalho/IT-014/item-de-trabalho.md): `CONCLUIDO`
+* [`IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background`](../../itens-de-trabalho/IT-015/item-de-trabalho.md): `CONCLUIDO`
+* [`IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada`](../../itens-de-trabalho/IT-016/item-de-trabalho.md): `CONCLUIDO`
+
+O Ator agêntico **Integrador da Realização**, atuando sob a Skill `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`:
+1. Validou a tipagem estrita via `npm run typecheck` (sem erros);
+2. Validou a compilação global do sistema via `npm run build` (sucesso absoluto);
+3. Executou a suíte integrada completa de testes via `npm test` (**16/16 arquivos de teste aprovados e 110/110 testes verdes — 100% de sucesso**);
+4. Declarou a prontidão técnica global do software integrado e emitiu o Resultado do Processo **`REALIZACAO_INTEGRADA`** em 2026-10-04, devidamente registrado no [Plano de Realização](plano-de-realizacao.md).
+
+### Handoff para Verificação da Entrega de Valor
+
+A Entrega de Valor permanece no status **`EM_REALIZACAO`**. O software integrado da `EV-004` encontra-se operacionalmente disponível, e o **Integrador da Realização** formalizou o handoff oficial para o Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`), para que proceda à avaliação substantiva da realização frente aos critérios de valor, beneficiários relevantes e resultados observáveis prometidos na Especificação da EV-004.
+
 
 

@@ -4,13 +4,15 @@
 
 NAAMIVE
 
+
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu integralmente a **Execução Técnica dos Itens de Trabalho** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
+O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Integração da Realização** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
 
-1. O Ator agêntico competente **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) concluiu com 100% de sucesso a execução técnica do [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
-2. Foram implementadas as rotas HTTP (`/rastreabilidade`, `/rastreabilidade/auditar`, `/rastreabilidade/consulta`, `/rastreabilidade/:entidade/:codigo`), templates responsivos com Bootstrap 5 (`renderizarPainelRastreabilidade`, `renderizarDetalhesRastreabilidade`, navbar atualizada com EV-004 e link para Rastreabilidade) com suporte a badges epistêmicas, indicadores de vigência e filtros de contexto por finalidade declarada, além de injeção no servidor web e suíte de testes integrados com 5 novos testes passando com 100% de aprovação (`tests/it016-camada-web-rastreabilidade.test.ts`).
-3. Com a conclusão de `IT-016`, todos os 4 Itens de Trabalho planejados da EV-004 (`IT-013`, `IT-014`, `IT-015` e `IT-016`) estão com status **`CONCLUIDO`**, totalizando 16 arquivos de testes e 110 testes unitários e de integração verdes sem regressões em `npm test`, `npm run typecheck` e `npm run build`.
+1. O Ator agêntico competente **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`) validou a prontidão técnica global do software integrado da EV-004.
+2. Foram validados os 4 Itens de Trabalho da EV-004 (`IT-013`, `IT-014`, `IT-015` e `IT-016`), todos em status `CONCLUIDO` com `EXECUCAO_CONCLUIDA`.
+3. Foram aprovadas a tipagem estrita (`npm run typecheck`), compilação (`npm run build`) e a suíte integrada completa de testes (`npm test` com **16 arquivos de teste e 110 testes automatizados verdes sem regressões**).
+4. O Integrador da Realização emitiu formalmente o Resultado do Processo **`REALIZACAO_INTEGRADA`**, devidamente registrado no [Plano de Realização da EV-004](dados/entregas-de-valor/EV-004/plano-de-realizacao.md) e na [EV-004](dados/entregas-de-valor/EV-004/entrega-de-valor.md), entregando o handoff oficial para o Ator **Verificador da Entrega de Valor**.
 
 ## Governança transversal e Débitos
 
@@ -88,7 +90,8 @@ O ciclo de vida do NAAMIVE concluiu integralmente a **Execução Técnica dos It
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
-  - Situação: Todos os 4 Itens de Trabalho concluídos com 100% de sucesso; pronto para atuação do Integrador da Realização.
+  - Parecer de Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização
+  - Situação: Realização técnica interna concluída; entregue formalmente ao Verificador da Entrega de Valor.
 
 ### Itens de Trabalho Concluídos (EV-004)
 
@@ -109,18 +112,19 @@ O ciclo de vida do NAAMIVE concluiu integralmente a **Execução Técnica dos It
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* Todos os itens de trabalho da `EV-004` foram concluídos com sucesso.
+* Todos os itens de trabalho da `EV-004` foram concluídos e integrados com sucesso.
 
 ## Próxima ação legítima
 
-1. Atuação do **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`): validar a integração técnica global de todos os Itens de Trabalho da `EV-004`, checar a suíte integrada de compilação e testes, emitir o parecer formal `REALIZACAO_INTEGRADA` e entregar o handoff oficial para o **Verificador da Entrega de Valor**.
+1. Atuação do **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`): avaliar substantivamente o software integrado frente à Especificação da `EV-004`, à intenção de valor pretendida, aos beneficiários relevantes e aos critérios verificáveis, emitindo o laudo técnico (`EVOLUCAO_MATERIALIZADA` ou `EVOLUCAO_NAO_MATERIALIZADA`) e preparando o acionamento do Owner para homologação soberana.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
 * `dados/entregas-de-valor/EV-004/entrega-de-valor.md`
-* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
+* `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
+* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
+
 
