@@ -158,6 +158,7 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 * [M-001 — Condução da Necessidade](dados/modulos/M-001/modulo.md)
   * [Mapa de Entregas de Valor de M-001](dados/modulos/M-001/mapa-de-entregas-de-valor.md)
 * [M-002 — Formação do Projeto](dados/modulos/M-002/modulo.md)
+  * [Mapa de Entregas de Valor de M-002](dados/modulos/M-002/mapa-de-entregas-de-valor.md)
 * [M-003 — Coordenação do Trabalho](dados/modulos/M-003/modulo.md)
 * [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md)
 * [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)
@@ -166,6 +167,8 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 
 * [EV-001 — Compromisso da Necessidade](dados/entregas-de-valor/EV-001/entrega-de-valor.md)
   * [Plano de Realização da EV-001](dados/entregas-de-valor/EV-001/plano-de-realizacao.md)
+* [EV-002 — Direção do Projeto](dados/entregas-de-valor/EV-002/entrega-de-valor.md)
+  * [Plano de Realização da EV-002](dados/entregas-de-valor/EV-002/plano-de-realizacao.md)
 
 ### Itens de Trabalho
 
@@ -289,7 +292,8 @@ dados/
     │   ├── modulo.md
     │   └── mapa-de-entregas-de-valor.md
     ├── M-002/
-    │   └── modulo.md
+    │   ├── modulo.md
+    │   └── mapa-de-entregas-de-valor.md
     ├── M-003/
     │   └── modulo.md
     ├── M-004/
@@ -297,7 +301,10 @@ dados/
     └── M-005/
         └── modulo.md
 └── entregas-de-valor/
-    └── EV-001/
+    ├── EV-001/
+    │   ├── entrega-de-valor.md
+    │   └── plano-de-realizacao.md
+    └── EV-002/
         ├── entrega-de-valor.md
         └── plano-de-realizacao.md
 dados/itens-de-trabalho/

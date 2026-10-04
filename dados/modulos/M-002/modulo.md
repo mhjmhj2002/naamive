@@ -17,6 +17,7 @@
 * **Dentro da fronteira:** vínculo com a Necessidade, formação, auditoria da formação e Direção do Projeto.
 * **Fora da fronteira:** qualificação da Necessidade, delimitação ou formação de Módulos, coordenação da execução e verificação de resultado.
 * **Relações relevantes:** recebe o compromisso de M-001 e disponibiliza a Direção para M-003, M-004 e M-005; M-004 preserva suas evidências.
+* **Mapa de Entregas de Valor:** [Mapa de Entregas de Valor de M-002](mapa-de-entregas-de-valor.md).
 
 ## Formação técnica
 
