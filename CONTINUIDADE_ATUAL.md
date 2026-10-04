@@ -6,14 +6,13 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE progrediu com legitimidade da conclusão da `EV-002` para a **delimitação e materialização da `EV-003`** pelo **Especialista em Delimitação de Entregas de Valor**:
+O ciclo de vida do NAAMIVE progrediu com legitimidade com a conclusão da **Formação Técnica da `EV-003 — Coordenação do Trabalho Preparado`** pelo **Especialista em Formação da Entrega de Valor**:
 
 1. A **`EV-002 — Direção do Projeto`** permanece formal e soberanamente **`CONCLUIDA`** pelo Owner `mhj` (com 100% de sucesso e software validado).
-2. O **Especialista em Delimitação de Entregas de Valor**, atuando estritamente dentro de sua competência funcional sob o Módulo [M-003 — Coordenação do Trabalho](dados/modulos/M-003/modulo.md) (com status `FORMADO` e Especificação Técnica aprovada), delimitou a próxima evolução finita e observável de valor.
-3. Foi criado o registro canônico [dados/modulos/M-003/mapa-de-entregas-de-valor.md](dados/modulos/M-003/mapa-de-entregas-de-valor.md) e materializada a instância de **`EV-003 — Coordenação do Trabalho Preparado`** (identificador técnico UUID `b06d5c8e-f9d1-457b-8880-87305dc3aca6`) no status inicial normativo **`EM_FORMACAO`**.
-4. Foi criado o registro principal [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md).
-5. O [README.md](README.md) foi devidamente atualizado refletindo a estrutura navegável viva.
-6. A responsabilidade do Especialista em Delimitação foi concluída, e o handoff foi emitido para o **Especialista em Formação da Entrega de Valor**.
+2. O **Especialista em Formação da Entrega de Valor**, atuando estritamente dentro de sua competência funcional sob o registro [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md) e com base na Especificação Técnica de [M-003 — Coordenação do Trabalho](dados/modulos/M-003/modulo.md), elaborou a formação de produto e técnica de alto nível da `EV-003`.
+3. Foram definidos: declaração de valor, beneficiários, jornadas, regras de negócio, modelo de dados relacional PostgreSQL (`trabalhos_coordenados`, `handoffs_coordenacao`, `retornos_coordenacao`), contratos lógicos de casos de uso, mitigação de riscos, critérios verificáveis de aceitação, alinhamento com a Baseline Essencial / Decisão Material do Owner e justificativa de suficiência.
+4. A `EV-003` permanece em status normativo **`EM_FORMACAO`** (pois a transição para `FORMADA` depende exclusivamente do parecer formal do Auditor).
+5. A responsabilidade do Especialista em Formação da Entrega de Valor foi concluída, e o **handoff foi emitido para o Auditor da Entrega de Valor** para avaliação independente da formação.
 
 ## Governança transversal e Débitos
 
@@ -81,9 +80,9 @@ O ciclo de vida do NAAMIVE progrediu com legitimidade da conclusão da `EV-002` 
   - Identificador técnico: `b06d5c8e-f9d1-457b-8880-87305dc3aca6`
   - Módulo proprietário: `M-003 — Coordenação do Trabalho`
   - Status atual: **`EM_FORMACAO`**
-  - Registro principal: `dados/entregas-de-valor/EV-003/entrega-de-valor.md`
-  - Mapa de origem: `dados/modulos/M-003/mapa-de-entregas-de-valor.md`
-  - Handoff: Entregue pelo Especialista em Delimitação de Entregas de Valor para o Especialista em Formação da Entrega de Valor.
+  - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
+  - Situação da Formação: Formação técnica de alto nível e especificação de produto concluídas pelo Especialista em Formação da Entrega de Valor.
+  - Handoff: Entregue ao **Auditor da Entrega de Valor** para avaliação independente da formação.
 
 ### Itens de Trabalho (EV-002)
 
@@ -93,19 +92,20 @@ O ciclo de vida do NAAMIVE progrediu com legitimidade da conclusão da `EV-002` 
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A delimitação da `EV-003` foi realizada com sucesso e sem colisões.
-* A próxima atividade agêntica cabe ao **Especialista em Formação da Entrega de Valor**.
+* A formação técnica da `EV-003` foi detalhada sem colisões ou lacunas bloqueantes.
+* A próxima atividade agêntica cabe ao **Auditor da Entrega de Valor**.
 
 ## Próxima ação legítima
 
-1. Atuar como o **Especialista em Formação da Entrega de Valor** (utilizando a Skill `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`) para elaborar a formação técnica da `EV-003` (especificação de negócio, comportamento observável, requisitos de alto nível, contratos e arquitetura) no registro [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md).
+1. Atuar como o **Auditor da Entrega de Valor** (utilizando a Skill `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`) para realizar a avaliação independente da formação da `EV-003`, confrontando a Especificação com as fontes normativas, emitindo o parecer formal e o Resultado do Processo (`FORMACAO_SUFICIENTE` ou `FORMACAO_INSUFICIENTE`).
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`
-* `dados/modulos/M-003/mapa-de-entregas-de-valor.md`
+* `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`
+* `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
 * `dados/entregas-de-valor/EV-003/entrega-de-valor.md`
 * `dados/modulos/M-003/modulo.md`
+
