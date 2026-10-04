@@ -232,6 +232,10 @@ export class RepositorioNecessidadePostgres implements RepositorioNecessidade {
     );
     for (const h of resHist.rows) {
       if (h.atividade !== "Criação da Necessidade") {
+        const detalhes = typeof h.detalhes === "string" ? JSON.parse(h.detalhes) : h.detalhes;
+        if (detalhes?.projetoId) {
+          (nec as any)._projetoId = detalhes.projetoId;
+        }
         (nec as any)._historico.push({
           id: h.id,
           necessidadeId: h.necessidade_id,
@@ -239,7 +243,7 @@ export class RepositorioNecessidadePostgres implements RepositorioNecessidade {
           atividade: h.atividade,
           statusAnterior: h.status_anterior,
           statusNovo: h.status_novo,
-          detalhes: typeof h.detalhes === "string" ? JSON.parse(h.detalhes) : h.detalhes,
+          detalhes,
           registradoEm: new Date(h.registrado_em),
         });
       }

@@ -61,6 +61,21 @@ export interface PortaIntegracaoContexto {
 export class AdaptadorIntegracaoProjeto implements PortaIntegracaoProjeto {
   // Mapeamento em memória/persistência de projetos por necessidadeId para assegurar 1:1 e idempotência
   private readonly projetosPorNecessidade: Map<string, ConfirmacaoBootstrapProjeto> = new Map();
+  private servicoAplicacao:
+    | {
+        solicitarBootstrapProjeto(solicitacao: SolicitacaoBootstrapProjeto): Promise<ConfirmacaoBootstrapProjeto>;
+        obterProjetoPorNecessidadeId(necessidadeId: string): Promise<{ id: string; necessidadeId: string; criadoEm: Date } | null>;
+      }
+    | undefined;
+
+  constructor(
+    servicoAplicacao?: {
+      solicitarBootstrapProjeto(solicitacao: SolicitacaoBootstrapProjeto): Promise<ConfirmacaoBootstrapProjeto>;
+      obterProjetoPorNecessidadeId(necessidadeId: string): Promise<{ id: string; necessidadeId: string; criadoEm: Date } | null>;
+    } | undefined
+  ) {
+    this.servicoAplicacao = servicoAplicacao;
+  }
 
   public async solicitarBootstrapProjeto(
     solicitacao: SolicitacaoBootstrapProjeto
@@ -69,6 +84,10 @@ export class AdaptadorIntegracaoProjeto implements PortaIntegracaoProjeto {
       throw new InvarianteVioladaErro(
         "Identificador da Necessidade é obrigatório para bootstrap de Projeto no M-002."
       );
+    }
+
+    if (this.servicoAplicacao) {
+      return this.servicoAplicacao.solicitarBootstrapProjeto(solicitacao);
     }
 
     const necessidadeId = solicitacao.necessidadeId.trim();
@@ -98,6 +117,16 @@ export class AdaptadorIntegracaoProjeto implements PortaIntegracaoProjeto {
   public async obterProjetoPorNecessidade(
     necessidadeId: string
   ): Promise<ConfirmacaoBootstrapProjeto | null> {
+    if (this.servicoAplicacao) {
+      const proj = await this.servicoAplicacao.obterProjetoPorNecessidadeId(necessidadeId.trim());
+      if (!proj) return null;
+      return {
+        projetoId: proj.id,
+        necessidadeId: proj.necessidadeId,
+        criadoEm: proj.criadoEm,
+        jaExistente: true,
+      };
+    }
     return this.projetosPorNecessidade.get(necessidadeId.trim()) ?? null;
   }
 

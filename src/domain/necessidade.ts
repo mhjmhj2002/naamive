@@ -58,6 +58,7 @@ export class Necessidade {
   private _resultados: RegistroResultadoProcesso[] = [];
   private _decisoes: RegistroDecisaoOwner[] = [];
   private _compromisso: CompromissoNecessidade | null = null;
+  private _projetoId: string | null = null;
 
   constructor(dados: DadosCriacaoNecessidade, criadoEm: Date = new Date()) {
     if (!dados.id || dados.id.trim() === "") {
@@ -120,6 +121,10 @@ export class Necessidade {
 
   get compromisso(): CompromissoNecessidade | null {
     return this._compromisso;
+  }
+
+  get projetoId(): string | null {
+    return this._projetoId;
   }
 
   /**
@@ -422,6 +427,7 @@ export class Necessidade {
 
     const statusAnterior = this._status;
     this._status = StatusNecessidade.EM_PROJETO;
+    this._projetoId = projetoId;
 
     this.registrarAtividade(
       atorResponsavel,

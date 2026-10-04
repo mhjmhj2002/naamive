@@ -8,7 +8,7 @@
 | Código | `IT-007` |
 | Entrega de Valor proprietária | [EV-002 — Direção do Projeto](../../entregas-de-valor/EV-002/entrega-de-valor.md) |
 | Módulo de proveniência | [M-002 — Formação do Projeto](../../modulos/M-002/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -27,12 +27,24 @@
 
 ## Execução e Evidências
 
-* **Executor:** (A ser assumido pelo Ator Engenheiro de Software)
-* **Artefatos produzidos / alterados:** (A preencher na execução)
-* **Resultado de testes locais:** (A preencher na execução)
-* **Conclusão técnica:** (A preencher na execução)
+* **Executor:** Engenheiro de Software
+* **Artefatos produzidos / alterados:**
+  - `migrations/004_decisoes_e_historico_projeto.sql`: Migração com tabelas relacionais de histórico e decisões do Owner para o Projeto.
+  - `src/infrastructure/database/repositorio-projeto-postgres.ts`: Repositório PostgreSQL transacional com suporte a operações completas de Projeto (salvar, obterPorId, obterPorCodigo, obterPorNecessidadeId, listarTodos) e hidratação de etapas, auditorias e direções.
+  - `src/infrastructure/database/repositorio-projeto-memoria.ts`: Repositório em memória para suporte a isolamento e testes.
+  - `src/application/servico-aplicacao-projeto.ts`: Serviço de aplicação com orquestração dos casos de uso de bootstrap, avanço de etapas de formação, parecer de auditoria e geração da Direção.
+  - `src/infrastructure/adapters/integracao-modulos.ts`: `AdaptadorIntegracaoProjeto` conectado ao `ServicoAplicacaoProjeto` com devolução de `jaExistente: true` e preservação do invariante 1:1.
+  - `src/domain/necessidade.ts`: Suporte à retenção e recuperação do `projetoId` associado.
+  - `src/infrastructure/database/repositorio-postgres.ts`: Hidratação segura de `_projetoId` a partir dos metadados de vínculo 1:1.
+  - `src/server.ts` e `src/index.ts`: Injeção de dependência e exportações de domínio e infraestrutura.
+  - `tests/it007-repositorio-e-servico-projeto.test.ts`: Suíte de testes com 5 testes cobrindo persistência transacional, hidratação completa, idempotência de bootstrap, orquestração de formação/auditoria e integração assíncrona com o worker em background.
+* **Resultado de testes locais:**
+  - `npm test`: 51/51 testes passando com 100% de sucesso em 7 arquivos de teste.
+  - `npm run typecheck`: 0 erros encontrados via `tsc --noEmit`.
+  - `npm run build`: Compilação limpa com código de saída 0.
+* **Conclusão técnica:** Todos os critérios técnicos foram plenamente atendidos. O Item de Trabalho dependente subsequente (`IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada`) encontra-se com todas as dependências satisfeitas e apto a ser transicionado de `CRIADO` para `PRONTO_PARA_EXECUCAO`.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente de execução)
-* **Data / Registro:** (Pendente de execução)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04 (Concluído pelo Engenheiro de Software)

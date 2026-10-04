@@ -163,13 +163,13 @@ Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-002` tornou-se
 * **Plano de Realização consolidado:** [Plano de Realização da EV-002](plano-de-realizacao.md)
 * **Itens de Trabalho materializados:**
   - [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md): `CONCLUIDO`
-  - [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md): `PRONTO_PARA_EXECUCAO`
-  - [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md): `CRIADO`
-  - [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md): `CRIADO`
+  - [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md): `CONCLUIDO`
+  - [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md): `CONCLUIDO`
+  - [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md): `PRONTO_PARA_EXECUCAO`
 
-### Handoff do Planejamento
+### Handoff da Realização em Andamento
 
-Com a aprovação do Plano de Realização e a materialização dos Itens de Trabalho no repositório, a `EV-002` ingressou legitimamente em **`EM_REALIZACAO`**.
-O próximo Ator competente a atuar é o **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`), encarregado de assumir e executar o primeiro Item de Trabalho apto (`IT-005`).
+Com a conclusão do `IT-007`, os componentes centrais de persistência transacional PostgreSQL, orquestração de casos de uso de Projeto e sincronização de M-001/M-002 encontram-se operantes e testados com 100% de sucesso.
+O próximo Ator competente a atuar é o **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`), encarregado de assumir e executar o Item de Trabalho [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md).
 
 

@@ -6,6 +6,10 @@ import { ExecutorMigracoes } from "./infrastructure/database/migrador.js";
 import { RepositorioNecessidadePostgres } from "./infrastructure/database/repositorio-postgres.js";
 import { RepositorioNecessidadeMemoria } from "./infrastructure/database/repositorio-memoria.js";
 import { RepositorioNecessidade } from "./domain/repositorio-necessidade.js";
+import { RepositorioProjetoPostgres } from "./infrastructure/database/repositorio-projeto-postgres.js";
+import { RepositorioProjetoMemoria } from "./infrastructure/database/repositorio-projeto-memoria.js";
+import { RepositorioProjeto } from "./domain/repositorio-projeto.js";
+import { ServicoAplicacaoProjeto } from "./application/servico-aplicacao-projeto.js";
 import { AdaptadorAutenticacaoOwner } from "./infrastructure/adapters/autenticacao-owner.js";
 import {
   AdaptadorIntegracaoProjeto,
@@ -103,6 +107,7 @@ async function semearDadosIniciais(repositorio: RepositorioNecessidade): Promise
  */
 async function inicializarInfraestrutura(config: ReturnType<typeof carregarConfiguracao>): Promise<{
   repositorio: RepositorioNecessidade;
+  repositorioProjeto: RepositorioProjeto;
   filaTarefas: FilaTarefas;
   tipoPersistencia: "postgres" | "pg-mem" | "memoria";
 }> {
@@ -120,8 +125,9 @@ async function inicializarInfraestrutura(config: ReturnType<typeof carregarConfi
       await executor.executarMigracoes();
 
       const repositorio = new RepositorioNecessidadePostgres(conexao);
+      const repositorioProjeto = new RepositorioProjetoPostgres(conexao);
       const filaTarefas = new FilaTarefasPostgres(conexao);
-      return { repositorio, filaTarefas, tipoPersistencia: "postgres" };
+      return { repositorio, repositorioProjeto, filaTarefas, tipoPersistencia: "postgres" };
     } catch (err: any) {
       console.warn(`[NAAMIVE Bootstrap] PostgreSQL externo indisponível (${err.message}). Utilizando emulador relacional pg-mem.`);
     }
@@ -162,13 +168,15 @@ async function inicializarInfraestrutura(config: ReturnType<typeof carregarConfi
     await executor.executarMigracoes();
 
     const repositorio = new RepositorioNecessidadePostgres(conexaoMem);
+    const repositorioProjeto = new RepositorioProjetoPostgres(conexaoMem);
     const filaTarefas = new FilaTarefasPostgres(conexaoMem);
-    return { repositorio, filaTarefas, tipoPersistencia: "pg-mem" };
+    return { repositorio, repositorioProjeto, filaTarefas, tipoPersistencia: "pg-mem" };
   } catch (err: any) {
     console.warn(`[NAAMIVE Bootstrap] Falha ao inicializar pg-mem (${err.message}). Utilizando repositório em memória nativo.`);
     const repositorio = new RepositorioNecessidadeMemoria();
+    const repositorioProjeto = new RepositorioProjetoMemoria();
     const filaTarefas = new FilaTarefasMemoria();
-    return { repositorio, filaTarefas, tipoPersistencia: "memoria" };
+    return { repositorio, repositorioProjeto, filaTarefas, tipoPersistencia: "memoria" };
   }
 }
 
@@ -226,15 +234,16 @@ export async function iniciarSistema(): Promise<{
   const portaPretendida = config.porta;
 
   // 1. Inicializa persistência e fila
-  const { repositorio, filaTarefas, tipoPersistencia } = await inicializarInfraestrutura(config);
+  const { repositorio, repositorioProjeto, filaTarefas, tipoPersistencia } = await inicializarInfraestrutura(config);
   console.log(`[NAAMIVE Bootstrap] Persistência ativa: [${tipoPersistencia.toUpperCase()}]`);
 
   // 2. Semeia Necessidade N-001 canônica
   await semearDadosIniciais(repositorio);
 
-  // 3. Inicializa adaptadores de autenticação do Owner e integrações M-002 e M-004
+  // 3. Inicializa serviço de aplicação de projeto e adaptadores de autenticação do Owner e integrações
+  const servicoProjeto = new ServicoAplicacaoProjeto(repositorioProjeto, repositorio);
   const autenticacaoOwner = new AdaptadorAutenticacaoOwner(["mhj", "owner"]);
-  const portaProjeto = new AdaptadorIntegracaoProjeto();
+  const portaProjeto = new AdaptadorIntegracaoProjeto(servicoProjeto);
   const portaContexto = new AdaptadorIntegracaoContexto();
 
   // 4. Inicializa o Worker de background desacoplado
