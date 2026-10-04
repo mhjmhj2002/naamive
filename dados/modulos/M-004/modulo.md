@@ -17,6 +17,7 @@
 * **Dentro da fronteira:** preservação e recuperação de contexto, evidências, decisões, Resultados do Processo e rastreabilidade entre Necessidade, Projeto, trabalho e resultado.
 * **Fora da fronteira:** determinar próximo trabalho, escolher executor, tomar decisão humana e verificar substantivamente o resultado.
 * **Relações relevantes:** atende a M-001, M-002 e M-003 com contexto; fornece rastreabilidade a M-005. Não coordena seus fluxos.
+* **Mapa de Entregas de Valor:** [Mapa de Entregas de Valor de M-004](mapa-de-entregas-de-valor.md).
 
 ## Handoff
 

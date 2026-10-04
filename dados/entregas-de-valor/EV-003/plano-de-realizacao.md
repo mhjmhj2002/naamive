@@ -5,7 +5,7 @@
 * **Entrega de Valor proprietária:** [EV-003 — Coordenação do Trabalho Preparado](entrega-de-valor.md)
 * **Identificador técnico da EV:** `b06d5c8e-f9d1-457b-8880-87305dc3aca6`
 * **Módulo proprietário:** [M-003 — Coordenação do Trabalho](../../modulos/M-003/modulo.md)
-* **Status da EV:** `EM_REALIZACAO` (transicionado a partir de `FORMADA` com parecer `FORMACAO_SUFICIENTE` do Auditor da Entrega de Valor)
+* **Status da EV:** `CONCLUIDA` (com parecer `EVOLUCAO_MATERIALIZADA` e decisão soberana `HOMOLOGADO_PELO_OWNER`)
 * **Ator responsável pelo planejamento:** Especialista em Planejamento da Realização
 * **Decisão Material de Arquitetura do Owner:** Node.js (TypeScript) + PostgreSQL relacional com interface web responsiva (Bootstrap 5) e worker desacoplado em background.
 
