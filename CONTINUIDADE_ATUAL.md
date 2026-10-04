@@ -7,12 +7,12 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Integração da Realização** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
+O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Verificação da Entrega de Valor** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
 
-1. O Ator agêntico competente **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`) validou a prontidão técnica global do software integrado da EV-004.
-2. Foram validados os 4 Itens de Trabalho da EV-004 (`IT-013`, `IT-014`, `IT-015` e `IT-016`), todos em status `CONCLUIDO` com `EXECUCAO_CONCLUIDA`.
-3. Foram aprovadas a tipagem estrita (`npm run typecheck`), compilação (`npm run build`) e a suíte integrada completa de testes (`npm test` com **16 arquivos de teste e 110 testes automatizados verdes sem regressões**).
-4. O Integrador da Realização emitiu formalmente o Resultado do Processo **`REALIZACAO_INTEGRADA`**, devidamente registrado no [Plano de Realização da EV-004](dados/entregas-de-valor/EV-004/plano-de-realizacao.md) e na [EV-004](dados/entregas-de-valor/EV-004/entrega-de-valor.md), entregando o handoff oficial para o Ator **Verificador da Entrega de Valor**.
+1. O Ator agêntico competente **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) realizou a avaliação substantiva independente do software integrado frente à Especificação da EV-004, aos beneficiários relevantes, à intenção de valor e aos critérios verificáveis.
+2. Foram comprovados todos os 6 critérios de aceitação com base na suíte automatizada global de testes (**16 arquivos de teste e 110 testes automatizados verdes sem regressões — 100% de sucesso**).
+3. O Verificador emitiu formalmente o Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**, devidamente registrado na [EV-004](dados/entregas-de-valor/EV-004/entrega-de-valor.md).
+4. O laudo técnico positivo encerra a atuação do Verificador da Entrega de Valor e habilita a etapa obrigatória de **Homologação pelo Owner** (`mhj`), subsidiando a deliberação soberana para a transição terminal da EV-004 para `CONCLUIDA`.
 
 ## Governança transversal e Débitos
 
@@ -54,7 +54,7 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Integração da Real
 * M-002 — Formação do Projeto: `FORMADO` (Mapa canônico possui `EV-002` em `CONCLUIDA`)
 * M-003 — Coordenação do Trabalho: `FORMADO` (Mapa canônico possui `EV-003` em `CONCLUIDA`)
 * M-004 — Contexto e Rastreabilidade: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-004/mapa-de-entregas-de-valor.md` (registra `EV-004` em `EM_REALIZACAO`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-004/mapa-de-entregas-de-valor.md` (registra `EV-004` em `EM_REALIZACAO` com `EVOLUCAO_MATERIALIZADA`)
 * M-005 — Verificação do Resultado de Software: `FORMADO`
 
 ### Entregas de Valor
@@ -87,11 +87,12 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Integração da Real
 * **EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade:**
   - Identificador técnico: `806acc2a-8f8f-4389-a234-ca61c42f5bb3`
   - Módulo proprietário: `M-004 — Contexto e Rastreabilidade`
-  - Status atual: **`EM_REALIZACAO`**
+  - Status atual: **`EM_REALIZACAO`** (aprovada tecnicamente por `EVOLUCAO_MATERIALIZADA`, aguardando Homologação do Owner)
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
   - Parecer de Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização
-  - Situação: Realização técnica interna concluída; entregue formalmente ao Verificador da Entrega de Valor.
+  - Parecer de Verificação: `EVOLUCAO_MATERIALIZADA` emitido pelo Verificador da Entrega de Valor em 2026-10-04
+  - Situação: Verificação técnica concluída; habilitada para a Homologação do Owner.
 
 ### Itens de Trabalho Concluídos (EV-004)
 
@@ -112,11 +113,11 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Integração da Real
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* Todos os itens de trabalho da `EV-004` foram concluídos e integrados com sucesso.
+* A Verificação técnica foi concluída favoravelmente com emissão de `EVOLUCAO_MATERIALIZADA`.
 
 ## Próxima ação legítima
 
-1. Atuação do **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`): avaliar substantivamente o software integrado frente à Especificação da `EV-004`, à intenção de valor pretendida, aos beneficiários relevantes e aos critérios verificáveis, emitindo o laudo técnico (`EVOLUCAO_MATERIALIZADA` ou `EVOLUCAO_NAO_MATERIALIZADA`) e preparando o acionamento do Owner para homologação soberana.
+1. Atuação do **Owner** (`mhj`): realizar a inspeção soberana de valor da `EV-004` (utilizando os endpoints e interfaces em `/rastreabilidade` e o laudo técnico `EVOLUCAO_MATERIALIZADA`) e emitir a Decisão Humana Material de Homologação (`HOMOLOGADO_PELO_OWNER` ou `REJEITADO_PELO_OWNER`), autorizando a transição para o status terminal **`CONCLUIDA`**.
 
 ## Arquivos mínimos para continuar
 
@@ -124,7 +125,7 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Integração da Real
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-004/entrega-de-valor.md`
-* `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
-* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
+* `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
+* `documentacao/governanca/debitos/DEB-GOV-001.md`
 
 
