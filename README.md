@@ -164,6 +164,7 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 * [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md)
   * [Mapa de Entregas de Valor de M-004](dados/modulos/M-004/mapa-de-entregas-de-valor.md)
 * [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)
+  * [Mapa de Entregas de Valor de M-005](dados/modulos/M-005/mapa-de-entregas-de-valor.md)
 
 ### Entregas de Valor
 
@@ -175,6 +176,7 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
   * [Plano de Realização da EV-003](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
 * [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   * [Plano de Realização da EV-004](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
+* [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
 
 ### Itens de Trabalho
 
@@ -319,7 +321,8 @@ dados/
     │   ├── modulo.md
     │   └── mapa-de-entregas-de-valor.md
     └── M-005/
-        └── modulo.md
+        ├── modulo.md
+        └── mapa-de-entregas-de-valor.md
 └── entregas-de-valor/
     ├── EV-001/
     │   ├── entrega-de-valor.md
@@ -330,9 +333,11 @@ dados/
     ├── EV-003/
     │   ├── entrega-de-valor.md
     │   └── plano-de-realizacao.md
-    └── EV-004/
-        ├── entrega-de-valor.md
-        └── plano-de-realizacao.md
+    ├── EV-004/
+    │   ├── entrega-de-valor.md
+    │   └── plano-de-realizacao.md
+    └── EV-005/
+        └── entrega-de-valor.md
 dados/itens-de-trabalho/
 ├── IT-001/
 │   └── item-de-trabalho.md

@@ -7,12 +7,18 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Verificação da Entrega de Valor** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
+O ciclo de vida do NAAMIVE concluiu formalmente a **Homologação pelo Owner** e a transição terminal para **`CONCLUIDA`** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md), e realizou em seguida o avanço legítimo da jornada com a delimitação canônica da **`EV-005 — Avaliação e Verificação da Entrega de Valor`** no módulo [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md):
 
-1. O Ator agêntico competente **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) realizou a avaliação substantiva independente do software integrado frente à Especificação da EV-004, aos beneficiários relevantes, à intenção de valor e aos critérios verificáveis.
-2. Foram comprovados todos os 6 critérios de aceitação com base na suíte automatizada global de testes (**16 arquivos de teste e 110 testes automatizados verdes sem regressões — 100% de sucesso**).
-3. O Verificador emitiu formalmente o Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**, devidamente registrado na [EV-004](dados/entregas-de-valor/EV-004/entrega-de-valor.md).
-4. O laudo técnico positivo encerra a atuação do Verificador da Entrega de Valor e habilita a etapa obrigatória de **Homologação pelo Owner** (`mhj`), subsidiando a deliberação soberana para a transição terminal da EV-004 para `CONCLUIDA`.
+1. **Homologação e Conclusão da EV-004:**
+   - O Owner (`mhj`) deliberou e registrou a Decisão Humana Material soberana de homologação formal (`HOMOLOGADO_PELO_OWNER`) em `dados/entregas-de-valor/EV-004/entrega-de-valor.md`.
+   - A EV-004 atingiu o status terminal **`CONCLUIDA`** com 100% de sucesso.
+   - O mapa canônico de M-004 (`dados/modulos/M-004/mapa-de-entregas-de-valor.md`) foi atualizado refletindo o encerramento com êxito da EV-004.
+2. **Delimitação da EV-005 no Módulo M-005:**
+   - O Ator agêntico competente **Especialista em Delimitação de Entregas de Valor** (`.agents/skills/entrega-de-valor/delimitacao-de-entregas-de-valor/SKILL.md`) delimitou e materializou a primeira evolução de M-005: a **`EV-005 — Avaliação e Verificação da Entrega de Valor`**.
+   - Criado o registro canônico `dados/modulos/M-005/mapa-de-entregas-de-valor.md` e o artefato principal `dados/entregas-de-valor/EV-005/entrega-de-valor.md` com status **`EM_FORMACAO`** e identificador técnico UUID v4 único (`6868d52a-295d-46a5-89fc-a6eac1d70dc5`).
+   - O handoff formal da delimitação foi emitido ao **Especialista em Formação da Entrega de Valor**.
+3. **Garantia de Qualidade e Integridade Técnica:**
+   - Validados a tipagem estrita (`npm run typecheck`) e a suíte completa de testes (`npm test`) com **16 arquivos de teste e 110 testes automatizados verdes — 100% de sucesso sem regressões**.
 
 ## Governança transversal e Débitos
 
@@ -26,7 +32,7 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Verificação da Ent
 
 ### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
-  - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` plenamente cumprida para `EV-001`, `EV-002` e `EV-003`.
+  - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` plenamente cumprida para `EV-001`, `EV-002`, `EV-003` e `EV-004`.
 
 ## Entidades ativas
 
@@ -53,9 +59,9 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Verificação da Ent
 * M-001 — Condução da Necessidade: `FORMADO` (Mapa canônico possui `EV-001` em `CONCLUIDA`)
 * M-002 — Formação do Projeto: `FORMADO` (Mapa canônico possui `EV-002` em `CONCLUIDA`)
 * M-003 — Coordenação do Trabalho: `FORMADO` (Mapa canônico possui `EV-003` em `CONCLUIDA`)
-* M-004 — Contexto e Rastreabilidade: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-004/mapa-de-entregas-de-valor.md` (registra `EV-004` em `EM_REALIZACAO` com `EVOLUCAO_MATERIALIZADA`)
+* M-004 — Contexto e Rastreabilidade: `FORMADO` (Mapa canônico possui `EV-004` em `CONCLUIDA`)
 * M-005 — Verificação do Resultado de Software: `FORMADO`
+  - Mapa de Entregas de Valor: `dados/modulos/M-005/mapa-de-entregas-de-valor.md` (registra `EV-005` em `EM_FORMACAO`)
 
 ### Entregas de Valor
 
@@ -82,50 +88,43 @@ O ciclo de vida do NAAMIVE concluiu com 100% de sucesso a **Verificação da Ent
   - Status atual: **`CONCLUIDA`**
   - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
+  - Homologação do Owner: `HOMOLOGADO_PELO_OWNER` emitido pelo Owner `mhj` em 2026-10-04
   - Situação: Ciclo de vida da EV-003 concluído com 100% de sucesso.
 
 * **EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade:**
   - Identificador técnico: `806acc2a-8f8f-4389-a234-ca61c42f5bb3`
   - Módulo proprietário: `M-004 — Contexto e Rastreabilidade`
-  - Status atual: **`EM_REALIZACAO`** (aprovada tecnicamente por `EVOLUCAO_MATERIALIZADA`, aguardando Homologação do Owner)
+  - Status atual: **`CONCLUIDA`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
-  - Parecer de Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização
-  - Parecer de Verificação: `EVOLUCAO_MATERIALIZADA` emitido pelo Verificador da Entrega de Valor em 2026-10-04
-  - Situação: Verificação técnica concluída; habilitada para a Homologação do Owner.
+  - Parecer de Verificação: `EVOLUCAO_MATERIALIZADA` emitido pelo Verificador da Entrega de Valor
+  - Homologação do Owner: `HOMOLOGADO_PELO_OWNER` emitido pelo Owner `mhj` em 2026-10-04
+  - Situação: Ciclo de vida da EV-004 concluído formalmente com 100% de sucesso.
 
-### Itens de Trabalho Concluídos (EV-004)
-
-* **IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações:**
-  - Registro: [dados/itens-de-trabalho/IT-013/item-de-trabalho.md](dados/itens-de-trabalho/IT-013/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-* **IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional:**
-  - Registro: [dados/itens-de-trabalho/IT-014/item-de-trabalho.md](dados/itens-de-trabalho/IT-014/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-* **IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background:**
-  - Registro: [dados/itens-de-trabalho/IT-015/item-de-trabalho.md](dados/itens-de-trabalho/IT-015/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-* **IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada:**
-  - Registro: [dados/itens-de-trabalho/IT-016/item-de-trabalho.md](dados/itens-de-trabalho/IT-016/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
+* **EV-005 — Avaliação e Verificação da Entrega de Valor:**
+  - Identificador técnico: `6868d52a-295d-46a5-89fc-a6eac1d70dc5`
+  - Módulo proprietário: `M-005 — Verificação do Resultado de Software`
+  - Status atual: **`EM_FORMACAO`**
+  - Registro principal: [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
+  - Situação: Delimitação inicial concluída; handoff entregue para a Formação da Entrega de Valor.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A Verificação técnica foi concluída favoravelmente com emissão de `EVOLUCAO_MATERIALIZADA`.
+* A EV-004 foi homologada e concluída.
+* A EV-005 está materializada em `EM_FORMACAO`, apta para o trabalho do Especialista em Formação da Entrega de Valor.
 
 ## Próxima ação legítima
 
-1. Atuação do **Owner** (`mhj`): realizar a inspeção soberana de valor da `EV-004` (utilizando os endpoints e interfaces em `/rastreabilidade` e o laudo técnico `EVOLUCAO_MATERIALIZADA`) e emitir a Decisão Humana Material de Homologação (`HOMOLOGADO_PELO_OWNER` ou `REJEITADO_PELO_OWNER`), autorizando a transição para o status terminal **`CONCLUIDA`**.
+1. Atuação do **Especialista em Formação da Entrega de Valor** (`.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`): conduzir a formação técnica da `EV-005 — Avaliação e Verificação da Entrega de Valor`, detalhando a especificação técnica de alto nível, os critérios verificáveis, modelos de dados para laudos de conformidade de software, adaptadores e interfaces web de inspeção técnica.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `dados/entregas-de-valor/EV-004/entrega-de-valor.md`
-* `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
-* `documentacao/governanca/debitos/DEB-GOV-001.md`
-
-
+* `dados/modulos/M-005/modulo.md`
+* `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
+* `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
+* `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`

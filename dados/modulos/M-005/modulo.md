@@ -17,6 +17,7 @@
 * **Dentro da fronteira:** evidência de verificabilidade e relação do resultado com a Necessidade de origem.
 * **Fora da fronteira:** implementar software, conduzir a execução, aprovar formação de outras entidades e preservar o contexto geral do percurso.
 * **Relações relevantes:** recebe o percurso de M-003 e a rastreabilidade de M-004; é orientado pela Direção de M-002.
+* **Mapa de Entregas de Valor:** [Mapa de Entregas de Valor de M-005](mapa-de-entregas-de-valor.md).
 
 ## Handoff
 

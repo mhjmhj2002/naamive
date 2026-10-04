@@ -7,7 +7,7 @@
 | Identificador técnico | `806acc2a-8f8f-4389-a234-ca61c42f5bb3` |
 | Código | `EV-004` |
 | Módulo proprietário | [M-004 — Contexto e Rastreabilidade](../../modulos/M-004/modulo.md) |
-| Status | `EM_REALIZACAO` |
+| Status | `CONCLUIDA` |
 | Plano de Realização | [Plano de Realização da EV-004](plano-de-realizacao.md) |
 
 ## Delimitação inicial
@@ -240,9 +240,28 @@ Conclui-se formalmente pela emissão do Resultado do Processo **`EVOLUCAO_MATERI
 ### Handoff da Verificação Técnica
 
 Em estrita conformidade com `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e a governança transversal do NAAMIVE:
-* O laudo técnico favorável `EVOLUCAO_MATERIALIZADA` atesta a prontidão substancial do incremento de software e encerra a responsabilidade do Verificador da Entrega de Valor.
-* A Entrega de Valor permanece em **`EM_REALIZACAO`**, pois o laudo técnico positivo habilita, mas não substitui, a decisão soberana do Owner.
-* O laudo é entregue e disponibilizado formalmente para subsidiar o acionamento do **Owner** (`mhj`) para a etapa obrigatória de **Homologação da Entrega de Valor**, necessária para que seja proferida a Decisão Humana Material soberana (`HOMOLOGADO_PELO_OWNER`) que autoriza a transição da EV-004 para o status terminal **`CONCLUIDA`**.
+* O laudo técnico favorável `EVOLUCAO_MATERIALIZADA` atestou a prontidão substancial do incremento de software e encerrou a responsabilidade do Verificador da Entrega de Valor.
+* O laudo técnico positivo subsidiou e habilitou formalmente o acionamento do **Owner** (`mhj`) para a etapa obrigatória de **Homologação da Entrega de Valor**, preservando a soberania humana para a tomada de Decisão Material (`HOMOLOGADO_PELO_OWNER`) necessária para a transição da EV-004 para o status terminal `CONCLUIDA`.
+
+## Homologação do Owner (Decisão Material Soberana)
+
+| Campo | Registro |
+| --- | --- |
+| **Ator competente** | Owner (Decisão Humana Material de Homologação) |
+| **Identidade autenticada** | `mhj` |
+| **Data da Homologação** | 2026-10-04 |
+| **Decisão / Parecer** | `HOMOLOGADO_PELO_OWNER` |
+| **Status resultante** | `CONCLUIDA` |
+| **Fundamentação de Governança** | Cumprimento pleno do gateway mandatório de homologação do Owner normatizado em `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e resolução de [DEB-GOV-001](../../../documentacao/governanca/debitos/DEB-GOV-001.md). |
+
+### Declaração Formal e Soberana do Owner
+
+> *"Na condição de Owner (`mhj`), manifesto a Decisão Material soberana de homologação formal da EV-004 (`HOMOLOGADO_PELO_OWNER`). O software integrado foi inspecionado operacionalmente e cumpre integralmente o valor pretendido: a preservação estruturada de registros de proveniência com classificação epistêmica, o grafo relacional de vínculos causais com integridade referencial, a recuperação proporcional de contexto orientada por finalidade declarada (`DESPACHAR_TRABALHO`, `AUDITAR_FORMACAO`, `EXECUTAR_ITEM`, `VERIFICAR_RESULTADO`), a distinção estrita entre estado vigente e histórico de auditoria, o diagnóstico explícito de lacunas causais, o worker assíncrono em background e a interface web responsiva em Bootstrap 5 (`/rastreabilidade`). Autorizo a transição formal da EV-004 para CONCLUIDA com 100% de sucesso."*
+
+### Handoff Final
+
+Com a emissão do laudo técnico favorável `EVOLUCAO_MATERIALIZADA` e a Decisão Material soberana `HOMOLOGADO_PELO_OWNER`, a Entrega de Valor **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** transiciona em definitivo para o status terminal **`CONCLUIDA`**. Suas capacidades operacionais e contratos lógicos permanecem consolidados e em operação contínua no NAAMIVE.
+
 
 
 
