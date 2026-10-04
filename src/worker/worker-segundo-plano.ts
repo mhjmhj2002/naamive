@@ -7,6 +7,7 @@ import {
 import { RepositorioNecessidade } from "../domain/repositorio-necessidade.js";
 import { StatusNecessidade } from "../domain/tipos.js";
 import { ServicoAplicacaoCoordenacao } from "../application/servico-aplicacao-coordenacao.js";
+import { ServicoContexto } from "../application/servico-contexto.js";
 
 export type ManipuladorTarefa = (tarefa: TarefaTrabalho) => Promise<void>;
 
@@ -25,6 +26,7 @@ export class WorkerSegundoPlano {
   private portaProjeto: PortaIntegracaoProjeto;
   private portaContexto: PortaIntegracaoContexto;
   private servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined;
+  private servicoContexto?: ServicoContexto | undefined;
   private manipuladores: Map<string, ManipuladorTarefa> = new Map();
 
   private executando: boolean = false;
@@ -38,13 +40,15 @@ export class WorkerSegundoPlano {
     portaProjeto: PortaIntegracaoProjeto,
     portaContexto: PortaIntegracaoContexto,
     config: ConfiguracaoWorker = {},
-    servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined
+    servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined,
+    servicoContexto?: ServicoContexto | undefined
   ) {
     this.fila = fila;
     this.repositorio = repositorio;
     this.portaProjeto = portaProjeto;
     this.portaContexto = portaContexto;
     this.servicoCoordenacao = servicoCoordenacao;
+    this.servicoContexto = servicoContexto;
     this.intervaloPollingMs = config.intervaloPollingMs ?? 100;
 
     this.registrarManipuladoresPadrao();
@@ -187,6 +191,27 @@ export class WorkerSegundoPlano {
             projetoId: payload.projetoId,
             trabalhoId: payload.trabalhoId ?? null,
             sucesso: payload.sucesso ?? null,
+          },
+          timestamp: new Date(),
+        });
+      }
+    });
+
+    // 4. Tarefa de auditoria periódica de proveniência e consistência de contexto (EV-004 / IT-015)
+    this.registrarManipulador("AUDITORIA_CONTEXTO_PROVENIENCIA", async (tarefa) => {
+      const payload = (tarefa.payload ?? {}) as { projetoId?: string };
+      if (this.servicoContexto) {
+        const relatorio = await this.servicoContexto.auditarConsistenciaContexto(payload.projetoId);
+        await this.portaContexto.registrarEventoRastreabilidade({
+          entidadeOrigem: "WorkerSegundoPlano",
+          idOrigem: payload.projetoId ?? "GLOBAL",
+          tipoEvento: "AUDITORIA_CONTEXTO_CONCLUIDA",
+          dados: {
+            diagnosticoGeral: relatorio.diagnosticoGeral,
+            totalAuditados: relatorio.totalRegistrosAuditados,
+            lacunas: relatorio.lacunasDetectadas.length,
+            contradicoes: relatorio.contradicoesDetectadas.length,
+            auditadoEm: relatorio.auditadoEm,
           },
           timestamp: new Date(),
         });

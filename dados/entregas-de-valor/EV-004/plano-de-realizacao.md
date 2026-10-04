@@ -39,8 +39,8 @@ IT-016 (Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Int
 | --- | --- | --- | --- |
 | [`IT-013`](../../itens-de-trabalho/IT-013/item-de-trabalho.md) | Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações | `CONCLUIDO` | Nenhuma (sucede baseline consolidada na EV-003) |
 | [`IT-014`](../../itens-de-trabalho/IT-014/item-de-trabalho.md) | Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional | `CONCLUIDO` | `IT-013` |
-| [`IT-015`](../../itens-de-trabalho/IT-015/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background | `PRONTO_PARA_EXECUCAO` | `IT-014` |
-| [`IT-016`](../../itens-de-trabalho/IT-016/item-de-trabalho.md) | Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada | `CRIADO` | `IT-015` |
+| [`IT-015`](../../itens-de-trabalho/IT-015/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background | `CONCLUIDO` | `IT-014` |
+| [`IT-016`](../../itens-de-trabalho/IT-016/item-de-trabalho.md) | Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada | `PRONTO_PARA_EXECUCAO` | `IT-015` |
 
 ## Critérios de Aceitação e Testes
 

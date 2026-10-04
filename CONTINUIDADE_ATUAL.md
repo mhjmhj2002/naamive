@@ -8,9 +8,9 @@ NAAMIVE
 
 O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
 
-1. O Ator agêntico competente **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) concluiu com 100% de sucesso a execução técnica do [IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional](dados/itens-de-trabalho/IT-014/item-de-trabalho.md), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
-2. Foram implementadas as entidades puras de domínio `RegistroProveniencia` e `VinculoCausal` (`src/domain/contexto.ts`), os tipos e enums (`src/domain/tipos-contexto.ts`), as interfaces e Value Objects (`src/domain/valores-contexto.ts`), o serviço de domínio `MotorRecuperacaoContexto` (`src/domain/motor-contexto.ts`) e a suíte de testes unitários com 8 testes passando com 100% de sucesso (`tests/it014-dominio-contexto.test.ts`).
-3. Com a conclusão de `IT-014`, o item subsequente na cadeia de dependências, [IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background](dados/itens-de-trabalho/IT-015/item-de-trabalho.md), teve suas dependências satisfeitas e transicionou de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
+1. O Ator agêntico competente **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) concluiu com 100% de sucesso a execução técnica do [IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background](dados/itens-de-trabalho/IT-015/item-de-trabalho.md), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+2. Foram implementados o contrato de domínio puro `RepositorioContexto` (`src/domain/repositorio-contexto.ts`), os adaptadores de persistência `RepositorioContextoPostgres` (`src/infrastructure/database/repositorio-contexto-postgres.ts`) e `RepositorioContextoMemoria` (`src/infrastructure/database/repositorio-contexto-memoria.ts`), o serviço de aplicação `ServicoContexto` (`src/application/servico-contexto.ts`), a integração com o worker assíncrono em background para a tarefa `AUDITORIA_CONTEXTO_PROVENIENCIA` (`src/worker/worker-segundo-plano.ts`), a injeção no bootstrap (`src/server.ts`) e a suíte de testes com 9 testes passando com 100% de aprovação (`tests/it015-repositorio-e-servico-contexto.test.ts`).
+3. Com a conclusão de `IT-015`, o item subsequente e final na cadeia de dependências da EV-004, [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md), teve suas dependências satisfeitas e transicionou de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
 
 ## Governança transversal e Débitos
 
@@ -88,7 +88,7 @@ O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 —
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
-  - Situação: Plano de Realização em execução ativa; IT-013 e IT-014 concluídos com sucesso e IT-015 pronto para execução.
+  - Situação: Plano de Realização em execução ativa; IT-013, IT-014 e IT-015 concluídos com sucesso e IT-016 pronto para execução.
 
 ### Itens de Trabalho Ativos (EV-004)
 
@@ -102,22 +102,22 @@ O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 —
   - Dependências: `IT-013` (satisfeitas)
 * **IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background:**
   - Registro: [dados/itens-de-trabalho/IT-015/item-de-trabalho.md](dados/itens-de-trabalho/IT-015/item-de-trabalho.md)
-  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Status: **`CONCLUIDO`**
   - Dependências: `IT-014` (satisfeitas)
 * **IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada:**
   - Registro: [dados/itens-de-trabalho/IT-016/item-de-trabalho.md](dados/itens-de-trabalho/IT-016/item-de-trabalho.md)
-  - Status: **`CRIADO`**
-  - Dependências: `IT-015`
+  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Dependências: `IT-015` (satisfeitas)
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A `EV-004` encontra-se em `EM_REALIZACAO` com `IT-015` pronto para execução imediata.
+* A `EV-004` encontra-se em `EM_REALIZACAO` com `IT-016` pronto para execução imediata.
 
 ## Próxima ação legítima
 
-1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): iniciar a execução técnica do [IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background](dados/itens-de-trabalho/IT-015/item-de-trabalho.md), implementando `RepositorioContextoPostgres`, `ServicoContexto` e a integração com o worker assíncrono para auditoria periódica de proveniência.
+1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): iniciar a execução técnica do [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md), implementando rotas HTTP, templates responsivos com Bootstrap 5 e suíte integrada end-to-end para a EV-004.
 
 ## Arquivos mínimos para continuar
 
@@ -125,6 +125,6 @@ O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 —
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-015/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-016/item-de-trabalho.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
 
