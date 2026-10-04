@@ -8,7 +8,7 @@
 | Código | `IT-008` |
 | Entrega de Valor proprietária | [EV-002 — Direção do Projeto](../../entregas-de-valor/EV-002/entrega-de-valor.md) |
 | Módulo de proveniência | [M-002 — Formação do Projeto](../../modulos/M-002/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -28,12 +28,20 @@
 
 ## Execução e Evidências
 
-* **Executor:** (A ser assumido pelo Ator Engenheiro de Software)
-* **Artefatos produzidos / alterados:** (A preencher na execução)
-* **Resultado de testes locais:** (A preencher na execução)
-* **Conclusão técnica:** (A preencher na execução)
+* **Executor:** Engenheiro de Software
+* **Artefatos produzidos / alterados:**
+  - `src/web/templates.ts`: Implementadas funções `renderizarListaProjetos` e `renderizarDetalhesProjeto`, badges Bootstrap de status (`obterClasseBadgeStatusProjeto`), estilização gradiente da Direção do Projeto, cards de etapas de formação e pareceres de auditoria, além de link bidirecional entre Necessidades e Projetos.
+  - `src/web/servidor-web.ts`: Implementadas as rotas HTTP de Projeto (`GET /projetos`, `GET /projetos/:id`, `POST /projetos/:id/etapas`, `POST /projetos/:id/parecer-auditoria`, `POST /projetos/:id/cancelar` e `GET /api/projetos/:id/direcao`), com integração plena de persistência e validação de autoridade do Owner.
+  - `src/server.ts`: Injetados `servicoProjeto` e `repositorioProjeto` na inicialização do servidor web na composição do bootstrap.
+  - `tests/it008-camada-web-projeto.test.ts`: Bateria abrangente de 7 testes de ponta a ponta cobrindo navegação, renderização, registro de etapas, emissão de pareceres, exibição da Direção aprovada, cancelamento pelo Owner e jornada end-to-end da EV-002.
+* **Resultado de testes locais:**
+  - `npm run typecheck`: 0 erros (tipagem estrita com TypeScript).
+  - `npm run build`: Compilação limpa sem advertências.
+  - `tests/it008-camada-web-projeto.test.ts`: 7/7 testes aprovados.
+  - Suíte completa do projeto (`npm test`): 8/8 arquivos de teste e 58/58 testes aprovados (100% de sucesso).
+* **Conclusão técnica:** Todos os critérios técnicos de aceitação do `IT-008` foram plenamente atendidos. A cadeia técnica de Itens de Trabalho da EV-002 (IT-005, IT-006, IT-007 e IT-008) encontra-se 100% concluída.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente de execução)
-* **Data / Registro:** (Pendente de execução)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04 — Conclusão pelo Ator Engenheiro de Software.

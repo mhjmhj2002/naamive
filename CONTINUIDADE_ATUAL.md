@@ -6,16 +6,16 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Engenheiro de Software**. O terceiro Item de Trabalho da **`EV-002 — Direção do Projeto`**, **`IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002`**, foi plenamente executado, testado e concluído (`CONCLUIDO`), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Engenheiro de Software**. O quarto e último Item de Trabalho da **`EV-002 — Direção do Projeto`**, **`IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada`**, foi plenamente construído, testado e concluído (`CONCLUIDO`), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
 
-Com a conclusão do `IT-007`:
-1. Foram implementados os adaptadores de persistência relacional transacional de Projeto em PostgreSQL (`src/infrastructure/database/repositorio-projeto-postgres.ts`), repositório em memória para suporte e testes (`src/infrastructure/database/repositorio-projeto-memoria.ts`) e a migração `migrations/004_decisoes_e_historico_projeto.sql` para rastreabilidade de decisões do Owner e histórico de Projeto.
-2. Foi implementado o serviço de aplicação (`src/application/servico-aplicacao-projeto.ts`) orquestrando os casos de uso de bootstrap idempotente de Projeto, registro de etapas de formação (`ENQUADRAMENTO`, `DESCOBERTA`, `DIREÇÃO DA SOLUÇÃO`), pareceres de auditoria independente (`FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`), consolidação e consulta da Direção do Projeto e consultas por ID, código e Necessidade de origem (1:1).
-3. Foi conectado e aperfeiçoado o `AdaptadorIntegracaoProjeto` (`src/infrastructure/adapters/integracao-modulos.ts`), integrando o fluxo de solicitação de bootstrap entre M-001 e M-002 com garantia de idempotência estrita (`jaExistente: true`) e transição coordenada da Necessidade para `EM_PROJETO`.
-4. Foi implementada a suíte de testes de persistência e integração (`tests/it007-repositorio-e-servico-projeto.test.ts`) com 5/5 testes verdes, elevando a suíte geral da aplicação para 51/51 testes aprovados (100% de sucesso).
-5. A tipagem estrita via `npm run typecheck` e o build do projeto via `npm run build` passaram com sucesso e sem ressalvas.
+Com a conclusão do `IT-008`:
+1. Foram estendidos os templates responsivos com Bootstrap 5 (`src/web/templates.ts`), implementando a listagem de Projetos (`renderizarListaProjetos`), detalhes e acompanhamento do Projeto (`renderizarDetalhesProjeto`), badges de status (`obterClasseBadgeStatusProjeto`), cards de etapas de formação e pareceres de auditoria, painel em destaque com gradiente para a Direção do Projeto consolidada e link bidirecional entre Necessidades de origem e Projetos gerados (relação 1:1).
+2. Foram implementadas no servidor web (`src/web/servidor-web.ts`) as rotas HTTP da vertical de Projeto (`GET /projetos`, `GET /projetos/:id`, `POST /projetos/:id/etapas`, `POST /projetos/:id/parecer-auditoria`, `POST /projetos/:id/cancelar` e endpoint REST `GET /api/projetos/:id/direcao`), com suporte a resposta HTML/JSON e validação estrita de identidade do Owner (`mhj`) para cancelamento.
+3. Foram injetados `servicoProjeto` e `repositorioProjeto` na composição de bootstrap do servidor web (`src/server.ts`).
+4. Foi implementada a suíte de testes de ponta a ponta (`tests/it008-camada-web-projeto.test.ts`) com 7/7 testes verdes, cobrindo navegação, registro de etapas, emissão de pareceres, exibição da Direção aprovada, bloqueio de segurança no cancelamento e jornada integrada end-to-end da EV-002.
+5. A tipagem estrita via `npm run typecheck`, o build do projeto via `npm run build` e a suíte completa de testes (`npm test`) passaram com 100% de sucesso (8 arquivos de teste e 58/58 testes verdes).
 
-Em decorrência da satisfação integral de suas dependências, o quarto e último Item de Trabalho da cadeia de realização da EV-002, **`IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada`**, transicionou validamente de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**, encontrando-se apto para execução pelo Engenheiro de Software.
+Com isso, **todos os 4 Itens de Trabalho da EV-002 (IT-005, IT-006, IT-007 e IT-008) estão concluídos**. A realização técnica da EV-002 encontra-se integralmente executada, abrindo caminho para a integração agregada da realização pelo **Integrador da Realização**.
 
 A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`).
 
@@ -78,7 +78,7 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Em realização técnica ativa (3/4 itens de trabalho concluídos: IT-005, IT-006 e IT-007).
+  - Situação: Todos os 4 Itens de Trabalho concluídos (`IT-005`, `IT-006`, `IT-007` e `IT-008`). Pronta para integração agregada da realização.
 
 ### Itens de Trabalho (EV-002)
 
@@ -86,32 +86,29 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
   - Status: **`CONCLUIDO`**
   - Resultado do Processo: `EXECUCAO_CONCLUIDA`
   - Registro: `dados/itens-de-trabalho/IT-005/item-de-trabalho.md`
-  - Dependências: Nenhuma
 * **IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação:**
   - Status: **`CONCLUIDO`**
   - Resultado do Processo: `EXECUCAO_CONCLUIDA`
   - Registro: `dados/itens-de-trabalho/IT-006/item-de-trabalho.md`
-  - Dependências: `IT-005` (satisfeita)
 * **IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002:**
   - Status: **`CONCLUIDO`**
   - Resultado do Processo: `EXECUCAO_CONCLUIDA`
   - Registro: `dados/itens-de-trabalho/IT-007/item-de-trabalho.md`
-  - Dependências: `IT-006` (satisfeita)
 * **IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada:**
-  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Status: **`CONCLUIDO`**
+  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
   - Registro: `dados/itens-de-trabalho/IT-008/item-de-trabalho.md`
-  - Dependências: `IT-007` (satisfeita)
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A `EV-002` está legitimamente em `EM_REALIZACAO`.
-* O `IT-008` está imediatamente apto para início de execução técnica pelo Engenheiro de Software.
+* A cadeia de Itens de Trabalho da `EV-002` foi 100% executada e concluída.
+* O sistema está apto para o passo seguinte de integração agregada e verificação.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para assumir o **`IT-008`**, transicionando-o para `EM_EXECUCAO` e implementando as telas responsivas em Bootstrap, rotas web de acompanhamento de Projeto, renderização da Direção aprovada e a suíte integrada de testes da EV-002.
+1. Atuar no papel de **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`) para consolidar a integração agregada dos quatro Itens de Trabalho da EV-002 (`IT-005` a `IT-008`), emitindo o Resultado do Processo `INTEGRACAO_CONCLUIDA` e entregando o handoff para a Verificação da Entrega de Valor.
 
 ## Arquivos mínimos para continuar
 
@@ -120,8 +117,7 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-008/item-de-trabalho.md`
-* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
-* `src/web/templates.ts`
+* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
+* `tests/it008-camada-web-projeto.test.ts`
 * `src/web/servidor-web.ts`
-* `tests/it007-repositorio-e-servico-projeto.test.ts`
+* `src/web/templates.ts`

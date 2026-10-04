@@ -1,6 +1,9 @@
 import { Necessidade } from "../domain/necessidade.js";
 import { CompromissoNecessidade } from "../domain/valores.js";
 import { StatusNecessidade } from "../domain/tipos.js";
+import { Projeto } from "../domain/projeto.js";
+import { VisaoProjeto } from "../application/servico-aplicacao-projeto.js";
+import { StatusProjeto } from "../domain/tipos-projeto.js";
 
 /**
  * Escapa strings para evitar injeção em HTML.
@@ -16,7 +19,7 @@ export function escaparHtml(str: string | null | undefined): string {
 }
 
 /**
- * Retorna classe badge do Bootstrap conforme status.
+ * Retorna classe badge do Bootstrap conforme status de Necessidade.
  */
 function obterClasseBadgeStatus(status: StatusNecessidade): string {
   switch (status) {
@@ -31,6 +34,24 @@ function obterClasseBadgeStatus(status: StatusNecessidade): string {
     case StatusNecessidade.ATENDIDA:
       return "bg-secondary";
     case StatusNecessidade.CANCELADA:
+      return "bg-danger";
+    default:
+      return "bg-secondary";
+  }
+}
+
+/**
+ * Retorna classe badge do Bootstrap conforme status de Projeto.
+ */
+export function obterClasseBadgeStatusProjeto(status: StatusProjeto): string {
+  switch (status) {
+    case StatusProjeto.EM_FORMACAO:
+      return "bg-info text-dark";
+    case StatusProjeto.FORMADO:
+      return "bg-success";
+    case StatusProjeto.CONCLUIDO:
+      return "bg-primary";
+    case StatusProjeto.CANCELADO:
       return "bg-danger";
     default:
       return "bg-secondary";
@@ -80,6 +101,13 @@ export function layoutMestre(titulo: string, conteudo: string): string {
     .historico-item.qualificacao {
       border-left-color: #0dcaf0;
     }
+    .historico-item.formacao {
+      border-left-color: #0d6efd;
+    }
+    .card-direcao {
+      background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+      border: 2px solid #198754;
+    }
   </style>
 </head>
 <body>
@@ -96,11 +124,14 @@ export function layoutMestre(titulo: string, conteudo: string): string {
             <a class="nav-link" href="/">Necessidades</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="/projetos">Projetos</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="/nova">Nova Necessidade</a>
           </li>
         </ul>
         <span class="navbar-text text-light small">
-          EV-001 — Condução da Necessidade
+          EV-001 & EV-002 — Necessidade e Projeto
         </span>
       </div>
     </div>
@@ -429,11 +460,16 @@ export function renderizarDetalhesNecessidade(
     `;
   } else if (necessidade.status === StatusNecessidade.EM_PROJETO) {
     acoesGovernança = `
-      <div class="alert alert-success d-flex align-items-center mb-4">
+      <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
         <div>
-          <strong>Compromisso Aprovado e Materializado no Projeto!</strong>
-          <p class="mb-0 small">Esta necessidade avançou para <code>EM_PROJETO</code> com confirmação de bootstrap no M-002.</p>
+          <strong class="d-block">Compromisso Aprovado e Materializado no Projeto!</strong>
+          <span class="small">Esta necessidade avançou para <code>EM_PROJETO</code> com confirmação de bootstrap no M-002.</span>
         </div>
+        ${necessidade.projetoId ? `
+          <a href="/projetos/${escaparHtml(necessidade.projetoId)}" class="btn btn-sm btn-success fw-bold text-nowrap ms-3">
+            Ver Projeto no M-002 &rarr;
+          </a>
+        ` : ""}
       </div>
     `;
   }
@@ -552,4 +588,371 @@ export function renderizarDetalhesNecessidade(
   `;
 
   return layoutMestre(`Detalhes: ${necessidade.codigo}`, conteudo);
+}
+
+/**
+ * Renderiza a listagem de Projetos.
+ */
+export function renderizarListaProjetos(projetos: (Projeto | VisaoProjeto)[]): string {
+  const itensTabela = projetos.map((p) => {
+    const badge = `<span class="badge ${obterClasseBadgeStatusProjeto(p.status)} badge-status">${p.status}</span>`;
+    return `
+      <tr>
+        <td><strong>${escaparHtml(p.codigo)}</strong></td>
+        <td><a href="/projetos/${escaparHtml(p.id)}" class="text-decoration-none fw-bold">${escaparHtml(p.titulo)}</a></td>
+        <td>
+          <a href="/necessidades/${escaparHtml(p.necessidadeId)}" class="badge bg-light text-primary border text-decoration-none">
+            ${escaparHtml(p.necessidadeId)}
+          </a>
+        </td>
+        <td>${badge}</td>
+        <td>
+          <span class="badge bg-light text-dark border">
+            ${p.etapas ? p.etapas.length : 0} etapa(s)
+          </span>
+        </td>
+        <td><small class="text-muted">${p.criadoEm.toLocaleDateString("pt-BR")}</small></td>
+        <td>
+          <a href="/projetos/${escaparHtml(p.id)}" class="btn btn-sm btn-outline-primary">Acompanhar</a>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  const conteudoVazio = `
+    <div class="alert alert-info py-4 text-center">
+      <h5>Nenhum Projeto materializado</h5>
+      <p class="mb-3">Projetos são gerados automaticamente a partir de Necessidades aprovadas pelo Owner com Compromisso consolidado (relação 1:1).</p>
+      <a href="/" class="btn btn-primary">Ver Necessidades</a>
+    </div>
+  `;
+
+  const conteudo = `
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1">Projetos de Software (M-002)</h1>
+        <p class="text-muted mb-0">Painel de formação e acompanhamento da Direção da Solução (EV-002)</p>
+      </div>
+      <div>
+        <a href="/" class="btn btn-outline-secondary btn-sm">&larr; Ver Necessidades</a>
+      </div>
+    </div>
+
+    ${projetos.length === 0 ? conteudoVazio : `
+      <div class="card card-resumo border-0">
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col" style="width: 100px;">Código</th>
+                <th scope="col">Título</th>
+                <th scope="col">Necessidade (1:1)</th>
+                <th scope="col">Status Atual</th>
+                <th scope="col">Formação</th>
+                <th scope="col">Criação</th>
+                <th scope="col" style="width: 120px;">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itensTabela}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `}
+  `;
+
+  return layoutMestre("Lista de Projetos", conteudo);
+}
+
+/**
+ * Renderiza os detalhes de um Projeto, histórico de formação, pareceres de auditoria,
+ * visualização da Direção aprovada e ações de governança (auditoria, avanço e cancelamento pelo Owner).
+ */
+export function renderizarDetalhesProjeto(
+  projeto: Projeto | VisaoProjeto,
+  necessidadeOrigem?: Necessidade | null,
+  mensagemFeedback?: { tipo: "sucesso" | "erro"; texto: string }
+): string {
+  const badgeStatus = `<span class="badge ${obterClasseBadgeStatusProjeto(projeto.status)} badge-status">${projeto.status}</span>`;
+
+  const alertaFeedback = mensagemFeedback ? `
+    <div class="alert alert-${mensagemFeedback.tipo === "sucesso" ? "success" : "danger"} alert-dismissible fade show mb-4">
+      ${escaparHtml(mensagemFeedback.texto)}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+  ` : "";
+
+  // Painel de Direção do Projeto Aprovada (Destaque quando FORMADO)
+  const painelDirecao = projeto.direcao ? `
+    <div class="card card-direcao shadow-sm mb-4">
+      <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Direção do Projeto (Consolidada e Aprovada)</h5>
+        <span class="badge bg-light text-success fw-bold">Disponível para Módulos</span>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-12">
+            <h6 class="text-muted small text-uppercase fw-bold">Objetivo do Projeto</h6>
+            <p class="mb-0 fs-6 fw-semibold text-dark">${escaparHtml(projeto.direcao.objetivoProjeto)}</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted small text-uppercase fw-bold">Compromisso de Origem (N-001)</h6>
+            <p class="mb-0">${escaparHtml(projeto.direcao.compromissoOrigem)}</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted small text-uppercase fw-bold">Fronteiras Delimitadas</h6>
+            <p class="mb-0">${escaparHtml(projeto.direcao.fronteiras)}</p>
+          </div>
+          <div class="col-md-12">
+            <h6 class="text-muted small text-uppercase fw-bold">Contexto Técnico Relevante</h6>
+            <p class="mb-0 bg-white p-3 rounded border text-secondary">${escaparHtml(projeto.direcao.contextoRelevante)}</p>
+          </div>
+          <div class="col-12 border-top pt-2 mt-2 d-flex justify-content-between text-muted small">
+            <span>Consolidado pela Formação e Auditoria da EV-002</span>
+            <span>Aprovado em: ${new Date(projeto.direcao.aprovadoEm).toLocaleString("pt-BR")}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  ` : "";
+
+  // Ações de Governança Conforme o Status
+  let acoesGovernança = "";
+
+  if (projeto.status === StatusProjeto.EM_FORMACAO) {
+    acoesGovernança = `
+      <div class="card card-resumo border-0 mb-4">
+        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <h5 class="card-title mb-0 h6 fw-bold">Ações da Vertical: Formação & Auditoria do Projeto (EV-002)</h5>
+          <span class="badge bg-info text-dark">EM_FORMACAO</span>
+        </div>
+        <div class="card-body">
+          <p class="small text-muted mb-3">
+            O <strong>Especialista em Formação do Projeto</strong> pode registrar etapas (Enquadramento, Descoberta e Direção da Solução). O <strong>Auditor do Projeto</strong> emite o parecer independente <code>FORMACAO_SUFICIENTE</code> para concluir a formação e disponibilizar a Direção.
+          </p>
+          
+          <div class="row g-3">
+            <!-- Formulário de Registro de Etapa -->
+            <div class="col-lg-6">
+              <div class="p-3 border rounded bg-white h-100">
+                <h6 class="fw-bold mb-2 small text-uppercase text-primary">Registrar Etapa de Formação</h6>
+                <form action="/projetos/${escaparHtml(projeto.id)}/etapas" method="POST">
+                  <div class="mb-2">
+                    <label for="etapaNome" class="form-label small">Etapa</label>
+                    <select class="form-select form-select-sm" id="etapaNome" name="etapa" required>
+                      <option value="ENQUADRAMENTO">ENQUADRAMENTO</option>
+                      <option value="DESCOBERTA">DESCOBERTA</option>
+                      <option value="DIREÇÃO DA SOLUÇÃO">DIREÇÃO DA SOLUÇÃO</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label for="detalheEtapa" class="form-label small">Descrição / Conteúdo Técnico</label>
+                    <textarea class="form-control form-control-sm" id="detalheEtapa" name="detalhe" rows="2" placeholder="Resumo do avanço da etapa..." required></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-outline-primary btn-sm w-100">Salvar Etapa de Formação</button>
+                </form>
+              </div>
+            </div>
+
+            <!-- Formulário de Emissão de Parecer / Conclusão -->
+            <div class="col-lg-6">
+              <div class="p-3 border rounded bg-white h-100">
+                <h6 class="fw-bold mb-2 small text-uppercase text-success">Auditoria e Conclusão de Formação</h6>
+                <form action="/projetos/${escaparHtml(projeto.id)}/parecer-auditoria" method="POST">
+                  <div class="mb-2">
+                    <label for="resultadoAuditoria" class="form-label small">Resultado do Processo</label>
+                    <select class="form-select form-select-sm" id="resultadoAuditoria" name="resultado" required>
+                      <option value="FORMACAO_SUFICIENTE">FORMACAO_SUFICIENTE (Aprovar e Gerar Direção)</option>
+                      <option value="FORMACAO_INSUFICIENTE">FORMACAO_INSUFICIENTE (Manter em Formação)</option>
+                    </select>
+                  </div>
+                  <div class="mb-2">
+                    <label for="parecerTexto" class="form-label small">Parecer do Auditor</label>
+                    <input type="text" class="form-control form-control-sm" id="parecerTexto" name="parecer" placeholder="Parecer circunstanciado..." required>
+                  </div>
+                  <div class="mb-2">
+                    <label for="objetivoDirecao" class="form-label small">Objetivo da Direção (se SUFICIENTE)</label>
+                    <input type="text" class="form-control form-control-sm" id="objetivoDirecao" name="objetivoProjeto" placeholder="Objetivo técnico principal..." value="Construir arquitetura e módulos da solução">
+                  </div>
+                  <button type="submit" class="btn btn-success btn-sm w-100 fw-bold">Emitir Parecer e Concluir Formação</button>
+                </form>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ação Excepcional de Cancelamento pelo Owner -->
+          <div class="border-top pt-3 mt-3">
+            <h6 class="fw-bold mb-2 small text-uppercase text-danger">Cancelamento Excepcional (Decisão Material do Owner)</h6>
+            <form action="/projetos/${escaparHtml(projeto.id)}/cancelar" method="POST" class="row g-2 align-items-center">
+              <div class="col-md-3">
+                <input type="text" class="form-control form-control-sm" name="usuario" placeholder="Usuário Owner (ex: mhj)" required>
+              </div>
+              <div class="col-md-6">
+                <input type="text" class="form-control form-control-sm" name="justificativa" placeholder="Justificativa formal de cancelamento..." required>
+              </div>
+              <div class="col-md-3">
+                <button type="submit" class="btn btn-outline-danger btn-sm w-100">✕ Cancelar Projeto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    `;
+  } else if (projeto.status === StatusProjeto.FORMADO) {
+    acoesGovernança = `
+      <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <strong class="d-block">Projeto Formado com Sucesso!</strong>
+          <span class="small">A Direção do Projeto está consolidada e aprovada pela Auditoria da EV-002, pronta para consumo pelos Módulos e Entregas de Valor.</span>
+        </div>
+        <div class="d-flex gap-2">
+          <!-- Ação de cancelamento excepcional pelo Owner disponível até status terminal -->
+          <button class="btn btn-sm btn-outline-danger" type="button" data-bs-toggle="collapse" data-bs-target="#boxCancelamento" aria-expanded="false">
+            Cancelamento do Owner...
+          </button>
+        </div>
+      </div>
+
+      <div class="collapse mb-4" id="boxCancelamento">
+        <div class="card card-body border-danger p-3 bg-light">
+          <h6 class="fw-bold text-danger mb-2 small text-uppercase">Cancelamento Excepcional pelo Owner (mhj)</h6>
+          <form action="/projetos/${escaparHtml(projeto.id)}/cancelar" method="POST" class="row g-2 align-items-center">
+            <div class="col-md-3">
+              <input type="text" class="form-control form-control-sm" name="usuario" placeholder="Usuário Owner (ex: mhj)" required>
+            </div>
+            <div class="col-md-6">
+              <input type="text" class="form-control form-control-sm" name="justificativa" placeholder="Justificativa formal do cancelamento..." required>
+            </div>
+            <div class="col-md-3">
+              <button type="submit" class="btn btn-danger btn-sm w-100">Confirmar Cancelamento</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+  } else if (projeto.status === StatusProjeto.CANCELADO) {
+    acoesGovernança = `
+      <div class="alert alert-danger mb-4">
+        <strong>Projeto Cancelado por Decisão Material do Owner</strong>
+        <p class="mb-0 small">Este projeto foi encerrado em status terminal e não admite novas modificações ou transições.</p>
+      </div>
+    `;
+  }
+
+  // Renderização das Etapas de Formação
+  const etapasLista = projeto.etapas && projeto.etapas.length > 0 ? projeto.etapas.map((et) => `
+    <div class="historico-item formacao mb-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <strong class="text-dark">${escaparHtml(et.etapa)}</strong>
+        <small class="text-muted">${new Date(et.registradoEm).toLocaleString("pt-BR")}</small>
+      </div>
+      <div class="small text-muted mb-1">
+        Registrado por: <span class="badge bg-light text-dark border">${escaparHtml(et.registradoPor)}</span>
+      </div>
+      <pre class="bg-light p-2 rounded small mb-0 font-monospace">${escaparHtml(JSON.stringify(et.conteudo, null, 2))}</pre>
+    </div>
+  `).join("") : `<p class="small text-muted mb-0">Nenhuma etapa de formação registrada ainda.</p>`;
+
+  // Renderização das Auditorias
+  const auditoriasLista = projeto.auditorias && projeto.auditorias.length > 0 ? projeto.auditorias.map((aud) => `
+    <div class="historico-item auditoria mb-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <strong class="${aud.resultado.includes("SUFICIENTE") ? "text-success" : "text-warning"}">${escaparHtml(aud.resultado)}</strong>
+        <small class="text-muted">${new Date(aud.auditadoEm).toLocaleString("pt-BR")}</small>
+      </div>
+      <div class="small text-muted mb-1">
+        Auditor: <span class="badge bg-light text-dark border">${escaparHtml(aud.auditor)}</span>
+      </div>
+      <p class="small mb-0 text-dark">${escaparHtml(aud.parecer)}</p>
+    </div>
+  `).join("") : `<p class="small text-muted mb-0">Nenhum parecer de auditoria registrado ainda.</p>`;
+
+  const conteudo = `
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <span class="badge bg-dark">${escaparHtml(projeto.codigo)}</span>
+          ${badgeStatus}
+          <a href="/necessidades/${escaparHtml(projeto.necessidadeId)}" class="badge bg-info text-dark text-decoration-none">
+            Origem: ${escaparHtml(necessidadeOrigem ? necessidadeOrigem.codigo : projeto.necessidadeId)}
+          </a>
+        </div>
+        <h1 class="h3 mb-0">${escaparHtml(projeto.titulo)}</h1>
+      </div>
+      <div>
+        <a href="/projetos" class="btn btn-outline-secondary btn-sm">&larr; Voltar aos Projetos</a>
+      </div>
+    </div>
+
+    ${alertaFeedback}
+    ${painelDirecao}
+    ${acoesGovernança}
+
+    <div class="row">
+      <!-- Coluna Principal com Etapas e Pareceres -->
+      <div class="col-lg-7 mb-4">
+        <div class="card card-resumo border-0 mb-4 p-4">
+          <h5 class="border-bottom pb-2 mb-3">Etapas de Formação Técnica (M-002)</h5>
+          <div>
+            ${etapasLista}
+          </div>
+        </div>
+
+        <div class="card card-resumo border-0 p-4">
+          <h5 class="border-bottom pb-2 mb-3">Auditoria Independente do Projeto</h5>
+          <div>
+            ${auditoriasLista}
+          </div>
+        </div>
+      </div>
+
+      <!-- Coluna Lateral com Contexto da Necessidade e Metadados -->
+      <div class="col-lg-5 mb-4">
+        <div class="card card-resumo border-0 mb-4 p-4">
+          <h5 class="border-bottom pb-2 mb-3">Vínculo com Necessidade de Origem (1:1)</h5>
+          ${necessidadeOrigem ? `
+            <div class="mb-3">
+              <h6 class="text-muted small text-uppercase">Título da Demanda</h6>
+              <p class="fw-bold mb-1">${escaparHtml(necessidadeOrigem.titulo)}</p>
+              <span class="badge bg-light text-dark border">${escaparHtml(necessidadeOrigem.codigo)}</span>
+              <span class="badge bg-success ms-1">${escaparHtml(necessidadeOrigem.status)}</span>
+            </div>
+            <div class="mb-3">
+              <h6 class="text-muted small text-uppercase">Problema Assumido</h6>
+              <p class="small mb-0">${escaparHtml(necessidadeOrigem.problemaOuOportunidade)}</p>
+            </div>
+            <div class="mb-3">
+              <h6 class="text-muted small text-uppercase">Resultado Pretendido</h6>
+              <p class="small mb-0">${escaparHtml(necessidadeOrigem.resultadoPretendido)}</p>
+            </div>
+            <a href="/necessidades/${escaparHtml(necessidadeOrigem.id)}" class="btn btn-sm btn-outline-primary w-100">
+              Ver Detalhes da Necessidade &rarr;
+            </a>
+          ` : `
+            <p class="small text-muted mb-2">ID da Necessidade: <code>${escaparHtml(projeto.necessidadeId)}</code></p>
+            <a href="/necessidades/${escaparHtml(projeto.necessidadeId)}" class="btn btn-sm btn-outline-primary w-100">
+              Ver Necessidade de Origem &rarr;
+            </a>
+          `}
+        </div>
+
+        <div class="card card-resumo border-0 p-4">
+          <h5 class="border-bottom pb-2 mb-3">Metadados de Rastreabilidade</h5>
+          <dl class="row mb-0 small">
+            <dt class="col-sm-5 text-muted">ID Técnico:</dt>
+            <dd class="col-sm-7 font-monospace text-break">${escaparHtml(projeto.id)}</dd>
+
+            <dt class="col-sm-5 text-muted">Data de Criação:</dt>
+            <dd class="col-sm-7">${new Date(projeto.criadoEm).toLocaleString("pt-BR")}</dd>
+
+            <dt class="col-sm-5 text-muted">Última Atualização:</dt>
+            <dd class="col-sm-7">${new Date(projeto.atualizadoEm).toLocaleString("pt-BR")}</dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+  `;
+
+  return layoutMestre(`Projeto: ${projeto.codigo}`, conteudo);
 }

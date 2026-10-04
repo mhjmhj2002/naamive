@@ -13,10 +13,19 @@ import {
   AtorCompetenteNecessidade,
 } from "../domain/tipos.js";
 import { ServicoCompromissoNecessidade } from "../domain/servico-compromisso.js";
+import { RepositorioProjeto } from "../domain/repositorio-projeto.js";
+import { ServicoAplicacaoProjeto } from "../application/servico-aplicacao-projeto.js";
+import {
+  EtapaFormacaoProjeto,
+  TipoResultadoProcessoProjeto,
+  AtorCompetenteProjeto,
+} from "../domain/tipos-projeto.js";
 import {
   renderizarListaNecessidades,
   renderizarFormularioNovaNecessidade,
   renderizarDetalhesNecessidade,
+  renderizarListaProjetos,
+  renderizarDetalhesProjeto,
 } from "./templates.js";
 
 export interface DependenciasServidorWeb {
@@ -25,6 +34,8 @@ export interface DependenciasServidorWeb {
   portaProjeto: PortaIntegracaoProjeto;
   portaContexto: PortaIntegracaoContexto;
   filaTarefas?: FilaTarefas;
+  servicoProjeto?: ServicoAplicacaoProjeto;
+  repositorioProjeto?: RepositorioProjeto;
 }
 
 /**
@@ -96,7 +107,15 @@ function redirecionar(res: ServerResponse, urlDestino: string): void {
  * Cria a aplicação/servidor HTTP responsivo do NAAMIVE.
  */
 export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
-  const { repositorio, autenticacaoOwner, portaProjeto, portaContexto, filaTarefas } = deps;
+  const {
+    repositorio,
+    autenticacaoOwner,
+    portaProjeto,
+    portaContexto,
+    filaTarefas,
+    servicoProjeto,
+    repositorioProjeto,
+  } = deps;
 
   const server = http.createServer(async (req, res) => {
     try {
@@ -401,6 +420,253 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
           return responderJson(res, 404, { erro: "Compromisso não encontrado ou ainda não aprovado." });
         }
         return responderJson(res, 200, compromisso);
+      }
+
+      // ==========================================
+      // ROTAS DA VERTICAL PROJETO (EV-002 / M-002)
+      // ==========================================
+
+      // 11. GET /projetos — Listagem de Projetos
+      if (metodo === "GET" && pathname === "/projetos") {
+        let listaProjetos: any[] = [];
+        if (servicoProjeto) {
+          listaProjetos = await servicoProjeto.listarProjetos();
+        } else if (repositorioProjeto) {
+          listaProjetos = await repositorioProjeto.listarTodos();
+        }
+        const html = renderizarListaProjetos(listaProjetos);
+        return responderHtml(res, 200, html);
+      }
+
+      // 12. GET /projetos/:id — Detalhes do Projeto, formação, auditorias e Direção
+      const matchDetalhesProjeto = pathname.match(/^\/projetos\/([a-zA-Z0-9_-]+)$/);
+      if (metodo === "GET" && matchDetalhesProjeto) {
+        const id = matchDetalhesProjeto[1];
+        let projeto: any = null;
+        if (servicoProjeto) {
+          projeto = await servicoProjeto.obterProjetoPorId(id);
+        } else if (repositorioProjeto) {
+          projeto = await repositorioProjeto.obterPorId(id);
+        }
+
+        if (!projeto) {
+          return responderHtml(res, 404, "<h1>404 — Projeto não encontrado</h1>");
+        }
+
+        let necessidadeOrigem: Necessidade | null = null;
+        if (projeto.necessidadeId) {
+          necessidadeOrigem = await repositorio.obterPorId(projeto.necessidadeId);
+        }
+
+        let feedback: { tipo: "sucesso" | "erro"; texto: string } | undefined;
+        if (url.searchParams.get("feedback")) {
+          feedback = {
+            tipo: url.searchParams.get("tipo") === "erro" ? "erro" : "sucesso",
+            texto: url.searchParams.get("feedback") || "",
+          };
+        }
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            id: projeto.id,
+            codigo: projeto.codigo,
+            titulo: projeto.titulo,
+            status: projeto.status,
+            necessidadeId: projeto.necessidadeId,
+            etapas: projeto.etapas,
+            auditorias: projeto.auditorias,
+            direcao: projeto.direcao,
+          });
+        }
+
+        const html = renderizarDetalhesProjeto(projeto, necessidadeOrigem, feedback);
+        return responderHtml(res, 200, html);
+      }
+
+      // 13. POST /projetos/:id/etapas — Registro de Etapa de Formação
+      const matchEtapaProjeto = pathname.match(/^\/projetos\/([a-zA-Z0-9_-]+)\/etapas$/);
+      if (metodo === "POST" && matchEtapaProjeto) {
+        const id = matchEtapaProjeto[1];
+        const body = await extrairCorpoRequisicao(req);
+        const etapa = body.etapa as EtapaFormacaoProjeto || EtapaFormacaoProjeto.ENQUADRAMENTO;
+        const detalhe = body.detalhe ? String(body.detalhe).trim() : "";
+
+        if (!detalhe) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "O detalhe do conteúdo da etapa é obrigatório." });
+          }
+          return redirecionar(res, `/projetos/${id}?tipo=erro&feedback=O+conteúdo+da+etapa+é+obrigatório.`);
+        }
+
+        try {
+          if (servicoProjeto) {
+            await servicoProjeto.registrarEtapaFormacao(
+              id,
+              etapa,
+              { detalhe, registradoVia: "Web/HTTP" },
+              AtorCompetenteProjeto.ESPECIALISTA_FORMACAO_PROJETO
+            );
+          } else if (repositorioProjeto) {
+            const proj = await repositorioProjeto.obterPorId(id);
+            if (!proj) {
+              return responderHtml(res, 404, "<h1>404 — Projeto não encontrado</h1>");
+            }
+            proj.registrarEtapaFormacao(
+              AtorCompetenteProjeto.ESPECIALISTA_FORMACAO_PROJETO,
+              etapa,
+              { detalhe, registradoVia: "Web/HTTP" }
+            );
+            await repositorioProjeto.salvar(proj);
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, { ok: true, etapa });
+          }
+
+          return redirecionar(res, `/projetos/${id}?tipo=sucesso&feedback=Etapa+de+formação+registrada+com+sucesso.`);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(res, `/projetos/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 14. POST /projetos/:id/parecer-auditoria — Emissão de parecer de auditoria e conclusão de formação
+      const matchAuditoriaProjeto = pathname.match(/^\/projetos\/([a-zA-Z0-9_-]+)\/parecer-auditoria$/);
+      if (metodo === "POST" && matchAuditoriaProjeto) {
+        const id = matchAuditoriaProjeto[1];
+        const body = await extrairCorpoRequisicao(req);
+        const resultado = body.resultado as TipoResultadoProcessoProjeto || TipoResultadoProcessoProjeto.FORMACAO_SUFICIENTE;
+        const parecer = body.parecer ? String(body.parecer).trim() : "";
+        const objetivoProjeto = body.objetivoProjeto ? String(body.objetivoProjeto).trim() : "Objetivo do Projeto validado pela Auditoria da EV-002";
+
+        if (!parecer) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "O parecer descritivo de auditoria é obrigatório." });
+          }
+          return redirecionar(res, `/projetos/${id}?tipo=erro&feedback=O+parecer+do+auditor+é+obrigatório.`);
+        }
+
+        try {
+          if (servicoProjeto) {
+            await servicoProjeto.registrarParecerAuditoria(
+              id,
+              resultado,
+              parecer,
+              AtorCompetenteProjeto.AUDITOR_PROJETO,
+              resultado === TipoResultadoProcessoProjeto.FORMACAO_SUFICIENTE ? {
+                compromissoOrigem: `Compromisso da Necessidade`,
+                objetivoProjeto,
+                fronteiras: "M-002 / EV-002 delimitado",
+                contextoRelevante: "Formação auditada e aprovada com Direção do Projeto consolidada.",
+              } : undefined
+            );
+          } else if (repositorioProjeto) {
+            const proj = await repositorioProjeto.obterPorId(id);
+            if (!proj) {
+              return responderHtml(res, 404, "<h1>404 — Projeto não encontrado</h1>");
+            }
+            proj.registrarAuditoria(AtorCompetenteProjeto.AUDITOR_PROJETO, resultado, parecer);
+            if (resultado === TipoResultadoProcessoProjeto.FORMACAO_SUFICIENTE) {
+              proj.concluirFormacao(AtorCompetenteProjeto.AUDITOR_PROJETO, {
+                compromissoOrigem: `Compromisso da Necessidade`,
+                objetivoProjeto,
+                fronteiras: "M-002 / EV-002 delimitado",
+                contextoRelevante: "Formação auditada e aprovada com Direção do Projeto consolidada.",
+              });
+            }
+            await repositorioProjeto.salvar(proj);
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, { ok: true, resultado });
+          }
+
+          return redirecionar(res, `/projetos/${id}?tipo=sucesso&feedback=Auditoria+registrada+com+sucesso.`);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(res, `/projetos/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 15. POST /projetos/:id/cancelar — Decisão material humana de cancelamento exclusivo do Owner
+      const matchCancelarProjeto = pathname.match(/^\/projetos\/([a-zA-Z0-9_-]+)\/cancelar$/);
+      if (metodo === "POST" && matchCancelarProjeto) {
+        const id = matchCancelarProjeto[1];
+        const body = await extrairCorpoRequisicao(req);
+        const usuarioInformado = body.usuario;
+        const justificativa = body.justificativa;
+
+        try {
+          const usuarioOwnerValido = await autenticacaoOwner.exigirIdentidadeOwner(usuarioInformado);
+
+          // Obter Projeto e executar cancelamento
+          let proj: any = null;
+          if (repositorioProjeto) {
+            proj = await repositorioProjeto.obterPorId(id);
+          } else if (servicoProjeto) {
+            // Caso servico não exponha repositório diretamente, busca via get
+            proj = await (servicoProjeto as any).repositorioProjeto?.obterPorId(id);
+          }
+
+          if (!proj) {
+            return responderHtml(res, 404, "<h1>404 — Projeto não encontrado</h1>");
+          }
+
+          proj.cancelarPorDecisaoOwner(usuarioOwnerValido, justificativa);
+
+          if (repositorioProjeto) {
+            await repositorioProjeto.salvar(proj);
+          } else if (servicoProjeto) {
+            await (servicoProjeto as any).repositorioProjeto?.salvar(proj);
+          }
+
+          // Registrar evento de rastreabilidade
+          await portaContexto.registrarEventoRastreabilidade({
+            entidadeOrigem: "Projeto",
+            idOrigem: id,
+            tipoEvento: "DECISAO_OWNER_PROJETO_CANCELADO",
+            dados: { usuarioOwner: usuarioOwnerValido, justificativa },
+            timestamp: new Date(),
+          });
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, { ok: true, status: proj.status });
+          }
+
+          return redirecionar(res, `/projetos/${id}?tipo=sucesso&feedback=Cancelamento+do+Projeto+aprovado+pelo+Owner.`);
+        } catch (err: any) {
+          const statusHttp = err.name === "AutoridadeInvalidaErro" || err.name === "AutenticacaoRequeridaErro"
+            ? 403
+            : 400;
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, statusHttp, { erro: err.message });
+          }
+
+          return redirecionar(res, `/projetos/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 16. GET /api/projetos/:id/direcao — Endpoint REST da Direção do Projeto
+      const matchDirecaoApi = pathname.match(/^\/api\/projetos\/([a-zA-Z0-9_-]+)\/direcao$/);
+      if (metodo === "GET" && matchDirecaoApi) {
+        const id = matchDirecaoApi[1];
+        let direcao = null;
+        if (servicoProjeto) {
+          direcao = await servicoProjeto.obterDirecaoProjeto(id);
+        } else if (repositorioProjeto) {
+          const proj = await repositorioProjeto.obterPorId(id);
+          direcao = proj?.direcao || null;
+        }
+
+        if (!direcao) {
+          return responderJson(res, 404, { erro: "Direção do Projeto não encontrada ou ainda não aprovada." });
+        }
+        return responderJson(res, 200, direcao);
       }
 
       // Rota não encontrada

@@ -165,11 +165,12 @@ Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-002` tornou-se
   - [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md): `CONCLUIDO`
   - [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md): `CONCLUIDO`
   - [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md): `CONCLUIDO`
-  - [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md): `PRONTO_PARA_EXECUCAO`
+  - [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md): `CONCLUIDO`
 
-### Handoff da Realização em Andamento
+### Handoff da Realização Técnica Concluída
 
-Com a conclusão do `IT-007`, os componentes centrais de persistência transacional PostgreSQL, orquestração de casos de uso de Projeto e sincronização de M-001/M-002 encontram-se operantes e testados com 100% de sucesso.
-O próximo Ator competente a atuar é o **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`), encarregado de assumir e executar o Item de Trabalho [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md).
+Com a conclusão do `IT-008`, todos os quatro Itens de Trabalho da cadeia de realização da EV-002 (IT-005, IT-006, IT-007 e IT-008) foram plenamente construídos, verificados com suíte de testes locais e integrados (58/58 testes verdes) e concluídos com o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+
+O próximo Ator competente a atuar é o **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`), encarregado de consolidar a integração agregada da realização técnica da EV-002 e emitir o handoff para a Verificação da Entrega de Valor.
 
 
