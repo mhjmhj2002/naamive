@@ -17,6 +17,7 @@
 * **Dentro da fronteira:** decomposição, próximo trabalho válido, competência, seleção de executor, handoff, acompanhamento e explicitação de pendências de decisão do fluxo.
 * **Fora da fronteira:** decisão humana material, fonte de verdade de evidências e histórico, formação de Necessidade ou Projeto e verificação final do resultado.
 * **Relações relevantes:** é orientado por M-002, depende de contexto recuperável de M-004 e fornece o percurso necessário a M-005.
+* **Mapa de Entregas de Valor:** [Mapa de Entregas de Valor de M-003](mapa-de-entregas-de-valor.md).
 
 ## Handoff
 
