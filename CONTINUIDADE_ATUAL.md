@@ -6,19 +6,19 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
+O ciclo de vida do NAAMIVE avançou com pleno sucesso na **Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
 
 1. A **`EV-002 — Direção do Projeto`** permanece soberanamente **`CONCLUIDA`** pelo Owner `mhj` (100% de sucesso e software validado).
-2. O **Engenheiro de Software**, atuando estritamente dentro de sua competência funcional sob o registro [dados/itens-de-trabalho/IT-011/item-de-trabalho.md](dados/itens-de-trabalho/IT-011/item-de-trabalho.md) e com base na Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`, executou com sucesso o **`IT-011 — Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background`**:
-   - Definiu a interface pura `RepositorioCoordenacao` em `src/domain/repositorio-coordenacao.ts` e o erro de domínio `RecursoNaoEncontradoErro` em `src/domain/erros.ts`;
-   - Implementou os adaptadores de repositório `RepositorioCoordenacaoPostgres` em `src/infrastructure/database/repositorio-coordenacao-postgres.ts` (com persistência relacional transacional atômica e suporte a JSONB) e `RepositorioCoordenacaoMemoria` em `src/infrastructure/database/repositorio-coordenacao-memoria.ts`;
-   - Implementou o serviço de aplicação `ServicoAplicacaoCoordenacao` em `src/application/servico-aplicacao-coordenacao.ts` orquestrando os casos de uso de cadastro, avaliação de elegibilidade, seleção de próximo avanço, despacho idempotente de handoffs, registro de retornos e consulta detalhada com dependências;
-   - Integrou o manipulador `REAVALIAR_COORDENACAO` ao loop desacoplado do `WorkerSegundoPlano` em `src/worker/worker-segundo-plano.ts`, com emissão de eventos de rastreabilidade para o M-004;
-   - Integrou os novos serviços e repositórios no bootstrap operacional do sistema em `src/server.ts`;
-   - Desenvolveu a suíte de testes de integração em `tests/it011-repositorio-e-servico-coordenacao.test.ts` cobrindo 100% dos critérios técnicos e fluxos de persistência e background;
-   - Validou a integridade completa do sistema com `npm run typecheck && npm run build && npm test` (11 suítes e 81 testes aprovados com 100% de sucesso);
-   - Emitiu o Resultado do Processo **`EXECUCAO_CONCLUIDA`** e transicionou o `IT-011` para **`CONCLUIDO`**.
-3. Com a conclusão de sua dependência (`IT-011`), o item **`IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada`** teve seu status atualizado para **`PRONTO_PARA_EXECUCAO`** tanto em seu registro quanto no Plano de Realização da EV-003.
+2. O **Engenheiro de Software**, atuando estritamente dentro de sua competência funcional sob o registro [dados/itens-de-trabalho/IT-012/item-de-trabalho.md](dados/itens-de-trabalho/IT-012/item-de-trabalho.md) e com base na Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`, executou com sucesso o **`IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada`**:
+   - Estendeu as entidades de domínio `TrabalhoCoordenado` (com método `registrarDecisaoHumanaLiberacao` para liberação soberana pelo Owner) e `MotorCoordenacaoTrabalho` (com agregação de trabalhos em condição `POSSIVEL` em `ResultadoAvaliacaoElegibilidade`);
+   - Atualizou o serviço de aplicação `ServicoAplicacaoCoordenacao` com o método `liberarDecisaoHumanaOwner` e a exposição consolidada do grafo completo na visão de coordenação;
+   - Desenvolveu e integrou no `src/web/templates.ts` os templates responsivos em Bootstrap 5: painel de coordenação (`renderizarPainelCoordenacao`), detalhes do trabalho (`renderizarDetalhesTrabalhoCoordenado`) e inspeção estruturada do handoff (`renderizarDetalheHandoff`), além da inclusão do link de Coordenação na navbar global;
+   - Implementou as rotas HTTP no `src/web/servidor-web.ts`: `/coordenacao` (GET), `/coordenacao/trabalhos/:id` (GET), `/coordenacao/trabalhos/:id/despachar` (POST), `/coordenacao/handoffs/:id` (GET), `/coordenacao/retornos` (POST) e `/coordenacao/trabalhos/:id/decisao-owner` (POST), com suporte dual a HTML responsivo e respostas REST em JSON, conectadas à porta de contexto para rastreabilidade com o M-004;
+   - Injetou as dependências de coordenação no servidor web durante o bootstrap operacional do sistema em `src/server.ts`;
+   - Desenvolveu a suíte completa de testes de ponta a ponta em `tests/it012-camada-web-coordenacao.test.ts` cobrindo 100% dos 6 critérios técnicos de aceitação;
+   - Validou a integridade completa do sistema com `npm run typecheck && npm run build && npm test` (12 suítes e 86 testes aprovados com 100% de sucesso);
+   - Emitiu o Resultado do Processo **`EXECUCAO_CONCLUIDA`** e transicionou o `IT-012` para **`CONCLUIDO`**.
+3. **Plano de Realização da EV-003 Plenamente Concluído:** Todos os 4 Itens de Trabalho previstos no Plano de Realização da EV-003 (`IT-009`, `IT-010`, `IT-011` e `IT-012`) estão rigorosamente **`CONCLUIDO`** com Resultado `EXECUCAO_CONCLUIDA`.
 
 ## Governança transversal e Débitos
 
@@ -89,7 +89,7 @@ O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 �
   - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
   - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
-  - Situação: Em realização técnica. `IT-009`, `IT-010` e `IT-011` concluídos com sucesso; `IT-012` pronto para execução.
+  - Situação: Todos os itens de trabalho da realização concluídos (`IT-009`, `IT-010`, `IT-011` e `IT-012`). Aguardando atuação do Integrador da Realização.
 
 ### Itens de Trabalho (EV-003)
 
@@ -107,27 +107,25 @@ O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 �
   - Resultado do Processo: `EXECUCAO_CONCLUIDA`
 * **IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada:**
   - Registro: [dados/itens-de-trabalho/IT-012/item-de-trabalho.md](dados/itens-de-trabalho/IT-012/item-de-trabalho.md)
-  - Status: **`PRONTO_PARA_EXECUCAO`** (dependência `IT-011` satisfeita).
+  - Status: **`CONCLUIDO`**
+  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A `EV-003` está em realização técnica ativa (`EM_REALIZACAO`).
-* Os itens `IT-009`, `IT-010` e `IT-011` foram concluídos com sucesso.
-* O item `IT-012` está com status `PRONTO_PARA_EXECUCAO`.
-* A próxima atividade agêntica cabe ao **Engenheiro de Software** (vertical Item de Trabalho / Execução).
+* A `EV-003` teve todos os seus Itens de Trabalho concluídos com 100% de sucesso.
+* A próxima atividade agêntica cabe ao **Integrador da Realização** (vertical Item de Trabalho / Integração).
 
 ## Próxima ação legítima
 
-1. Atuar como o **Engenheiro de Software** (utilizando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para executar o **`IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada`**, implementando rotas HTTP (`/coordenacao`), templates Bootstrap 5 responsivos para visualização de trabalhos coordenados, despacho com um clique ("Delegar Próximo Avanço"), exibição detalhada de handoffs emitidos e suíte completa de testes end-to-end integrados.
+1. Atuar como o **Integrador da Realização** (utilizando a Skill `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`) para verificar a cobertura e conclusão de todos os itens do [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md), validar a compilação global e suíte de testes integrados, emitir o Resultado do Processo **`REALIZACAO_INTEGRADA`** e formalizar o handoff oficial para o Ator **Verificador da Entrega de Valor**.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
-* `dados/itens-de-trabalho/IT-012/item-de-trabalho.md`
+* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
 * `dados/entregas-de-valor/EV-003/plano-de-realizacao.md`
 * `dados/entregas-de-valor/EV-003/entrega-de-valor.md`

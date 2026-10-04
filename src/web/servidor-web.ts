@@ -15,17 +15,24 @@ import {
 import { ServicoCompromissoNecessidade } from "../domain/servico-compromisso.js";
 import { RepositorioProjeto } from "../domain/repositorio-projeto.js";
 import { ServicoAplicacaoProjeto } from "../application/servico-aplicacao-projeto.js";
+import { RepositorioCoordenacao } from "../domain/repositorio-coordenacao.js";
+import { ServicoAplicacaoCoordenacao } from "../application/servico-aplicacao-coordenacao.js";
+import { CondicaoOperacionalTrabalho } from "../domain/tipos-coordenacao.js";
 import {
   EtapaFormacaoProjeto,
   TipoResultadoProcessoProjeto,
   AtorCompetenteProjeto,
 } from "../domain/tipos-projeto.js";
 import {
+  escaparHtml,
   renderizarListaNecessidades,
   renderizarFormularioNovaNecessidade,
   renderizarDetalhesNecessidade,
   renderizarListaProjetos,
   renderizarDetalhesProjeto,
+  renderizarPainelCoordenacao,
+  renderizarDetalhesTrabalhoCoordenado,
+  renderizarDetalheHandoff,
 } from "./templates.js";
 
 export interface DependenciasServidorWeb {
@@ -36,6 +43,8 @@ export interface DependenciasServidorWeb {
   filaTarefas?: FilaTarefas;
   servicoProjeto?: ServicoAplicacaoProjeto;
   repositorioProjeto?: RepositorioProjeto;
+  servicoCoordenacao?: ServicoAplicacaoCoordenacao;
+  repositorioCoordenacao?: RepositorioCoordenacao;
 }
 
 /**
@@ -115,6 +124,8 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
     filaTarefas,
     servicoProjeto,
     repositorioProjeto,
+    servicoCoordenacao,
+    repositorioCoordenacao,
   } = deps;
 
   const server = http.createServer(async (req, res) => {
@@ -667,6 +678,396 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
           return responderJson(res, 404, { erro: "Direção do Projeto não encontrada ou ainda não aprovada." });
         }
         return responderJson(res, 200, direcao);
+      }
+
+      // =========================================================================
+      // ROTAS DE COORDENAÇÃO DO TRABALHO (M-003 / EV-003 / IT-012)
+      // =========================================================================
+
+      // 17. GET /coordenacao — Painel principal de Coordenação do Trabalho
+      if (metodo === "GET" && pathname === "/coordenacao") {
+        if (!servicoCoordenacao && !repositorioCoordenacao) {
+          return responderHtml(res, 500, "<h1>500 — Módulo de Coordenação não configurado no servidor.</h1>");
+        }
+
+        // Obtém projetos disponíveis para seleção
+        const projetos = repositorioProjeto ? await repositorioProjeto.listarTodos() : [];
+        let projetoId = url.searchParams.get("projetoId");
+
+        if (!projetoId && projetos.length > 0) {
+          projetoId = projetos[0]!.id;
+        }
+
+        if (!projetoId) {
+          return responderHtml(
+            res,
+            200,
+            renderizarPainelCoordenacao(
+              {
+                projetoId: "",
+                totalTrabalhos: 0,
+                possiveis: [],
+                preparados: [],
+                emExecucao: [],
+                bloqueados: [],
+                aguardandoDecisao: [],
+                encerrados: [],
+                proximoAvancoValido: null,
+                avaliacao: {
+                  projetoId: "",
+                  totalTrabalhos: 0,
+                  trabalhosPossiveis: [],
+                  trabalhosPreparados: [],
+                  trabalhosEmExecucao: [],
+                  trabalhosBloqueados: [],
+                  trabalhosAguardandoDecisao: [],
+                  trabalhosEncerrados: [],
+                  proximoAvancoValido: null,
+                  diagnosticos: [],
+                },
+              },
+              projetos,
+              null
+            )
+          );
+        }
+
+        const projetoSelecionado = projetos.find((p) => p.id === projetoId) || null;
+        let visao: any;
+        if (servicoCoordenacao) {
+          visao = await servicoCoordenacao.listarTrabalhosCoordenados(projetoId);
+        } else {
+          const trabalhos = await repositorioCoordenacao!.listarPorProjetoId(projetoId);
+          visao = {
+            projetoId,
+            totalTrabalhos: trabalhos.length,
+            possiveis: trabalhos.filter((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.POSSIVEL),
+            preparados: trabalhos.filter((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.PREPARADO),
+            emExecucao: trabalhos.filter((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.EM_EXECUCAO),
+            bloqueados: trabalhos.filter((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.BLOQUEADO),
+            aguardandoDecisao: trabalhos.filter((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.AGUARDANDO_DECISAO_HUMANA),
+            encerrados: trabalhos.filter((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.ENCERRADO),
+            proximoAvancoValido: trabalhos.find((t) => t.condicaoOperacional === CondicaoOperacionalTrabalho.PREPARADO) || null,
+            avaliacao: {} as any,
+          };
+        }
+
+        const feedbackMsg = url.searchParams.get("feedback");
+        const feedbackTipo = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
+        const feedback = feedbackMsg && feedbackTipo ? { tipo: feedbackTipo, mensagem: feedbackMsg } : undefined;
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, visao);
+        }
+
+        const html = renderizarPainelCoordenacao(visao, projetos, projetoSelecionado, feedback);
+        return responderHtml(res, 200, html);
+      }
+
+      // 18. GET /coordenacao/trabalhos/:id — Detalhes completos do Trabalho Coordenado
+      const matchDetalhesTrabalho = pathname.match(/^\/coordenacao\/trabalhos\/([a-zA-Z0-9_-]+)$/);
+      if (metodo === "GET" && matchDetalhesTrabalho) {
+        const trabalhoId = matchDetalhesTrabalho[1];
+
+        try {
+          let detalhe: any;
+          if (servicoCoordenacao) {
+            detalhe = await servicoCoordenacao.obterDetalhesTrabalho(trabalhoId);
+          } else if (repositorioCoordenacao) {
+            const trabalho = await repositorioCoordenacao.obterPorId(trabalhoId);
+            if (!trabalho) {
+              return responderHtml(res, 404, "<h1>404 — Trabalho Coordenado não encontrado</h1>");
+            }
+            detalhe = {
+              trabalho,
+              dependenciasDetalhadas: [],
+              handoffAtivo: trabalho.handoffs.length > 0 ? trabalho.handoffs[trabalho.handoffs.length - 1] : null,
+            };
+          } else {
+            return responderHtml(res, 500, "<h1>500 — Repositório de Coordenação indisponível</h1>");
+          }
+
+          let projeto = null;
+          if (repositorioProjeto) {
+            projeto = await repositorioProjeto.obterPorId(detalhe.trabalho.projetoId);
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, detalhe);
+          }
+
+          const feedbackMsg = url.searchParams.get("feedback");
+          const feedbackTipo = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
+          const feedback = feedbackMsg && feedbackTipo ? { tipo: feedbackTipo, mensagem: feedbackMsg } : undefined;
+
+          const html = renderizarDetalhesTrabalhoCoordenado(detalhe, projeto, feedback);
+          return responderHtml(res, 200, html);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 404, { erro: err.message });
+          }
+          return responderHtml(res, 404, `<h1>404 — ${escaparHtml(err.message)}</h1>`);
+        }
+      }
+
+      // 19. POST /coordenacao/trabalhos/:id/despachar — Despacho com Um Clique ("Delegar Próximo Avanço")
+      const matchDespacharTrabalho = pathname.match(/^\/coordenacao\/trabalhos\/([a-zA-Z0-9_-]+)\/despachar$/);
+      if (metodo === "POST" && matchDespacharTrabalho) {
+        const trabalhoId = matchDespacharTrabalho[1];
+        const body = await extrairCorpoRequisicao(req);
+        const executorDesignado = body.executorDesignado ? String(body.executorDesignado).trim() : null;
+        const tokenFornecido = body.tokenCorrelacao ? String(body.tokenCorrelacao).trim() : null;
+
+        try {
+          if (!servicoCoordenacao && !repositorioCoordenacao) {
+            throw new Error("Serviço de Coordenação não disponível.");
+          }
+
+          let handoffEmitido: any;
+          if (servicoCoordenacao) {
+            handoffEmitido = await servicoCoordenacao.despacharProximoAvanco(
+              trabalhoId,
+              {
+                projeto: body.projetoId || "P-001",
+                necessidade: "N-001",
+                modulo: "M-003",
+                entregaDeValor: "EV-003",
+                documentosNormativos: [
+                  "documentacao/entrega-de-valor/02_MODELO_DE_ENTREGA_DE_VALOR.md",
+                  "dados/entregas-de-valor/EV-003/entrega-de-valor.md",
+                ],
+              },
+              executorDesignado,
+              tokenFornecido
+            );
+          } else {
+            const trab = await repositorioCoordenacao!.obterPorId(trabalhoId);
+            if (!trab) throw new Error("Trabalho não encontrado.");
+            const token = tokenFornecido || `hdof-${trab.codigo.toLowerCase()}-${Date.now()}`;
+            const hd = trab.despacharHandoff(
+              token,
+              {
+                projeto: trab.projetoId,
+                necessidade: "N-001",
+                modulo: "M-003",
+                entregaDeValor: "EV-003",
+              },
+              executorDesignado
+            );
+            await repositorioCoordenacao!.salvar(trab);
+            handoffEmitido = {
+              handoffId: hd.id,
+              trabalhoId: trab.id,
+              codigoTrabalho: trab.codigo,
+              tokenCorrelacao: hd.tokenCorrelacao,
+            };
+          }
+
+          // Notifica contexto de rastreabilidade M-004
+          await portaContexto.registrarEventoRastreabilidade({
+            entidadeOrigem: "TrabalhoCoordenado",
+            idOrigem: trabalhoId,
+            tipoEvento: "HANDOFF_DESPACHADO",
+            dados: {
+              codigoTrabalho: handoffEmitido.codigoTrabalho,
+              tokenCorrelacao: handoffEmitido.tokenCorrelacao,
+              atorDestinatario: handoffEmitido.atorDestinatario,
+            },
+            timestamp: new Date(),
+          });
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, handoffEmitido);
+          }
+
+          return redirecionar(
+            res,
+            `/coordenacao/trabalhos/${trabalhoId}?tipo=sucesso&feedback=Handoff+despachado+com+sucesso!+Token:+${encodeURIComponent(handoffEmitido.tokenCorrelacao)}`
+          );
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(
+            res,
+            `/coordenacao/trabalhos/${trabalhoId}?tipo=erro&feedback=${encodeURIComponent(err.message)}`
+          );
+        }
+      }
+
+      // 20. GET /coordenacao/handoffs/:id — Inspeção detalhada do Handoff e pacote estruturado
+      const matchDetalhesHandoff = pathname.match(/^\/coordenacao\/handoffs\/([a-zA-Z0-9_-]+)$/);
+      if (metodo === "GET" && matchDetalhesHandoff) {
+        const handoffId = matchDetalhesHandoff[1];
+
+        if (!repositorioCoordenacao) {
+          return responderHtml(res, 500, "<h1>500 — Repositório de Coordenação indisponível</h1>");
+        }
+
+        const par = await repositorioCoordenacao.obterHandoffPorId(handoffId);
+        if (!par) {
+          return responderHtml(res, 404, "<h1>404 — Handoff não encontrado</h1>");
+        }
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            handoff: par.handoff,
+            trabalho: {
+              id: par.trabalho.id,
+              codigo: par.trabalho.codigo,
+              titulo: par.trabalho.titulo,
+              condicaoOperacional: par.trabalho.condicaoOperacional,
+            },
+          });
+        }
+
+        const html = renderizarDetalheHandoff(par.handoff, par.trabalho);
+        return responderHtml(res, 200, html);
+      }
+
+      // 21. POST /coordenacao/retornos — Registro de retorno de execução (via formulário ou API REST)
+      if (metodo === "POST" && pathname === "/coordenacao/retornos") {
+        const body = await extrairCorpoRequisicao(req);
+        const tokenCorrelacao = body.tokenCorrelacao ? String(body.tokenCorrelacao).trim() : "";
+        const sucesso = body.sucesso === true || body.sucesso === "true" || body.sucesso === "1";
+        const resultadoObservavel = body.resultadoObservavel ? String(body.resultadoObservavel).trim() : "";
+        const pendenciasOuBloqueios = body.pendenciasOuBloqueios ? String(body.pendenciasOuBloqueios).trim() : null;
+        const trabalhoIdRetorno = body.trabalhoId ? String(body.trabalhoId).trim() : "";
+
+        if (!tokenCorrelacao) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "O token de correlação é obrigatório." });
+          }
+          return redirecionar(res, `/coordenacao?tipo=erro&feedback=Token+de+correlação+é+obrigatório.`);
+        }
+
+        try {
+          if (!servicoCoordenacao && !repositorioCoordenacao) {
+            throw new Error("Serviço de Coordenação não disponível.");
+          }
+
+          let resultadoRetorno: any;
+          if (servicoCoordenacao) {
+            resultadoRetorno = await servicoCoordenacao.registrarRetornoExecucao(tokenCorrelacao, {
+              sucesso,
+              resultadoObservavel,
+              pendenciasOuBloqueios,
+            });
+          } else {
+            const par = await repositorioCoordenacao!.obterHandoffPorToken(tokenCorrelacao);
+            if (!par) throw new Error("Handoff não encontrado com token fornecido.");
+            const ret = par.trabalho.registrarRetorno(tokenCorrelacao, sucesso, resultadoObservavel, pendenciasOuBloqueios);
+            await repositorioCoordenacao!.salvar(par.trabalho);
+            resultadoRetorno = {
+              trabalhoId: par.trabalho.id,
+              codigoTrabalho: par.trabalho.codigo,
+              condicaoOperacionalResultante: par.trabalho.condicaoOperacional,
+              retornoId: ret.id,
+              sucesso,
+            };
+          }
+
+          // Notifica contexto de rastreabilidade M-004
+          await portaContexto.registrarEventoRastreabilidade({
+            entidadeOrigem: "HandoffCoordenacao",
+            idOrigem: tokenCorrelacao,
+            tipoEvento: "RETORNO_RECEBIDO",
+            dados: {
+              sucesso,
+              resultadoObservavel,
+              trabalhoId: resultadoRetorno.trabalhoId,
+            },
+            timestamp: new Date(),
+          });
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, resultadoRetorno);
+          }
+
+          const targetId = trabalhoIdRetorno || resultadoRetorno.trabalhoId;
+          return redirecionar(
+            res,
+            `/coordenacao/trabalhos/${targetId}?tipo=sucesso&feedback=Retorno+de+execução+registrado+com+sucesso!`
+          );
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          const targetId = trabalhoIdRetorno ? `/coordenacao/trabalhos/${trabalhoIdRetorno}` : "/coordenacao";
+          return redirecionar(res, `${targetId}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 22. POST /coordenacao/trabalhos/:id/decisao-owner — Decisão soberana do Owner para liberar trabalho
+      const matchDecisaoOwner = pathname.match(/^\/coordenacao\/trabalhos\/([a-zA-Z0-9_-]+)\/decisao-owner$/);
+      if (metodo === "POST" && matchDecisaoOwner) {
+        const trabalhoId = matchDecisaoOwner[1];
+        const body = await extrairCorpoRequisicao(req);
+        const usuarioInformado = body.usuario;
+        const diretriz = body.diretriz ? String(body.diretriz).trim() : "";
+
+        try {
+          const usuarioOwnerValido = await autenticacaoOwner.exigirIdentidadeOwner(usuarioInformado);
+
+          if (!diretriz) {
+            throw new Error("A diretriz ou decisão humana do Owner é obrigatória.");
+          }
+
+          let trabalhoAtualizado: any;
+          if (servicoCoordenacao) {
+            trabalhoAtualizado = await servicoCoordenacao.liberarDecisaoHumanaOwner(
+              trabalhoId,
+              usuarioOwnerValido,
+              diretriz,
+              CondicaoOperacionalTrabalho.PREPARADO
+            );
+          } else if (repositorioCoordenacao) {
+            const trab = await repositorioCoordenacao.obterPorId(trabalhoId);
+            if (!trab) throw new Error("Trabalho não encontrado.");
+            trab.registrarDecisaoHumanaLiberacao(usuarioOwnerValido, diretriz, CondicaoOperacionalTrabalho.PREPARADO);
+            await repositorioCoordenacao.salvar(trab);
+            trabalhoAtualizado = trab;
+          }
+
+          // Notifica contexto de rastreabilidade M-004
+          await portaContexto.registrarEventoRastreabilidade({
+            entidadeOrigem: "TrabalhoCoordenado",
+            idOrigem: trabalhoId,
+            tipoEvento: "DECISAO_SOBERANA_OWNER_LIBERACAO",
+            dados: {
+              usuarioOwner: usuarioOwnerValido,
+              diretriz,
+              novaCondicao: CondicaoOperacionalTrabalho.PREPARADO,
+            },
+            timestamp: new Date(),
+          });
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, {
+              ok: true,
+              trabalhoId,
+              condicaoOperacional: trabalhoAtualizado.condicaoOperacional,
+            });
+          }
+
+          return redirecionar(
+            res,
+            `/coordenacao/trabalhos/${trabalhoId}?tipo=sucesso&feedback=Decisão+soberana+do+Owner+registrada+com+sucesso!+Trabalho+liberado+para+PREPARADO.`
+          );
+        } catch (err: any) {
+          const statusHttp = err.name === "AutoridadeInvalidaErro" || err.name === "AutenticacaoRequeridaErro"
+            ? 403
+            : 400;
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, statusHttp, { erro: err.message });
+          }
+
+          return redirecionar(
+            res,
+            `/coordenacao/trabalhos/${trabalhoId}?tipo=erro&feedback=${encodeURIComponent(err.message)}`
+          );
+        }
       }
 
       // Rota não encontrada

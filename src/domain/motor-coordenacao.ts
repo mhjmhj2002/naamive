@@ -13,6 +13,7 @@ export interface DiagnosticoElegibilidadeTrabalho {
 export interface ResultadoAvaliacaoElegibilidade {
   projetoId: string;
   totalTrabalhos: number;
+  trabalhosPossiveis: TrabalhoCoordenado[];
   trabalhosPreparados: TrabalhoCoordenado[];
   trabalhosEmExecucao: TrabalhoCoordenado[];
   trabalhosBloqueados: TrabalhoCoordenado[];
@@ -65,6 +66,7 @@ export class MotorCoordenacaoTrabalho {
     }
 
     const diagnosticos: DiagnosticoElegibilidadeTrabalho[] = [];
+    const possiveis: TrabalhoCoordenado[] = [];
     const preparados: TrabalhoCoordenado[] = [];
     const emExecucao: TrabalhoCoordenado[] = [];
     const bloqueados: TrabalhoCoordenado[] = [];
@@ -73,6 +75,9 @@ export class MotorCoordenacaoTrabalho {
 
     for (const trabalho of trabalhos) {
       switch (trabalho.condicaoOperacional) {
+        case CondicaoOperacionalTrabalho.POSSIVEL:
+          possiveis.push(trabalho);
+          break;
         case CondicaoOperacionalTrabalho.PREPARADO:
           preparados.push(trabalho);
           break;
@@ -153,6 +158,7 @@ export class MotorCoordenacaoTrabalho {
     return {
       projetoId,
       totalTrabalhos: trabalhos.length,
+      trabalhosPossiveis: possiveis,
       trabalhosPreparados: preparados,
       trabalhosEmExecucao: emExecucao,
       trabalhosBloqueados: bloqueados,

@@ -61,6 +61,7 @@ export interface ResultadoProcessamentoRetorno {
 export interface VisaoTrabalhosCoordenacao {
   projetoId: string;
   totalTrabalhos: number;
+  possiveis: TrabalhoCoordenado[];
   preparados: TrabalhoCoordenado[];
   emExecucao: TrabalhoCoordenado[];
   bloqueados: TrabalhoCoordenado[];
@@ -329,6 +330,7 @@ export class ServicoAplicacaoCoordenacao {
     return {
       projetoId,
       totalTrabalhos: avaliacao.totalTrabalhos,
+      possiveis: avaliacao.trabalhosPossiveis,
       preparados: avaliacao.trabalhosPreparados,
       emExecucao: avaliacao.trabalhosEmExecucao,
       bloqueados: avaliacao.trabalhosBloqueados,
@@ -383,4 +385,33 @@ export class ServicoAplicacaoCoordenacao {
       handoffAtivo,
     };
   }
+
+  /**
+   * Registra a decisão soberana do Owner para liberar um trabalho bloqueado ou aguardando decisão humana.
+   */
+  public async liberarDecisaoHumanaOwner(
+    trabalhoId: string,
+    usuarioOwner: string,
+    diretriz: string,
+    novaCondicao: CondicaoOperacionalTrabalho = CondicaoOperacionalTrabalho.PREPARADO
+  ): Promise<TrabalhoCoordenado> {
+    const trabalho = await this.repositorioCoordenacao.obterPorId(trabalhoId);
+    if (!trabalho) {
+      throw new RecursoNaoEncontradoErro("TrabalhoCoordenado", trabalhoId);
+    }
+
+    trabalho.registrarDecisaoHumanaLiberacao(usuarioOwner, diretriz, novaCondicao);
+    await this.repositorioCoordenacao.salvar(trabalho);
+
+    // Se houver fila, reavalia a coordenação
+    if (this.filaTarefas) {
+      await this.filaTarefas.enfileirar("REAVALIAR_COORDENACAO", {
+        projetoId: trabalho.projetoId,
+        trabalhoId: trabalho.id,
+      });
+    }
+
+    return trabalho;
+  }
 }
+

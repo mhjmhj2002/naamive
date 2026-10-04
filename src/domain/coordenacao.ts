@@ -532,6 +532,46 @@ export class TrabalhoCoordenado {
   }
 
   /**
+   * Registra a decisão material humana soberana do Owner, liberando o trabalho para continuidade.
+   */
+  registrarDecisaoHumanaLiberacao(
+    usuarioOwner: string,
+    decisaoOuDiretriz: string,
+    novaCondicao: CondicaoOperacionalTrabalho = CondicaoOperacionalTrabalho.PREPARADO
+  ): void {
+    if (this._condicaoOperacional !== CondicaoOperacionalTrabalho.AGUARDANDO_DECISAO_HUMANA && this._condicaoOperacional !== CondicaoOperacionalTrabalho.BLOQUEADO) {
+      throw new TransicaoInvalidaErro(
+        this._condicaoOperacional,
+        "Liberar por decisão humana",
+        `Apenas trabalhos em AGUARDANDO_DECISAO_HUMANA ou BLOQUEADO podem receber liberação soberana do Owner (atual: ${this._condicaoOperacional}).`
+      );
+    }
+    if (!usuarioOwner || usuarioOwner.trim() === "") {
+      throw new InvarianteVioladaErro("A identificação do usuário Owner é obrigatória para decisão soberana.");
+    }
+    if (!decisaoOuDiretriz || decisaoOuDiretriz.trim() === "") {
+      throw new InvarianteVioladaErro("A decisão ou diretriz do Owner é obrigatória.");
+    }
+
+    if (novaCondicao === CondicaoOperacionalTrabalho.PREPARADO) {
+      this.validarInvarianteEspecializacao();
+    }
+
+    const anterior = this._condicaoOperacional;
+    this._condicaoOperacional = novaCondicao;
+    this._motivoBloqueio = null;
+    this._atualizadoEm = new Date();
+
+    this.registrarHistorico(
+      "Owner",
+      `Decisão humana soberana do Owner '${usuarioOwner.trim()}': ${decisaoOuDiretriz.trim()}`,
+      anterior,
+      this._condicaoOperacional,
+      { usuarioOwner: usuarioOwner.trim(), diretriz: decisaoOuDiretriz.trim() }
+    );
+  }
+
+  /**
    * Registra entrada no histórico de coordenação.
    */
   private registrarHistorico(
