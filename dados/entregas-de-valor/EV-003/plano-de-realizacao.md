@@ -36,8 +36,8 @@ IT-012 (Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte In
 
 | Código | Título Técnico | Status Atual | Dependências |
 | --- | --- | --- | --- |
-| [`IT-009`](../../itens-de-trabalho/IT-009/item-de-trabalho.md) | Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações | `PRONTO_PARA_EXECUCAO` | Nenhuma (sucede baseline consolidada na EV-002) |
-| [`IT-010`](../../itens-de-trabalho/IT-010/item-de-trabalho.md) | Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização | `CRIADO` | `IT-009` |
+| [`IT-009`](../../itens-de-trabalho/IT-009/item-de-trabalho.md) | Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações | `CONCLUIDO` | Nenhuma (sucede baseline consolidada na EV-002) |
+| [`IT-010`](../../itens-de-trabalho/IT-010/item-de-trabalho.md) | Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização | `PRONTO_PARA_EXECUCAO` | `IT-009` |
 | [`IT-011`](../../itens-de-trabalho/IT-011/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background | `CRIADO` | `IT-010` |
 | [`IT-012`](../../itens-de-trabalho/IT-012/item-de-trabalho.md) | Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada | `CRIADO` | `IT-011` |
 

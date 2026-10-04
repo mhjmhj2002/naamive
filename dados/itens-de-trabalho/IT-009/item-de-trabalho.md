@@ -8,12 +8,12 @@
 | Código | `IT-009` |
 | Entrega de Valor proprietária | [EV-003 — Coordenação do Trabalho Preparado](../../entregas-de-valor/EV-003/entrega-de-valor.md) |
 | Módulo de proveniência | [M-003 — Coordenação do Trabalho](../../modulos/M-003/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
 * **Objetivo técnico:** Criar o esquema de dados relacional e scripts de migração no PostgreSQL para suportar a Coordenação do Trabalho, compreendendo as tabelas `trabalhos_coordenados`, `handoffs_coordenacao` e `retornos_coordenacao`, com integridade referencial a `projetos(id)`, constraints de condições operacionais, chaves únicas para tokens de correlação e índices para consultas de dependências e histórico.
-* **Fronteira técnica:** Camada de infraestrutura e persistência de dados (`src/infraestrutura/` ou `src/db/migrations/`), scripts SQL/TypeScript de criação de tabelas, índices e funções de integridade.
+* **Fronteira técnica:** Camada de infraestrutura e persistência de dados (`migrations/005_esquema_coordenacao_trabalho.sql`), scripts SQL de criação de tabelas, índices e funções de integridade.
 * **Dependências de outros itens:** Nenhuma (sucede a baseline técnica de persistência consolidada no IT-005/EV-002).
 * **Contratos lógicos observados:** Especificação da EV-003 (Seção Dados, contratos e integrações), campos canônicos de `trabalhos_coordenados`, `handoffs_coordenacao` e `retornos_coordenacao`.
 * **Decisões locais autorizadas:** Nomes exatos de índices, definições de tipos para JSONB e queries de migração idempotente.
@@ -28,12 +28,16 @@
 
 ## Execução e Evidências
 
-* **Executor:** (A ser atribuído — Engenheiro de Software)
-* **Artefatos produzidos / alterados:** (A preencher na execução)
-* **Resultado de testes locais:** (A preencher na execução)
-* **Conclusão técnica:** (A preencher na execução)
+* **Executor:** Engenheiro de Software (`execucao-do-item-de-trabalho`)
+* **Artefatos produzidos / alterados:**
+  - `migrations/005_esquema_coordenacao_trabalho.sql`: DDL relacional idempotente criando `trabalhos_coordenados`, `handoffs_coordenacao` e `retornos_coordenacao`, com chaves estrangeiras para `projetos(id)`, constraints de integridade referencial `ON DELETE RESTRICT`, checagem de condição operacional `chk_condicao_operacional`, índices (`idx_trabalhos_projeto_id`, `idx_trabalhos_condicao_operacional`, `idx_handoffs_trabalho_id`, `idx_handoffs_token_correlacao`, `idx_retornos_handoff_id`) e restrições de unicidade (`uq_trabalhos_coordenados_codigo`, `uq_handoffs_token_correlacao`).
+  - `tests/it009-esquema-relacional-coordenacao.test.ts`: Bateria automatizada cobrindo execução da migração 005, integridade referencial entre as 3 tabelas e projetos, unicidade de tokens e códigos, e rejeição de condições operacionais inválidas.
+* **Resultado de testes locais:**
+  - `npx vitest run tests/it009-esquema-relacional-coordenacao.test.ts`: 2 testes aprovados com 100% de sucesso.
+  - `npm run typecheck && npm run build && npm test`: 9 suítes e 60 testes aprovados com 100% de sucesso, sem erros de tipagem TypeScript ou falhas de compilação.
+* **Conclusão técnica:** O esquema relacional de coordenação do trabalho foi implementado com integridade total e atende a todos os critérios de aceitação do IT-009.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (A preencher na execução: `EXECUCAO_CONCLUIDA` ou `EXECUCAO_IMPEDIDA`)
-* **Data / Registro:** (A preencher na execução)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04 — Engenheiro de Software
