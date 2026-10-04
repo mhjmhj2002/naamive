@@ -36,10 +36,10 @@ IT-008 (Camada Web Responsiva de Projeto, Direção e Suíte de Testes Locais)
 
 | Código | Título Técnico | Status Inicial | Dependências |
 | --- | --- | --- | --- |
-| `IT-005` | Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1 | `CANDIDATO` | `IT-004` (EV-001) |
-| `IT-006` | Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação | `CANDIDATO` | `IT-005` |
-| `IT-007` | Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002 | `CANDIDATO` | `IT-006` |
-| `IT-008` | Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada | `CANDIDATO` | `IT-007` |
+| [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md) | Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1 | `PRONTO_PARA_EXECUCAO` | Nenhuma (sucede baseline consolidada na EV-001) |
+| [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md) | Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação | `CRIADO` | `IT-005` |
+| [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002 | `CRIADO` | `IT-006` |
+| [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md) | Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada | `CRIADO` | `IT-007` |
 
 ## Critérios de Aceitação e Testes
 

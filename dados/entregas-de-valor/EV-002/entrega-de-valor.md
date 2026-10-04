@@ -7,7 +7,7 @@
 | Identificador técnico | `096a280f-c8aa-4de1-932b-159e5a609b21` |
 | Código | `EV-002` |
 | Módulo proprietário | [M-002 — Formação do Projeto](../../modulos/M-002/modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 
 ## Delimitação inicial
 
@@ -154,6 +154,22 @@ Conclui-se formalmente pela emissão do Resultado do Processo **`FORMACAO_SUFICI
 
 ### Handoff da auditoria
 
-Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-002` torna-se validamente disponível e a Entrega de Valor avança para o status **`FORMADA`**.
-O próximo Ator competente a atuar é o **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`), encarregado de consolidar o Plano de Realização definitivo da EV-002 e materializar formalmente os Itens de Trabalho (`IT-005` a `IT-008`).
+Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-002` tornou-se validamente disponível e a Entrega de Valor avançou para o status `FORMADA`.
+
+## Início da Realização Técnica
+
+* **Ator responsável:** Especialista em Planejamento da Realização
+* **Status atual:** `EM_REALIZACAO`
+* **Plano de Realização consolidado:** [Plano de Realização da EV-002](plano-de-realizacao.md)
+* **Itens de Trabalho materializados:**
+  - [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md): `PRONTO_PARA_EXECUCAO`
+  - [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md): `CRIADO`
+  - [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md): `CRIADO`
+  - [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md): `CRIADO`
+
+### Handoff do Planejamento
+
+Com a aprovação do Plano de Realização e a materialização dos Itens de Trabalho no repositório, a `EV-002` ingressou legitimamente em **`EM_REALIZACAO`**.
+O próximo Ator competente a atuar é o **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`), encarregado de assumir e executar o primeiro Item de Trabalho apto (`IT-005`).
+
 

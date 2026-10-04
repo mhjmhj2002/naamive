@@ -6,9 +6,11 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor avançou com a emissão do parecer independente favorável **`FORMACAO_SUFICIENTE`** pelo **Auditor da Entrega de Valor**, formalizando a transição da **`EV-002 — Direção do Projeto`** (pertencente ao módulo **`M-002 — Formação do Projeto`**) para o status **`FORMADA`**.
+O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Especialista em Planejamento da Realização**. O Plano de Realização da **`EV-002 — Direção do Projeto`** (pertencente ao módulo **`M-002 — Formação do Projeto`**) foi consolidado e seus quatro Itens de Trabalho técnicos foram materializados no repositório (`IT-005` a `IT-008`).
 
-A Especificação Técnica da `EV-002` encontra-se validamente disponível, detalhada e suficiente para realização física, aderente à Decisão Material do Owner de Arquitetura e Stack (Node.js/TypeScript, PostgreSQL relacional, camada web responsiva com Bootstrap e Worker em background desacoplado) e assegurando o invariante 1:1 entre Necessidade e Projeto.
+Com a materialização dos Itens de Trabalho e a formalização do planejamento, a **`EV-002`** transicionou validamente de **`FORMADA`** para **`EM_REALIZACAO`**.
+
+O primeiro Item de Trabalho da cadeia, **`IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1`**, encontra-se com status **`PRONTO_PARA_EXECUCAO`**, apto a ser assumido pelo Ator **Engenheiro de Software**. Os demais itens (`IT-006`, `IT-007` e `IT-008`) encontram-se em status **`CRIADO`**, aguardando a conclusão de suas respectivas dependências técnicas.
 
 A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`) e com suíte de testes 100% verde.
 
@@ -50,7 +52,7 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 * Mapa canônico do P-001: `dados/projetos/P-001/mapa-de-modulos.md`
 * M-001 — Condução da Necessidade: `FORMADO` (Mapa canônico possui `EV-001` em `CONCLUIDA`)
 * M-002 — Formação do Projeto: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-002/mapa-de-entregas-de-valor.md` (registra `EV-002` em `FORMADA`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-002/mapa-de-entregas-de-valor.md` (registra `EV-002` em `EM_REALIZACAO`)
 * M-003 — Coordenação do Trabalho: `FORMADO`
 * M-004 — Contexto e Rastreabilidade: `FORMADO`
 * M-005 — Verificação do Resultado de Software: `FORMADO`
@@ -67,32 +69,49 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 * **EV-002 — Direção do Projeto:**
   - Identificador técnico: `096a280f-c8aa-4de1-932b-159e5a609b21`
   - Módulo proprietário: `M-002 — Formação do Projeto`
-  - Status atual: **`FORMADA`**
+  - Status atual: **`EM_REALIZACAO`**
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Especificação disponível e aprovada; apta ao planejamento e início da realização.
+  - Situação: Planejamento concluído; Itens de Trabalho materializados; em realização técnica ativa.
+
+### Itens de Trabalho (EV-002)
+
+* **IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1:**
+  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Registro: `dados/itens-de-trabalho/IT-005/item-de-trabalho.md`
+  - Dependências: Nenhuma
+* **IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação:**
+  - Status: `CRIADO`
+  - Registro: `dados/itens-de-trabalho/IT-006/item-de-trabalho.md`
+  - Dependências: `IT-005`
+* **IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002:**
+  - Status: `CRIADO`
+  - Registro: `dados/itens-de-trabalho/IT-007/item-de-trabalho.md`
+  - Dependências: `IT-006`
+* **IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada:**
+  - Status: `CRIADO`
+  - Registro: `dados/itens-de-trabalho/IT-008/item-de-trabalho.md`
+  - Dependências: `IT-007`
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A `EV-002` está validamente em `FORMADA`.
+* A `EV-002` está legitimamente em `EM_REALIZACAO`.
+* O `IT-005` está imediatamente apto para início de execução técnica.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) para formalizar a materialização dos Itens de Trabalho `IT-005` a `IT-008` nos arquivos canônicos correspondentes (`dados/itens-de-trabalho/`) e detalhar a execução da `EV-002`.
-2. Em seguida, iniciar a execução do primeiro Item de Trabalho (`IT-005`), transicionando a `EV-002` para **`EM_REALIZACAO`**.
+1. Atuar no papel de **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para assumir o **`IT-005`**, transicionando-o para `EM_EXECUCAO` e implementando as migrações/esquema relacional no PostgreSQL e suíte de testes correspondente.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md` a `07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
-* `documentacao/item-de-trabalho/01_DEFINICAO_DO_ITEM_DE_TRABALHO.md` a `07_RESULTADOS_DO_PROCESSO_DO_ITEM_DE_TRABALHO.md`
-* `dados/modulos/M-002/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
-
+* `dados/itens-de-trabalho/IT-005/item-de-trabalho.md`
+* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+* `src/infrastructure/database/esquema-postgres.sql`

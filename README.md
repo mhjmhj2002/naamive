@@ -176,6 +176,10 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 * [IT-002 — Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso](dados/itens-de-trabalho/IT-002/item-de-trabalho.md)
 * [IT-003 — Worker em Background Desacoplado, Autenticação e Portas de Integração](dados/itens-de-trabalho/IT-003/item-de-trabalho.md)
 * [IT-004 — Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais](dados/itens-de-trabalho/IT-004/item-de-trabalho.md)
+* [IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1](dados/itens-de-trabalho/IT-005/item-de-trabalho.md)
+* [IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação](dados/itens-de-trabalho/IT-006/item-de-trabalho.md)
+* [IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002](dados/itens-de-trabalho/IT-007/item-de-trabalho.md)
+* [IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada](dados/itens-de-trabalho/IT-008/item-de-trabalho.md)
 
 ## Estrutura atual
 
@@ -314,7 +318,15 @@ dados/itens-de-trabalho/
 │   └── item-de-trabalho.md
 ├── IT-003/
 │   └── item-de-trabalho.md
-└── IT-004/
+├── IT-004/
+│   └── item-de-trabalho.md
+├── IT-005/
+│   └── item-de-trabalho.md
+├── IT-006/
+│   └── item-de-trabalho.md
+├── IT-007/
+│   └── item-de-trabalho.md
+└── IT-008/
     └── item-de-trabalho.md
 ```
 
