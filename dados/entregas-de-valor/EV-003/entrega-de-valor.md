@@ -7,7 +7,7 @@
 | Identificador técnico | `b06d5c8e-f9d1-457b-8880-87305dc3aca6` |
 | Código | `EV-003` |
 | Módulo proprietário | [M-003 — Coordenação do Trabalho](../../modulos/M-003/modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 
 ## Delimitação inicial
 
@@ -179,5 +179,12 @@ Conclui-se formalmente pela emissão do Resultado do Processo **`FORMACAO_SUFICI
 ### Handoff da auditoria
 
 Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-003` torna-se validamente disponível e a Entrega de Valor atinge o status **`FORMADA`**, ficando apta para a futura fase de realização técnica (Planejamento da Realização).
+
+## Realização da Entrega de Valor
+
+O **Especialista em Planejamento da Realização** elaborou formalmente o [Plano de Realização da EV-003](plano-de-realizacao.md), decompondo a realização técnica da EV-003 em quatro Itens de Trabalho ordenados em grafo acíclico (`IT-009`, `IT-010`, `IT-011` e `IT-012`).
+
+Com a aprovação do Plano de Realização e a disponibilização do primeiro item com status `PRONTO_PARA_EXECUCAO` (`IT-009`), a Entrega de Valor transiciona legitimamente para o status **`EM_REALIZACAO`**.
+
 
 

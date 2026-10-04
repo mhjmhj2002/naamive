@@ -6,14 +6,18 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE progrediu com legitimidade com a conclusão da **Auditoria Independente da `EV-003 — Coordenação do Trabalho Preparado`** pelo **Auditor da Entrega de Valor**:
+O ciclo de vida do NAAMIVE avançou legitimamente para a fase de **Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
 
-1. A **`EV-002 — Direção do Projeto`** permanece formal e soberanamente **`CONCLUIDA`** pelo Owner `mhj` (com 100% de sucesso e software validado).
-2. O **Auditor da Entrega de Valor**, atuando estritamente dentro de sua competência funcional sob o registro [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md) e com base na Skill `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`, realizou a avaliação independente da formação da `EV-003`.
-3. Foram confrontados: valor, beneficiário, jornadas, regras de negócio, aderência a M-003, modelo relacional PostgreSQL (`trabalhos_coordenados`, `handoffs_coordenacao`, `retornos_coordenacao`), contratos lógicos, invariante de especialização e critérios verificáveis.
-4. Foi emitido formalmente o Resultado do Processo **`FORMACAO_SUFICIENTE`**, habilitando a transição de status da `EV-003` de `EM_FORMACAO` para **`FORMADA`** (atualizado também no Mapa canônico de `M-003`).
-5. A Especificação da `EV-003` está validamente disponível para a futura fase de realização técnica.
-6. A responsabilidade do Auditor da Entrega de Valor foi concluída, e o **handoff foi emitido para a Realização (Planejamento da Realização)**.
+1. A **`EV-002 — Direção do Projeto`** permanece soberanamente **`CONCLUIDA`** pelo Owner `mhj` (100% de sucesso e software validado).
+2. O **Especialista em Planejamento da Realização**, atuando estritamente dentro de sua competência funcional sob o registro [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md) e com base na Skill `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`, elaborou o **[Plano de Realização da EV-003](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)**.
+3. A Especificação da EV-003 foi decomposta tecnicamente em quatro Itens de Trabalho incrementais e desacoplados organizados em grafo acíclico (DAG):
+   - **`IT-009`**: Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações (Status: `PRONTO_PARA_EXECUCAO`).
+   - **`IT-010`**: Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização (Status: `CRIADO`).
+   - **`IT-011`**: Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background (Status: `CRIADO`).
+   - **`IT-012`**: Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada (Status: `CRIADO`).
+4. Com a aprovação do Plano de Realização e a disponibilização do `IT-009`, a **`EV-003`** transitou legitimamente de `FORMADA` para **`EM_REALIZACAO`** no registro principal e no Mapa canônico de `M-003`.
+5. O **README.md** foi rigorosamente atualizado com os novos artefatos e a estrutura de dados expandida.
+6. A responsabilidade do Especialista em Planejamento da Realização foi concluída com sucesso, e o **handoff foi emitido para o Engenheiro de Software**.
 
 ## Governança transversal e Débitos
 
@@ -54,7 +58,7 @@ O ciclo de vida do NAAMIVE progrediu com legitimidade com a conclusão da **Audi
 * M-001 — Condução da Necessidade: `FORMADO` (Mapa canônico possui `EV-001` em `CONCLUIDA`)
 * M-002 — Formação do Projeto: `FORMADO` (Mapa canônico possui `EV-002` em `CONCLUIDA`)
 * M-003 — Coordenação do Trabalho: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-003/mapa-de-entregas-de-valor.md` (registra `EV-003` em `FORMADA`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-003/mapa-de-entregas-de-valor.md` (registra `EV-003` em `EM_REALIZACAO`)
 * M-004 — Contexto e Rastreabilidade: `FORMADO`
 * M-005 — Verificação do Resultado de Software: `FORMADO`
 
@@ -80,35 +84,46 @@ O ciclo de vida do NAAMIVE progrediu com legitimidade com a conclusão da **Audi
 * **EV-003 — Coordenação do Trabalho Preparado:**
   - Identificador técnico: `b06d5c8e-f9d1-457b-8880-87305dc3aca6`
   - Módulo proprietário: `M-003 — Coordenação do Trabalho`
-  - Status atual: **`FORMADA`**
+  - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
+  - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
   - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
-  - Situação: Formação técnica de alto nível aprovada independentemente; especificação disponível.
-  - Handoff: Entregue para o **Planejamento da Realização** (vertical Item de Trabalho / Realização).
+  - Situação: Decomposta tecnicamente em quatro Itens de Trabalho (`IT-009` a `IT-012`). Realização técnica iniciada.
+  - Handoff: Entregue para o **Engenheiro de Software** (`execucao-do-item-de-trabalho`).
 
-### Itens de Trabalho (EV-002)
+### Itens de Trabalho (EV-003)
 
-* **IT-005 a IT-008:** Todos `CONCLUIDO` com resultado `EXECUCAO_CONCLUIDA`.
+* **IT-009 — Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações:**
+  - Registro: [dados/itens-de-trabalho/IT-009/item-de-trabalho.md](dados/itens-de-trabalho/IT-009/item-de-trabalho.md)
+  - Status: **`PRONTO_PARA_EXECUCAO`** (dependências prévias satisfeitas).
+* **IT-010 — Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização:**
+  - Registro: [dados/itens-de-trabalho/IT-010/item-de-trabalho.md](dados/itens-de-trabalho/IT-010/item-de-trabalho.md)
+  - Status: `CRIADO` (aguardando conclusão do `IT-009`).
+* **IT-011 — Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background:**
+  - Registro: [dados/itens-de-trabalho/IT-011/item-de-trabalho.md](dados/itens-de-trabalho/IT-011/item-de-trabalho.md)
+  - Status: `CRIADO` (aguardando conclusão do `IT-010`).
+* **IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada:**
+  - Registro: [dados/itens-de-trabalho/IT-012/item-de-trabalho.md](dados/itens-de-trabalho/IT-012/item-de-trabalho.md)
+  - Status: `CRIADO` (aguardando conclusão do `IT-011`).
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A `EV-003` atingiu o marco de formação superado (`FORMADA`).
-* A próxima atividade agêntica cabe ao **Planejador da Realização** (vertical Item de Trabalho).
+* A `EV-003` iniciou formalmente sua Realização (`EM_REALIZACAO`).
+* O item `IT-009` está com status `PRONTO_PARA_EXECUCAO`.
+* A próxima atividade agêntica cabe ao **Engenheiro de Software** (vertical Item de Trabalho / Execução).
 
 ## Próxima ação legítima
 
-1. Atuar como o **Planejador da Realização** (utilizando a Skill `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) para elaborar o **Plano de Realização da EV-003** (`dados/entregas-de-valor/EV-003/plano-de-realizacao.md`), decompondo a realização técnica da `EV-003` em Itens de Trabalho incrementais (`IT-009` em diante).
+1. Atuar como o **Engenheiro de Software** (utilizando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para executar o **`IT-009 — Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações`**, implementando as migrações/tabelas no PostgreSQL (`trabalhos_coordenados`, `handoffs_coordenacao`, `retornos_coordenacao`), executando os testes de persistência locais e atualizando o status do item para `CONCLUIDO`.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
+* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+* `dados/itens-de-trabalho/IT-009/item-de-trabalho.md`
+* `dados/entregas-de-valor/EV-003/plano-de-realizacao.md`
 * `dados/entregas-de-valor/EV-003/entrega-de-valor.md`
-* `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `dados/modulos/M-003/modulo.md`
-
-

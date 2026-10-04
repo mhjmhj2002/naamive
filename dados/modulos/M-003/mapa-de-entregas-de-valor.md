@@ -23,8 +23,9 @@ Foram recuperados proporcionalmente a [Direção do P-001](../../projetos/P-001/
 | --- | --- |
 | Identificador técnico | `b06d5c8e-f9d1-457b-8880-87305dc3aca6` |
 | Módulo proprietário | [M-003 — Coordenação do Trabalho](modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 | Registro principal | [EV-003 — Coordenação do Trabalho Preparado](../../entregas-de-valor/EV-003/entrega-de-valor.md) |
+| Plano de Realização | [Plano de Realização da EV-003](../../entregas-de-valor/EV-003/plano-de-realizacao.md) |
 
 * **Declaração de valor:** permitir que o operador ou usuário conduza o avanço do trabalho do projeto a partir do reconhecimento legítimo do próximo avanço válido, verificando as condições de preparação, a competência e o Ator/Skill necessários, e emitindo handoff com contexto recuperável suficiente sem reconstrução manual.
 * **Beneficiário relevante:** o operador da jornada, os Atores executores e o Owner que acompanha a progressão contínua e legítima do trabalho.
