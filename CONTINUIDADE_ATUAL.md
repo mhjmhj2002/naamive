@@ -6,16 +6,15 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 — Coordenação do Trabalho Preparado`** e materializou o próximo avanço legítimo do sistema com a delimitação da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`**:
+O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 — Coordenação do Trabalho Preparado`** e avançou progressivamente no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md), concluindo a elaboração técnica da **Especificação da Entrega de Valor** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`**:
 
-1. A **`EV-003 — Coordenação do Trabalho Preparado`** foi formal e soberanamente homologada pelo Owner `mhj` com a Decisão Material **`HOMOLOGADO_PELO_OWNER`**, transicionando definitivamente para o status **`CONCLUIDA`**:
-   - Software integrado inspecionado e operante com 100% de sucesso nos testes integrados (**12/12 arquivos de teste aprovados, 86/86 testes verdes**);
-   - Capacidades consolidadas em operação: motor determinístico do próximo avanço válido, invariante estrito de especialização (`competência → Ator → Skill`), emissão idempotente de handoffs com contexto recuperável de N-001 e P-001, reconciliação e liberação de dependências sucessoras, tratamento de suspensões com destravamento soberano e camada web responsiva Bootstrap 5 (`/coordenacao`);
-   - Mapa canônico de `M-003` atualizado refletindo `EV-003` como `CONCLUIDA`.
-2. Como próximo avanço legítimo do sistema orientado pelo Mapa de Módulos do `P-001` (onde `M-001`, `M-002` e `M-003` possuem suas primeiras Entregas de Valor concluídas), o Ator competente **Especialista em Delimitação de Entregas de Valor** atuou sobre o módulo seguinte aprovado [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
-   - Elaborou e materializou o [Mapa de Entregas de Valor de M-004](dados/modulos/M-004/mapa-de-entregas-de-valor.md);
-   - Delimitou e materializou a **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** (UUID `806acc2a-8f8f-4389-a234-ca61c42f5bb3`) em status inicial **`EM_FORMACAO`** sob [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md);
-   - Entregou o handoff oficial da delimitação para o **Especialista em Formação da Entrega de Valor**.
+1. A **`EV-003 — Coordenação do Trabalho Preparado`** encontra-se no status **`CONCLUIDA`**, formal e soberanamente homologada pelo Owner `mhj` (`HOMOLOGADO_PELO_OWNER`) com 100% dos testes verdes (**12/12 arquivos de teste aprovados, 86/86 testes verdes**).
+2. O Ator agêntico competente **Especialista em Formação da Entrega de Valor** (`.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`) atuou sobre a **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** (UUID `806acc2a-8f8f-4389-a234-ca61c42f5bb3`), que permanece no status de ciclo de vida **`EM_FORMACAO`**:
+   - Consolidou a formação técnica e aprofundou conjuntamente o lado de produto e a solução técnica de alto nível no registro principal [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md);
+   - Definiu os fluxos de preservação estruturada, causalidade explícita, recuperação orientada por finalidade e distinção entre estado vigente e histórico superado;
+   - Especificou a arquitetura sob a Baseline Essencial (DDD hexagonal em Node.js/TypeScript, persistência PostgreSQL com migração `006_esquema_contexto_rastreabilidade.sql`, tabelas `registros_proveniencia` e `vinculos_causais`, worker assíncrono para consistência e camada web responsiva em `/rastreabilidade`), com custo incremental de R$ 0,00;
+   - Estabeleceu os contratos de casos de uso e seis critérios verificáveis de aceitação;
+   - Realizou formalmente o handoff da formação para o **Auditor da Entrega de Valor** para avaliação independente de suficiência.
 
 ## Governança transversal e Débitos
 
@@ -96,7 +95,7 @@ O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 
   - Módulo proprietário: `M-004 — Contexto e Rastreabilidade`
   - Status atual: **`EM_FORMACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
-  - Situação: Delimitação materializada no Mapa de M-004 e registro principal criado; entregue ao Especialista em Formação da Entrega de Valor.
+  - Situação: Formação técnica e Especificação da Entrega de Valor concluídas pelo Especialista em Formação da Entrega de Valor; entregue formalmente para avaliação independente do Auditor da Entrega de Valor.
 
 ### Itens de Trabalho (EV-003 — Concluídos)
 
@@ -121,12 +120,11 @@ O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A `EV-003` foi homologada pelo Owner e encontra-se formalmente `CONCLUIDA`.
-* A `EV-004` foi delimitada e materializada, encontrando-se apta para a Formação da Entrega de Valor.
+* A formação técnica da `EV-004` foi finalizada e disponibilizada para auditoria independente.
 
 ## Próxima ação legítima
 
-1. Atuação do **Especialista em Formação da Entrega de Valor** (`.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`): conduzir a formação técnica da [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](dados/entregas-de-valor/EV-004/entrega-de-valor.md), elaborando a Especificação da Entrega de Valor (lado de produto, arquitetura, esquema relacional PostgreSQL de contexto e rastreabilidade, modelo de causalidade e critérios verificáveis) e entregando o handoff para a Auditoria da Entrega de Valor.
+1. Atuação do **Auditor da Entrega de Valor** (`.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`): conduzir a avaliação independente da Especificação da [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](dados/entregas-de-valor/EV-004/entrega-de-valor.md), verificando suficiência de produto, arquitetura, modelo de causalidade e critérios verificáveis, e emitir o respectivo Resultado do Processo (`FORMACAO_SUFICIENTE` ou `FORMACAO_INSUFICIENTE`).
 
 ## Arquivos mínimos para continuar
 
@@ -136,3 +134,4 @@ O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 
 * `dados/modulos/M-004/modulo.md`
 * `dados/modulos/M-004/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-004/entrega-de-valor.md`
+
