@@ -6,15 +6,13 @@ NAAMIVE
 
 ## Momento atual
 
-Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas com Especificações Técnicas aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor e suas quatro Skills principais estão materializadas.
+Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas com Especificações Técnicas aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor e suas quatro Skills principais estão materializadas. A instância `EV-001 — Compromisso da Necessidade` foi reauditada e aprovada com `FORMACAO_SUFICIENTE` após a intervenção material de arquitetura do Owner (Node.js/TypeScript + PostgreSQL, web responsiva e worker desacoplado).
 
-Ocorreu intervenção material obrigatória de arquitetura pelo **Owner**: o produto NAAMIVE deve ser desenvolvido em **Node.js (TypeScript)** com **PostgreSQL**, dotado de interface web responsiva e worker em background para execução contínua, revogando expressamente a presunção indevida anterior de Java 21 / Spring Boot.
-
-Em cumprimento legítimo a essa decisão soberana:
-1. Os artefatos da camada de realização atrelados à baseline anterior foram expurgados (`dados/entregas-de-valor/EV-001/plano-de-realizacao.md` e o diretório `dados/itens-de-trabalho/`);
-2. A instância `EV-001` retornou ao estado de formação e teve sua Especificação de Arquitetura e Decisões Técnicas formalmente readequada para a stack Node.js/TypeScript/PostgreSQL com worker desacoplado;
-3. O Ator independente **Auditor da Entrega de Valor** realizou novo rito de avaliação e emitiu o Resultado do Processo **`FORMACAO_SUFICIENTE`**;
-4. O status de `EV-001` foi transicionado para **`FORMADA`** no registro principal e no Mapa de Entregas de Valor de M-001.
+A transição legítima da Entrega de Valor para a camada de Realização foi concluída com sucesso pelo Ator **Especialista em Planejamento da Realização** (conforme a Skill `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`):
+1. Foi elaborado e aprovado o novo **Plano de Realização da Entrega de Valor** (`dados/entregas-de-valor/EV-001/plano-de-realizacao.md`), alinhado estritamente à stack definida pelo Owner (Node.js/TypeScript, PostgreSQL, interface web responsiva e worker em background);
+2. Foram materializados os 4 novos Itens de Trabalho da EV-001 (`IT-001` a `IT-004`) em `dados/itens-de-trabalho/`, com grafo DAG de dependências explícito;
+3. O status de `EV-001` foi formalmente atualizado de `FORMADA` para `EM_REALIZACAO` no registro principal da EV e no Mapa do Módulo M-001;
+4. O item de trabalho de fundação `IT-001` foi disponibilizado no status `PRONTO_PARA_EXECUCAO`.
 
 ## Governança transversal
 
@@ -50,7 +48,7 @@ Em cumprimento legítimo a essa decisão soberana:
 * Mapa canônico do P-001: `dados/projetos/P-001/mapa-de-modulos.md`
 * Entrada: `Direção do Projeto` aprovada por `FORMACAO_SUFICIENTE`
 * M-001 — Condução da Necessidade: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-001/mapa-de-entregas-de-valor.md` (registra EV-001 em `FORMADA`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-001/mapa-de-entregas-de-valor.md` (registra EV-001 em `EM_REALIZACAO`)
 * M-002 — Formação do Projeto: `FORMADO`
 * M-003 — Coordenação do Trabalho: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE`
 * M-004 — Contexto e Rastreabilidade: `FORMADO`, com Especificação Técnica aprovada por `FORMACAO_SUFICIENTE`
@@ -63,24 +61,34 @@ Em cumprimento legítimo a essa decisão soberana:
 * Módulo proprietário: `M-001`
 * Mapa canônico: `dados/modulos/M-001/mapa-de-entregas-de-valor.md`
 * Registro principal: `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
-* Status atual: `FORMADA`
-* Decisão Material do Owner de Arquitetura: Node.js (TypeScript), PostgreSQL, interface web responsiva e worker contínuo em background.
-* Resultado do Processo vigente: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor.
+* Plano de Realização: `dados/entregas-de-valor/EV-001/plano-de-realizacao.md`
+* Status atual: `EM_REALIZACAO`
+* Solução planejada: Node.js (TypeScript) + PostgreSQL, interface web responsiva e worker desacoplado em background.
+
+### Itens de Trabalho da EV-001 (Camada de Realização)
+
+* Localização normativa: `documentacao/item-de-trabalho/`
+* Catálogo de instâncias ativas:
+  - `IT-001`: Estrutura Base Node.js/TypeScript, Configuração e Esquema PostgreSQL — Status: `PRONTO_PARA_EXECUCAO` (disponível para execução)
+  - `IT-002`: Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso — Status: `CRIADO` (depende de IT-001)
+  - `IT-003`: Worker em Background Desacoplado, Autenticação e Portas de Integração — Status: `CRIADO` (depende de IT-002)
+  - `IT-004`: Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais — Status: `CRIADO` (depende de IT-003)
 
 ## Estado do bloqueio
 
-**DESBLOQUEADO.** A especificação da EV-001 foi readequada e aprovada com sucesso. A Entrega de Valor está apta para um novo ciclo legítimo de Planejamento da Realização sob a stack determinada pelo Owner.
+**DESBLOQUEADO.** A camada de realização foi formalmente ativada sob a nova arquitetura Node.js/TypeScript + PostgreSQL. O primeiro item técnico de trabalho (`IT-001`) está pronto e aguardando execução pelo Engenheiro de Software.
 
 ## Próxima ação legítima
 
-Acionar o Ator agêntico **Especialista em Planejamento da Realização** (carregando a Skill `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) sobre a instância `EV-001` (`dados/entregas-de-valor/EV-001/entrega-de-valor.md`), para:
-1. Elaborar novo **Plano de Realização da Entrega de Valor** (`dados/entregas-de-valor/EV-001/plano-de-realizacao.md`) concebido para Node.js/TypeScript e PostgreSQL com interface web responsiva e worker em background;
-2. Decompor e materializar os novos Itens de Trabalho em `dados/itens-de-trabalho/` com grafo DAG de dependências explícito;
-3. Transicionar `EV-001` de `FORMADA` para `EM_REALIZACAO` e disponibilizar o primeiro item de trabalho técnico em `PRONTO_PARA_EXECUCAO`.
+Acionar o Ator agêntico **Engenheiro de Software** (carregando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) sobre a instância `IT-001` (`dados/itens-de-trabalho/IT-001/item-de-trabalho.md`), para:
+1. Transicionar o status de `IT-001` de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO`;
+2. Inicializar a estrutura base do projeto Node.js com TypeScript (`package.json`, `tsconfig.json`), dependências, scripts de teste/compilação e migrações relacionais em PostgreSQL;
+3. Executar compilação TypeScript e a suíte de testes locais de IT-001;
+4. Registrar as evidências de execução e transicionar `IT-001` para `CONCLUIDO` (com `EXECUCAO_CONCLUIDA`), habilitando a prontidão de `IT-002`.
 
 ## Lacunas e limites vigentes
 
-* Nenhuma linha de código de software foi implementada (respeito estrito aos papéis e à proibição de implementação direta).
+* Nenhuma linha de código de software foi implementada nesta atividade (respeitando o limite estrito da Skill do Especialista em Planejamento da Realização e a proibição expressa de codificação nesta task).
 * O consumo final de evidências pelo Verificador Agregado do Projeto e os efeitos em `CONCLUIDO` do P-001 e `ATENDIDA` da N-001 continuam sem caminho operacional formalizado.
 
 ## Arquivos mínimos para continuar
@@ -89,6 +97,7 @@ Acionar o Ator agêntico **Especialista em Planejamento da Realização** (carre
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `documentacao/item-de-trabalho/01_DEFINICAO_DO_ITEM_DE_TRABALHO.md` a `07_RESULTADOS_DO_PROCESSO_DO_ITEM_DE_TRABALHO.md`
-* `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
+* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
 * `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
-* `dados/modulos/M-001/mapa-de-entregas-de-valor.md`
+* `dados/entregas-de-valor/EV-001/plano-de-realizacao.md`
+* `dados/itens-de-trabalho/IT-001/item-de-trabalho.md`

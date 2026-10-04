@@ -7,7 +7,7 @@
 | Identificador técnico | `80264aa7-5243-4396-a99e-e33e38aca286` |
 | Código | `EV-001` |
 | Módulo proprietário | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 
 ## Delimitação inicial
 
@@ -141,4 +141,13 @@ Conclui-se formalmente pela emissão do Resultado do Processo **`FORMACAO_SUFICI
 ### Handoff da auditoria
 
 A Especificação readequada está validamente disponível e a `EV-001` transiciona para o status **`FORMADA`**. O próximo passo legítimo é o acionamento do **Especialista em Planejamento da Realização** para concepção do novo Plano de Realização alinhado à stack Node.js/TypeScript/PostgreSQL e materialização dos novos Itens de Trabalho.
+
+## Realização
+
+* **Plano de Realização da Entrega de Valor:** [plano-de-realizacao.md](plano-de-realizacao.md)
+* **Ator responsável pelo planejamento:** Especialista em Planejamento da Realização
+* **Decisão Material do Owner:** Node.js (TypeScript) + PostgreSQL com interface web responsiva e worker desacoplado em background.
+* **Gatilho de Início da Realização:** Plano de Realização elaborado e aprovado com a materialização dos Itens de Trabalho `IT-001` a `IT-004`.
+* **Transição de Status:** `FORMADA` → `EM_REALIZACAO`
+* **Próxima etapa executável:** Atribuição do item de trabalho inicial `IT-001` (status `PRONTO_PARA_EXECUCAO`) ao Ator **Engenheiro de Software**.
 

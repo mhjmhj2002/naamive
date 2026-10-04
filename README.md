@@ -139,6 +139,14 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 ### Entregas de Valor
 
 * [EV-001 — Compromisso da Necessidade](dados/entregas-de-valor/EV-001/entrega-de-valor.md)
+  * [Plano de Realização da EV-001](dados/entregas-de-valor/EV-001/plano-de-realizacao.md)
+
+### Itens de Trabalho
+
+* [IT-001 — Estrutura Base Node.js/TypeScript, Configuração e Esquema PostgreSQL](dados/itens-de-trabalho/IT-001/item-de-trabalho.md)
+* [IT-002 — Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso](dados/itens-de-trabalho/IT-002/item-de-trabalho.md)
+* [IT-003 — Worker em Background Desacoplado, Autenticação e Portas de Integração](dados/itens-de-trabalho/IT-003/item-de-trabalho.md)
+* [IT-004 — Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais](dados/itens-de-trabalho/IT-004/item-de-trabalho.md)
 
 ## Estrutura atual
 
@@ -257,7 +265,17 @@ dados/
         └── modulo.md
 └── entregas-de-valor/
     └── EV-001/
-        └── entrega-de-valor.md
+        ├── entrega-de-valor.md
+        └── plano-de-realizacao.md
+dados/itens-de-trabalho/
+├── IT-001/
+│   └── item-de-trabalho.md
+├── IT-002/
+│   └── item-de-trabalho.md
+├── IT-003/
+│   └── item-de-trabalho.md
+└── IT-004/
+    └── item-de-trabalho.md
 ```
 
 O `README.md` responde onde está cada coisa. O `CONTINUIDADE_ATUAL.md` responde onde o trabalho está agora.
