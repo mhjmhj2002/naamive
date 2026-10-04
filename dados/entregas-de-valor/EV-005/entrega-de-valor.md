@@ -7,7 +7,7 @@
 | Identificador técnico | `6868d52a-295d-46a5-89fc-a6eac1d70dc5` |
 | Código | `EV-005` |
 | Módulo proprietário | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `EM_FORMACAO` |
+| Status | `FORMADA` |
 | Plano de Realização | [Plano de Realização da EV-005](plano-de-realizacao.md) |
 
 ## Delimitação inicial
@@ -201,4 +201,27 @@ A realização técnica da EV-005 é estruturada em 4 Itens de Trabalho sequenci
 
 ## Handoff da Formação
 
-A formação técnica da **EV-005 — Avaliação e Verificação da Entrega de Valor** está integralmente concluída pelo **Especialista em Formação da Entrega de Valor**. A Especificação consolidada, os critérios verificáveis e o plano de realização são entregues formalmente ao **Auditor da Entrega de Valor** para condução da auditoria independente da formação técnica.
+A formação técnica da **EV-005 — Avaliação e Verificação da Entrega de Valor** foi integralmente concluída pelo **Especialista em Formação da Entrega de Valor**. A Especificação consolidada, os critérios verificáveis e o plano de realização foram entregues formalmente ao **Auditor da Entrega de Valor** para condução da auditoria independente da formação técnica.
+
+## Resultado do Processo — Auditoria da Entrega de Valor
+
+`FORMACAO_SUFICIENTE`
+
+### Parecer técnico independente
+
+A Especificação da **EV-005 — Avaliação e Verificação da Entrega de Valor** foi avaliada de forma independente pelo **Auditor da Entrega de Valor** a partir dos artefatos normativos do domínio, da Especificação Técnica aprovada de [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md#especificação-técnica-do-módulo), da Direção do Projeto [P-001](../../projetos/P-001/projeto.md#direção-do-projeto) e do Compromisso da Necessidade [N-001](../../necessidades/N-001/necessidade.md#compromisso-da-necessidade).
+
+A avaliação conclui que a Formação é **suficiente para permitir futura realização sem redescoberta do valor de negócio nem redesenho da solução técnica de alto nível**:
+
+1. **Intenção de valor e beneficiário:** A intenção de valor (permitir comprovar de forma observável, reproduzível e rastreável se o incremento de software integrado atende aos critérios verificáveis derivados do Compromisso e da Direção, emitindo laudos fundamentados e explicitando divergências) e os beneficiários (operador da jornada, Atores de governança, Verificador Agregado do Projeto e o Owner) estão rigorosamente alinhados com a capacidade delimitada de M-005 e concretizam o critério de atendimento da N-001 de levar a necessidade até software verificável.
+2. **Fronteiras e não presunção de conformidade:** A especificação respeita integralmente as fronteiras de M-005 e do monólito modular. M-005 produz laudos e pareceres técnicos de verificabilidade; não implementa software, não coordena retrabalho (M-003), não compete com a rastreabilidade transversal (M-004), não usurpa o papel do Verificador Agregado do Projeto (`COMPROMISSO_ATENDIDO`) e não substitui a decisão soberana do Owner (`HOMOLOGADO_PELO_OWNER`). O princípio estrito de *Não Presunção de Conformidade* garante que ausência de evidência gere `EVIDENCIA_INSUFICIENTE`.
+3. **Idempotência, imutabilidade e rastreabilidade:** O modelo relacional assegura que a reavaliação de um mesmo resultado com as mesmas evidências seja idempotente, que os laudos sejam imutáveis e auditáveis e que toda evidência e critério possuam vínculo causal explícito com a cadeia de proveniência preservada por M-004 até N-001.
+4. **Arquitetura e Baseline Técnica:** A solução de alto nível está alinhada à **Baseline Essencial**, operando no mesmo ecossistema Node.js (TypeScript strict ESM) e PostgreSQL relacional com transações ACID, emulador `pg-mem` para testes rápidos, worker assíncrono em background e interface web com Bootstrap 5, com custo incremental de R$ 0,00.
+5. **Critérios verificáveis e testabilidade:** Foram formalizados seis critérios de aceitação verificáveis cobrindo a recepção de resultados, cadastro de critérios, registro estruturado de evidências em `JSONB`, motor de avaliação com categorias internas (`CRITERIO_DEMONSTRADO`, `CRITERIO_NAO_DEMONSTRADO`, `EVIDENCIA_INSUFICIENTE`, `VERIFICACAO_IMPOSSIVEL`, `DIVERGENCIA_ENCONTRADA`), integração causal e interface web responsiva (`/verificacao`), acompanhados da respectiva estratégia de testes unitários, relacionais e de integração.
+
+Com a emissão de `FORMACAO_SUFICIENTE`, o marco de formação é validamente superado. A Especificação da Entrega de Valor torna-se disponível para consumo posterior e o status da EV-005 avança legitimamente de `EM_FORMACAO` para **`FORMADA`**.
+
+### Handoff da Auditoria
+
+Com a aprovação independente da formação técnica (`FORMACAO_SUFICIENTE`), a **EV-005** encontra-se em status **`FORMADA`**. O artefato e seu contexto são entregues formalmente ao **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) para abertura e coordenação da realização dos Itens de Trabalho no monólito executável.
+
