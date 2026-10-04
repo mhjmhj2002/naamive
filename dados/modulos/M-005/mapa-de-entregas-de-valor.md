@@ -23,7 +23,7 @@ Foram recuperados proporcionalmente a [Direção do P-001](../../projetos/P-001/
 | --- | --- |
 | Identificador técnico | `6868d52a-295d-46a5-89fc-a6eac1d70dc5` |
 | Módulo proprietário | [M-005 — Verificação do Resultado de Software](modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 | Registro principal | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Plano de Realização | [Plano de Realização da EV-005](../../entregas-de-valor/EV-005/plano-de-realizacao.md) |
 

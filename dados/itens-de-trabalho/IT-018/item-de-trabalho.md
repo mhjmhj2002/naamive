@@ -8,7 +8,7 @@
 | Código | `IT-018` |
 | Entrega de Valor proprietária | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Módulo de proveniência | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `PLANEJADO` |
+| Status | `CRIADO` |
 
 ## Definição Técnica
 

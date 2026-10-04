@@ -8,7 +8,7 @@
 | Código | `IT-017` |
 | Entrega de Valor proprietária | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Módulo de proveniência | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `PLANEJADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 
@@ -24,3 +24,7 @@
 2. **Integridade Referencial e Constraints:** Chaves estrangeiras entre critérios/evidências/laudos e resultados de software com constraints de integridade adequadas e unicidade de códigos legíveis (`codigo_referencia`).
 3. **Compatibilidade com pg-mem e PostgreSQL Real:** Execução bem-sucedida das migrações em ambiente real PostgreSQL e na biblioteca de emulação `pg-mem` utilizada nos testes unitários e de integração.
 4. **Verificação Estrita:** Aprovação em `npm run typecheck`, `npm run build` e suíte de testes com cobertura da migração.
+
+## Handoff do Planejamento da Realização
+
+O **IT-017** foi ativado pelo **Especialista em Planejamento da Realização** com status **`PRONTO_PARA_EXECUCAO`**, uma vez que não possui dependências técnicas pendentes e a EV-005 encontra-se em `EM_REALIZACAO`. O item está formalmente liberado para ser assumido pelo Ator **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para início da implementação da migração `migrations/007_esquema_verificacao_software.sql` e seus testes automatizados associados.

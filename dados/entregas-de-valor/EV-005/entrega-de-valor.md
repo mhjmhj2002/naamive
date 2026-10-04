@@ -7,7 +7,7 @@
 | Identificador técnico | `6868d52a-295d-46a5-89fc-a6eac1d70dc5` |
 | Código | `EV-005` |
 | Módulo proprietário | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 | Plano de Realização | [Plano de Realização da EV-005](plano-de-realizacao.md) |
 
 ## Delimitação inicial

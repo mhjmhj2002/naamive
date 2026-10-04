@@ -5,8 +5,8 @@
 * **Entrega de Valor proprietária:** [EV-005 — Avaliação e Verificação da Entrega de Valor](entrega-de-valor.md)
 * **Identificador técnico da EV:** `6868d52a-295d-46a5-89fc-a6eac1d70dc5`
 * **Módulo proprietário:** [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md)
-* **Status da EV:** `EM_FORMACAO`
-* **Ator responsável pelo planejamento:** Especialista em Formação da Entrega de Valor
+* **Status da EV:** `EM_REALIZACAO`
+* **Ator responsável pelo planejamento:** Especialista em Planejamento da Realização
 * **Decisão Material de Arquitetura do Owner:** Node.js (TypeScript strict ESM) + PostgreSQL relacional com interface web responsiva (Bootstrap 5) e worker desacoplado em background (Baseline Essencial, custo R$ 0,00).
 
 ## Estratégia de Realização Técnica
@@ -37,10 +37,10 @@ IT-020 (Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte 
 
 | Código | Título Técnico | Status Inicial | Dependências |
 | --- | --- | --- | --- |
-| [`IT-017`](../../itens-de-trabalho/IT-017/item-de-trabalho.md) | Esquema Relacional PostgreSQL de Verificação de Software e Migrações | `PLANEJADO` | Nenhuma (sucede baseline consolidada na EV-004) |
-| [`IT-018`](../../itens-de-trabalho/IT-018/item-de-trabalho.md) | Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade | `PLANEJADO` | `IT-017` |
-| [`IT-019`](../../itens-de-trabalho/IT-019/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background | `PLANEJADO` | `IT-018` |
-| [`IT-020`](../../itens-de-trabalho/IT-020/item-de-trabalho.md) | Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada | `PLANEJADO` | `IT-019` |
+| [`IT-017`](../../itens-de-trabalho/IT-017/item-de-trabalho.md) | Esquema Relacional PostgreSQL de Verificação de Software e Migrações | `PRONTO_PARA_EXECUCAO` | Nenhuma (sucede baseline consolidada na EV-004) |
+| [`IT-018`](../../itens-de-trabalho/IT-018/item-de-trabalho.md) | Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade | `CRIADO` | `IT-017` |
+| [`IT-019`](../../itens-de-trabalho/IT-019/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background | `CRIADO` | `IT-018` |
+| [`IT-020`](../../itens-de-trabalho/IT-020/item-de-trabalho.md) | Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada | `CRIADO` | `IT-019` |
 
 ## Critérios de Aceitação e Testes
 
