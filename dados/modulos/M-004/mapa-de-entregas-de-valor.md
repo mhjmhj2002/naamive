@@ -23,8 +23,9 @@ Foram recuperados proporcionalmente a [Direção do P-001](../../projetos/P-001/
 | --- | --- |
 | Identificador técnico | `806acc2a-8f8f-4389-a234-ca61c42f5bb3` |
 | Módulo proprietário | [M-004 — Contexto e Rastreabilidade](modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
 | Registro principal | [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](../../entregas-de-valor/EV-004/entrega-de-valor.md) |
+| Plano de Realização | [Plano de Realização da EV-004](../../entregas-de-valor/EV-004/plano-de-realizacao.md) |
 
 * **Declaração de valor:** permitir que o operador, o Owner e os Atores recuperem e correlacionem por finalidade declarada o contexto proporcional, as decisões, os vínculos de causalidade e as referências de origem da jornada sem exigir reconstrução manual do histórico e sem gerar estados concorrentes.
 * **Beneficiário relevante:** o operador da jornada, os Atores executores e o Owner que necessitam explicar o percurso, auditar decisões e recuperar insumos para o avanço legítimo.

@@ -7,7 +7,8 @@
 | Identificador técnico | `806acc2a-8f8f-4389-a234-ca61c42f5bb3` |
 | Código | `EV-004` |
 | Módulo proprietário | [M-004 — Contexto e Rastreabilidade](../../modulos/M-004/modulo.md) |
-| Status | `FORMADA` |
+| Status | `EM_REALIZACAO` |
+| Plano de Realização | [Plano de Realização da EV-004](plano-de-realizacao.md) |
 
 ## Delimitação inicial
 
@@ -180,8 +181,8 @@ A avaliação conclui que a Formação é **suficiente para permitir futura real
 
 Com a emissão de `FORMACAO_SUFICIENTE`, o marco de formação é superado. A Especificação da Entrega de Valor torna-se validamente disponível para consumo posterior e o status da EV-004 avança legitimamente de `EM_FORMACAO` para **`FORMADA`**.
 
-## Próximo passo e handoff
+## Próximo passo e realização técnica
 
-A Entrega de Valor encontra-se no status **`FORMADA`**. O próximo avanço legítimo consiste no planejamento e decomposição da realização técnica pelo Ator competente da vertical de realização (**Planejador da Realização**), conforme a governança do NAAMIVE.
+Com a aprovação do [Plano de Realização](plano-de-realizacao.md) pelo Especialista em Planejamento da Realização e a decomposição nos Itens de Trabalho `IT-013` a `IT-016`, a Entrega de Valor transicionou formalmente para **`EM_REALIZACAO`**. O item inicial [IT-013](../../itens-de-trabalho/IT-013/item-de-trabalho.md) está com status `PRONTO_PARA_EXECUCAO` e apto para atribuição ao Ator agêntico **Engenheiro de Software**.
 
 

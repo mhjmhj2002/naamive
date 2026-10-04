@@ -6,13 +6,14 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 — Coordenação do Trabalho Preparado`** e avançou progressivamente no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md), concluindo a avaliação independente da **Especificação da Entrega de Valor** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`**:
+O ciclo de vida do NAAMIVE iniciou formalmente a fase de **Realização Técnica** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
 
-1. A **`EV-003 — Coordenação do Trabalho Preparado`** encontra-se no status **`CONCLUIDA`**, formal e soberanamente homologada pelo Owner `mhj` (`HOMOLOGADO_PELO_OWNER`) com 100% dos testes verdes (**12/12 arquivos de teste aprovados, 86/86 testes verdes**).
-2. O Ator agêntico competente **Auditor da Entrega de Valor** (`.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`) realizou a avaliação técnica independente da Especificação da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** (UUID `806acc2a-8f8f-4389-a234-ca61c42f5bb3`):
-   - Concluiu favoravelmente pela suficiência de produto, respeito integral às fronteiras transversais de M-004, solidez da Baseline Essencial em Node.js/PostgreSQL com custo de R$ 0,00, separação rigorosa entre estado vigente e histórico e clareza dos critérios verificáveis;
-   - Emitiu formalmente o Resultado do Processo **`FORMACAO_SUFICIENTE`** no registro principal [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md);
-   - A Especificação da Entrega de Valor encontra-se validamente disponível e a **`EV-004`** transicionou de `EM_FORMACAO` para **`FORMADA`**.
+1. O Ator agêntico competente **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) elaborou e aprovou o [Plano de Realização da EV-004](dados/entregas-de-valor/EV-004/plano-de-realizacao.md), decompondo a evolução em 4 Itens de Trabalho técnicos com grafo direcionado de dependências (DAG):
+   - [`IT-013`](dados/itens-de-trabalho/IT-013/item-de-trabalho.md): Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações (`PRONTO_PARA_EXECUCAO`);
+   - [`IT-014`](dados/itens-de-trabalho/IT-014/item-de-trabalho.md): Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional (`CRIADO`);
+   - [`IT-015`](dados/itens-de-trabalho/IT-015/item-de-trabalho.md): Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background (`CRIADO`);
+   - [`IT-016`](dados/itens-de-trabalho/IT-016/item-de-trabalho.md): Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada (`CRIADO`).
+2. Com a aprovação e materialização do Plano de Realização e dos Itens de Trabalho, o status da **`EV-004`** transicionou legitimamente de `FORMADA` para **`EM_REALIZACAO`** no registro principal e no Mapa de Entregas de Valor de M-004.
 
 ## Governança transversal e Débitos
 
@@ -54,7 +55,7 @@ O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 
 * M-002 — Formação do Projeto: `FORMADO` (Mapa canônico possui `EV-002` em `CONCLUIDA`)
 * M-003 — Coordenação do Trabalho: `FORMADO` (Mapa canônico possui `EV-003` em `CONCLUIDA`)
 * M-004 — Contexto e Rastreabilidade: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-004/mapa-de-entregas-de-valor.md` (registra `EV-004` em `FORMADA`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-004/mapa-de-entregas-de-valor.md` (registra `EV-004` em `EM_REALIZACAO`)
 * M-005 — Verificação do Resultado de Software: `FORMADO`
 
 ### Entregas de Valor
@@ -82,56 +83,50 @@ O ciclo de vida do NAAMIVE concluiu formalmente com 100% de sucesso a **`EV-003 
   - Status atual: **`CONCLUIDA`**
   - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
-  - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
-  - Resultado da Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização em 2026-10-04
-  - Resultado da Verificação: `EVOLUCAO_MATERIALIZADA` emitido pelo Verificador da Entrega de Valor em 2026-10-04
-  - Homologação do Owner: `HOMOLOGADO_PELO_OWNER` emitido pelo Owner `mhj` em 2026-10-04
   - Situação: Ciclo de vida da EV-003 concluído com 100% de sucesso.
 
 * **EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade:**
   - Identificador técnico: `806acc2a-8f8f-4389-a234-ca61c42f5bb3`
   - Módulo proprietário: `M-004 — Contexto e Rastreabilidade`
-  - Status atual: **`FORMADA`**
+  - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
-  - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor em 2026-10-04
-  - Situação: Formação técnica e Especificação da Entrega de Valor aprovadas por auditoria independente com status `FORMADA`; Especificação disponível para planejamento da realização.
+  - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
+  - Situação: Plano de Realização aprovado e decomposto nos Itens de Trabalho IT-013 a IT-016; IT-013 pronto para execução.
 
-### Itens de Trabalho (EV-003 — Concluídos)
+### Itens de Trabalho Ativos (EV-004)
 
-* **IT-009 — Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações:**
-  - Registro: [dados/itens-de-trabalho/IT-009/item-de-trabalho.md](dados/itens-de-trabalho/IT-009/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
-* **IT-010 — Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização:**
-  - Registro: [dados/itens-de-trabalho/IT-010/item-de-trabalho.md](dados/itens-de-trabalho/IT-010/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
-* **IT-011 — Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background:**
-  - Registro: [dados/itens-de-trabalho/IT-011/item-de-trabalho.md](dados/itens-de-trabalho/IT-011/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
-* **IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada:**
-  - Registro: [dados/itens-de-trabalho/IT-012/item-de-trabalho.md](dados/itens-de-trabalho/IT-012/item-de-trabalho.md)
-  - Status: **`CONCLUIDO`**
-  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
+* **IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações:**
+  - Registro: [dados/itens-de-trabalho/IT-013/item-de-trabalho.md](dados/itens-de-trabalho/IT-013/item-de-trabalho.md)
+  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Dependências: Nenhuma
+* **IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional:**
+  - Registro: [dados/itens-de-trabalho/IT-014/item-de-trabalho.md](dados/itens-de-trabalho/IT-014/item-de-trabalho.md)
+  - Status: **`CRIADO`**
+  - Dependências: `IT-013`
+* **IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background:**
+  - Registro: [dados/itens-de-trabalho/IT-015/item-de-trabalho.md](dados/itens-de-trabalho/IT-015/item-de-trabalho.md)
+  - Status: **`CRIADO`**
+  - Dependências: `IT-014`
+* **IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada:**
+  - Registro: [dados/itens-de-trabalho/IT-016/item-de-trabalho.md](dados/itens-de-trabalho/IT-016/item-de-trabalho.md)
+  - Status: **`CRIADO`**
+  - Dependências: `IT-015`
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A `EV-004` alcançou o status `FORMADA` com parecer formal `FORMACAO_SUFICIENTE`.
+* A `EV-004` encontra-se em `EM_REALIZACAO` com `IT-013` pronto para execução imediata.
 
 ## Próxima ação legítima
 
-1. Atuação do **Planejador da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`): elaborar o Plano de Realização da [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](dados/entregas-de-valor/EV-004/entrega-de-valor.md), realizando a decomposição técnica coesa em Itens de Trabalho (ex.: migração/esquema relacional de rastreabilidade, domínio de proveniência/causalidade, serviço de aplicação/worker e camada web responsiva de consulta).
+1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): iniciar a execução técnica do [IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações](dados/itens-de-trabalho/IT-013/item-de-trabalho.md), implementando a migração `006_esquema_contexto_rastreabilidade.sql` e seus testes automatizados de persistência e integridade referencial.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `dados/modulos/M-004/modulo.md`
-* `dados/modulos/M-004/mapa-de-entregas-de-valor.md`
-* `dados/entregas-de-valor/EV-004/entrega-de-valor.md`
-* `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
-
+* `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
+* `dados/itens-de-trabalho/IT-013/item-de-trabalho.md`
+* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
