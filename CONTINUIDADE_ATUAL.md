@@ -6,18 +6,16 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Engenheiro de Software**. O quarto e último Item de Trabalho da **`EV-002 — Direção do Projeto`**, **`IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada`**, foi plenamente construído, testado e concluído (`CONCLUIDO`), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+O ciclo de vida da etapa de Realização e da vertical Entrega de Valor avançou com a atuação do Ator agêntico **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`).
 
-Com a conclusão do `IT-008`:
-1. Foram estendidos os templates responsivos com Bootstrap 5 (`src/web/templates.ts`), implementando a listagem de Projetos (`renderizarListaProjetos`), detalhes e acompanhamento do Projeto (`renderizarDetalhesProjeto`), badges de status (`obterClasseBadgeStatusProjeto`), cards de etapas de formação e pareceres de auditoria, painel em destaque com gradiente para a Direção do Projeto consolidada e link bidirecional entre Necessidades de origem e Projetos gerados (relação 1:1).
-2. Foram implementadas no servidor web (`src/web/servidor-web.ts`) as rotas HTTP da vertical de Projeto (`GET /projetos`, `GET /projetos/:id`, `POST /projetos/:id/etapas`, `POST /projetos/:id/parecer-auditoria`, `POST /projetos/:id/cancelar` e endpoint REST `GET /api/projetos/:id/direcao`), com suporte a resposta HTML/JSON e validação estrita de identidade do Owner (`mhj`) para cancelamento.
-3. Foram injetados `servicoProjeto` e `repositorioProjeto` na composição de bootstrap do servidor web (`src/server.ts`).
-4. Foi implementada a suíte de testes de ponta a ponta (`tests/it008-camada-web-projeto.test.ts`) com 7/7 testes verdes, cobrindo navegação, registro de etapas, emissão de pareceres, exibição da Direção aprovada, bloqueio de segurança no cancelamento e jornada integrada end-to-end da EV-002.
-5. A tipagem estrita via `npm run typecheck`, o build do projeto via `npm run build` e a suíte completa de testes (`npm test`) passaram com 100% de sucesso (8 arquivos de teste e 58/58 testes verdes).
+A integridade técnica global do software produzido pelos quatro Itens de Trabalho da **`EV-002 — Direção do Projeto`** (`IT-005`, `IT-006`, `IT-007` e `IT-008`) foi avaliada e aprovada com a emissão do Resultado do Processo **`REALIZACAO_INTEGRADA`**:
+1. Todos os 4 Itens de Trabalho estavam formalmente em `CONCLUIDO` com `EXECUCAO_CONCLUIDA`.
+2. A checagem de tipos (`npm run typecheck`) e o build global (`npm run build`) foram executados sem erros.
+3. A suíte completa e integrada de testes (`npm test`) passou com 100% de sucesso (8 arquivos de teste, 58/58 testes verdes).
+4. O parecer técnico de integração e a declaração de prontidão foram registrados no [Plano de Realização da EV-002](dados/entregas-de-valor/EV-002/plano-de-realizacao.md) e na [EV-002](dados/entregas-de-valor/EV-002/entrega-de-valor.md).
+5. O handoff oficial foi transferido para o **Verificador da Entrega de Valor**, para que proceda à avaliação substantiva da entrega frente aos critérios de valor e beneficiários.
 
-Com isso, **todos os 4 Itens de Trabalho da EV-002 (IT-005, IT-006, IT-007 e IT-008) estão concluídos**. A realização técnica da EV-002 encontra-se integralmente executada, abrindo caminho para a integração agregada da realização pelo **Integrador da Realização**.
-
-A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`).
+A `EV-002` permanece no status **`EM_REALIZACAO`** (a integração técnica não altera o status da EV, conforme a regra de separação de conceitos).
 
 ## Governança transversal e Débitos
 
@@ -78,7 +76,8 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Todos os 4 Itens de Trabalho concluídos (`IT-005`, `IT-006`, `IT-007` e `IT-008`). Pronta para integração agregada da realização.
+  - Parecer de Integração: **`REALIZACAO_INTEGRADA`** emitido pelo Integrador da Realização em 2026-10-04
+  - Situação: Realização técnica 100% integrada e aprovada (58/58 testes verdes). Pronta para a verificação de valor.
 
 ### Itens de Trabalho (EV-002)
 
@@ -103,12 +102,12 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A cadeia de Itens de Trabalho da `EV-002` foi 100% executada e concluída.
-* O sistema está apto para o passo seguinte de integração agregada e verificação.
+* A integração técnica da `EV-002` foi concluída com `REALIZACAO_INTEGRADA`.
+* O sistema está apto para o passo seguinte de verificação da entrega de valor.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`) para consolidar a integração agregada dos quatro Itens de Trabalho da EV-002 (`IT-005` a `IT-008`), emitindo o Resultado do Processo `INTEGRACAO_CONCLUIDA` e entregando o handoff para a Verificação da Entrega de Valor.
+1. Atuar no papel de **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para confrontar o software integrado com a especificação, os critérios verificáveis e o valor prometido aos beneficiários da `EV-002`, emitindo o parecer formal de verificação (`EVOLUCAO_MATERIALIZADA` ou `EVOLUCAO_NAO_MATERIALIZADA`).
 
 ## Arquivos mínimos para continuar
 
@@ -117,7 +116,7 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
-* `tests/it008-camada-web-projeto.test.ts`
-* `src/web/servidor-web.ts`
-* `src/web/templates.ts`
+* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
+* `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
+* `documentacao/governanca/debitos/DEB-GOV-001.md`
+
