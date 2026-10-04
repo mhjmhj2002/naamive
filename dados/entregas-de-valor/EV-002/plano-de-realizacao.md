@@ -5,7 +5,7 @@
 * **Entrega de Valor proprietária:** [EV-002 — Direção do Projeto](entrega-de-valor.md)
 * **Identificador técnico da EV:** `096a280f-c8aa-4de1-932b-159e5a609b21`
 * **Módulo proprietário:** [M-002 — Formação do Projeto](../../modulos/M-002/modulo.md)
-* **Status da EV na elaboração:** `EM_FORMACAO` (preparado para Auditoria da Entrega de Valor e posterior planejamento de execução)
+* **Status da EV:** `FORMADA` (com parecer `FORMACAO_SUFICIENTE` do Auditor da Entrega de Valor)
 * **Ator responsável pelo planejamento:** Especialista em Planejamento da Realização
 * **Decisão Material de Arquitetura do Owner:** Node.js (TypeScript) + PostgreSQL com interface web responsiva e worker desacoplado em background.
 

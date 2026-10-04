@@ -6,15 +6,11 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor avançou com a delimitação canônica e formação técnica da **`EV-002 — Direção do Projeto`** vinculada ao módulo proprietário **`M-002 — Formação do Projeto`**.
+O ciclo de vida da vertical Entrega de Valor avançou com a emissão do parecer independente favorável **`FORMACAO_SUFICIENTE`** pelo **Auditor da Entrega de Valor**, formalizando a transição da **`EV-002 — Direção do Projeto`** (pertencente ao módulo **`M-002 — Formação do Projeto`**) para o status **`FORMADA`**.
 
-A `EV-001 — Compromisso da Necessidade` permanece como referência de sucesso concluída (`CONCLUIDA`), com sua realização integrada, suíte de testes 100% verde e homologação formal realizada pelo Owner (`mhj`).
+A Especificação Técnica da `EV-002` encontra-se validamente disponível, detalhada e suficiente para realização física, aderente à Decisão Material do Owner de Arquitetura e Stack (Node.js/TypeScript, PostgreSQL relacional, camada web responsiva com Bootstrap e Worker em background desacoplado) e assegurando o invariante 1:1 entre Necessidade e Projeto.
 
-A instância **`EV-002 — Direção do Projeto` foi materializada e formalmente especificada**:
-- Delimitação canônica registrada no Mapa de Entregas de Valor de M-002 (`dados/modulos/M-002/mapa-de-entregas-de-valor.md`);
-- Registro principal e Especificação Técnica consolidada em `dados/entregas-de-valor/EV-002/entrega-de-valor.md` com status **`EM_FORMACAO`**;
-- Plano de realização preliminar e grafo de dependências decomposto em `IT-005` a `IT-008` registrado em `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`;
-- Aderência estrita à Decisão Material do Owner de Arquitetura e Stack (Node.js/TypeScript, PostgreSQL, Web responsiva e Worker desacoplado em background) e garantia do invariante estrito de unicidade 1:1 entre Necessidade e Projeto.
+A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`) e com suíte de testes 100% verde.
 
 ## Governança transversal e Débitos
 
@@ -54,7 +50,7 @@ A instância **`EV-002 — Direção do Projeto` foi materializada e formalmente
 * Mapa canônico do P-001: `dados/projetos/P-001/mapa-de-modulos.md`
 * M-001 — Condução da Necessidade: `FORMADO` (Mapa canônico possui `EV-001` em `CONCLUIDA`)
 * M-002 — Formação do Projeto: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-002/mapa-de-entregas-de-valor.md` (registra `EV-002` em `EM_FORMACAO`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-002/mapa-de-entregas-de-valor.md` (registra `EV-002` em `FORMADA`)
 * M-003 — Coordenação do Trabalho: `FORMADO`
 * M-004 — Contexto e Rastreabilidade: `FORMADO`
 * M-005 — Verificação do Resultado de Software: `FORMADO`
@@ -71,21 +67,22 @@ A instância **`EV-002 — Direção do Projeto` foi materializada e formalmente
 * **EV-002 — Direção do Projeto:**
   - Identificador técnico: `096a280f-c8aa-4de1-932b-159e5a609b21`
   - Módulo proprietário: `M-002 — Formação do Projeto`
-  - Status atual: **`EM_FORMACAO`**
+  - Status atual: **`FORMADA`**
+  - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Especificação da Entrega de Valor consolidada e submetida ao **Auditor da Entrega de Valor**.
+  - Situação: Especificação disponível e aprovada; apta ao planejamento e início da realização.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A especificação da `EV-002` está materializada e preparada para a auditoria independente.
+* A `EV-002` está validamente em `FORMADA`.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Auditor da Entrega de Valor** (`.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`) para realizar a avaliação independente da Especificação da `EV-002`.
-2. Em caso de emissão de parecer favorável (`FORMACAO_SUFICIENTE`), transicionar a `EV-002` de `EM_FORMACAO` para **`FORMADA`**, liberando-a para planejamento da realização e execução dos Itens de Trabalho (`IT-005` a `IT-008`).
+1. Atuar no papel de **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) para formalizar a materialização dos Itens de Trabalho `IT-005` a `IT-008` nos arquivos canônicos correspondentes (`dados/itens-de-trabalho/`) e detalhar a execução da `EV-002`.
+2. Em seguida, iniciar a execução do primeiro Item de Trabalho (`IT-005`), transicionando a `EV-002` para **`EM_REALIZACAO`**.
 
 ## Arquivos mínimos para continuar
 
@@ -93,7 +90,9 @@ A instância **`EV-002 — Direção do Projeto` foi materializada e formalmente
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md` a `07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
+* `documentacao/item-de-trabalho/01_DEFINICAO_DO_ITEM_DE_TRABALHO.md` a `07_RESULTADOS_DO_PROCESSO_DO_ITEM_DE_TRABALHO.md`
 * `dados/modulos/M-002/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`
+* `.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`
+
