@@ -8,7 +8,7 @@
 | Código | `IT-003` |
 | Entrega de Valor proprietária | [EV-001 — Compromisso da Necessidade](../../entregas-de-valor/EV-001/entrega-de-valor.md) |
 | Módulo de proveniência | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `CRIADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 

@@ -8,7 +8,7 @@
 | Código | `IT-002` |
 | Entrega de Valor proprietária | [EV-001 — Compromisso da Necessidade](../../entregas-de-valor/EV-001/entrega-de-valor.md) |
 | Módulo de proveniência | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -31,12 +31,23 @@
 
 ## Execução e Evidências
 
-* **Executor:** (Aguardando conclusão de IT-001)
-* **Artefatos produzidos / alterados:** N/A
-* **Resultado de testes locais:** N/A
-* **Conclusão técnica:** N/A
+* **Executor:** Engenheiro de Software (Ator agêntico)
+* **Artefatos produzidos / alterados:**
+  * `src/domain/tipos.ts`: Enumerações oficiais e imutáveis para `StatusNecessidade`, `TipoResultadoProcesso`, `DecisaoMaterialOwner`, `TipoNecessidade` e `AtorCompetenteNecessidade`.
+  * `src/domain/erros.ts`: Hierarquia de exceções de domínio puro (`ErroDominio`, `TransicaoInvalidaErro`, `AutoridadeInvalidaErro`, `InvarianteVioladaErro`).
+  * `src/domain/valores.ts`: Interfaces de dados, contratos de histórico de atividade, resultados do processo, decisões do Owner e compromisso da necessidade.
+  * `src/domain/necessidade.ts`: Entidade raiz encapsulando regras de integridade, histórico imutável de atividades, separação estrita de resultados e decisões, transições canônicas (`EM_FORMACAO` → `EM_QUALIFICACAO` → `AGUARDANDO_DECISAO` → `EM_PROJETO` → `ATENDIDA` / `CANCELADA`).
+  * `src/domain/servico-compromisso.ts`: `ServicoCompromissoNecessidade` para validação e composição segura da visão consolidada após aprovação formal do Owner.
+  * `src/domain/repositorio-necessidade.ts`: Interface desacoplada `RepositorioNecessidade` para persistência.
+  * `src/index.ts`: Ponto central de exportação modularizada do domínio.
+  * `tests/it002-dominio-necessidade.test.ts`: 13 testes unitários locais cobrindo criação, invariantes obrigatórias, emissão de resultados por atores competentes, rejeição de autoridade inválida, bloqueio de transições ilegítimas, decisões do Owner com usuário autenticado, consolidação do compromisso e transições terminais.
+* **Resultado de testes locais:**
+  * `npm run typecheck`: 0 erros encontrados (`tsc --noEmit`).
+  * `npm run build`: Compilação de TypeScript para JavaScript executável em `dist/` com sucesso.
+  * `npm test`: 17 testes executados em 2 arquivos (`tests/it001-fundacao.test.ts` e `tests/it002-dominio-necessidade.test.ts`), 17 aprovados (100% de sucesso).
+* **Conclusão técnica:** O núcleo de domínio puro da Necessidade foi implementado com fidelidade rigorosa aos modelos normativos, satisfazendo plenamente todos os critérios técnicos de aceitação.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente)
-* **Data / Registro:** (Pendente)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-03 — Execução técnica concluída com 100% de sucesso nos testes locais.
