@@ -9,12 +9,14 @@ NAAMIVE
 O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
 
 1. A **`EV-002 — Direção do Projeto`** permanece soberanamente **`CONCLUIDA`** pelo Owner `mhj` (100% de sucesso e software validado).
-2. O **Engenheiro de Software**, atuando estritamente dentro de sua competência funcional sob o registro [dados/itens-de-trabalho/IT-009/item-de-trabalho.md](dados/itens-de-trabalho/IT-009/item-de-trabalho.md) e com base na Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`, executou com sucesso o **`IT-009 — Esquema Relacional PostgreSQL de Coordenação do Trabalho e Migrações`**:
-   - Criou a migração `migrations/005_esquema_coordenacao_trabalho.sql` com as tabelas `trabalhos_coordenados`, `handoffs_coordenacao` e `retornos_coordenacao`, integridade referencial com `projetos(id)`, constraints operacionais e de unicidade (`token_correlacao`, `codigo`), e índices para histórico e correlação;
-   - Implementou a suíte de testes automatizados `tests/it009-esquema-relacional-coordenacao.test.ts` validando o comportamento relacional em memória com `pg-mem`;
-   - Validou a integridade completa do sistema com `npm run typecheck && npm run build && npm test` (9 suítes e 60 testes aprovados com 100% de sucesso);
-   - Emitiu o Resultado do Processo **`EXECUCAO_CONCLUIDA`** e transicionou o `IT-009` para **`CONCLUIDO`**.
-3. Com a conclusão de sua única dependência (`IT-009`), o item **`IT-010 — Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização`** teve seu status atualizado para **`PRONTO_PARA_EXECUCAO`** tanto em seu registro quanto no Plano de Realização da EV-003.
+2. O **Engenheiro de Software**, atuando estritamente dentro de sua competência funcional sob o registro [dados/itens-de-trabalho/IT-010/item-de-trabalho.md](dados/itens-de-trabalho/IT-010/item-de-trabalho.md) e com base na Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`, executou com sucesso o **`IT-010 — Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização`**:
+   - Implementou o catálogo de tipos e enumerações em `src/domain/tipos-coordenacao.ts` e interfaces em `src/domain/valores-coordenacao.ts`;
+   - Implementou as entidades de domínio puro `TrabalhoCoordenado`, `HandoffCoordenacao` e `RetornoCoordenacao` em `src/domain/coordenacao.ts`, garantindo invariantes de especialização, máquina de estados operacionais (`POSSIVEL`, `PREPARADO`, `EM_EXECUCAO`, `BLOQUEADO`, `AGUARDANDO_DECISAO_HUMANA`, `ENCERRADO`), geração de tokens únicos e imutabilidade de retornos;
+   - Implementou o serviço de domínio `MotorCoordenacaoTrabalho` em `src/domain/motor-coordenacao.ts` para cálculo determinístico do próximo avanço válido, diagnóstico de elegibilidade de dependências e promoção automática de trabalhos aptos;
+   - Desenvolveu a suíte de testes unitários isolados em `tests/it010-dominio-coordenacao.test.ts` cobrindo 100% dos caminhos críticos e invariantes;
+   - Validou a integridade completa do sistema com `npm run typecheck && npm run build && npm test` (10 suítes e 72 testes aprovados com 100% de sucesso);
+   - Emitiu o Resultado do Processo **`EXECUCAO_CONCLUIDA`** e transicionou o `IT-010` para **`CONCLUIDO`**.
+3. Com a conclusão de sua única dependência (`IT-010`), o item **`IT-011 — Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background`** teve seu status atualizado para **`PRONTO_PARA_EXECUCAO`** tanto em seu registro quanto no Plano de Realização da EV-003.
 
 ## Governança transversal e Débitos
 
@@ -85,7 +87,7 @@ O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 �
   - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
   - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
-  - Situação: Em realização técnica. `IT-009` concluído com sucesso; `IT-010` pronto para execução.
+  - Situação: Em realização técnica. `IT-009` e `IT-010` concluídos com sucesso; `IT-011` pronto para execução.
 
 ### Itens de Trabalho (EV-003)
 
@@ -95,10 +97,11 @@ O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 �
   - Resultado do Processo: `EXECUCAO_CONCLUIDA`
 * **IT-010 — Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização:**
   - Registro: [dados/itens-de-trabalho/IT-010/item-de-trabalho.md](dados/itens-de-trabalho/IT-010/item-de-trabalho.md)
-  - Status: **`PRONTO_PARA_EXECUCAO`** (dependência `IT-009` satisfeita).
+  - Status: **`CONCLUIDO`**
+  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
 * **IT-011 — Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background:**
   - Registro: [dados/itens-de-trabalho/IT-011/item-de-trabalho.md](dados/itens-de-trabalho/IT-011/item-de-trabalho.md)
-  - Status: `CRIADO` (aguardando conclusão do `IT-010`).
+  - Status: **`PRONTO_PARA_EXECUCAO`** (dependência `IT-010` satisfeita).
 * **IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada:**
   - Registro: [dados/itens-de-trabalho/IT-012/item-de-trabalho.md](dados/itens-de-trabalho/IT-012/item-de-trabalho.md)
   - Status: `CRIADO` (aguardando conclusão do `IT-011`).
@@ -108,13 +111,13 @@ O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 �
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
 * A `EV-003` está em realização técnica ativa (`EM_REALIZACAO`).
-* O item `IT-009` foi concluído com sucesso.
-* O item `IT-010` está com status `PRONTO_PARA_EXECUCAO`.
+* Os itens `IT-009` e `IT-010` foram concluídos com sucesso.
+* O item `IT-011` está com status `PRONTO_PARA_EXECUCAO`.
 * A próxima atividade agêntica cabe ao **Engenheiro de Software** (vertical Item de Trabalho / Execução).
 
 ## Próxima ação legítima
 
-1. Atuar como o **Engenheiro de Software** (utilizando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para executar o **`IT-010 — Núcleo de Domínio de Coordenação, Motor de Elegibilidade e Invariante de Especialização`**, implementando as entidades de domínio puro (`TrabalhoCoordenado`, `HandoffCoordenacao`, `RetornoCoordenacao`), regras de transição de condições operacionais, invariante de especialização e o motor de cálculo do próximo avanço válido, acompanhado de sua suíte de testes de unidade.
+1. Atuar como o **Engenheiro de Software** (utilizando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para executar o **`IT-011 — Repositório PostgreSQL, Serviço de Aplicação de Coordenação e Worker em Background`**, implementando o repositório transacional PostgreSQL, serviço de aplicação com casos de uso de coordenação, integração com o worker em background e respectiva suíte de testes de integração.
 
 ## Arquivos mínimos para continuar
 
@@ -122,6 +125,6 @@ O ciclo de vida do NAAMIVE avançou legitimamente na **Realização da `EV-003 �
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
-* `dados/itens-de-trabalho/IT-010/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-011/item-de-trabalho.md`
 * `dados/entregas-de-valor/EV-003/plano-de-realizacao.md`
 * `dados/entregas-de-valor/EV-003/entrega-de-valor.md`

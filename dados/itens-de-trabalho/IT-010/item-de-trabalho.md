@@ -8,7 +8,7 @@
 | Código | `IT-010` |
 | Entrega de Valor proprietária | [EV-003 — Coordenação do Trabalho Preparado](../../entregas-de-valor/EV-003/entrega-de-valor.md) |
 | Módulo de proveniência | [M-003 — Coordenação do Trabalho](../../modulos/M-003/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -29,12 +29,21 @@
 
 ## Execução e Evidências
 
-* **Executor:** (A ser atribuído — Engenheiro de Software)
-* **Artefatos produzidos / alterados:** (A preencher na execução)
-* **Resultado de testes locais:** (A preencher na execução)
-* **Conclusão técnica:** (A preencher na execução)
+* **Executor:** Engenheiro de Software
+* **Artefatos produzidos / alterados:**
+  - `src/domain/tipos-coordenacao.ts`: Catálogo oficial de tipos, condições operacionais (`POSSIVEL`, `PREPARADO`, `EM_EXECUCAO`, `BLOQUEADO`, `AGUARDANDO_DECISAO_HUMANA`, `ENCERRADO`) e atores da coordenação.
+  - `src/domain/valores-coordenacao.ts`: Objetos de valor, interfaces de dados e estrutura do pacote estruturado do handoff com referências de contexto.
+  - `src/domain/coordenacao.ts`: Entidades de domínio puro `TrabalhoCoordenado`, `HandoffCoordenacao` e `RetornoCoordenacao`, encapsulando invariantes de especialização, máquina de estados operacionais, imutabilidade de retornos e reconstituição.
+  - `src/domain/motor-coordenacao.ts`: Serviço de domínio puro `MotorCoordenacaoTrabalho` para avaliação do grafo de dependências, diagnóstico de elegibilidade, promoção de trabalhos e cálculo determinístico do próximo avanço válido.
+  - `src/index.ts`: Exportação canônica das novas entidades e serviços de coordenação.
+  - `tests/it010-dominio-coordenacao.test.ts`: Suíte de 12 testes unitários isolados validando todos os caminhos críticos e invariantes.
+* **Resultado de testes locais:**
+  - `npm run typecheck`: 0 erros de tipagem.
+  - `npm run build`: Compilação TypeScript concluída com sucesso.
+  - `npm test`: 10 suítes de teste executadas, 72 testes aprovados (100% de sucesso).
+* **Conclusão técnica:** O núcleo de domínio de coordenação está plenamente implementado, testado e em conformidade estrita com a Especificação da EV-003 e os invariantes de domínio do NAAMIVE.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (A preencher na execução: `EXECUCAO_CONCLUIDA` ou `EXECUCAO_IMPEDIDA`)
-* **Data / Registro:** (A preencher na execução)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04 — Engenheiro de Software
