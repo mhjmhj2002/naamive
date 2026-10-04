@@ -8,7 +8,7 @@
 | Código | `IT-006` |
 | Entrega de Valor proprietária | [EV-002 — Direção do Projeto](../../entregas-de-valor/EV-002/entrega-de-valor.md) |
 | Módulo de proveniência | [M-002 — Formação do Projeto](../../modulos/M-002/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -27,12 +27,21 @@
 
 ## Execução e Evidências
 
-* **Executor:** (A ser assumido pelo Ator Engenheiro de Software)
-* **Artefatos produzidos / alterados:** (A preencher na execução)
-* **Resultado de testes locais:** (A preencher na execução)
-* **Conclusão técnica:** (A preencher na execução)
+* **Executor:** Engenheiro de Software
+* **Artefatos produzidos / alterados:**
+  - `src/domain/tipos-projeto.ts`: Definição de `StatusProjeto`, `EtapaFormacaoProjeto`, `TipoResultadoProcessoProjeto`, `DecisaoMaterialOwnerProjeto` e `AtorCompetenteProjeto`.
+  - `src/domain/valores-projeto.ts`: Interfaces de dados, registros imutáveis de etapas, auditorias, direção consolidada e decisões.
+  - `src/domain/projeto.ts`: Entidade rica `Projeto` com máquina de estados, proteção de invariantes, condução de etapas de formação, parecer de auditoria, consolidação de direção e cancelamento excepcional pelo Owner.
+  - `src/domain/repositorio-projeto.ts`: Contrato de persistência de Projeto.
+  - `src/index.ts`: Re-exportação dos novos módulos de domínio de Projeto.
+  - `tests/it006-dominio-projeto.test.ts`: Suíte completa de 12 testes unitários cobrindo todos os critérios técnicos de aceitação.
+* **Resultado de testes locais:**
+  - `npm test`: 6 arquivos de teste aprovados, 46/46 testes unitários e de integração verdes (12 testes novos específicos do IT-006).
+  - `npm run typecheck`: 0 erros de tipagem estrita no TypeScript.
+  - `npm run build`: Compilação limpa em `dist/`.
+* **Conclusão técnica:** Todos os 4 critérios técnicos de aceitação foram cumpridos integralmente.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente de execução)
-* **Data / Registro:** (Pendente de execução)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04 — Engenheiro de Software

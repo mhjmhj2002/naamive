@@ -8,7 +8,7 @@
 | Código | `IT-007` |
 | Entrega de Valor proprietária | [EV-002 — Direção do Projeto](../../entregas-de-valor/EV-002/entrega-de-valor.md) |
 | Módulo de proveniência | [M-002 — Formação do Projeto](../../modulos/M-002/modulo.md) |
-| Status | `CRIADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 

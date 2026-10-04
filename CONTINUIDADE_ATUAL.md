@@ -6,13 +6,16 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Engenheiro de Software**. O primeiro Item de Trabalho da **`EV-002 — Direção do Projeto`**, **`IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1`**, foi plenamente executado, testado e concluído (`CONCLUIDO`), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Engenheiro de Software**. O segundo Item de Trabalho da **`EV-002 — Direção do Projeto`**, **`IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação`**, foi plenamente executado, testado e concluído (`CONCLUIDO`), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
 
-Com a conclusão do `IT-005`, o esquema de dados relacional de Projetos (`projetos`, `etapas_formacao_projeto`, `auditorias_projeto` e `direcoes_projeto`) está materializado em `migrations/003_esquema_projetos.sql`, com a restrição de unicidade estrita 1:1 (`UNIQUE(necessidade_id)`) validada com 100% de sucesso na suíte de testes automatizados (`tests/it005-esquema-relacional-projeto.test.ts`).
+Com a conclusão do `IT-006`:
+1. O modelo de domínio puro de Projeto foi implementado em TypeScript (`src/domain/tipos-projeto.ts`, `src/domain/valores-projeto.ts`, `src/domain/projeto.ts` e `src/domain/repositorio-projeto.ts`), cobrindo o catálogo estrito de status (`EM_FORMACAO`, `FORMADO`, `CONCLUIDO`, `CANCELADO`), as etapas conceituais de formação (`ENQUADRAMENTO`, `DESCOBERTA`, `DIREÇÃO DA SOLUÇÃO`), os pareceres de auditoria (`FORMACAO_SUFICIENTE`, `FORMACAO_INSUFICIENTE`), a consolidação da Direção do Projeto e a decisão material exclusiva do Owner de `CANCELAMENTO_APROVADO`.
+2. A suíte de testes unitários do domínio de Projeto (`tests/it006-dominio-projeto.test.ts`) foi implementada com 12/12 testes verdes, elevando a suíte geral da aplicação para 46/46 testes aprovados (100% de sucesso).
+3. A tipagem estrita via `npm run typecheck` e o build do projeto via `npm run build` passaram com sucesso e sem ressalvas.
 
-Em decorrência da satisfação de suas dependências, o segundo Item de Trabalho da cadeia, **`IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação`**, transicionou validamente de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**, encontrando-se apto para execução pelo Engenheiro de Software.
+Em decorrência da satisfação integral de suas dependências, o terceiro Item de Trabalho da cadeia, **`IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002`**, transicionou validamente de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**, encontrando-se apto para execução pelo Engenheiro de Software.
 
-A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`) e com suíte de testes 100% verde (34/34 testes passando no total da aplicação).
+A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`).
 
 ## Governança transversal e Débitos
 
@@ -73,7 +76,7 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Em realização técnica ativa (1/4 itens de trabalho concluídos).
+  - Situação: Em realização técnica ativa (2/4 itens de trabalho concluídos: IT-005 e IT-006).
 
 ### Itens de Trabalho (EV-002)
 
@@ -83,13 +86,14 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
   - Registro: `dados/itens-de-trabalho/IT-005/item-de-trabalho.md`
   - Dependências: Nenhuma
 * **IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação:**
-  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Status: **`CONCLUIDO`**
+  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
   - Registro: `dados/itens-de-trabalho/IT-006/item-de-trabalho.md`
   - Dependências: `IT-005` (satisfeita)
 * **IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002:**
-  - Status: `CRIADO`
+  - Status: **`PRONTO_PARA_EXECUCAO`**
   - Registro: `dados/itens-de-trabalho/IT-007/item-de-trabalho.md`
-  - Dependências: `IT-006`
+  - Dependências: `IT-006` (satisfeita)
 * **IT-008 — Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada:**
   - Status: `CRIADO`
   - Registro: `dados/itens-de-trabalho/IT-008/item-de-trabalho.md`
@@ -100,11 +104,11 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
 * A `EV-002` está legitimamente em `EM_REALIZACAO`.
-* O `IT-006` está imediatamente apto para início de execução técnica pelo Engenheiro de Software.
+* O `IT-007` está imediatamente apto para início de execução técnica pelo Engenheiro de Software.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para assumir o **`IT-006`**, transicionando-o para `EM_EXECUCAO` e implementando o núcleo de domínio de Projeto em TypeScript (`src/domain/projeto/` ou equivalente), as etapas de formação, pareceres de auditoria e a suíte de testes unitários.
+1. Atuar no papel de **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para assumir o **`IT-007`**, transicionando-o para `EM_EXECUCAO` e implementando o repositório PostgreSQL de Projeto, o serviço de aplicação correspondente aos casos de uso de bootstrap e etapas de formação, a integração de handoff com M-001 e os respectivos testes de integração.
 
 ## Arquivos mínimos para continuar
 
@@ -113,7 +117,8 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-006/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-007/item-de-trabalho.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
-* `migrations/003_esquema_projetos.sql`
-* `tests/it005-esquema-relacional-projeto.test.ts`
+* `src/domain/projeto.ts`
+* `src/domain/repositorio-projeto.ts`
+* `tests/it006-dominio-projeto.test.ts`
