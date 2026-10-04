@@ -6,19 +6,17 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE avançou com pleno sucesso na **Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
+O ciclo de vida do NAAMIVE concluiu formalmente a **Integração da Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
 
 1. A **`EV-002 — Direção do Projeto`** permanece soberanamente **`CONCLUIDA`** pelo Owner `mhj` (100% de sucesso e software validado).
-2. O **Engenheiro de Software**, atuando estritamente dentro de sua competência funcional sob o registro [dados/itens-de-trabalho/IT-012/item-de-trabalho.md](dados/itens-de-trabalho/IT-012/item-de-trabalho.md) e com base na Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`, executou com sucesso o **`IT-012 — Camada Web Responsiva de Coordenação, Despacho de Handoffs e Suíte Integrada`**:
-   - Estendeu as entidades de domínio `TrabalhoCoordenado` (com método `registrarDecisaoHumanaLiberacao` para liberação soberana pelo Owner) e `MotorCoordenacaoTrabalho` (com agregação de trabalhos em condição `POSSIVEL` em `ResultadoAvaliacaoElegibilidade`);
-   - Atualizou o serviço de aplicação `ServicoAplicacaoCoordenacao` com o método `liberarDecisaoHumanaOwner` e a exposição consolidada do grafo completo na visão de coordenação;
-   - Desenvolveu e integrou no `src/web/templates.ts` os templates responsivos em Bootstrap 5: painel de coordenação (`renderizarPainelCoordenacao`), detalhes do trabalho (`renderizarDetalhesTrabalhoCoordenado`) e inspeção estruturada do handoff (`renderizarDetalheHandoff`), além da inclusão do link de Coordenação na navbar global;
-   - Implementou as rotas HTTP no `src/web/servidor-web.ts`: `/coordenacao` (GET), `/coordenacao/trabalhos/:id` (GET), `/coordenacao/trabalhos/:id/despachar` (POST), `/coordenacao/handoffs/:id` (GET), `/coordenacao/retornos` (POST) e `/coordenacao/trabalhos/:id/decisao-owner` (POST), com suporte dual a HTML responsivo e respostas REST em JSON, conectadas à porta de contexto para rastreabilidade com o M-004;
-   - Injetou as dependências de coordenação no servidor web durante o bootstrap operacional do sistema em `src/server.ts`;
-   - Desenvolveu a suíte completa de testes de ponta a ponta em `tests/it012-camada-web-coordenacao.test.ts` cobrindo 100% dos 6 critérios técnicos de aceitação;
-   - Validou a integridade completa do sistema com `npm run typecheck && npm run build && npm test` (12 suítes e 86 testes aprovados com 100% de sucesso);
-   - Emitiu o Resultado do Processo **`EXECUCAO_CONCLUIDA`** e transicionou o `IT-012` para **`CONCLUIDO`**.
-3. **Plano de Realização da EV-003 Plenamente Concluído:** Todos os 4 Itens de Trabalho previstos no Plano de Realização da EV-003 (`IT-009`, `IT-010`, `IT-011` e `IT-012`) estão rigorosamente **`CONCLUIDO`** com Resultado `EXECUCAO_CONCLUIDA`.
+2. O **Integrador da Realização**, atuando estritamente dentro de sua competência funcional sob o registro [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md) e com base na Skill `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`, concluiu com sucesso a integração técnica de todos os Itens de Trabalho da EV-003 (`IT-009`, `IT-010`, `IT-011` e `IT-012`):
+   - Verificou 100% de cobertura e conclusão dos 4 Itens de Trabalho no grafo de realização;
+   - Validou a tipagem estrita via `npm run typecheck` (sem erros);
+   - Validou a compilação global do sistema via `npm run build` (sucesso absoluto);
+   - Executou a suíte integrada completa de testes via `npm test` (**12/12 arquivos de teste aprovados e 86/86 testes verdes — 100% de sucesso**);
+   - Declarou a prontidão técnica global do software integrado e emitiu o Resultado do Processo **`REALIZACAO_INTEGRADA`**;
+   - Realizou o handoff oficial para o Ator agêntico **Verificador da Entrega de Valor**.
+3. A **`EV-003 — Coordenação do Trabalho Preparado`** encontra-se em status **`EM_REALIZACAO`**, com realização técnica 100% integrada e apta para a **Verificação da Entrega de Valor**.
 
 ## Governança transversal e Débitos
 
@@ -89,7 +87,8 @@ O ciclo de vida do NAAMIVE avançou com pleno sucesso na **Realização da `EV-0
   - Registro principal: [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
   - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
-  - Situação: Todos os itens de trabalho da realização concluídos (`IT-009`, `IT-010`, `IT-011` e `IT-012`). Aguardando atuação do Integrador da Realização.
+  - Resultado da Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização em 2026-10-04
+  - Situação: Realização técnica 100% integrada e aprovada. Handoff entregue para o Verificador da Entrega de Valor.
 
 ### Itens de Trabalho (EV-003)
 
@@ -114,18 +113,19 @@ O ciclo de vida do NAAMIVE avançou com pleno sucesso na **Realização da `EV-0
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A `EV-003` teve todos os seus Itens de Trabalho concluídos com 100% de sucesso.
-* A próxima atividade agêntica cabe ao **Integrador da Realização** (vertical Item de Trabalho / Integração).
+* A `EV-003` concluiu a etapa de integração técnica com 100% de sucesso.
+* A próxima atividade agêntica cabe ao **Verificador da Entrega de Valor** (vertical Entrega de Valor / Verificação).
 
 ## Próxima ação legítima
 
-1. Atuar como o **Integrador da Realização** (utilizando a Skill `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`) para verificar a cobertura e conclusão de todos os itens do [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md), validar a compilação global e suíte de testes integrados, emitir o Resultado do Processo **`REALIZACAO_INTEGRADA`** e formalizar o handoff oficial para o Ator **Verificador da Entrega de Valor**.
+1. Atuar como o **Verificador da Entrega de Valor** (utilizando a Skill `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para confrontar o software integrado da [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md) frente à intenção de valor, beneficiários, critérios verificáveis e resultados observáveis, emitindo o Laudo Técnico de Verificação (`EVOLUCAO_MATERIALIZADA`) e preparando o handoff para a etapa de Homologação pelo Owner (`mhj`).
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
-* `dados/entregas-de-valor/EV-003/plano-de-realizacao.md`
+* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
 * `dados/entregas-de-valor/EV-003/entrega-de-valor.md`
+* `dados/entregas-de-valor/EV-003/plano-de-realizacao.md`
+
