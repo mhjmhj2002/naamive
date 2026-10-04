@@ -33,6 +33,8 @@ npm run test:watch
 2. `tests/it002-dominio-necessidade.test.ts`: Regras de negócio da Necessidade, invariantes de transição, pareceres e consolidação de compromisso.
 3. `tests/it003-worker-autenticacao-integracao.test.ts`: Worker em background, polling, autenticação do Owner e portas de integração idempotentes (M-002 e M-004).
 4. `tests/it004-camada-web-responsiva.test.ts`: Rotas HTTP da interface web, renderização com Bootstrap 5, formulários e jornada completa da EV-001.
+5. `tests/it005-esquema-relacional-projeto.test.ts` a `tests/it008-camada-web-projeto.test.ts`: Fundação relacional, domínio, serviços e camada web responsiva de Projetos (EV-002).
+6. `tests/it009-esquema-relacional-coordenacao.test.ts` a `tests/it012-camada-web-coordenacao.test.ts`: Fundação relacional, motor de elegibilidade, serviços, worker e camada web responsiva de Coordenação do Trabalho (EV-003).
 
 ---
 

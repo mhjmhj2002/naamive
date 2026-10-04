@@ -6,17 +6,16 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu formalmente a **Integração da Realização da `EV-003 — Coordenação do Trabalho Preparado`**:
+O ciclo de vida do NAAMIVE concluiu formalmente a **Verificação da Entrega de Valor da `EV-003 — Coordenação do Trabalho Preparado`**:
 
 1. A **`EV-002 — Direção do Projeto`** permanece soberanamente **`CONCLUIDA`** pelo Owner `mhj` (100% de sucesso e software validado).
-2. O **Integrador da Realização**, atuando estritamente dentro de sua competência funcional sob o registro [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md) e com base na Skill `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`, concluiu com sucesso a integração técnica de todos os Itens de Trabalho da EV-003 (`IT-009`, `IT-010`, `IT-011` e `IT-012`):
-   - Verificou 100% de cobertura e conclusão dos 4 Itens de Trabalho no grafo de realização;
-   - Validou a tipagem estrita via `npm run typecheck` (sem erros);
-   - Validou a compilação global do sistema via `npm run build` (sucesso absoluto);
-   - Executou a suíte integrada completa de testes via `npm test` (**12/12 arquivos de teste aprovados e 86/86 testes verdes — 100% de sucesso**);
-   - Declarou a prontidão técnica global do software integrado e emitiu o Resultado do Processo **`REALIZACAO_INTEGRADA`**;
-   - Realizou o handoff oficial para o Ator agêntico **Verificador da Entrega de Valor**.
-3. A **`EV-003 — Coordenação do Trabalho Preparado`** encontra-se em status **`EM_REALIZACAO`**, com realização técnica 100% integrada e apta para a **Verificação da Entrega de Valor**.
+2. O **Verificador da Entrega de Valor**, atuando estritamente dentro de sua competência funcional sob o registro [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md) e com base na Skill `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`:
+   - Confrontou o software integrado resultante dos Itens de Trabalho `IT-009` a `IT-012` frente à intenção de valor, aos beneficiários relevantes, ao resultado observável esperado, ao comportamento especificado e aos critérios verificáveis da EV-003;
+   - Verificou que os testes integrados executam com 100% de sucesso (**12/12 arquivos aprovados, 86/86 testes verdes**) e sem qualquer regressão nas capacidades consolidadas das EVs anteriores;
+   - Comprovou a materialização integral das capacidades de coordenação: motor determinístico do próximo avanço válido, invariante de especialização (`competência → Ator → Skill`), emissão idempotente de handoffs com contexto recuperável (N-001/P-001), reconciliação de retornos com liberação de dependências sucessoras, tratamento de suspensão e destravamento soberano pelo Owner (`mhj`) e acompanhamento responsivo via interface web Bootstrap 5 (`/coordenacao`);
+   - Declarou a prontidão técnica e emitiu o Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**;
+   - Entregou o laudo técnico independente e formalizou o handoff para subsidiar e habilitar o gateway obrigatório de **Homologação pelo Owner**.
+3. A **`EV-003 — Coordenação do Trabalho Preparado`** encontra-se em status **`EM_REALIZACAO`**, com Verificação técnica positiva (`EVOLUCAO_MATERIALIZADA`) e apta para a decisão soberana do Owner (`HOMOLOGADO_PELO_OWNER`).
 
 ## Governança transversal e Débitos
 
@@ -30,7 +29,7 @@ O ciclo de vida do NAAMIVE concluiu formalmente a **Integração da Realização
 
 ### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
-  - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` plenamente cumprida para a EV-001 e para a EV-002.
+  - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` plenamente cumprida para a EV-001 e EV-002, e devidamente acionada para a EV-003.
 
 ## Entidades ativas
 
@@ -88,7 +87,8 @@ O ciclo de vida do NAAMIVE concluiu formalmente a **Integração da Realização
   - Plano de Realização: [dados/entregas-de-valor/EV-003/plano-de-realizacao.md](dados/entregas-de-valor/EV-003/plano-de-realizacao.md)
   - Resultado da Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Resultado da Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização em 2026-10-04
-  - Situação: Realização técnica 100% integrada e aprovada. Handoff entregue para o Verificador da Entrega de Valor.
+  - Resultado da Verificação: `EVOLUCAO_MATERIALIZADA` emitido pelo Verificador da Entrega de Valor em 2026-10-04
+  - Situação: Verificação técnica aprovada. Handoff entregue para subsidiar a etapa de Homologação soberana do Owner.
 
 ### Itens de Trabalho (EV-003)
 
@@ -111,21 +111,21 @@ O ciclo de vida do NAAMIVE concluiu formalmente a **Integração da Realização
 
 ## Estado do bloqueio
 
-**DESBLOQUEADO:**
-* Não há débitos ou impedimentos bloqueantes ativos.
-* A `EV-003` concluiu a etapa de integração técnica com 100% de sucesso.
-* A próxima atividade agêntica cabe ao **Verificador da Entrega de Valor** (vertical Entrega de Valor / Verificação).
+**DESBLOQUEADO / AGUARDANDO DECISÃO HUMANA DO OWNER:**
+* Não há débitos ou impedimentos bloqueantes técnicos ativos.
+* A `EV-003` concluiu a etapa de Verificação técnica independente com resultado positivo (`EVOLUCAO_MATERIALIZADA`).
+* A próxima ação legítima cabe ao Ator humano soberano **Owner** (`mhj`) para realizar a **Homologação da Entrega de Valor**, proferindo sua Decisão Material (`HOMOLOGADO_PELO_OWNER`) e autorizando a transição formal para `CONCLUIDA`.
 
 ## Próxima ação legítima
 
-1. Atuar como o **Verificador da Entrega de Valor** (utilizando a Skill `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para confrontar o software integrado da [dados/entregas-de-valor/EV-003/entrega-de-valor.md](dados/entregas-de-valor/EV-003/entrega-de-valor.md) frente à intenção de valor, beneficiários, critérios verificáveis e resultados observáveis, emitindo o Laudo Técnico de Verificação (`EVOLUCAO_MATERIALIZADA`) e preparando o handoff para a etapa de Homologação pelo Owner (`mhj`).
+1. Atuação do **Owner** (`mhj`): inspecionar a interface web operacional (`http://localhost:3001/coordenacao`) e manifestar a Decisão Material soberana de Homologação (`HOMOLOGADO_PELO_OWNER`), concluindo com 100% de sucesso o ciclo de vida da `EV-003 — Coordenação do Trabalho Preparado`.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
 * `dados/entregas-de-valor/EV-003/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-003/plano-de-realizacao.md`
+
 
