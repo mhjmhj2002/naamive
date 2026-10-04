@@ -6,15 +6,13 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor avançou com a atuação do Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`).
+O ciclo de vida da vertical Entrega de Valor foi concluído com pleno êxito para a **`EV-002 — Direção do Projeto`** com a homologação soberana do Owner:
 
-A verificação substantiva do software integrado da **`EV-002 — Direção do Projeto`** (`IT-005` a `IT-008`) foi realizada e aprovada com a emissão do Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**:
-1. O software integrado foi confrontado com a intenção de valor, os beneficiários relevantes, o resultado observável esperado, o comportamento esperado e os seis critérios verificáveis da Especificação Técnica da EV-002.
-2. A integridade e a utilidade da evolução para os beneficiários foram demonstradas sem quebras ou regressões em relação à baseline da EV-001 (58/58 testes verdes na suíte completa).
-3. O Laudo Técnico de Verificação Independente e o Resultado formal foram registrados em [dados/entregas-de-valor/EV-002/entrega-de-valor.md](dados/entregas-de-valor/EV-002/entrega-de-valor.md).
-4. Em estrita observância a `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e à resolução do `DEB-GOV-001`, o laudo positivo habilita e subsidia o gateway mandatório de **Homologação pelo Owner**, sem transicionar a EV diretamente para `CONCLUIDA`.
-
-A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção humana e homologação formal do Owner.
+1. A verificação técnica independente do software integrado (`IT-005` a `IT-008`) havia atestado a prontidão com a emissão do Resultado do Processo **`EVOLUCAO_MATERIALIZADA`** (58/58 testes verdes, sem regressões).
+2. O **Owner** (`mhj`), no exercício de sua competência humana soberana e exclusiva, inspecionou a aplicação web em execução e manifestou a Decisão Material formal de Homologação: **`HOMOLOGADO_PELO_OWNER`**.
+3. A **`EV-002`** transicionou formal e definitivamente para o status **`CONCLUIDA`** (100% de sucesso).
+4. O registro em [dados/entregas-de-valor/EV-002/entrega-de-valor.md](dados/entregas-de-valor/EV-002/entrega-de-valor.md) e o mapa canônico de [dados/modulos/M-002/mapa-de-entregas-de-valor.md](dados/modulos/M-002/mapa-de-entregas-de-valor.md) foram atualizados refletindo o status `CONCLUIDA`.
+5. O sistema está plenamente verificado, com tipagem e testes íntegros (`npm run typecheck && npm test`), pronto para os próximos passos da jornada.
 
 ## Governança transversal e Débitos
 
@@ -28,7 +26,7 @@ A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção human
 
 ### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
-  - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` incorporada às normas e skills.
+  - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` plenamente cumprida para a EV-001 e agora para a EV-002.
 
 ## Entidades ativas
 
@@ -38,7 +36,7 @@ A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção human
 * Compromisso: aprovado pelo Owner (`APROVADO`, usuário autenticado `mhj`)
 * Status: `EM_PROJETO`
 * Projeto de origem: `P-001`, em vínculo exclusivo 1:1
-* Artefato de saída: `Compromisso da Necessidade` disponível para consumo pelo Projeto
+* Artefato de saída: `Compromisso da Necessidade` consumido com êxito pelo Projeto
 
 ### Projeto P-001
 
@@ -47,14 +45,14 @@ A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção human
 * Nome inicial: Jornada Autônoma do NAAMIVE
 * Necessidade de origem: `N-001`
 * Status: `FORMADO`
-* Artefato de saída: `Direção do Projeto` aprovada e disponível para a vertical Módulo
+* Artefato de saída: `Direção do Projeto` aprovada e consolidada
 
 ### Módulos
 
 * Mapa canônico do P-001: `dados/projetos/P-001/mapa-de-modulos.md`
 * M-001 — Condução da Necessidade: `FORMADO` (Mapa canônico possui `EV-001` em `CONCLUIDA`)
 * M-002 — Formação do Projeto: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-002/mapa-de-entregas-de-valor.md` (registra `EV-002` em `EM_REALIZACAO`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-002/mapa-de-entregas-de-valor.md` (registra `EV-002` em `CONCLUIDA`)
 * M-003 — Coordenação do Trabalho: `FORMADO`
 * M-004 — Contexto e Rastreabilidade: `FORMADO`
 * M-005 — Verificação do Resultado de Software: `FORMADO`
@@ -71,13 +69,14 @@ A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção human
 * **EV-002 — Direção do Projeto:**
   - Identificador técnico: `096a280f-c8aa-4de1-932b-159e5a609b21`
   - Módulo proprietário: `M-002 — Formação do Projeto`
-  - Status atual: **`EM_REALIZACAO`**
+  - Status atual: **`CONCLUIDA`**
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Parecer de Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização
-  - Parecer de Verificação: **`EVOLUCAO_MATERIALIZADA`** emitido pelo Verificador da Entrega de Valor em 2026-10-04
+  - Parecer de Verificação: `EVOLUCAO_MATERIALIZADA` emitido pelo Verificador da Entrega de Valor
+  - Homologação do Owner: `HOMOLOGADO_PELO_OWNER` emitido pelo Owner `mhj` em 2026-10-04
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Verificação técnica positiva concluída com êxito. Habilitada formalmente para a Homologação pelo Owner.
+  - Situação: Ciclo de vida da EV-002 concluído com 100% de sucesso.
 
 ### Itens de Trabalho (EV-002)
 
@@ -102,19 +101,19 @@ A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção human
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A verificação técnica independente da `EV-002` foi concluída com `EVOLUCAO_MATERIALIZADA`.
-* O sistema está apto e aguarda a decisão de homologação humana soberana pelo Owner.
+* A homologação formal soberana do Owner concluiu a `EV-002` com 100% de sucesso.
+* O sistema está íntegro e operacional para os próximos passos da jornada.
 
 ## Próxima ação legítima
 
-1. Solicitar a inspeção e a Decisão Material Humana do **Owner** (`mhj`) para **Homologação da Entrega de Valor** (`HOMOLOGADO_PELO_OWNER` ou `REJEITADO_PELO_OWNER`), conforme `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e `documentacao/governanca/debitos/DEB-GOV-001.md`.
-2. Após manifestação favorável formal do Owner (`HOMOLOGADO_PELO_OWNER`), efetivar a transição do status da `EV-002` para **`CONCLUIDA`**.
+1. Definir o direcionamento para o próximo ciclo de entrega de valor do NAAMIVE (ex.: delimitação da próxima Entrega de Valor em M-003 — Coordenação do Trabalho, ou conforme planejamento da jornada).
+2. Manter a infraestrutura e dados do sistema alinhados às necessidades operacionais.
 
 ## Arquivos mínimos para continuar
 
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
+* `dados/modulos/M-002/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
-* `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
-* `documentacao/governanca/debitos/DEB-GOV-001.md`
+* `dados/projetos/P-001/mapa-de-modulos.md`

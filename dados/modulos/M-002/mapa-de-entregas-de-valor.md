@@ -23,7 +23,7 @@ Foram recuperados proporcionalmente a [Direção do P-001](../../projetos/P-001/
 | --- | --- |
 | Identificador técnico | `096a280f-c8aa-4de1-932b-159e5a609b21` |
 | Módulo proprietário | [M-002 — Formação do Projeto](modulo.md) |
-| Status | `EM_REALIZACAO` |
+| Status | `CONCLUIDA` |
 | Registro principal | [EV-002 — Direção do Projeto](../../entregas-de-valor/EV-002/entrega-de-valor.md) |
 | Plano de Realização | [Plano de Realização da EV-002](../../entregas-de-valor/EV-002/plano-de-realizacao.md) |
 
