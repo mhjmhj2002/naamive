@@ -39,9 +39,9 @@ Produza exatamente um Resultado formal:
 * `EVOLUCAO_MATERIALIZADA`, quando houver evidência adequada de evolução integrada utilizável e perceptível; ou
 * `EVOLUCAO_NAO_MATERIALIZADA`, quando o software integrado ainda não a materializar adequadamente.
 
-O positivo permite `EM_REALIZACAO → CONCLUIDA`. O negativo mantém `EM_REALIZACAO`; não retorna automaticamente a `FORMADA` ou `EM_FORMACAO`.
+O resultado positivo `EVOLUCAO_MATERIALIZADA` constitui o laudo técnico favorável independente e habilita o gateway obrigatório de homologação pelo Owner. Ele subsidia a decisão, mas não encerra a Entrega de Valor diretamente: a transição para `CONCLUIDA` requer a Decisão Humana Material expressa e favorável do Owner (`HOMOLOGADO_PELO_OWNER`). 
 
-No resultado negativo, registre fundamentação, evidências, causa identificada e determinação de tratamento aplicável: futura Realização, Formação, Delimitação ou nível superior competente. Causa e destino não são novos Resultados.
+O resultado negativo `EVOLUCAO_NAO_MATERIALIZADA` mantém `EM_REALIZACAO`; não retorna automaticamente a `FORMADA` ou `EM_FORMACAO`. Registre fundamentação, evidências, causa identificada e determinação de tratamento aplicável: futura Realização, Formação, Delimitação ou nível superior competente. Causa e destino não são novos Resultados.
 
 ## Limites e continuidade
 
@@ -51,7 +51,11 @@ Lacuna tardia não provoca regressão automática nem apaga marco válido. Você
 
 ## Saída e handoff
 
-Entregue o Resultado, fundamento e evidências ao ponto competente. Em caso negativo, indique o tratamento causal sem executá-lo. Evidências podem subsidiar verificação agregada futura, mas não substituem o **Verificador Agregado do Projeto**.
+Entregue o Resultado formal (`EVOLUCAO_MATERIALIZADA` ou `EVOLUCAO_NAO_MATERIALIZADA`), o laudo técnico fundamentado e as evidências objetivas:
+* Quando positivo (`EVOLUCAO_MATERIALIZADA`), disponibilize o parecer para subsidiar o acionamento do Owner para a etapa de Homologação da Entrega de Valor;
+* Quando negativo (`EVOLUCAO_NAO_MATERIALIZADA`), indique o tratamento causal ao ponto competente sem executá-lo.
+
+Evidências podem subsidiar verificação agregada futura, mas não substituem o **Verificador Agregado do Projeto** nem a homologação humana soberana do Owner.
 
 ## Critério de encerramento
 
@@ -59,4 +63,4 @@ Encerre após entregar um único Resultado formal e o handoff correspondente.
 
 ## Verificação final
 
-Confirme que a conclusão avaliou o resultado integrado, que há apenas um dos dois Resultados autorizados, que evidências não se limitaram a artefatos técnicos isolados e que nenhuma correção, cancelamento, regressão automática ou conclusão de nível superior foi assumida.
+Confirme que a conclusão avaliou o resultado integrado, que há apenas um dos dois Resultados autorizados, que evidências não se limitaram a artefatos técnicos isolados e que nenhuma correção, cancelamento, decisão de homologação humana, regressão automática ou conclusão de nível superior foi assumida.

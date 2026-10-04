@@ -12,7 +12,7 @@ Os nomes normativos e os significados das posições possíveis nesse fluxo pert
 2. Ela somente nasce da delimitação conduzida pelo Especialista em Delimitação de Entregas de Valor sobre Módulo com formação técnica aprovada.
 3. Formação, auditoria, realização e verificação têm objetos e responsabilidades distintos; nenhum Ator os funde unilateralmente.
 4. Um retorno é encaminhamento causal para tratamento, determinado pela causa identificada e não pela ideia genérica de “voltar uma etapa”; ele não provoca regressão automática de Status ou da posição da demanda no ciclo, conforme [Débitos e Continuidade Progressiva](../governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md).
-5. A conclusão depende de verificação positiva do software integrado, não da existência isolada de código, artefato técnico ou ambiente.
+5. A conclusão depende de verificação técnica positiva do software integrado conjugada com a homologação formal soberana do Owner, e não da existência isolada de código, artefato técnico ou ambiente.
 6. Questão cujo alcance exceda a Entrega de Valor retorna ao nível competente; ela não é redefinida silenciosamente nesta vertical.
 
 ## Fluxo de referência
@@ -34,8 +34,12 @@ Módulo com formação técnica aprovada
       → futura decomposição e realização
       → software integrado
       → verificação da Entrega de Valor
-         → evolução materializada
-            → conclusão
+         → evolução materializada (laudo técnico favorável)
+            → homologação pelo Owner
+               → homologado pelo Owner
+                  → conclusão
+               → rejeitado pelo Owner
+                  → tratamento conforme apontamento do Owner
          → evolução não materializada
             → tratamento conforme a causa
                → realização, formação, delimitação ou nível competente
@@ -131,9 +135,18 @@ Verificação
 
 A verificação não se reduz a código implementado, Pull Request integrado, deploy realizado, endpoint pronto, tabela criada ou testes técnicos passando. Esses elementos podem compor evidência, mas não demonstram isoladamente que o beneficiário pode utilizar e perceber a evolução prometida.
 
-### Verificação positiva
+### Verificação positiva e laudo técnico
 
-Quando a verificação concluir, com evidência adequada, que o software integrado materializa a evolução prometida, a Entrega de Valor alcança sua conclusão. A conclusão requer conjuntamente resultado integrado de software, evolução utilizável e perceptível no contexto definido e verificação positiva correspondente.
+Quando a verificação concluir, com evidência adequada, que o software integrado materializa a evolução prometida, o Verificador emite o laudo técnico com o Resultado do Processo `EVOLUCAO_MATERIALIZADA`. 
+
+Essa verificação técnica positiva é condição necessária, mas não encerra a Entrega de Valor por si só: ela habilita obrigatoriamente a etapa de **Homologação pelo Owner**.
+
+### Homologação pelo Owner
+
+A homologação é a etapa soberana na qual o Owner inspeciona a evolução do software em operação, valida o valor real entregue sob a perspectiva de negócio e manifesta sua Decisão Humana Material:
+
+* **Homologação Favorável (`HOMOLOGADO_PELO_OWNER`):** O Owner atesta que a evolução atende à intenção de valor pretendida, autorizando formalmente a transição da Entrega de Valor para o status terminal `CONCLUIDA`.
+* **Rejeição na Homologação (`REJEITADO_PELO_OWNER`):** O Owner aponta desconformidades na experiência, insuficiência de valor ou desvios materiais de negócio. A Entrega de Valor não conclui e permanece em `EM_REALIZACAO`, sendo os apontamentos encaminhados para tratamento causal na Realização (correção de comportamento), na Formação (ajuste de especificação) ou no nível competente.
 
 ### Verificação negativa e retorno causal
 
@@ -152,10 +165,9 @@ O Verificador não implementa a correção, não forma a Especificação, não r
 
 ### Conclusão
 
-A conclusão encerra com sucesso apenas a Entrega de Valor verificada positivamente. Ela não conclui automaticamente o Módulo, não conclui automaticamente o Projeto e não torna automaticamente a Necessidade `ATENDIDA`. Evidências e conclusões dessa verificação podem subsidiar verificações agregadas superiores, sem substituir o Verificador Agregado do Projeto nem produzir conclusão agregada.
+A conclusão encerra com sucesso apenas a Entrega de Valor que tenha obtido verificação técnica positiva (`EVOLUCAO_MATERIALIZADA`) e expressa homologação favorável pelo Owner (`HOMOLOGADO_PELO_OWNER`). 
 
-> [!NOTE]
-> **Débito de Governança Bloqueante [DEB-GOV-001](../governanca/debitos/DEB-GOV-001.md):** Foi formalmente reconhecido o gap normativo referente à ausência de etapa mandatória de Inspeção, Homologação e Decisão Humana Material do Owner prévia à transição para `CONCLUIDA`. Como mitigação imediata para a `EV-001`, a conclusão técnica decorrente de verificação positiva fica estritamente condicionada e bloqueada até a homologação explícita do Owner. Novas Entregas de Valor (a partir de `EV-002`) permanecem bloqueadas até a revisão definitiva deste ciclo de vida.
+A conclusão encerra a Entrega de Valor individualmente. Ela não conclui automaticamente o Módulo, não conclui automaticamente o Projeto e não torna automaticamente a Necessidade `ATENDIDA`. Evidências e conclusões dessa verificação e homologação subsidiam verificações agregadas superiores, sem substituir o Verificador Agregado do Projeto nem produzir conclusão agregada.
 
 ### Cancelamento excepcional
 

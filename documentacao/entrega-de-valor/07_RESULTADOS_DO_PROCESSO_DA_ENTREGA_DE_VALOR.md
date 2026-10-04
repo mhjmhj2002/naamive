@@ -27,14 +27,17 @@ Os Status da Entrega de Valor estão em [Status da Entrega de Valor](06_STATUS_D
 | Auditoria da Formação | `FORMACAO_INSUFICIENTE` | Auditor da Entrega de Valor |
 | Verificação da Entrega de Valor | `EVOLUCAO_MATERIALIZADA` | Verificador da Entrega de Valor |
 | Verificação da Entrega de Valor | `EVOLUCAO_NAO_MATERIALIZADA` | Verificador da Entrega de Valor |
-| Decisão humana | `CANCELAMENTO_APROVADO` | Owner |
+| Homologação da Entrega de Valor | `HOMOLOGADO_PELO_OWNER` | Owner |
+| Homologação da Entrega de Valor | `REJEITADO_PELO_OWNER` | Owner |
+| Decisão humana excepcional | `CANCELAMENTO_APROVADO` | Owner |
 
 Um Resultado somente é válido quando produzido pelo Ator competente. Em particular:
 
 * o Formador não aprova a própria Formação;
 * o Auditor não realiza a Verificação da evolução integrada;
-* o Verificador não forma, redelimita ou implementa; e
-* nenhum Ator agêntico produz unilateralmente `CANCELAMENTO_APROVADO`.
+* o Verificador não forma, redelimita ou implementa, e seu laudo positivo (`EVOLUCAO_MATERIALIZADA`) habilita, mas não substitui, a decisão soberana do Owner;
+* a homologação ou rejeição do valor entregue cabe com exclusividade ao Owner (`HOMOLOGADO_PELO_OWNER` ou `REJEITADO_PELO_OWNER`); e
+* nenhum Ator agêntico produz unilateralmente decisões materiais do Owner.
 
 Artefato existente, condição técnica isolada ou aparente proximidade de um marco não permite inferir Resultado automaticamente.
 
@@ -71,19 +74,14 @@ O problema é tratado no ponto competente e submetido a nova Auditoria quando ap
 
 O Verificador da Entrega de Valor produz `EVOLUCAO_MATERIALIZADA` quando conclui, com evidência adequada, que o software integrado realmente materializa a evolução prometida de forma utilizável e perceptível no contexto definido.
 
-O Resultado permite a transição:
+Este Resultado é o parecer técnico favorável independente da Verificação. Ele atesta a prontidão técnica do incremento e é condição mandatória para acionar a Homologação pelo Owner. Não encerra diretamente a Entrega de Valor:
 
 ```text
-EM_REALIZACAO
-→ CONCLUIDA
+EM_REALIZACAO (com EVOLUCAO_MATERIALIZADA)
+→ acionamento do Owner para Homologação
 ```
 
-> [!NOTE]
-> **Débito de Governança Bloqueante [DEB-GOV-001](../governanca/debitos/DEB-GOV-001.md):** Para a `EV-001`, a transição prática para `CONCLUIDA` após `EVOLUCAO_MATERIALIZADA` fica vinculada à etapa preliminar de homologação e aprovação material expressa do Owner. Novas Entregas de Valor ficam bloqueadas até a inclusão definitiva do estado/resultado formal de Homologação do Owner neste catálogo e no ciclo de vida.
-
 Código existente, Pull Request integrado, deploy, endpoint, tabela ou testes técnicos isoladamente não equivalem necessariamente a este Resultado. A conclusão depende da Verificação da evolução integrada prevista no [Ciclo de Vida da Entrega de Valor](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md).
-
-A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
 
 ### `EVOLUCAO_NAO_MATERIALIZADA`
 
@@ -96,6 +94,33 @@ EM_REALIZACAO
 ```
 
 O Resultado não provoca retorno para `FORMADA` ou `EM_FORMACAO`, nem regressão para Módulo, Projeto ou Necessidade. A causa orienta o tratamento pela Realização, Formação, Delimitação ou nível superior competente, conforme o Ciclo de Vida. Após o tratamento necessário, a realização e/ou a Verificação prossegue conforme aplicável.
+
+## Decisões Humanas Materiais de Homologação do Owner
+
+### `HOMOLOGADO_PELO_OWNER`
+
+`HOMOLOGADO_PELO_OWNER` é a Decisão Humana Material proferida exclusivamente pelo Owner após inspecionar o software integrado e validar o valor de negócio entregue, tendo como subsídio o laudo técnico `EVOLUCAO_MATERIALIZADA`.
+
+Este Resultado autoriza a transição terminal de sucesso:
+
+```text
+EM_REALIZACAO (com EVOLUCAO_MATERIALIZADA + HOMOLOGADO_PELO_OWNER)
+→ CONCLUIDA
+```
+
+A homologação do Owner registra formalmente a aceitação soberana do incremento de valor entregue. A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
+
+### `REJEITADO_PELO_OWNER`
+
+`REJEITADO_PELO_OWNER` é a Decisão Humana Material proferida pelo Owner quando, na inspeção da Entrega de Valor, identifica que a solução não satisfaz os objetivos de negócio, a usabilidade ou a intenção de valor pretendida, mesmo diante de testes técnicos favoráveis.
+
+A Entrega de Valor permanece em:
+
+```text
+EM_REALIZACAO
+```
+
+O Owner explicita as razões e desconformidades observadas, direcionando a causa para tratamento pela Realização (correção de comportamento/interface), pela Formação (revisão de especificação) ou para decisão de nível superior. A Entrega de Valor não é concluída enquanto não for sanada e homologada favoravelmente.
 
 ## Resultado, causa e determinação de tratamento
 

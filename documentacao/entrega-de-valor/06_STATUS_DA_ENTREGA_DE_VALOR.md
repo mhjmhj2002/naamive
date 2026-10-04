@@ -16,8 +16,8 @@ Ele não representa atividade em curso, fila, transferência entre Atores, concl
 | --- | --- |
 | `EM_FORMACAO` | A Entrega de Valor foi validamente materializada pelo Especialista em Delimitação de Entregas de Valor e ainda não superou o marco de formação. Nesse Status ocorrem a Formação, a Auditoria independente e os ciclos de tratamento necessários até que a formação seja considerada suficiente. |
 | `FORMADA` | A Formação foi considerada suficiente pela Auditoria independente, a Especificação da Entrega de Valor está disponível e a Entrega de Valor está apta à realização, que ainda não foi efetivamente iniciada. |
-| `EM_REALIZACAO` | A realização foi efetivamente iniciada. A Entrega de Valor permanece nesse Status durante o desenvolvimento, a integração e a Verificação da Entrega de Valor. |
-| `CONCLUIDA` | Status terminal de sucesso, alcançado quando as condições de conclusão do Ciclo de Vida foram satisfeitas, incluindo software integrado correspondente, evolução utilizável e perceptível conforme a Entrega de Valor e Verificação positiva. |
+| `EM_REALIZACAO` | A realização foi efetivamente iniciada. A Entrega de Valor permanece nesse Status durante o desenvolvimento, a integração, a Verificação técnica da Entrega de Valor e a homologação do Owner. |
+| `CONCLUIDA` | Status terminal de sucesso, alcançado exclusivamente quando as condições de conclusão do Ciclo de Vida forem satisfeitas conjuntamente: software integrado correspondente, evolução utilizável e perceptível conforme a Entrega de Valor, Verificação técnica positiva (`EVOLUCAO_MATERIALIZADA`) e Homologação favorável do Owner (`HOMOLOGADO_PELO_OWNER`). |
 | `CANCELADA` | Status terminal excepcional, alcançado exclusivamente por decisão humana material válida de cancelamento. |
 
 O fluxo de referência é:
@@ -104,13 +104,11 @@ Uma Verificação negativa também não provoca regressão de Status. Sua causa 
 `CONCLUIDA` é o Status terminal de sucesso da Entrega de Valor. Ela somente pode alcançá-lo quando as condições de conclusão definidas no Ciclo de Vida forem satisfeitas conjuntamente:
 
 * software integrado correspondente à Entrega de Valor;
-* evolução utilizável e perceptível no contexto definido; e
-* Verificação positiva com evidência adequada de que a evolução prometida foi materializada.
+* evolução utilizável e perceptível no contexto definido;
+* Verificação técnica positiva com evidência adequada de que a evolução prometida foi materializada (`EVOLUCAO_MATERIALIZADA`); e
+* Homologação formal e soberana pelo Owner com decisão favorável (`HOMOLOGADO_PELO_OWNER`).
 
-O token formal da conclusão produzida pela Verificação é `EVOLUCAO_MATERIALIZADA`, pertencente exclusivamente aos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md). A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
-
-> [!NOTE]
-> **Débito de Governança Bloqueante [DEB-GOV-001](../governanca/debitos/DEB-GOV-001.md):** Para a `EV-001`, a transição prática para `CONCLUIDA` requer a homologação e aprovação material expressa do Owner após a verificação técnica. Novas Entregas de Valor (`EV-002` em diante) permanecem bloqueadas até a revisão definitiva dos status e do ciclo normativo.
+A Verificação técnica atesta a conformidade do software integrado; contudo, a decisão de conclusão é prerrogativa exclusiva e soberana do Owner, que valida se o valor entregue cumpre o propósito de produto. A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
 
 ## `CANCELADA`
 
@@ -130,10 +128,10 @@ Este catálogo não cria entidade Débito, estrutura de persistência, fluxo de 
 
 Não são Status da Entrega de Valor:
 
-* Formação, Auditoria, Verificação, realização parcial, integração, espera, transferência entre Atores, encaminhamento ou tratamento de problema;
-* `FORMACAO_SUFICIENTE`, formação insuficiente, conclusão positiva ou negativa da Verificação, determinações de retorno, decisões humanas, cancelamento aprovado ou qualquer outro Resultado do Processo;
+* Formação, Auditoria, Verificação, Homologação, realização parcial, integração, espera, transferência entre Atores, encaminhamento ou tratamento de problema;
+* `FORMACAO_SUFICIENTE`, formação insuficiente, conclusão positiva ou negativa da Verificação (`EVOLUCAO_MATERIALIZADA`, `EVOLUCAO_NAO_MATERIALIZADA`), determinações de retorno, decisões humanas (`HOMOLOGADO_PELO_OWNER`, `REJEITADO_PELO_OWNER`, `CANCELAMENTO_APROVADO`) ou qualquer outro Resultado do Processo;
 * Especificação da Entrega de Valor, software integrado, critério verificável, evidência, homologação, débito ou lacuna; e
-* `EM_AUDITORIA`, `AGUARDANDO_AUDITORIA`, `PRONTA_PARA_REALIZACAO`, `AGUARDANDO_REALIZACAO`, `EM_VERIFICACAO`, `AGUARDANDO_VERIFICACAO`, `EM_CORRECAO`, `EM_AJUSTE` ou `BLOQUEADA`.
+* `EM_AUDITORIA`, `AGUARDANDO_AUDITORIA`, `PRONTA_PARA_REALIZACAO`, `AGUARDANDO_REALIZACAO`, `EM_VERIFICACAO`, `AGUARDANDO_VERIFICACAO`, `AGUARDANDO_HOMOLOGACAO`, `AGUARDANDO_HOMOLOGACAO_OWNER`, `EM_CORRECAO`, `EM_AJUSTE` ou `BLOQUEADA`.
 
 Status identifica a posição no ciclo. [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md) identificam conclusões, decisões ou determinações produzidas por atividades relevantes do processo.
 

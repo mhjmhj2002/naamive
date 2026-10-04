@@ -33,15 +33,15 @@ Não há agente genérico responsável por toda a vertical. Um mesmo Executor po
 * **Natureza:** humana.
 * **Executor:** usuário autenticado.
 
-O Owner é o Ator humano transversal. Na Entrega de Valor, atua somente quando houver uma decisão humana material que não possa ser legitimamente resolvida por evidência, como:
+O Owner é o Ator humano transversal dotado de autoridade máxima no NAAMIVE. Na Entrega de Valor, possui competência e prerrogativa exclusiva para:
 
-* esclarecimento ou mudança material da intenção de valor;
-* escolha entre alternativas de negócio com impacto relevante; ou
-* decisão humana de aceite, caso tal fundamento venha a ser definido futuramente.
+* inspecionar e homologar formalmente a evolução de software entregue, validando se o valor percebido atende à expectativa de negócio e autorizando soberanamente a conclusão da Entrega de Valor (`HOMOLOGADO_PELO_OWNER` ou `REJEITADO_PELO_OWNER`);
+* tomar decisões humanas materiais não resolvíveis por evidência técnica objetiva;
+* esclarecer ou determinar mudanças materiais da intenção de valor ou da fronteira de produto;
+* escolher entre alternativas de negócio ou arquiteturais com impacto relevante; e
+* determinar ou aprovar o encerramento excepcional antecipado da Entrega de Valor (`CANCELAMENTO_APROVADO`).
 
-O Owner não é aprovador obrigatório de toda Entrega de Valor e não há ritual humano obrigatório em cada etapa. Ele não substitui o Especialista em Delimitação de Entregas de Valor, o Especialista em Formação da Entrega de Valor, o Auditor da Entrega de Valor ou o Verificador da Entrega de Valor; tampouco executa automaticamente trabalho técnico, implementação, auditoria ou verificação.
-
-Decisão técnica não é, por si só, decisão humana. O Owner é acionado apenas diante de questão humana material legítima que permaneça sem solução por evidência ou por decisão do nível competente.
+O parecer técnico emitido pelo Verificador da Entrega de Valor (`EVOLUCAO_MATERIALIZADA`) subsidia tecnicamente a decisão, mas não encerra a Entrega de Valor diretamente: a transição para `CONCLUIDA` exige a homologação e aprovação material expressa do Owner. O Owner não substitui o trabalho técnico e executivo dos Atores agênticos especialistas da vertical (Delimitador, Formador, Auditor e Verificador), nem executa diretamente codificação técnica ou elaboração de especificações.
 
 ## Especialista em Delimitação de Entregas de Valor
 
@@ -127,9 +127,9 @@ O Verificador avalia, após a Realização e a integração, se o software produ
 
 Pode confrontar declaração de valor, resultado observável esperado, comportamento especificado, critérios verificáveis, software integrado, evidências produzidas, Jornadas e Fluxos relevantes e limitações conhecidas. A avaliação é da Entrega de Valor como conjunto integrado; não se limita à validação de um Work Item isolado.
 
-Não implementa correções, não cria Work Items, não escolhe Executor, não define prioridade, não despacha retrabalho, não altera silenciosamente a Especificação, não redefine valor nem toma decisão humana material. Diante de divergência, produz evidência e a conclusão definida nos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md) para tratamento pela camada competente. Ambiente, aceite, fluxo de homologação e efeitos operacionais permanecem não definidos.
+Não implementa correções, não cria Work Items, não escolhe Executor, não define prioridade, não despacha retrabalho, não altera silenciosamente a Especificação, não redefine valor nem toma decisão humana material. Diante de divergência, produz evidência e a conclusão definida nos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md) para tratamento pela camada competente. Ambiente, ferramentas de teste e efeitos operacionais permanecem não definidos.
 
-Homologação pode ser mencionada como linguagem de negócio ou produto relacionada a essa verificação. Ela não cria Ator Homologador, processo, ambiente, Status ou decisão humana obrigatória. Quando a evolução puder ser verificada objetivamente, o Verificador produz sua conclusão técnica; o Owner somente pode ser acionado para decisão material não resolvível por evidência.
+O laudo técnico positivo do Verificador (`EVOLUCAO_MATERIALIZADA`) atesta que os critérios verificáveis da Especificação foram atendidos no software integrado e habilita o gateway obrigatório de homologação pelo Owner. A homologação humana do Owner valida a percepção de valor e é condição mandatória e indispensável para a transição final para `CONCLUIDA`.
 
 ## Auditor e Verificador não se substituem
 
@@ -173,12 +173,14 @@ Módulo com formação técnica aprovada
 → Especificação da Entrega de Valor
 → Auditor da Entrega de Valor
 → futura vertical Work Item e realização integrada
-→ Verificador da Entrega de Valor
+→ Verificador da Entrega de Valor (laudo técnico)
+→ Owner (inspeção e homologação humana material)
+→ conclusão formal da Entrega de Valor
 → evidências potencialmente úteis à agregação superior
 ```
 
-O Owner pode ser acionado em qualquer ponto apenas para decisão humana material legítima. Delimitador delimita, Formador forma, Auditor audita e Verificador verifica; a separação permanece mesmo que um Executor concreto venha a exercer mais de um desses papéis em momentos distintos.
+O Owner exerce a homologação material da evolução integrada antes de sua conclusão, além de poder ser acionado em qualquer ponto para decisão humana material legítima. Delimitador delimita, Formador forma, Auditor audita e Verificador verifica; a separação permanece mesmo que um Executor concreto venha a exercer mais de um desses papéis em momentos distintos.
 
 ## Questões deliberadamente posteriores
 
-Permanecem fora deste documento agentes concretos, eventos e orquestração operacionais, redelimitação que exija alterar identidade, persistência tecnológica, controle físico de concorrência, forma física da Especificação, decomposição, Work Item, execução, ambientes, homologação, aceite e mecanismos de implementação. A materialização documental atual, seu Mapa e seus arquivos de instância são definidos no Modelo.
+Permanecem fora deste documento agentes concretos, eventos e orquestração operacionais, redelimitação que exija alterar identidade, persistência tecnológica, controle físico de concorrência, forma física da Especificação, decomposição, Work Item, execução, ambientes e mecanismos de implementação. A materialização documental atual, seu Mapa e seus arquivos de instância são definidos no Modelo.

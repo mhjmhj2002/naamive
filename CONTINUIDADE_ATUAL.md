@@ -14,7 +14,7 @@ A instância **`EV-001 — Compromisso da Necessidade` alcançou com sucesso o s
 - O Ator agêntico **Verificador da Entrega de Valor** emitiu o laudo técnico independente com o Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**;
 - A transição formal para `CONCLUIDA` foi registrada em `dados/entregas-de-valor/EV-001/entrega-de-valor.md` e no Mapa de Entregas de Valor de M-001 (`dados/modulos/M-001/mapa-de-entregas-de-valor.md`).
 
-## Governança transversal e Débitos Ativos
+## Governança transversal e Débitos
 
 * Localização normativa: `documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md`
 * Descoberta tardia de lacuna não faz a condução retornar automaticamente a vertical ou Status anterior; marcos validamente alcançados e o histórico permanecem preservados.
@@ -22,12 +22,13 @@ A instância **`EV-001 — Compromisso da Necessidade` alcançou com sucesso o s
 * Ator agêntico pode identificar e propor Débito, mas sua validade depende de revisão e decisão humana competente.
 * As naturezas conceituais iniciais são `Débito de Governança` e `Débito da Demanda`; Débito reconhecido pode ser bloqueante ou não bloqueante.
 
-### Débitos Ativos de Governança
+### Débitos Ativos
+* Nenhum débito ativo no momento.
 
+### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
-  - **Severidade:** `BLOQUEANTE` para o início de qualquer nova Entrega de Valor (`EV-002` em diante) até saneamento normativo.
-  - **Mitigação para EV-001:** Plenamente satisfeita com o registro da declaração formal de homologação do Owner `mhj`.
-  - **Resolução Definitiva Pendente:** Revisão dos documentos normativos da Entrega de Valor (`03`, `05`, `06` e `07`) e da Skill de Verificação para formalizar definitivamente o gateway de homologação do Owner no ciclo de vida antes de iniciar `EV-002`.
+  - **Status:** `RESOLVIDO`.
+  - **Resolução:** Normas da vertical Entrega de Valor (`03`, `05`, `06` e `07`) e Skill de Verificação devidamente atualizadas com a formalização da etapa de Homologação do Owner e dos Resultados do Processo `HOMOLOGADO_PELO_OWNER` e `REJEITADO_PELO_OWNER`. Caso prático validado com sucesso na EV-001.
 
 ## Entidades ativas
 
@@ -70,7 +71,7 @@ A instância **`EV-001 — Compromisso da Necessidade` alcançou com sucesso o s
 * Registro principal: `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
 * Plano de Realização: `dados/entregas-de-valor/EV-001/plano-de-realizacao.md`
 * Status atual: **`CONCLUIDA`**
-* Homologação do Owner: Realizada pelo usuário autenticado `mhj` (aprovado na porta 3001)
+* Homologação do Owner: Realizada pelo usuário autenticado `mhj` (`HOMOLOGADO_PELO_OWNER`)
 * Resultado da Verificação: **`EVOLUCAO_MATERIALIZADA`** (emitido pelo Verificador da Entrega de Valor)
 
 ### Itens de Trabalho da EV-001 (Camada de Realização)
@@ -80,18 +81,18 @@ A instância **`EV-001 — Compromisso da Necessidade` alcançou com sucesso o s
 
 ## Estado do bloqueio
 
-**BLOQUEADO PARA NOVAS ENTREGAS DE VALOR (Débito Bloqueante DEB-GOV-001):**
-* A `EV-001` está plenamente **concluída** e homologada.
-* O início de qualquer nova Entrega de Valor subsequente (`EV-002` em diante) ou transições futuras permanecem **estritamente bloqueados** até a resolução normativa definitiva de `DEB-GOV-001` (incorporação da homologação do Owner na documentação formal da vertical Entrega de Valor).
+**DESBLOQUEADO:**
+* Não há débitos ou impedimentos bloqueantes ativos.
+* A `EV-001` está plenamente **concluída** e formalmente homologada pelo Owner.
+* O fluxo para início e planejamento da `EV-002` e avanço operacional para o módulo `M-002` (Formação do Projeto) está plenamente **liberado**.
 
 ## Próxima ação legítima
 
-1. Sanear o débito de governança **`DEB-GOV-001`**, atualizando a documentação normativa da vertical Entrega de Valor (`03_ATORES_DA_ENTREGA_DE_VALOR.md`, `05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md`, `06_STATUS_DA_ENTREGA_DE_VALOR.md`, `07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e a Skill de Verificação) para institucionalizar a etapa de homologação do Owner antes da conclusão.
-2. Com o débito saneado, deliberar sobre a continuidade do P-001, M-002 ou delimitação das próximas Entregas de Valor.
+1. Deliberar e planejar a próxima evolução de valor:
+   - Delimitação/formação da `EV-002` no âmbito de `M-001` ou condução do bootstrap do módulo `M-002 — Formação do Projeto`.
 
 ## Lacunas e limites vigentes
 
-* O débito `DEB-GOV-001` encontra-se mitigado pontualmente para a EV-001, mas pendente de resolução normativa estrutural no catálogo da vertical.
 * A propagação dos efeitos de conclusão da EV-001 para a verificação agregada do Projeto e atendimento final da Necessidade depende da atuação dos Atores de nível superior.
 
 ## Arquivos mínimos para continuar
@@ -99,9 +100,8 @@ A instância **`EV-001 — Compromisso da Necessidade` alcançou com sucesso o s
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
-* `documentacao/governanca/debitos/DEB-GOV-001.md`
 * `documentacao/entrega-de-valor/01_DEFINICAO_DA_ENTREGA_DE_VALOR.md` a `07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
-* `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
 * `dados/modulos/M-001/mapa-de-entregas-de-valor.md`
+* `dados/modulos/M-002/modulo.md`
 
 
