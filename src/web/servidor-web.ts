@@ -23,6 +23,11 @@ import {
   TipoResultadoProcessoProjeto,
   AtorCompetenteProjeto,
 } from "../domain/tipos-projeto.js";
+import { RepositorioContexto } from "../domain/repositorio-contexto.js";
+import { ServicoContexto } from "../application/servico-contexto.js";
+import {
+  FinalidadeContexto,
+} from "../domain/tipos-contexto.js";
 import {
   escaparHtml,
   renderizarListaNecessidades,
@@ -33,6 +38,8 @@ import {
   renderizarPainelCoordenacao,
   renderizarDetalhesTrabalhoCoordenado,
   renderizarDetalheHandoff,
+  renderizarPainelRastreabilidade,
+  renderizarDetalhesRastreabilidade,
 } from "./templates.js";
 
 export interface DependenciasServidorWeb {
@@ -45,6 +52,8 @@ export interface DependenciasServidorWeb {
   repositorioProjeto?: RepositorioProjeto;
   servicoCoordenacao?: ServicoAplicacaoCoordenacao;
   repositorioCoordenacao?: RepositorioCoordenacao;
+  servicoContexto?: ServicoContexto;
+  repositorioContexto?: RepositorioContexto;
 }
 
 /**
@@ -126,6 +135,8 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
     repositorioProjeto,
     servicoCoordenacao,
     repositorioCoordenacao,
+    servicoContexto,
+    repositorioContexto,
   } = deps;
 
   const server = http.createServer(async (req, res) => {
@@ -1068,6 +1079,161 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
             `/coordenacao/trabalhos/${trabalhoId}?tipo=erro&feedback=${encodeURIComponent(err.message)}`
           );
         }
+      }
+
+      // 23. GET /rastreabilidade — Painel geral de governança e rastreabilidade contextual
+      if (metodo === "GET" && pathname === "/rastreabilidade") {
+        const feedbackParam = url.searchParams.get("feedback");
+        const tipoFeedback = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
+
+        let relatorio: any;
+        let registrosRecentes: any[] = [];
+        let vinculosRecentes: any[] = [];
+
+        if (servicoContexto) {
+          relatorio = await servicoContexto.auditarConsistenciaContexto();
+          if (repositorioContexto) {
+            registrosRecentes = await repositorioContexto.listarTodosRegistros();
+            vinculosRecentes = await repositorioContexto.listarTodosVinculos();
+          }
+        } else if (repositorioContexto) {
+          registrosRecentes = await repositorioContexto.listarTodosRegistros();
+          vinculosRecentes = await repositorioContexto.listarTodosVinculos();
+          relatorio = {
+            totalRegistrosAuditados: registrosRecentes.length,
+            totalVinculosAuditados: vinculosRecentes.length,
+            registrosVigentes: registrosRecentes.filter((r) => r.vigente).length,
+            registrosSuperados: registrosRecentes.filter((r) => !r.vigente).length,
+            lacunasDetectadas: [],
+            contradicoesDetectadas: [],
+            diagnosticoGeral: "CONSISTENTE",
+            auditadoEm: new Date(),
+          };
+        } else {
+          relatorio = {
+            totalRegistrosAuditados: 0,
+            totalVinculosAuditados: 0,
+            registrosVigentes: 0,
+            registrosSuperados: 0,
+            lacunasDetectadas: [],
+            contradicoesDetectadas: [],
+            diagnosticoGeral: "CONSISTENTE",
+            auditadoEm: new Date(),
+          };
+        }
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            relatorio,
+            registrosRecentes,
+            vinculosRecentes,
+          });
+        }
+
+        const html = renderizarPainelRastreabilidade({
+          relatorio,
+          registrosRecentes: registrosRecentes.slice(-20).reverse(),
+          vinculosRecentes: vinculosRecentes.slice(-20).reverse(),
+          feedback: feedbackParam && tipoFeedback ? { tipo: tipoFeedback, mensagem: feedbackParam } : undefined,
+        });
+
+        return responderHtml(res, 200, html);
+      }
+
+      // 24. POST /rastreabilidade/auditar — Dispara auditoria de integridade ou agenda em background
+      if (metodo === "POST" && pathname === "/rastreabilidade/auditar") {
+        try {
+          if (servicoContexto) {
+            await servicoContexto.agendarAuditoriaBackground();
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, { ok: true, mensagem: "Auditoria agendada com sucesso." });
+          }
+
+          return redirecionar(
+            res,
+            "/rastreabilidade?tipo=sucesso&feedback=Auditoria+de+consistência+e+proveniência+executada+com+sucesso!"
+          );
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 500, { erro: err.message });
+          }
+          return redirecionar(res, `/rastreabilidade?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 25. GET /rastreabilidade/consulta — Redirecionador por código de entidade
+      if (metodo === "GET" && pathname === "/rastreabilidade/consulta") {
+        const codigo = url.searchParams.get("codigo")?.trim().toUpperCase();
+        const finalidade = url.searchParams.get("finalidade") || "INSPECAO_GERAL";
+
+        if (!codigo) {
+          return redirecionar(res, "/rastreabilidade?tipo=erro&feedback=Código+da+entidade+é+obrigatório.");
+        }
+
+        // Tenta inferir o tipo pelo prefixo do código
+        let prefixo = "entidade";
+        if (codigo.startsWith("N-")) prefixo = "necessidade";
+        else if (codigo.startsWith("P-")) prefixo = "projeto";
+        else if (codigo.startsWith("M-")) prefixo = "modulo";
+        else if (codigo.startsWith("EV-")) prefixo = "entrega_de_valor";
+        else if (codigo.startsWith("IT-")) prefixo = "item_de_trabalho";
+
+        return redirecionar(
+          res,
+          `/rastreabilidade/${prefixo}/${encodeURIComponent(codigo)}?finalidade=${encodeURIComponent(finalidade)}`
+        );
+      }
+
+      // 26. GET /rastreabilidade/:entidade/:codigo — Detalhe da linhagem causal e pacote proporcional
+      const matchRastreabilidade = pathname.match(/^\/rastreabilidade\/([a-zA-Z0-9_-]+)\/([a-zA-Z0-9_-]+)$/);
+      if (metodo === "GET" && matchRastreabilidade) {
+        const [, , codigoRef] = matchRastreabilidade;
+        const codigo = codigoRef.trim().toUpperCase();
+        const finalidadeParam = (url.searchParams.get("finalidade") as FinalidadeContexto) || FinalidadeContexto.INSPECAO_GERAL;
+        const feedbackParam = url.searchParams.get("feedback");
+        const tipoFeedback = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
+
+        let trilha: any;
+        let pacoteProporcional: any = null;
+
+        if (servicoContexto) {
+          trilha = await servicoContexto.obterTrilhaRastreabilidade(codigo);
+          pacoteProporcional = await servicoContexto.recuperarContextoPorFinalidade({
+            finalidade: finalidadeParam,
+            codigoReferencia: codigo,
+            incluirHistoricoSuperado: true,
+          });
+        } else {
+          trilha = {
+            codigoEntidade: codigo,
+            alvo: null,
+            registrosRelacionados: [],
+            elosAscendencia: [],
+            elosDerivacao: [],
+            alertas: [],
+            diagnostico: "CONSISTENTE",
+            recuperadoEm: new Date(),
+          };
+        }
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            trilha,
+            pacoteProporcional,
+            finalidadeEscolhida: finalidadeParam,
+          });
+        }
+
+        const html = renderizarDetalhesRastreabilidade({
+          trilha,
+          pacoteProporcional,
+          finalidadeEscolhida: finalidadeParam,
+          feedback: feedbackParam && tipoFeedback ? { tipo: tipoFeedback, mensagem: feedbackParam } : undefined,
+        });
+
+        return responderHtml(res, 200, html);
       }
 
       // Rota não encontrada

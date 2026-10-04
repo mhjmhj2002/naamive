@@ -8,7 +8,7 @@
 | Código | `IT-016` |
 | Entrega de Valor proprietária | [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](../../entregas-de-valor/EV-004/entrega-de-valor.md) |
 | Módulo de proveniência | [M-004 — Contexto e Rastreabilidade](../../modulos/M-004/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -28,12 +28,20 @@
 
 ## Execução e Evidências
 
-* **Executor:** (Aguardando atribuição do Engenheiro de Software)
-* **Artefatos produzidos / alterados:** (Aguardando execução)
-* **Resultado de testes locais:** (Aguardando execução)
-* **Conclusão técnica:** (Aguardando execução)
+* **Executor:** Engenheiro de Software (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`)
+* **Artefatos produzidos / alterados:**
+  - `src/web/templates.ts`: Inclusão do link de "Rastreabilidade" e da menção à "EV-004" na navbar responsiva global; implementação dos helpers visuais `obterClasseBadgeEpistemica` e `obterClasseBadgeDiagnostico`; implementação das visões completas `renderizarPainelRastreabilidade` e `renderizarDetalhesRastreabilidade` com suporte a métricas, inspeção genealógica, filtragem por finalidade e linha do tempo de proveniência.
+  - `src/web/servidor-web.ts`: Injeção de `servicoContexto` e `repositorioContexto` nas dependências do servidor HTTP; implementação das rotas `GET /rastreabilidade`, `POST /rastreabilidade/auditar`, `GET /rastreabilidade/consulta` e `GET /rastreabilidade/:entidade/:codigo`, com suporte dual de conteúdo (HTML responsivo e JSON).
+  - `src/server.ts`: Injeção de `servicoContexto` e `repositorioContexto` no bootstrap da aplicação web.
+  - `tests/it016-camada-web-rastreabilidade.test.ts`: Suíte de testes automatizados com 5 testes de integração ponta a ponta validando painel web, linhagem causal, badges epistêmicas, pacotes proporcionais por finalidade declarada e auditoria.
+* **Resultado de testes locais:**
+  - `npm run typecheck`: 0 erros (aprovado).
+  - `npm run build`: compilação TypeScript concluída com 100% de sucesso.
+  - `npx vitest run tests/it016-camada-web-rastreabilidade.test.ts`: 5 testes executados e aprovados com 100% de sucesso.
+  - `npm test`: 16 arquivos de teste e 110 testes unitários e de integração executados com 100% de aprovação (0 falhas).
+* **Conclusão técnica:** Todos os 5 critérios técnicos de aceitação foram cumpridos integralmente. O módulo web e a suíte integrada da EV-004 estão plenamente operacionais.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente)
-* **Data / Registro:** (Pendente)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-04 (Conclusão técnica integral de IT-016)

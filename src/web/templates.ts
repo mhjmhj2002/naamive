@@ -10,6 +10,17 @@ import {
   VisaoTrabalhosCoordenacao,
   DetalheTrabalhoCoordenado,
 } from "../application/servico-aplicacao-coordenacao.js";
+import { RegistroProveniencia, VinculoCausal } from "../domain/contexto.js";
+import {
+  ClassificacaoEpistemica,
+  FinalidadeContexto,
+  DiagnosticoContexto,
+} from "../domain/tipos-contexto.js";
+import { PacoteContextoProporcional } from "../domain/valores-contexto.js";
+import {
+  TrilhaRastreabilidade,
+  RelatorioConsistenciaContexto,
+} from "../application/servico-contexto.js";
 
 
 /**
@@ -137,11 +148,14 @@ export function layoutMestre(titulo: string, conteudo: string): string {
             <a class="nav-link" href="/coordenacao">Coordenação</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="/rastreabilidade">Rastreabilidade</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="/nova">Nova Necessidade</a>
           </li>
         </ul>
         <span class="navbar-text text-light small">
-          EV-001, EV-002 & EV-003 — Condução Autônoma do NAAMIVE
+          EV-001, EV-002, EV-003 & EV-004 — Condução Autônoma do NAAMIVE
         </span>
       </div>
     </div>
@@ -1509,4 +1523,443 @@ export function renderizarDetalheHandoff(
 
   return layoutMestre(`Handoff: ${handoff.tokenCorrelacao}`, conteudo);
 }
+
+/**
+ * Retorna classe badge do Bootstrap conforme ClassificacaoEpistemica.
+ */
+export function obterClasseBadgeEpistemica(epistemica: ClassificacaoEpistemica): string {
+  switch (epistemica) {
+    case ClassificacaoEpistemica.CONHECIDO:
+      return "bg-success text-white";
+    case ClassificacaoEpistemica.INFERIDO:
+      return "bg-info text-dark";
+    case ClassificacaoEpistemica.PROPOSTO:
+      return "bg-warning text-dark";
+    case ClassificacaoEpistemica.DESCONHECIDO:
+      return "bg-danger text-white";
+    default:
+      return "bg-secondary text-white";
+  }
+}
+
+/**
+ * Retorna classe badge do Bootstrap conforme DiagnosticoContexto.
+ */
+export function obterClasseBadgeDiagnostico(diagnostico: DiagnosticoContexto): string {
+  switch (diagnostico) {
+    case DiagnosticoContexto.CONSISTENTE:
+      return "bg-success text-white";
+    case DiagnosticoContexto.LACUNA_DETECTADA:
+      return "bg-warning text-dark";
+    case DiagnosticoContexto.CONTRADICAO_DETECTADA:
+      return "bg-danger text-white";
+    default:
+      return "bg-secondary text-white";
+  }
+}
+
+/**
+ * Renderiza o Painel Geral de Rastreabilidade (/rastreabilidade).
+ */
+export function renderizarPainelRastreabilidade(dados: {
+  relatorio: RelatorioConsistenciaContexto;
+  registrosRecentes: RegistroProveniencia[];
+  vinculosRecentes: VinculoCausal[];
+  feedback?: { tipo: "sucesso" | "erro"; mensagem: string } | undefined;
+}): string {
+  const { relatorio, registrosRecentes, vinculosRecentes, feedback } = dados;
+
+  const alertaFeedback = feedback
+    ? `<div class="alert alert-${feedback.tipo === "sucesso" ? "success" : "danger"} alert-dismissible fade show mb-4" role="alert">
+        <strong>${feedback.tipo === "sucesso" ? "Sucesso:" : "Atenção:"}</strong> ${escaparHtml(feedback.mensagem)}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`
+    : "";
+
+  const linhasRegistros = registrosRecentes.map((r) => {
+    const badgeEpistemica = `<span class="badge ${obterClasseBadgeEpistemica(r.classificacaoEpistemica)}">${r.classificacaoEpistemica}</span>`;
+    const badgeVigencia = r.vigente
+      ? `<span class="badge bg-success-subtle text-success border border-success">Vigente</span>`
+      : `<span class="badge bg-secondary-subtle text-secondary border border-secondary text-decoration-line-through">Superado</span>`;
+
+    return `
+      <tr>
+        <td>
+          <a href="/rastreabilidade/${escaparHtml(r.entidadeTipo.toLowerCase())}/${escaparHtml(r.codigoReferencia)}" class="fw-bold text-decoration-none font-monospace">
+            ${escaparHtml(r.codigoReferencia)}
+          </a>
+        </td>
+        <td><span class="badge bg-light text-dark border">${escaparHtml(r.entidadeTipo)}</span></td>
+        <td><small class="fw-semibold">${escaparHtml(r.tipoRegistro)}</small></td>
+        <td>${badgeEpistemica}</td>
+        <td>${badgeVigencia}</td>
+        <td><small class="text-muted">${escaparHtml(r.autorResponsavel)}</small></td>
+        <td><small class="text-muted">${new Date(r.registradoEm).toLocaleString("pt-BR")}</small></td>
+        <td>
+          <a href="/rastreabilidade/${escaparHtml(r.entidadeTipo.toLowerCase())}/${escaparHtml(r.codigoReferencia)}" class="btn btn-sm btn-outline-primary">
+            Inspecionar
+          </a>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  const linhasVinculos = vinculosRecentes.map((v) => {
+    return `
+      <tr>
+        <td><small class="font-monospace text-muted">${escaparHtml(v.origemRegistroId.substring(0, 8))}...</small></td>
+        <td><span class="badge bg-primary-subtle text-primary border border-primary">${escaparHtml(v.tipoRelacao)}</span></td>
+        <td><small class="font-monospace text-muted">${escaparHtml(v.destinoRegistroId.substring(0, 8))}...</small></td>
+        <td><small class="text-muted">${escaparHtml(v.justificativa || "—")}</small></td>
+        <td><small class="text-muted">${new Date(v.criadoEm).toLocaleDateString("pt-BR")}</small></td>
+      </tr>
+    `;
+  }).join("");
+
+  const conteudo = `
+    ${alertaFeedback}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1">Contexto & Rastreabilidade</h1>
+        <p class="text-muted mb-0">Genealogia causal, integridade epistêmica e histórico imutável (EV-004 / M-004)</p>
+      </div>
+      <div>
+        <form action="/rastreabilidade/auditar" method="POST" class="d-inline">
+          <button type="submit" class="btn btn-outline-primary shadow-sm">
+            Auditar Consistência
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Cards de Resumo e Métricas Epistêmicas -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 h-100">
+          <small class="text-muted fw-bold text-uppercase">Diagnóstico Geral</small>
+          <div class="mt-2">
+            <span class="badge ${obterClasseBadgeDiagnostico(relatorio.diagnosticoGeral)} fs-6">
+              ${relatorio.diagnosticoGeral}
+            </span>
+          </div>
+          <small class="text-muted mt-2">Auditado em: ${new Date(relatorio.auditadoEm).toLocaleTimeString("pt-BR")}</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 h-100">
+          <small class="text-muted fw-bold text-uppercase">Registros Auditados</small>
+          <h3 class="mb-0 mt-2">${relatorio.totalRegistrosAuditados}</h3>
+          <small class="text-success">${relatorio.registrosVigentes} vigentes <span class="text-muted">(${relatorio.registrosSuperados} superados)</span></small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 h-100">
+          <small class="text-muted fw-bold text-uppercase">Vínculos Causais</small>
+          <h3 class="mb-0 mt-2">${relatorio.totalVinculosAuditados}</h3>
+          <small class="text-muted">Arestas ativas no grafo</small>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 h-100">
+          <small class="text-muted fw-bold text-uppercase">Alertas / Inconsistências</small>
+          <h3 class="mb-0 mt-2 ${relatorio.lacunasDetectadas.length + relatorio.contradicoesDetectadas.length > 0 ? "text-danger" : "text-success"}">
+            ${relatorio.lacunasDetectadas.length + relatorio.contradicoesDetectadas.length}
+          </h3>
+          <small class="text-muted">${relatorio.lacunasDetectadas.length} lacunas, ${relatorio.contradicoesDetectadas.length} contradições</small>
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Consulta Rápida por Código -->
+    <div class="card card-resumo border-0 mb-4 p-4">
+      <h5 class="mb-3">Inspecionar Trilha Genealógica</h5>
+      <form action="/rastreabilidade/consulta" method="GET" class="row g-3 align-items-center">
+        <div class="col-md-5">
+          <input type="text" name="codigo" class="form-control font-monospace" placeholder="Código (ex: N-001, P-001, EV-004, IT-010)" required>
+        </div>
+        <div class="col-md-4">
+          <select name="finalidade" class="form-select">
+            <option value="INSPECAO_GERAL">Finalidade: Inspeção Geral</option>
+            <option value="FORMAR_ENTREGA">Finalidade: Formação de Entrega</option>
+            <option value="AUDITAR_FORMACAO">Finalidade: Auditoria de Formação</option>
+            <option value="DESPACHAR_TRABALHO">Finalidade: Despacho de Trabalho</option>
+            <option value="EXECUTAR_ITEM">Finalidade: Execução de Item</option>
+            <option value="VERIFICAR_RESULTADO">Finalidade: Verificação de Resultado</option>
+            <option value="AUDITAR_GOVERNANCA">Finalidade: Auditoria de Governança</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <button type="submit" class="btn btn-primary w-100">Buscar Contexto</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tabela de Registros de Proveniência Recentes -->
+    <div class="card card-resumo border-0 mb-4">
+      <div class="card-header bg-white py-3 border-0">
+        <h5 class="card-title mb-0">Registros de Proveniência & Vigência</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Código Ref.</th>
+              <th scope="col">Entidade</th>
+              <th scope="col">Tipo de Registro</th>
+              <th scope="col">Classificação Epistêmica</th>
+              <th scope="col">Vigência</th>
+              <th scope="col">Autor / Ator</th>
+              <th scope="col">Registrado Em</th>
+              <th scope="col" style="width: 120px;">Ação</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasRegistros.length > 0 ? linhasRegistros : `<tr><td colspan="8" class="text-center py-4 text-muted">Nenhum registro de proveniência catalogado até o momento.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Vínculos Causais Recentes -->
+    <div class="card card-resumo border-0">
+      <div class="card-header bg-white py-3 border-0">
+        <h5 class="card-title mb-0">Vínculos Causais Estabelecidos</h5>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th scope="col">Origem</th>
+              <th scope="col">Relação Causal</th>
+              <th scope="col">Destino</th>
+              <th scope="col">Justificativa</th>
+              <th scope="col">Data</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasVinculos.length > 0 ? linhasVinculos : `<tr><td colspan="5" class="text-center py-4 text-muted">Nenhum vínculo causal estabelecido.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+
+  return layoutMestre("Painel de Rastreabilidade", conteudo);
+}
+
+/**
+ * Renderiza a Visão Detalhada de Rastreabilidade e Linhagem Causal (/rastreabilidade/:entidade/:codigo).
+ */
+export function renderizarDetalhesRastreabilidade(dados: {
+  trilha: TrilhaRastreabilidade;
+  pacoteProporcional?: PacoteContextoProporcional | undefined;
+  finalidadeEscolhida?: FinalidadeContexto | undefined;
+  feedback?: { tipo: "sucesso" | "erro"; mensagem: string } | undefined;
+}): string {
+  const { trilha, pacoteProporcional, finalidadeEscolhida, feedback } = dados;
+  const alvo = trilha.alvo;
+
+  const alertaFeedback = feedback
+    ? `<div class="alert alert-${feedback.tipo === "sucesso" ? "success" : "danger"} alert-dismissible fade show mb-4" role="alert">
+        <strong>${feedback.tipo === "sucesso" ? "Sucesso:" : "Atenção:"}</strong> ${escaparHtml(feedback.mensagem)}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>`
+    : "";
+
+  const alertasHtml = trilha.alertas.length > 0
+    ? `<div class="alert alert-warning mb-4">
+        <h6 class="alert-heading fw-bold mb-2">Diagnósticos de Rastreabilidade:</h6>
+        <ul class="mb-0">
+          ${trilha.alertas.map((a) => `<li>[${escaparHtml(a.diagnostico)}] ${escaparHtml(a.mensagem)}</li>`).join("")}
+        </ul>
+      </div>`
+    : "";
+
+  // Ascendência (Ancestrais)
+  const itensAscendencia = trilha.elosAscendencia.map((elo) => {
+    return `
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <span class="badge bg-primary-subtle text-primary border border-primary me-2">${escaparHtml(elo.tipoRelacao)}</span>
+          <a href="/rastreabilidade/consulta?codigo=${escaparHtml(elo.codigoOrigem)}" class="fw-bold font-monospace text-decoration-none">
+            ${escaparHtml(elo.codigoOrigem)}
+          </a>
+          ${elo.justificativa ? `<div class="small text-muted mt-1">${escaparHtml(elo.justificativa)}</div>` : ""}
+        </div>
+        <span class="badge bg-light text-dark border">Ascendente</span>
+      </li>
+    `;
+  }).join("");
+
+  // Derivação (Descendentes)
+  const itensDerivacao = trilha.elosDerivacao.map((elo) => {
+    return `
+      <li class="list-group-item d-flex justify-content-between align-items-center">
+        <div>
+          <span class="badge bg-success-subtle text-success border border-success me-2">${escaparHtml(elo.tipoRelacao)}</span>
+          <a href="/rastreabilidade/consulta?codigo=${escaparHtml(elo.codigoDestino)}" class="fw-bold font-monospace text-decoration-none">
+            ${escaparHtml(elo.codigoDestino)}
+          </a>
+          ${elo.justificativa ? `<div class="small text-muted mt-1">${escaparHtml(elo.justificativa)}</div>` : ""}
+        </div>
+        <span class="badge bg-light text-dark border">Descendente</span>
+      </li>
+    `;
+  }).join("");
+
+  // Histórico de versões / registros correlatos
+  const registrosRelacionadosHtml = trilha.registrosRelacionados.map((r) => {
+    return `
+      <div class="p-3 border-bottom">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="fw-bold">${escaparHtml(r.tipoRegistro)}</span>
+          <div>
+            <span class="badge ${obterClasseBadgeEpistemica(r.classificacaoEpistemica)} me-1">${r.classificacaoEpistemica}</span>
+            <span class="badge ${r.vigente ? "bg-success" : "bg-secondary text-decoration-line-through"}">${r.vigente ? "Vigente" : "Superado"}</span>
+          </div>
+        </div>
+        <div class="small text-muted mb-2">Por: <strong>${escaparHtml(r.autorResponsavel)}</strong> em ${new Date(r.registradoEm).toLocaleString("pt-BR")}</div>
+        <pre class="bg-light p-2 rounded small mb-0 font-monospace" style="max-height: 200px; overflow-y: auto;">${escaparHtml(JSON.stringify(r.dadosContexto, null, 2))}</pre>
+      </div>
+    `;
+  }).join("");
+
+  const conteudo = `
+    ${alertaFeedback}
+    ${alertasHtml}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="/rastreabilidade">Rastreabilidade</a></li>
+            <li class="breadcrumb-item active" aria-current="page">${escaparHtml(trilha.codigoEntidade)}</li>
+          </ol>
+        </nav>
+        <h1 class="h3 mb-0">Inspeção Causal: <span class="font-monospace text-primary">${escaparHtml(trilha.codigoEntidade)}</span></h1>
+      </div>
+      <div>
+        <a href="/rastreabilidade" class="btn btn-outline-secondary btn-sm">&larr; Voltar ao Painel</a>
+      </div>
+    </div>
+
+    ${alvo ? `
+      <!-- Dados Principais da Entidade -->
+      <div class="card card-resumo border-0 mb-4 p-4">
+        <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+          <div>
+            <span class="badge bg-secondary me-2">${escaparHtml(alvo.entidadeTipo)}</span>
+            <span class="badge ${obterClasseBadgeEpistemica(alvo.classificacaoEpistemica)} me-2">Epistemologia: ${alvo.classificacaoEpistemica}</span>
+            <span class="badge ${alvo.vigente ? "bg-success" : "bg-danger text-decoration-line-through"}">${alvo.vigente ? "Registro Vigente" : "Histórico Superado"}</span>
+            <h4 class="mt-2 mb-1">${escaparHtml(alvo.codigoReferencia)}</h4>
+            <div class="small text-muted">ID Técnico: <span class="font-monospace">${escaparHtml(alvo.entidadeId)}</span></div>
+          </div>
+          <div class="text-end">
+            <span class="badge ${obterClasseBadgeDiagnostico(trilha.diagnostico)} fs-6">
+              ${trilha.diagnostico}
+            </span>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <div class="text-muted small">Autor / Ator Responsável:</div>
+            <div class="fw-semibold">${escaparHtml(alvo.autorResponsavel)}</div>
+          </div>
+          <div class="col-md-6 mb-3">
+            <div class="text-muted small">Registrado Em:</div>
+            <div class="fw-semibold">${new Date(alvo.registradoEm).toLocaleString("pt-BR")}</div>
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <div class="text-muted small mb-1">Dados Contextuais Preservados:</div>
+          <pre class="bg-dark text-light p-3 rounded small font-monospace" style="max-height: 300px; overflow-y: auto;">${escaparHtml(JSON.stringify(alvo.dadosContexto, null, 2))}</pre>
+        </div>
+      </div>
+
+      <!-- Grafo Causal: Ascendência e Derivação -->
+      <div class="row mb-4">
+        <div class="col-lg-6 mb-4">
+          <div class="card card-resumo border-0 h-100">
+            <div class="card-header bg-white py-3 border-0">
+              <h5 class="card-title mb-0">Linhagem Ascendente (Causas & Origens)</h5>
+              <small class="text-muted">Quem originou ou sustentou esta entidade</small>
+            </div>
+            <ul class="list-group list-group-flush">
+              ${itensAscendencia.length > 0 ? itensAscendencia : `<li class="list-group-item text-muted py-3 text-center">Nenhum vínculo ascendente registrado (Entidade Raiz).</li>`}
+            </ul>
+          </div>
+        </div>
+
+        <div class="col-lg-6 mb-4">
+          <div class="card card-resumo border-0 h-100">
+            <div class="card-header bg-white py-3 border-0">
+              <h5 class="card-title mb-0">Linhagem Descendente (Derivações & Impactos)</h5>
+              <small class="text-muted">Quem decorre ou depende diretamente desta entidade</small>
+            </div>
+            <ul class="list-group list-group-flush">
+              ${itensDerivacao.length > 0 ? itensDerivacao : `<li class="list-group-item text-muted py-3 text-center">Nenhum vínculo descendente registrado.</li>`}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recuperação Proporcional por Finalidade -->
+      <div class="card card-resumo border-0 mb-4 p-4">
+        <h5 class="mb-3">Recuperação Contextual Proporcional por Finalidade Declarada</h5>
+        <form action="/rastreabilidade/${escaparHtml(alvo.entidadeTipo.toLowerCase())}/${escaparHtml(alvo.codigoReferencia)}" method="GET" class="row g-3 mb-3">
+          <div class="col-md-8">
+            <select name="finalidade" class="form-select">
+              <option value="INSPECAO_GERAL" ${finalidadeEscolhida === FinalidadeContexto.INSPECAO_GERAL ? "selected" : ""}>INSPECAO_GERAL — Inspeção ampla sem cortes</option>
+              <option value="FORMAR_ENTREGA" ${finalidadeEscolhida === FinalidadeContexto.FORMAR_ENTREGA ? "selected" : ""}>FORMAR_ENTREGA — Contexto mínimo para formação de EV</option>
+              <option value="AUDITAR_FORMACAO" ${finalidadeEscolhida === FinalidadeContexto.AUDITAR_FORMACAO ? "selected" : ""}>AUDITAR_FORMACAO — Foco em evidências e critérios de auditoria</option>
+              <option value="DESPACHAR_TRABALHO" ${finalidadeEscolhida === FinalidadeContexto.DESPACHAR_TRABALHO ? "selected" : ""}>DESPACHAR_TRABALHO — Contexto operacional para handoff</option>
+              <option value="EXECUTAR_ITEM" ${finalidadeEscolhida === FinalidadeContexto.EXECUTAR_ITEM ? "selected" : ""}>EXECUTAR_ITEM — Especificações técnicas e contratos lógicos</option>
+              <option value="VERIFICAR_RESULTADO" ${finalidadeEscolhida === FinalidadeContexto.VERIFICAR_RESULTADO ? "selected" : ""}>VERIFICAR_RESULTADO — Foco em aceitação substantiva e evidências</option>
+              <option value="AUDITAR_GOVERNANCA" ${finalidadeEscolhida === FinalidadeContexto.AUDITAR_GOVERNANCA ? "selected" : ""}>AUDITAR_GOVERNANCA — Invariantes e trilha de conformidade</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <button type="submit" class="btn btn-outline-primary w-100">Filtrar Pacote Proporcional</button>
+          </div>
+        </form>
+
+        ${pacoteProporcional ? `
+          <div class="bg-light p-3 rounded">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+              <strong class="text-primary">Pacote Contextual Sintetizado (${pacoteProporcional.finalidadeDeclarada}):</strong>
+              <span class="badge ${obterClasseBadgeDiagnostico(pacoteProporcional.diagnosticoGeral)}">${pacoteProporcional.diagnosticoGeral}</span>
+            </div>
+            <div class="small text-muted mb-2">
+              Registros vigentes recuperados: <strong>${pacoteProporcional.registrosVigentes.length}</strong> | 
+              Registros históricos: <strong>${pacoteProporcional.registrosHistoricos.length}</strong> | 
+              Elos causais: <strong>${pacoteProporcional.cadeiaAscendencia.length}</strong>
+            </div>
+            <pre class="bg-dark text-light p-3 rounded small font-monospace mb-0" style="max-height: 250px; overflow-y: auto;">${escaparHtml(JSON.stringify(pacoteProporcional, null, 2))}</pre>
+          </div>
+        ` : ""}
+      </div>
+
+      <!-- Histórico de Transições e Proveniência da Entidade -->
+      <div class="card card-resumo border-0">
+        <div class="card-header bg-white py-3 border-0">
+          <h5 class="card-title mb-0">Histórico de Versões & Eventos de Proveniência (${trilha.registrosRelacionados.length})</h5>
+        </div>
+        <div>
+          ${registrosRelacionadosHtml}
+        </div>
+      </div>
+    ` : `
+      <div class="alert alert-info py-4 text-center">
+        <h5>Entidade não localizada</h5>
+        <p class="mb-0">Não foram encontrados registros de proveniência para o código informado.</p>
+      </div>
+    `}
+  `;
+
+  return layoutMestre(`Rastreabilidade: ${trilha.codigoEntidade}`, conteudo);
+}
+
 

@@ -6,11 +6,11 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
+O ciclo de vida do NAAMIVE concluiu integralmente a **Execução Técnica dos Itens de Trabalho** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
 
-1. O Ator agêntico competente **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) concluiu com 100% de sucesso a execução técnica do [IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background](dados/itens-de-trabalho/IT-015/item-de-trabalho.md), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
-2. Foram implementados o contrato de domínio puro `RepositorioContexto` (`src/domain/repositorio-contexto.ts`), os adaptadores de persistência `RepositorioContextoPostgres` (`src/infrastructure/database/repositorio-contexto-postgres.ts`) e `RepositorioContextoMemoria` (`src/infrastructure/database/repositorio-contexto-memoria.ts`), o serviço de aplicação `ServicoContexto` (`src/application/servico-contexto.ts`), a integração com o worker assíncrono em background para a tarefa `AUDITORIA_CONTEXTO_PROVENIENCIA` (`src/worker/worker-segundo-plano.ts`), a injeção no bootstrap (`src/server.ts`) e a suíte de testes com 9 testes passando com 100% de aprovação (`tests/it015-repositorio-e-servico-contexto.test.ts`).
-3. Com a conclusão de `IT-015`, o item subsequente e final na cadeia de dependências da EV-004, [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md), teve suas dependências satisfeitas e transicionou de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
+1. O Ator agêntico competente **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) concluiu com 100% de sucesso a execução técnica do [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+2. Foram implementadas as rotas HTTP (`/rastreabilidade`, `/rastreabilidade/auditar`, `/rastreabilidade/consulta`, `/rastreabilidade/:entidade/:codigo`), templates responsivos com Bootstrap 5 (`renderizarPainelRastreabilidade`, `renderizarDetalhesRastreabilidade`, navbar atualizada com EV-004 e link para Rastreabilidade) com suporte a badges epistêmicas, indicadores de vigência e filtros de contexto por finalidade declarada, além de injeção no servidor web e suíte de testes integrados com 5 novos testes passando com 100% de aprovação (`tests/it016-camada-web-rastreabilidade.test.ts`).
+3. Com a conclusão de `IT-016`, todos os 4 Itens de Trabalho planejados da EV-004 (`IT-013`, `IT-014`, `IT-015` e `IT-016`) estão com status **`CONCLUIDO`**, totalizando 16 arquivos de testes e 110 testes unitários e de integração verdes sem regressões em `npm test`, `npm run typecheck` e `npm run build`.
 
 ## Governança transversal e Débitos
 
@@ -88,36 +88,32 @@ O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 —
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
-  - Situação: Plano de Realização em execução ativa; IT-013, IT-014 e IT-015 concluídos com sucesso e IT-016 pronto para execução.
+  - Situação: Todos os 4 Itens de Trabalho concluídos com 100% de sucesso; pronto para atuação do Integrador da Realização.
 
-### Itens de Trabalho Ativos (EV-004)
+### Itens de Trabalho Concluídos (EV-004)
 
 * **IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações:**
   - Registro: [dados/itens-de-trabalho/IT-013/item-de-trabalho.md](dados/itens-de-trabalho/IT-013/item-de-trabalho.md)
   - Status: **`CONCLUIDO`**
-  - Dependências: Nenhuma
 * **IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional:**
   - Registro: [dados/itens-de-trabalho/IT-014/item-de-trabalho.md](dados/itens-de-trabalho/IT-014/item-de-trabalho.md)
   - Status: **`CONCLUIDO`**
-  - Dependências: `IT-013` (satisfeitas)
 * **IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background:**
   - Registro: [dados/itens-de-trabalho/IT-015/item-de-trabalho.md](dados/itens-de-trabalho/IT-015/item-de-trabalho.md)
   - Status: **`CONCLUIDO`**
-  - Dependências: `IT-014` (satisfeitas)
 * **IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada:**
   - Registro: [dados/itens-de-trabalho/IT-016/item-de-trabalho.md](dados/itens-de-trabalho/IT-016/item-de-trabalho.md)
-  - Status: **`PRONTO_PARA_EXECUCAO`**
-  - Dependências: `IT-015` (satisfeitas)
+  - Status: **`CONCLUIDO`**
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A `EV-004` encontra-se em `EM_REALIZACAO` com `IT-016` pronto para execução imediata.
+* Todos os itens de trabalho da `EV-004` foram concluídos com sucesso.
 
 ## Próxima ação legítima
 
-1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): iniciar a execução técnica do [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md), implementando rotas HTTP, templates responsivos com Bootstrap 5 e suíte integrada end-to-end para a EV-004.
+1. Atuação do **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`): validar a integração técnica global de todos os Itens de Trabalho da `EV-004`, checar a suíte integrada de compilação e testes, emitir o parecer formal `REALIZACAO_INTEGRADA` e entregar o handoff oficial para o **Verificador da Entrega de Valor**.
 
 ## Arquivos mínimos para continuar
 
@@ -125,6 +121,6 @@ O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 —
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-016/item-de-trabalho.md`
-* `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+* `dados/entregas-de-valor/EV-004/entrega-de-valor.md`
+* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
 
