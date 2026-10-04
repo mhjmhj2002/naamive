@@ -149,6 +149,9 @@ A Especificação readequada está validamente disponível e a `EV-001` transici
 * **Decisão Material do Owner:** Node.js (TypeScript) + PostgreSQL com interface web responsiva e worker desacoplado em background.
 * **Gatilho de Início da Realização:** Plano de Realização elaborado e aprovado com a materialização dos Itens de Trabalho `IT-001` a `IT-004`.
 * **Transição de Status:** `FORMADA` → `EM_REALIZACAO`
-* **Progresso da Realização:** Itens `IT-001`, `IT-002`, `IT-003` e `IT-004` concluídos com sucesso pelo Ator Engenheiro de Software (`EXECUCAO_CONCLUIDA`).
-* **Próxima etapa executável:** Handoff para o Ator **Integrador da Realização** para consolidação da realização e posterior **Verificador da Entrega de Valor**.
+* **Progresso da Realização:**
+  - Itens `IT-001`, `IT-002`, `IT-003` e `IT-004` concluídos com sucesso pelo Ator Engenheiro de Software (`EXECUCAO_CONCLUIDA`);
+  - Integração da Realização Técnica concluída com sucesso pelo Ator Integrador da Realização (`REALIZACAO_INTEGRADA`), com 100% de sucesso na suíte integrada de testes e compilação limpa.
+* **Próxima etapa executável:** Handoff para o Ator **Verificador da Entrega de Valor** (Skill `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para verificação da evolução integrada prometida.
+
 
