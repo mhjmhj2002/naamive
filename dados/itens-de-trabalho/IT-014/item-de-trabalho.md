@@ -8,7 +8,7 @@
 | Código | `IT-014` |
 | Entrega de Valor proprietária | [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](../../entregas-de-valor/EV-004/entrega-de-valor.md) |
 | Módulo de proveniência | [M-004 — Contexto e Rastreabilidade](../../modulos/M-004/modulo.md) |
-| Status | `CRIADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 

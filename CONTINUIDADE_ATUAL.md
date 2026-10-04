@@ -6,14 +6,11 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE iniciou formalmente a fase de **Realização Técnica** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
+O ciclo de vida do NAAMIVE avança na **Realização Técnica** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md):
 
-1. O Ator agêntico competente **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) elaborou e aprovou o [Plano de Realização da EV-004](dados/entregas-de-valor/EV-004/plano-de-realizacao.md), decompondo a evolução em 4 Itens de Trabalho técnicos com grafo direcionado de dependências (DAG):
-   - [`IT-013`](dados/itens-de-trabalho/IT-013/item-de-trabalho.md): Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações (`PRONTO_PARA_EXECUCAO`);
-   - [`IT-014`](dados/itens-de-trabalho/IT-014/item-de-trabalho.md): Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional (`CRIADO`);
-   - [`IT-015`](dados/itens-de-trabalho/IT-015/item-de-trabalho.md): Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background (`CRIADO`);
-   - [`IT-016`](dados/itens-de-trabalho/IT-016/item-de-trabalho.md): Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada (`CRIADO`).
-2. Com a aprovação e materialização do Plano de Realização e dos Itens de Trabalho, o status da **`EV-004`** transicionou legitimamente de `FORMADA` para **`EM_REALIZACAO`** no registro principal e no Mapa de Entregas de Valor de M-004.
+1. O Ator agêntico competente **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) concluiu com 100% de sucesso a execução técnica do [IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações](dados/itens-de-trabalho/IT-013/item-de-trabalho.md), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
+2. Foram criados a migração `migrations/006_esquema_contexto_rastreabilidade.sql` (tabelas `registros_proveniencia` e `vinculos_causais` com constraints de integridade epistêmica, restrição relacional `ON DELETE RESTRICT`, unicidade de vínculos direcionados e índices por entidade, tipo e vigência) e os testes automatizados em `tests/it013-esquema-relacional-contexto.test.ts`.
+3. Com a conclusão de `IT-013`, o item subsequente na cadeia de dependências, [IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional](dados/itens-de-trabalho/IT-014/item-de-trabalho.md), teve suas dependências satisfeitas e transicionou de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
 
 ## Governança transversal e Débitos
 
@@ -91,18 +88,18 @@ O ciclo de vida do NAAMIVE iniciou formalmente a fase de **Realização Técnica
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-004/entrega-de-valor.md](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-004/plano-de-realizacao.md](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
-  - Situação: Plano de Realização aprovado e decomposto nos Itens de Trabalho IT-013 a IT-016; IT-013 pronto para execução.
+  - Situação: Plano de Realização em execução ativa; IT-013 concluído e IT-014 pronto para execução.
 
 ### Itens de Trabalho Ativos (EV-004)
 
 * **IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações:**
   - Registro: [dados/itens-de-trabalho/IT-013/item-de-trabalho.md](dados/itens-de-trabalho/IT-013/item-de-trabalho.md)
-  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Status: **`CONCLUIDO`**
   - Dependências: Nenhuma
 * **IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional:**
   - Registro: [dados/itens-de-trabalho/IT-014/item-de-trabalho.md](dados/itens-de-trabalho/IT-014/item-de-trabalho.md)
-  - Status: **`CRIADO`**
-  - Dependências: `IT-013`
+  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Dependências: `IT-013` (satisfeitas)
 * **IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background:**
   - Registro: [dados/itens-de-trabalho/IT-015/item-de-trabalho.md](dados/itens-de-trabalho/IT-015/item-de-trabalho.md)
   - Status: **`CRIADO`**
@@ -116,11 +113,11 @@ O ciclo de vida do NAAMIVE iniciou formalmente a fase de **Realização Técnica
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A `EV-004` encontra-se em `EM_REALIZACAO` com `IT-013` pronto para execução imediata.
+* A `EV-004` encontra-se em `EM_REALIZACAO` com `IT-014` pronto para execução imediata.
 
 ## Próxima ação legítima
 
-1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): iniciar a execução técnica do [IT-013 — Esquema Relacional PostgreSQL de Contexto e Rastreabilidade e Migrações](dados/itens-de-trabalho/IT-013/item-de-trabalho.md), implementando a migração `006_esquema_contexto_rastreabilidade.sql` e seus testes automatizados de persistência e integridade referencial.
+1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): iniciar a execução técnica do [IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional](dados/itens-de-trabalho/IT-014/item-de-trabalho.md), implementando entidades puras de domínio, invariantes de preservação histórica e o motor de recuperação contextual por finalidade declarada.
 
 ## Arquivos mínimos para continuar
 
@@ -128,5 +125,6 @@ O ciclo de vida do NAAMIVE iniciou formalmente a fase de **Realização Técnica
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-004/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-013/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-014/item-de-trabalho.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+
