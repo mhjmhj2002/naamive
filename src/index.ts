@@ -15,3 +15,4 @@ export * from "./infrastructure/database/repositorio-memoria.js";
 export * from "./worker/worker-segundo-plano.js";
 export * from "./web/templates.js";
 export * from "./web/servidor-web.js";
+export * from "./server.js";

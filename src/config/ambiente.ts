@@ -20,12 +20,12 @@ export interface ConfiguracaoAplicacao {
 
 export function carregarConfiguracao(): ConfiguracaoAplicacao {
   const ambiente = process.env["NODE_ENV"] ?? "development";
-  const porta = parseInt(process.env["PORT"] ?? "3000", 10);
+  const porta = parseInt(process.env["PORT"] ?? "3001", 10);
   const databaseUrl = process.env["DATABASE_URL"];
 
   return {
     ambiente,
-    porta: isNaN(porta) ? 3000 : porta,
+    porta: isNaN(porta) ? 3001 : porta,
     bancoDados: {
       url: databaseUrl,
       host: process.env["DB_HOST"] ?? "127.0.0.1",

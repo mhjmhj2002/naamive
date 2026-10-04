@@ -6,8 +6,23 @@ O NAAMIVE organiza a condução de necessidades de negócio até resultados de s
 
 1. [Regras para agentes](AGENTS.md)
 2. [Continuidade atual](CONTINUIDADE_ATUAL.md)
-3. [Documentação](#documentação)
-4. [Dados operacionais](#dados-operacionais)
+3. [Documentação Técnica e Operacional do Sistema](#sistema-naamive)
+4. [Documentação das Verticais](#documentação)
+5. [Dados operacionais](#dados-operacionais)
+
+## Execução Rápida do Sistema
+
+Comando único para compilar e iniciar a aplicação web e o worker com suporte a portas livres (padrão `3001`):
+
+```bash
+npm run build && npm start
+```
+
+Acesse no navegador:
+```text
+http://localhost:3001/
+```
+*(Caso a porta 3001 esteja ocupada, o bootstrap aloca automaticamente a próxima porta livre sem falhar).*
 
 ## Regras para agentes
 
@@ -54,9 +69,20 @@ As Skills são manuais operacionais dos Atores agênticos; a documentação das 
 
 ## Documentação
 
+### Sistema NAAMIVE (Operação e Arquitetura)
+
+Manuais operacionais vivos do sistema executável e de sua infraestrutura:
+
+* [01 — Stack e Arquitetura do Sistema](documentacao/naamive/01_STACK_E_ARQUITETURA.md): detalhamento da stack (Node.js ESM, TypeScript, PostgreSQL / pg-mem, Bootstrap 5, Worker assíncrono) e isolamento DDD hexagonal.
+* [02 — Configuração e Ambiente](documentacao/naamive/02_CONFIGURACAO_E_AMBIENTE.md): pré-requisitos, variáveis de ambiente, portas suportadas (padrão 3001) e isolamento de conflitos locais.
+* [03 — Como Executar e Testar](documentacao/naamive/03_COMO_EXECUTAR_E_TESTAR.md): guia prático de compilação (`npm run build`), suíte de testes (`npm test`, `npm run typecheck`), inicialização (`npm start`) e acesso web (`http://localhost:3001`).
+* [04 — Fluxo Operacional da EV-001](documentacao/naamive/04_FLUXO_OPERACIONAL_EV001.md): roteiro passo a passo para o Owner inspecionar e operar o ciclo de vida da EV-001 (cadastro, pareceres, decisão do Owner `mhj` e visualização do Compromisso).
+
 ### Governança
 
 * [Débitos e Continuidade Progressiva](documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md)
+* [Débitos de Governança](documentacao/governanca/debitos/DEB-GOV-001.md)
+  * [DEB-GOV-001 — Ausência de Homologação do Owner na Entrega de Valor](documentacao/governanca/debitos/DEB-GOV-001.md)
 
 ### Atores
 
@@ -196,8 +222,15 @@ CONTINUIDADE_ATUAL.md
             └── SKILL.md
 
 documentacao/
+├── naamive/
+│   ├── 01_STACK_E_ARQUITETURA.md
+│   ├── 02_CONFIGURACAO_E_AMBIENTE.md
+│   ├── 03_COMO_EXECUTAR_E_TESTAR.md
+│   └── 04_FLUXO_OPERACIONAL_EV001.md
 ├── governanca/
-│   └── 01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md
+│   ├── 01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md
+│   └── debitos/
+│       └── DEB-GOV-001.md
 ├── atores/
 │   └── 01_CONCEITO_DE_ATOR.md
 ├── necessidade/

@@ -78,6 +78,9 @@ EM_REALIZACAO
 → CONCLUIDA
 ```
 
+> [!NOTE]
+> **Débito de Governança Bloqueante [DEB-GOV-001](../governanca/debitos/DEB-GOV-001.md):** Para a `EV-001`, a transição prática para `CONCLUIDA` após `EVOLUCAO_MATERIALIZADA` fica vinculada à etapa preliminar de homologação e aprovação material expressa do Owner. Novas Entregas de Valor ficam bloqueadas até a inclusão definitiva do estado/resultado formal de Homologação do Owner neste catálogo e no ciclo de vida.
+
 Código existente, Pull Request integrado, deploy, endpoint, tabela ou testes técnicos isoladamente não equivalem necessariamente a este Resultado. A conclusão depende da Verificação da evolução integrada prevista no [Ciclo de Vida da Entrega de Valor](05_CICLO_DE_VIDA_DA_ENTREGA_DE_VALOR.md).
 
 A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.

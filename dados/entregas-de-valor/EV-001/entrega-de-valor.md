@@ -153,5 +153,6 @@ A Especificação readequada está validamente disponível e a `EV-001` transici
   - Itens `IT-001`, `IT-002`, `IT-003` e `IT-004` concluídos com sucesso pelo Ator Engenheiro de Software (`EXECUCAO_CONCLUIDA`);
   - Integração da Realização Técnica concluída com sucesso pelo Ator Integrador da Realização (`REALIZACAO_INTEGRADA`), com 100% de sucesso na suíte integrada de testes e compilação limpa.
 * **Próxima etapa executável:** Handoff para o Ator **Verificador da Entrega de Valor** (Skill `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para verificação da evolução integrada prometida.
+* **Débito de Governança Ativo:** [DEB-GOV-001](../../../documentacao/governanca/debitos/DEB-GOV-001.md) — Para a `EV-001`, a conclusão técnica de verificação fica expressamente vinculada e condicionada à posterior Inspeção, Homologação e Decisão Humana Material do Owner antes de transicionar para `CONCLUIDA`. Novas Entregas de Valor subsequentes estão bloqueadas até a resolução normativa definitiva.
 
 

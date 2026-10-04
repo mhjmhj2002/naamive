@@ -109,6 +109,9 @@ Uma Verificação negativa também não provoca regressão de Status. Sua causa 
 
 O token formal da conclusão produzida pela Verificação é `EVOLUCAO_MATERIALIZADA`, pertencente exclusivamente aos [Resultados do Processo da Entrega de Valor](07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md). A conclusão da Entrega de Valor não conclui automaticamente Módulo ou Projeto, nem torna automaticamente a Necessidade atendida.
 
+> [!NOTE]
+> **Débito de Governança Bloqueante [DEB-GOV-001](../governanca/debitos/DEB-GOV-001.md):** Para a `EV-001`, a transição prática para `CONCLUIDA` requer a homologação e aprovação material expressa do Owner após a verificação técnica. Novas Entregas de Valor (`EV-002` em diante) permanecem bloqueadas até a revisão definitiva dos status e do ciclo normativo.
+
 ## `CANCELADA`
 
 `CANCELADA` é o Status terminal excepcional. Somente decisão humana material válida pode levar uma Entrega de Valor a esse encerramento, a partir de qualquer Status não terminal. Agentes especializados não podem cancelar unilateralmente uma Entrega de Valor.

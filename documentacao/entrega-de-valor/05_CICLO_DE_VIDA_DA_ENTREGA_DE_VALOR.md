@@ -154,6 +154,9 @@ O Verificador não implementa a correção, não forma a Especificação, não r
 
 A conclusão encerra com sucesso apenas a Entrega de Valor verificada positivamente. Ela não conclui automaticamente o Módulo, não conclui automaticamente o Projeto e não torna automaticamente a Necessidade `ATENDIDA`. Evidências e conclusões dessa verificação podem subsidiar verificações agregadas superiores, sem substituir o Verificador Agregado do Projeto nem produzir conclusão agregada.
 
+> [!NOTE]
+> **Débito de Governança Bloqueante [DEB-GOV-001](../governanca/debitos/DEB-GOV-001.md):** Foi formalmente reconhecido o gap normativo referente à ausência de etapa mandatória de Inspeção, Homologação e Decisão Humana Material do Owner prévia à transição para `CONCLUIDA`. Como mitigação imediata para a `EV-001`, a conclusão técnica decorrente de verificação positiva fica estritamente condicionada e bloqueada até a homologação explícita do Owner. Novas Entregas de Valor (a partir de `EV-002`) permanecem bloqueadas até a revisão definitiva deste ciclo de vida.
+
 ### Cancelamento excepcional
 
 Uma decisão humana material válida pode encerrar excepcionalmente a Entrega de Valor em qualquer posição não terminal. Essa decisão pertence ao Owner, cujo Executor é o usuário autenticado; nenhum Ator agêntico pode produzi-la unilateralmente.
