@@ -6,16 +6,15 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da etapa de Realização e da vertical Entrega de Valor avançou com a atuação do Ator agêntico **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`).
+O ciclo de vida da vertical Entrega de Valor avançou com a atuação do Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`).
 
-A integridade técnica global do software produzido pelos quatro Itens de Trabalho da **`EV-002 — Direção do Projeto`** (`IT-005`, `IT-006`, `IT-007` e `IT-008`) foi avaliada e aprovada com a emissão do Resultado do Processo **`REALIZACAO_INTEGRADA`**:
-1. Todos os 4 Itens de Trabalho estavam formalmente em `CONCLUIDO` com `EXECUCAO_CONCLUIDA`.
-2. A checagem de tipos (`npm run typecheck`) e o build global (`npm run build`) foram executados sem erros.
-3. A suíte completa e integrada de testes (`npm test`) passou com 100% de sucesso (8 arquivos de teste, 58/58 testes verdes).
-4. O parecer técnico de integração e a declaração de prontidão foram registrados no [Plano de Realização da EV-002](dados/entregas-de-valor/EV-002/plano-de-realizacao.md) e na [EV-002](dados/entregas-de-valor/EV-002/entrega-de-valor.md).
-5. O handoff oficial foi transferido para o **Verificador da Entrega de Valor**, para que proceda à avaliação substantiva da entrega frente aos critérios de valor e beneficiários.
+A verificação substantiva do software integrado da **`EV-002 — Direção do Projeto`** (`IT-005` a `IT-008`) foi realizada e aprovada com a emissão do Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**:
+1. O software integrado foi confrontado com a intenção de valor, os beneficiários relevantes, o resultado observável esperado, o comportamento esperado e os seis critérios verificáveis da Especificação Técnica da EV-002.
+2. A integridade e a utilidade da evolução para os beneficiários foram demonstradas sem quebras ou regressões em relação à baseline da EV-001 (58/58 testes verdes na suíte completa).
+3. O Laudo Técnico de Verificação Independente e o Resultado formal foram registrados em [dados/entregas-de-valor/EV-002/entrega-de-valor.md](dados/entregas-de-valor/EV-002/entrega-de-valor.md).
+4. Em estrita observância a `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e à resolução do `DEB-GOV-001`, o laudo positivo habilita e subsidia o gateway mandatório de **Homologação pelo Owner**, sem transicionar a EV diretamente para `CONCLUIDA`.
 
-A `EV-002` permanece no status **`EM_REALIZACAO`** (a integração técnica não altera o status da EV, conforme a regra de separação de conceitos).
+A `EV-002` permanece no status **`EM_REALIZACAO`**, apta para a inspeção humana e homologação formal do Owner.
 
 ## Governança transversal e Débitos
 
@@ -74,10 +73,11 @@ A `EV-002` permanece no status **`EM_REALIZACAO`** (a integração técnica não
   - Módulo proprietário: `M-002 — Formação do Projeto`
   - Status atual: **`EM_REALIZACAO`**
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
+  - Parecer de Integração: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização
+  - Parecer de Verificação: **`EVOLUCAO_MATERIALIZADA`** emitido pelo Verificador da Entrega de Valor em 2026-10-04
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Parecer de Integração: **`REALIZACAO_INTEGRADA`** emitido pelo Integrador da Realização em 2026-10-04
-  - Situação: Realização técnica 100% integrada e aprovada (58/58 testes verdes). Pronta para a verificação de valor.
+  - Situação: Verificação técnica positiva concluída com êxito. Habilitada formalmente para a Homologação pelo Owner.
 
 ### Itens de Trabalho (EV-002)
 
@@ -102,12 +102,13 @@ A `EV-002` permanece no status **`EM_REALIZACAO`** (a integração técnica não
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
-* A integração técnica da `EV-002` foi concluída com `REALIZACAO_INTEGRADA`.
-* O sistema está apto para o passo seguinte de verificação da entrega de valor.
+* A verificação técnica independente da `EV-002` foi concluída com `EVOLUCAO_MATERIALIZADA`.
+* O sistema está apto e aguarda a decisão de homologação humana soberana pelo Owner.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para confrontar o software integrado com a especificação, os critérios verificáveis e o valor prometido aos beneficiários da `EV-002`, emitindo o parecer formal de verificação (`EVOLUCAO_MATERIALIZADA` ou `EVOLUCAO_NAO_MATERIALIZADA`).
+1. Solicitar a inspeção e a Decisão Material Humana do **Owner** (`mhj`) para **Homologação da Entrega de Valor** (`HOMOLOGADO_PELO_OWNER` ou `REJEITADO_PELO_OWNER`), conforme `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md` e `documentacao/governanca/debitos/DEB-GOV-001.md`.
+2. Após manifestação favorável formal do Owner (`HOMOLOGADO_PELO_OWNER`), efetivar a transição do status da `EV-002` para **`CONCLUIDA`**.
 
 ## Arquivos mínimos para continuar
 
@@ -115,8 +116,5 @@ A `EV-002` permanece no status **`EM_REALIZACAO`** (a integração técnica não
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
-* `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
 * `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
 * `documentacao/governanca/debitos/DEB-GOV-001.md`
-
