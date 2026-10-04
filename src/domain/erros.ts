@@ -15,7 +15,7 @@ export class TransicaoInvalidaErro extends ErroDominio {
 }
 
 export class AutoridadeInvalidaErro extends ErroDominio {
-  constructor(atorEsperado: string, atorInformado: string) {
+  constructor(atorEsperado: string, atorInformado: string = "não informado") {
     super(
       `Autoridade inválida: a ação requer competência de '${atorEsperado}', mas foi informada '${atorInformado}'`
     );
@@ -27,5 +27,12 @@ export class InvarianteVioladaErro extends ErroDominio {
   constructor(mensagem: string) {
     super(`Invariante violada: ${mensagem}`);
     this.name = "InvarianteVioladaErro";
+  }
+}
+
+export class AutenticacaoRequeridaErro extends ErroDominio {
+  constructor(mensagem: string) {
+    super(`Autenticação obrigatória do Owner violada: ${mensagem}`);
+    this.name = "AutenticacaoRequeridaErro";
   }
 }

@@ -8,7 +8,7 @@
 | Código | `IT-003` |
 | Entrega de Valor proprietária | [EV-001 — Compromisso da Necessidade](../../entregas-de-valor/EV-001/entrega-de-valor.md) |
 | Módulo de proveniência | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -30,12 +30,25 @@
 
 ## Execução e Evidências
 
-* **Executor:** (Aguardando conclusão de IT-002)
-* **Artefatos produzidos / alterados:** N/A
-* **Resultado de testes locais:** N/A
-* **Conclusão técnica:** N/A
+* **Executor:** Ator Engenheiro de Software
+* **Artefatos produzidos / alterados:**
+  - `migrations/002_tabela_tarefas_trabalho.sql`: Esquema relacional para fila de jobs/tarefas de segundo plano no PostgreSQL;
+  - `src/domain/erros.ts`: Erros tipados `AutenticacaoRequeridaErro` e ajuste de `AutoridadeInvalidaErro`;
+  - `src/infrastructure/adapters/autenticacao-owner.ts`: Porta `PortaAutenticacaoOwner` e adaptador `AdaptadorAutenticacaoOwner` com checagem estrita de credenciais e autoridade do Owner;
+  - `src/infrastructure/adapters/integracao-modulos.ts`: Portas e adaptadores `PortaIntegracaoProjeto` (com M-002 para bootstrap idempotente 1:1) e `PortaIntegracaoContexto` (com M-004 para rastreabilidade auditável);
+  - `src/infrastructure/adapters/fila-tarefas.ts`: Abstração de fila assíncrona com implementações para PostgreSQL (`FilaTarefasPostgres`) e em memória (`FilaTarefasMemoria`);
+  - `src/infrastructure/database/repositorio-postgres.ts`: Implementação completa de `RepositorioNecessidadePostgres` para persistência transacional da Necessidade, histórico, resultados, decisões e compromisso;
+  - `src/worker/worker-segundo-plano.ts`: Implementação do `WorkerSegundoPlano` para polling contínuo desacoplado com parada graciosa e processamento de jobs de bootstrap e reconciliação;
+  - `src/index.ts`: Exportação central dos novos componentes;
+  - `tests/it003-worker-autenticacao-integracao.test.ts`: Suíte de testes cobrindo ciclo de vida do worker, autenticação/autorização estrita do Owner e idempotência de integração com M-002/M-004.
+* **Resultado de testes locais:**
+  - 24 de 24 testes executados com 100% de sucesso (`vitest run`);
+  - Checagem estrita de tipos aprovada sem nenhum erro (`tsc --noEmit`);
+  - Compilação de produção executada com sucesso (`tsc`).
+* **Conclusão técnica:** Todos os 4 critérios de aceitação foram plenamente atendidos.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente)
-* **Data / Registro:** (Pendente)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-03 (Registro pelo Ator Engenheiro de Software)
+

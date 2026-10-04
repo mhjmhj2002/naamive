@@ -8,11 +8,18 @@ NAAMIVE
 
 Os artefatos de saída das verticais Necessidade e Projeto foram formalizados e materializados nas instâncias existentes. A delimitação inicial e a formação técnica dos cinco Módulos do P-001 foram concluídas com Especificações Técnicas aprovadas por auditoria independente. A sequência normativa principal `01–07` da vertical Entrega de Valor e suas quatro Skills principais estão materializadas. A instância `EV-001 — Compromisso da Necessidade` foi reauditada e aprovada com `FORMACAO_SUFICIENTE` após a intervenção material de arquitetura do Owner (Node.js/TypeScript + PostgreSQL, web responsiva e worker desacoplado).
 
-A transição da Entrega de Valor para a camada de Realização progrediu operacionalmente com a conclusão de dois itens de trabalho fundamentais pelo Ator **Engenheiro de Software**:
+A realização técnica da `EV-001` avançou com sucesso até o terceiro Item de Trabalho fundamental pelo Ator **Engenheiro de Software**:
 1. **IT-001 — Estrutura Base Node.js/TypeScript, Configuração e Esquema PostgreSQL**: Concluído com `EXECUCAO_CONCLUIDA`. Fundação técnica, scripts, conexões transacionais, executor de migrações e esquema relacional completo em PostgreSQL validados com 100% de sucesso nos testes;
-2. **IT-002 — Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso**: Assumido em `EM_EXECUCAO` e concluído com `EXECUCAO_CONCLUIDA`. Foram implementadas as entidades de domínio puro em TypeScript (`Necessidade`), enumerações imutáveis do catálogo oficial (`StatusNecessidade`, `TipoResultadoProcesso`, `DecisaoMaterialOwner`, `AtorCompetenteNecessidade`), hierarquia de erros de domínio, interfaces de valores/eventos, serviço de composição segura do Compromisso (`ServicoCompromissoNecessidade`) e interface de persistência (`RepositorioNecessidade`);
-3. A integridade e invariantes de domínio foram comprovadas com 100% de sucesso nos testes automatizados locais (17 de 17 testes aprovados no `vitest`) e checagem estrita de tipos sem erros (`tsc --noEmit`);
-4. Com a conclusão de `IT-002`, o item seguinte do DAG, **IT-003 — Worker em Background Desacoplado, Autenticação e Portas de Integração**, teve sua dependência satisfeita e foi desbloqueado, transicionando para `PRONTO_PARA_EXECUCAO`.
+2. **IT-002 — Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso**: Concluído com `EXECUCAO_CONCLUIDA`. Entidades de domínio puro em TypeScript (`Necessidade`), catálogos imutáveis, regras de integridade e transições de ciclo de vida comprovadas por testes unitários e tipagem estrita;
+3. **IT-003 — Worker em Background Desacoplado, Autenticação e Portas de Integração**: Concluído com `EXECUCAO_CONCLUIDA`. Foram implementados:
+   - Esquema relacional de mensageria assíncrona (`migrations/002_tabela_tarefas_trabalho.sql`);
+   - Porta e adaptador de autenticação do Owner (`PortaAutenticacaoOwner`, `AdaptadorAutenticacaoOwner`) com checagem estrita de identidade antes de qualquer decisão material;
+   - Portas e adaptadores de integração de módulos (`PortaIntegracaoProjeto` com bootstrap idempotente 1:1 para M-002 e `PortaIntegracaoContexto` para rastreabilidade auditável com M-004);
+   - Abstrações e implementações de fila de tarefas (`FilaTarefasPostgres`, `FilaTarefasMemoria`);
+   - Repositório completo de persistência PostgreSQL (`RepositorioNecessidadePostgres`);
+   - `WorkerSegundoPlano` para execução contínua desacoplada do ciclo HTTP, com parada graciosa e processamento transacional de jobs;
+   - 100% de sucesso nos testes automatizados locais (24 de 24 testes aprovados no `vitest`), compilação TypeScript sem erros e build de produção validado;
+4. Com a conclusão de `IT-003`, o item final da EV-001 no DAG, **IT-004 — Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais**, teve sua dependência satisfeita e foi desbloqueado, transicionando para `PRONTO_PARA_EXECUCAO`.
 
 ## Governança transversal
 
@@ -69,26 +76,26 @@ A transição da Entrega de Valor para a camada de Realização progrediu operac
 
 * Localização normativa: `documentacao/item-de-trabalho/`
 * Catálogo de instâncias ativas:
-  - `IT-001`: Estrutura Base Node.js/TypeScript, Configuração e Esquema PostgreSQL — Status: `CONCLUIDO` (Resultado: `EXECUCAO_CONCLUIDA`, fundação e esquema validados por testes locais)
-  - `IT-002`: Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso — Status: `CONCLUIDO` (Resultado: `EXECUCAO_CONCLUIDA`, entidades puras, invariantes, histórico imutável e testes locais unitários validados)
-  - `IT-003`: Worker em Background Desacoplado, Autenticação e Portas de Integração — Status: `PRONTO_PARA_EXECUCAO` (desbloqueado com dependência de IT-002 satisfeita)
-  - `IT-004`: Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais — Status: `CRIADO` (depende de IT-003)
+  - `IT-001`: Estrutura Base Node.js/TypeScript, Configuração e Esquema PostgreSQL — Status: `CONCLUIDO` (Resultado: `EXECUCAO_CONCLUIDA`)
+  - `IT-002`: Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso — Status: `CONCLUIDO` (Resultado: `EXECUCAO_CONCLUIDA`)
+  - `IT-003`: Worker em Background Desacoplado, Autenticação e Portas de Integração — Status: `CONCLUIDO` (Resultado: `EXECUCAO_CONCLUIDA`, worker contínuo, autenticação de Owner e portas de integração comprovadas por testes locais)
+  - `IT-004`: Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais — Status: `PRONTO_PARA_EXECUCAO` (desbloqueado com dependência de IT-003 satisfeita)
 
 ## Estado do bloqueio
 
-**DESBLOQUEADO.** O núcleo de domínio puro (`IT-002`) foi implementado, tipado e testado com 100% de sucesso. O item seguinte de worker assíncrono em background e portas lógicas de integração (`IT-003`) encontra-se desbloqueado e em `PRONTO_PARA_EXECUCAO`.
+**DESBLOQUEADO.** O processamento contínuo em background, a autenticação do Owner e as portas de integração (`IT-003`) foram plenamente implementados, tipados e aprovados com 100% de sucesso nos testes automatizados. O item seguinte, `IT-004` (Camada Web Responsiva, Adaptadores HTTP e Suíte Integrada Local), encontra-se em `PRONTO_PARA_EXECUCAO`.
 
 ## Próxima ação legítima
 
-Acionar o Ator agêntico **Engenheiro de Software** (carregando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) sobre a instância `IT-003` (`dados/itens-de-trabalho/IT-003/item-de-trabalho.md`), para:
-1. Transicionar o status de `IT-003` de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO`;
-2. Implementar o worker desacoplado em background para processamento assíncrono contínuo em Node.js/TypeScript, a porta e adaptador de autenticação do Owner e as portas de integração lógica idempotente com M-002 e M-004;
-3. Executar os testes automatizados locais cobrindo a execução contínua do worker, verificação estrita de identidade do Owner e idempotência da integração;
-4. Registrar as evidências de execução e transicionar `IT-003` para `CONCLUIDO` (com `EXECUCAO_CONCLUIDA`), desbloqueando `IT-004`.
+Acionar o Ator agêntico **Engenheiro de Software** (carregando a Skill `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) sobre a instância `IT-004` (`dados/itens-de-trabalho/IT-004/item-de-trabalho.md`), para:
+1. Transicionar o status de `IT-004` de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO`;
+2. Implementar o servidor HTTP, as rotas e adaptadores da camada web responsiva (Bootstrap/HTML/CSS responsivo) para acompanhar o ciclo da Necessidade e registrar decisões do Owner;
+3. Implementar a suíte integrada de testes automatizados locais cobrindo a jornada ponta a ponta da EV-001 (Criação → Formação → Auditoria → Decisão do Owner → Compromisso da Necessidade → Disponibilização a M-002);
+4. Concluir a execução com `EXECUCAO_CONCLUIDA` e preparar o handoff para o Ator **Integrador da Realização** e subsequentemente o **Verificador da Entrega de Valor**.
 
 ## Lacunas e limites vigentes
 
-* A fundação técnica (`IT-001`) e o núcleo de domínio puro (`IT-002`) estão concluídos e validados localmente. O worker desacoplado (`IT-003`) e a camada web responsiva com suíte integrada (`IT-004`) são os próximos itens do plano de realização.
+* Os itens `IT-001`, `IT-002` e `IT-003` estão concluídos e validados localmente. `IT-004` é o item restante do plano de realização da EV-001.
 * O consumo final de evidências pelo Verificador Agregado do Projeto e os efeitos em `CONCLUIDO` do P-001 e `ATENDIDA` da N-001 continuam sem caminho operacional formalizado.
 
 ## Arquivos mínimos para continuar
@@ -100,5 +107,5 @@ Acionar o Ator agêntico **Engenheiro de Software** (carregando a Skill `.agents
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
 * `dados/entregas-de-valor/EV-001/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-001/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-002/item-de-trabalho.md`
 * `dados/itens-de-trabalho/IT-003/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-004/item-de-trabalho.md`
