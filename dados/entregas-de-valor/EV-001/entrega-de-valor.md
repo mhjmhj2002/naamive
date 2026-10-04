@@ -7,7 +7,7 @@
 | Identificador técnico | `80264aa7-5243-4396-a99e-e33e38aca286` |
 | Código | `EV-001` |
 | Módulo proprietário | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `EM_REALIZACAO` |
+| Status | `CONCLUIDA` |
 
 ## Delimitação inicial
 
@@ -152,7 +152,53 @@ A Especificação readequada está validamente disponível e a `EV-001` transici
 * **Progresso da Realização:**
   - Itens `IT-001`, `IT-002`, `IT-003` e `IT-004` concluídos com sucesso pelo Ator Engenheiro de Software (`EXECUCAO_CONCLUIDA`);
   - Integração da Realização Técnica concluída com sucesso pelo Ator Integrador da Realização (`REALIZACAO_INTEGRADA`), com 100% de sucesso na suíte integrada de testes e compilação limpa.
-* **Próxima etapa executável:** Handoff para o Ator **Verificador da Entrega de Valor** (Skill `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`) para verificação da evolução integrada prometida.
-* **Débito de Governança Ativo:** [DEB-GOV-001](../../../documentacao/governanca/debitos/DEB-GOV-001.md) — Para a `EV-001`, a conclusão técnica de verificação fica expressamente vinculada e condicionada à posterior Inspeção, Homologação e Decisão Humana Material do Owner antes de transicionar para `CONCLUIDA`. Novas Entregas de Valor subsequentes estão bloqueadas até a resolução normativa definitiva.
+* **Situação da Realização:** `REALIZACAO_INTEGRADA` alcançada e validada com suíte completa de testes locais e execução operacional comprovada.
+
+## Homologação do Owner (Mitigação DEB-GOV-001)
+
+| Campo | Registro |
+| --- | --- |
+| **Ator** | Owner (Decisão Humana Material de Homologação) |
+| **Identidade autenticada** | `mhj` |
+| **Data da Homologação** | 2026-10-04 |
+| **Decisão / Parecer** | `HOMOLOGADO` |
+| **Vínculo de Governança** | Satisfação da exigência de mitigação de [DEB-GOV-001](../../../documentacao/governanca/debitos/DEB-GOV-001.md) |
+
+### Declaração Formal do Owner
+
+> *"Eu, mhj (Owner), declaro que acessei a aplicação em execução na porta 3001, inspecionei as telas de listagem e detalhes da N-001, validei o fluxo de ponta a ponta e HOMOLOGO FORMALMENTE a EV-001 como aprovada."*
+
+## Resultado do Processo — Verificação da Entrega de Valor
+
+| Campo | Registro |
+| --- | --- |
+| **Ator competente** | Verificador da Entrega de Valor |
+| **Resultado do Processo** | `EVOLUCAO_MATERIALIZADA` |
+| **Status após verificação e homologação** | `CONCLUIDA` |
+| **Data da Verificação** | 2026-10-04 |
+
+### Laudo Técnico de Verificação Independente
+
+O Verificador da Entrega de Valor avaliou o software integrado resultante da realização técnica de `IT-001` a `IT-004`, confrontando-o com a Especificação da EV-001, os critérios de aceitação verificáveis e as evidências operacionais de execução:
+
+1. **Confronto com os Critérios Verificáveis da Especificação:**
+   - **Critério 1 (Registro e Consulta Web):** A interface web responsiva permite registrar e consultar a Necessidade, mantendo seu status atual estritamente distinguível de seu histórico e de suas evidências (demonstrado em `tests/it004-camada-web-responsiva.test.ts` e inspecionado visualmente pelo Owner na rota `/necessidades/:id`).
+   - **Critério 2 (Competência dos Atores e Separação de Status):** Os pareceres de Formação, Auditoria e Qualificação são associados exclusivamente aos seus respectivos Atores competentes, sem contaminação do catálogo de Status (`tests/it002-dominio-necessidade.test.ts`).
+   - **Critério 3 (Autoridade e Identidade do Owner):** A decisão material de compromisso exige identidade autenticada (`mhj`) e posição elegível (`QUALIFICADA`), rejeitando qualquer tentativa não autenticada (`tests/it002-dominio-necessidade.test.ts` e `tests/it003-worker-autenticacao-integracao.test.ts`).
+   - **Critério 4 (Compromisso Disponível e Bootstrap Idempotente de M-002):** A aprovação válida da decisão gera a visão consolidada do Compromisso da Necessidade e enfileira solicitação idempotente de bootstrap para M-002, preservando a fronteira de que a EV não cria diretamente o Projeto (`tests/it003-worker-autenticacao-integracao.test.ts`).
+   - **Critério 5 (Worker Desacoplado Contínuo):** O worker assíncrono processa tarefas contínuas e reconciliação sem degradar ou bloquear a camada web HTTP (`tests/it003-worker-autenticacao-integracao.test.ts` e `src/worker.ts`).
+   - **Critério 6 (Preservação Relacional e Contexto):** Todos os eventos, evidências e vínculos de origem permanecem íntegros e auditáveis no esquema relacional PostgreSQL (`tests/it001-fundacao.test.ts`).
+
+2. **Percepção e Utilidade da Evolução:**
+   A evolução de valor prometida ao beneficiário (pessoa que conduz a demanda e Owner responsável pela decisão) foi plenamente materializada em software executável, utilizável e responsivo. A jornada de condução da demanda até o Compromisso formal foi validada em testes automatizados e comprovada em homologação pelo Owner.
+
+3. **Conclusão:**
+   Com a emissão do parecer favorável e a presença da declaração formal de homologação do Owner, declara-se a evolução como plenamente materializada.
+
+Emite-se formalmente o Resultado do Processo **`EVOLUCAO_MATERIALIZADA`**, transicionando a **EV-001** de `EM_REALIZACAO` para **`CONCLUIDA`**.
+
+### Handoff da Verificação
+
+A Entrega de Valor `EV-001` encontra-se no status terminal de sucesso **`CONCLUIDA`**. Suas evidências e resultados ficam disponíveis para subsidiar as futuras verificações agregadas do projeto, mantendo as fronteiras das demais verticais preservadas.
 
 
