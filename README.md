@@ -177,6 +177,7 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 * [EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade](dados/entregas-de-valor/EV-004/entrega-de-valor.md)
   * [Plano de Realização da EV-004](dados/entregas-de-valor/EV-004/plano-de-realizacao.md)
 * [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
+  * [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md)
 
 ### Itens de Trabalho
 
@@ -196,6 +197,10 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 * [IT-014 — Núcleo de Domínio de Contexto, Rastreabilidade e Motor de Recuperação Proporcional](dados/itens-de-trabalho/IT-014/item-de-trabalho.md)
 * [IT-015 — Repositório PostgreSQL, Serviço de Aplicação de Contexto e Auditoria em Background](dados/itens-de-trabalho/IT-015/item-de-trabalho.md)
 * [IT-016 — Camada Web Responsiva de Rastreabilidade, Inspeção Causal e Suíte Integrada](dados/itens-de-trabalho/IT-016/item-de-trabalho.md)
+* [IT-017 — Esquema Relacional PostgreSQL de Verificação de Software e Migrações](dados/itens-de-trabalho/IT-017/item-de-trabalho.md)
+* [IT-018 — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade](dados/itens-de-trabalho/IT-018/item-de-trabalho.md)
+* [IT-019 — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background](dados/itens-de-trabalho/IT-019/item-de-trabalho.md)
+* [IT-020 — Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada](dados/itens-de-trabalho/IT-020/item-de-trabalho.md)
 
 ## Estrutura atual
 
@@ -337,7 +342,8 @@ dados/
     │   ├── entrega-de-valor.md
     │   └── plano-de-realizacao.md
     └── EV-005/
-        └── entrega-de-valor.md
+        ├── entrega-de-valor.md
+        └── plano-de-realizacao.md
 dados/itens-de-trabalho/
 ├── IT-001/
 │   └── item-de-trabalho.md
@@ -369,7 +375,15 @@ dados/itens-de-trabalho/
 │   └── item-de-trabalho.md
 ├── IT-015/
 │   └── item-de-trabalho.md
-└── IT-016/
+├── IT-016/
+│   └── item-de-trabalho.md
+├── IT-017/
+│   └── item-de-trabalho.md
+├── IT-018/
+│   └── item-de-trabalho.md
+├── IT-019/
+│   └── item-de-trabalho.md
+└── IT-020/
     └── item-de-trabalho.md
 ```
 

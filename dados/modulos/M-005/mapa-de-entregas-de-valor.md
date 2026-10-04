@@ -25,6 +25,7 @@ Foram recuperados proporcionalmente a [Direção do P-001](../../projetos/P-001/
 | Módulo proprietário | [M-005 — Verificação do Resultado de Software](modulo.md) |
 | Status | `EM_FORMACAO` |
 | Registro principal | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
+| Plano de Realização | [Plano de Realização da EV-005](../../entregas-de-valor/EV-005/plano-de-realizacao.md) |
 
 * **Declaração de valor:** permitir que o operador, o Owner e os Atores comprovem de forma observável, reproduzível e rastreável se o incremento de software integrado atende aos critérios verificáveis derivados do Compromisso da Necessidade e da Direção do Projeto, emitindo laudos técnicos fundamentados (`CRITÉRIO_DEMONSTRADO`, `CRITÉRIO_NÃO_DEMONSTRADO`, `EVIDÊNCIA_INSUFICIENTE`, `DIVERGÊNCIA_ENCONTRADA`) e identificando explicitamente limites e divergências.
 * **Beneficiário relevante:** o operador da jornada, os Atores de governança, o Verificador Agregado do Projeto e o Owner que necessitam de comprovação técnica rigorosa, independente e demonstrável do software integrado antes da homologação final.

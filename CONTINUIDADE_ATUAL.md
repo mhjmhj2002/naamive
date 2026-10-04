@@ -7,17 +7,19 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE concluiu formalmente a **Homologação pelo Owner** e a transição terminal para **`CONCLUIDA`** da **`EV-004 — Preservação e Recuperação de Contexto e Rastreabilidade`** no módulo [M-004 — Contexto e Rastreabilidade](dados/modulos/M-004/modulo.md), e realizou em seguida o avanço legítimo da jornada com a delimitação canônica da **`EV-005 — Avaliação e Verificação da Entrega de Valor`** no módulo [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md):
+O ciclo de vida do NAAMIVE concluiu a **Formação Técnica Completa da `EV-005 — Avaliação e Verificação da Entrega de Valor`** no módulo [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md), exercida pelo **Especialista em Formação da Entrega de Valor** (`.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`):
 
-1. **Homologação e Conclusão da EV-004:**
-   - O Owner (`mhj`) deliberou e registrou a Decisão Humana Material soberana de homologação formal (`HOMOLOGADO_PELO_OWNER`) em `dados/entregas-de-valor/EV-004/entrega-de-valor.md`.
-   - A EV-004 atingiu o status terminal **`CONCLUIDA`** com 100% de sucesso.
-   - O mapa canônico de M-004 (`dados/modulos/M-004/mapa-de-entregas-de-valor.md`) foi atualizado refletindo o encerramento com êxito da EV-004.
-2. **Delimitação da EV-005 no Módulo M-005:**
-   - O Ator agêntico competente **Especialista em Delimitação de Entregas de Valor** (`.agents/skills/entrega-de-valor/delimitacao-de-entregas-de-valor/SKILL.md`) delimitou e materializou a primeira evolução de M-005: a **`EV-005 — Avaliação e Verificação da Entrega de Valor`**.
-   - Criado o registro canônico `dados/modulos/M-005/mapa-de-entregas-de-valor.md` e o artefato principal `dados/entregas-de-valor/EV-005/entrega-de-valor.md` com status **`EM_FORMACAO`** e identificador técnico UUID v4 único (`6868d52a-295d-46a5-89fc-a6eac1d70dc5`).
-   - O handoff formal da delimitação foi emitido ao **Especialista em Formação da Entrega de Valor**.
-3. **Garantia de Qualidade e Integridade Técnica:**
+1. **Formação da EV-005 Concluída:**
+   - O documento principal [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md) foi aprofundado com a **Especificação da Entrega de Valor** completa (intenção de valor, comportamento de produto, arquitetura hexagonal, modelo relacional para PostgreSQL com migração `007_esquema_verificacao_software.sql`, entidades de domínio, enums de conclusões técnicas, invariante estrito de não presunção de conformidade, catálogo de critérios, coleta de evidências e integração causal com a proveniência de M-004).
+   - Definidos os 6 critérios de aceitação verificáveis e a estratégia de testes da evolução.
+   - Materializado o [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) contendo a estratégia técnica, o Grafo de Dependências Técnicas (DAG) e a decomposição sequencial em 4 Itens de Trabalho:
+     * [`IT-017`](dados/itens-de-trabalho/IT-017/item-de-trabalho.md): Esquema Relacional PostgreSQL de Verificação de Software e Migrações (`PLANEJADO`)
+     * [`IT-018`](dados/itens-de-trabalho/IT-018/item-de-trabalho.md): Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade (`PLANEJADO`)
+     * [`IT-019`](dados/itens-de-trabalho/IT-019/item-de-trabalho.md): Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background (`PLANEJADO`)
+     * [`IT-020`](dados/itens-de-trabalho/IT-020/item-de-trabalho.md): Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada (`PLANEJADO`)
+   - O mapa de entregas de valor [dados/modulos/M-005/mapa-de-entregas-de-valor.md](dados/modulos/M-005/mapa-de-entregas-de-valor.md) e o índice principal [README.md](README.md) foram devidamente atualizados.
+   - Handoff formal emitido para a **Auditoria da Entrega de Valor** (`.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`).
+2. **Garantia de Qualidade e Integridade Técnica:**
    - Validados a tipagem estrita (`npm run typecheck`) e a suíte completa de testes (`npm test`) com **16 arquivos de teste e 110 testes automatizados verdes — 100% de sucesso sem regressões**.
 
 ## Governança transversal e Débitos
@@ -61,7 +63,7 @@ O ciclo de vida do NAAMIVE concluiu formalmente a **Homologação pelo Owner** e
 * M-003 — Coordenação do Trabalho: `FORMADO` (Mapa canônico possui `EV-003` em `CONCLUIDA`)
 * M-004 — Contexto e Rastreabilidade: `FORMADO` (Mapa canônico possui `EV-004` em `CONCLUIDA`)
 * M-005 — Verificação do Resultado de Software: `FORMADO`
-  - Mapa de Entregas de Valor: `dados/modulos/M-005/mapa-de-entregas-de-valor.md` (registra `EV-005` em `EM_FORMACAO`)
+  - Mapa de Entregas de Valor: `dados/modulos/M-005/mapa-de-entregas-de-valor.md` (registra `EV-005` em `EM_FORMACAO` com especificação e plano de realização)
 
 ### Entregas de Valor
 
@@ -106,18 +108,18 @@ O ciclo de vida do NAAMIVE concluiu formalmente a **Homologação pelo Owner** e
   - Módulo proprietário: `M-005 — Verificação do Resultado de Software`
   - Status atual: **`EM_FORMACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
-  - Situação: Delimitação inicial concluída; handoff entregue para a Formação da Entrega de Valor.
+  - Plano de Realização: [dados/entregas-de-valor/EV-005/plano-de-realizacao.md](dados/entregas-de-valor/EV-005/plano-de-realizacao.md)
+  - Situação: Formação técnica completa concluída; handoff entregue ao Auditor da Entrega de Valor para avaliação independente.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A EV-004 foi homologada e concluída.
-* A EV-005 está materializada em `EM_FORMACAO`, apta para o trabalho do Especialista em Formação da Entrega de Valor.
+* A EV-005 possui especificação e plano de realização consolidados, pronta para a avaliação independente da Auditoria da Entrega de Valor.
 
 ## Próxima ação legítima
 
-1. Atuação do **Especialista em Formação da Entrega de Valor** (`.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`): conduzir a formação técnica da `EV-005 — Avaliação e Verificação da Entrega de Valor`, detalhando a especificação técnica de alto nível, os critérios verificáveis, modelos de dados para laudos de conformidade de software, adaptadores e interfaces web de inspeção técnica.
+1. Atuação do **Auditor da Entrega de Valor** (`.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`): inspecionar a formação técnica da `EV-005` e emitir parecer independente (`FORMACAO_SUFICIENTE` ou `FORMACAO_INSUFICIENTE`).
 
 ## Arquivos mínimos para continuar
 
@@ -127,4 +129,5 @@ O ciclo de vida do NAAMIVE concluiu formalmente a **Homologação pelo Owner** e
 * `dados/modulos/M-005/modulo.md`
 * `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
-* `.agents/skills/entrega-de-valor/formacao-da-entrega-de-valor/SKILL.md`
+* `dados/entregas-de-valor/EV-005/plano-de-realizacao.md`
+* `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md`
