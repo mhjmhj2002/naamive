@@ -7,7 +7,7 @@
 | Identificador técnico | `b06d5c8e-f9d1-457b-8880-87305dc3aca6` |
 | Código | `EV-003` |
 | Módulo proprietário | [M-003 — Coordenação do Trabalho](../../modulos/M-003/modulo.md) |
-| Status | `EM_FORMACAO` |
+| Status | `FORMADA` |
 
 ## Delimitação inicial
 
@@ -153,7 +153,31 @@ A proposta técnica opera integralmente dentro da infraestrutura já provisionad
 
 A Especificação da `EV-003` consolida com precisão o lado de produto e a solução técnica de alto nível, preservando a rastreabilidade `EV-003 → M-003 → P-001 → N-001`, a compatibilidade com a stack oficial e os critérios verificáveis necessários para o planejamento e decomposição da futura realização técnica sem necessidade de redescoberta do valor de negócio nem redesenho arquitetural.
 
-## Handoff
+## Handoff da formação
 
-A Especificação consolidada da **EV-003 — Coordenação do Trabalho Preparado** foi finalizada pelo **Especialista em Formação da Entrega de Valor** e é entregue ao **Auditor da Entrega de Valor** para avaliação independente da formação, conforme estabelecido em `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md` e `documentacao/entrega-de-valor/04_FORMACAO_DA_ENTREGA_DE_VALOR.md`.
+A Especificação consolidada da **EV-003 — Coordenação do Trabalho Preparado** foi finalizada pelo **Especialista em Formação da Entrega de Valor** e entregue ao **Auditor da Entrega de Valor** para avaliação independente da formação, conforme estabelecido em `.agents/skills/entrega-de-valor/auditoria-da-entrega-de-valor/SKILL.md` e `documentacao/entrega-de-valor/04_FORMACAO_DA_ENTREGA_DE_VALOR.md`.
+
+## Resultado do Processo — Auditoria independente
+
+| Campo | Registro |
+| --- | --- |
+| Ator competente | Auditor da Entrega de Valor |
+| Resultado do Processo | `FORMACAO_SUFICIENTE` |
+| Status após a auditoria | `FORMADA` |
+
+### Parecer independente
+
+O **Auditor da Entrega de Valor** realizou a avaliação independente da Especificação da `EV-003 — Coordenação do Trabalho Preparado`, confrontando proporcionalmente a intenção de valor, beneficiário, resultado observável, fronteiras, aderência à capacidade do Módulo proprietário (M-003), cadeia de origem causal, dependências, critérios verificáveis, solução técnica de alto nível, contratos de dados e decisões de arquitetura:
+
+1. **Aderência à Capacidade de M-003 e Origem Causal:** A EV-003 materializa a capacidade nuclear e a responsabilidade de [M-003 — Coordenação do Trabalho](../../modulos/M-003/modulo.md) (avaliação de condições de preparação, identificação do próximo avanço válido, encadeamento de competência/Ator/Skill, composição/emissão idempotente de handoffs com contexto recuperável e acompanhamento operacional). Não invade as fronteiras de decisão humana do Owner, de histórico transversal (M-004) ou de verificação final de software (M-005).
+2. **Conformidade com a Arquitetura e Stack Oficial:** A especificação adota com rigor a Decisão Material do Owner de Arquitetura e Stack (Node.js com TypeScript em arquitetura hexagonal, PostgreSQL relacional com transações atômicas e restrições de integridade, Worker assíncrono em background e interface web responsiva com Bootstrap 5). O custo de infraestrutura incremental permanece zero, alinhado à Baseline Essencial.
+3. **Invariantes e Integridade de Domínio:** O invariante nuclear de especialização (`necessidade de execução → responsabilidade necessária → Ator especializado → Skill principal correspondente → Executor compatível`) está expressamente garantido no desenho. A distinção entre condições operacionais (`POSSIVEL`, `PREPARADO`, `EM_EXECUCAO`, `BLOQUEADO`, `AGUARDANDO_DECISAO_HUMANA`, `ENCERRADO`) e os Status normativos das entidades de governança é mantida de forma inequívoca.
+4. **Suficiência para a Futura Realização:** O modelo de dados relacional (`trabalhos_coordenados`, `handoffs_coordenacao`, `retornos_coordenacao`), os contratos lógicos dos casos de uso, o mapeamento de riscos e os critérios verificáveis de aceitação são claros, precisos e completos. Permitem o planejamento da realização e a decomposição em Itens de Trabalho sem a necessidade de redescoberta do valor de negócio nem redesenho da solução técnica de alto nível.
+
+Conclui-se formalmente pela emissão do Resultado do Processo **`FORMACAO_SUFICIENTE`**, habilitando a transição de status de `EM_FORMACAO` para **`FORMADA`**.
+
+### Handoff da auditoria
+
+Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-003` torna-se validamente disponível e a Entrega de Valor atinge o status **`FORMADA`**, ficando apta para a futura fase de realização técnica (Planejamento da Realização).
+
 
