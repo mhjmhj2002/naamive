@@ -34,10 +34,10 @@ IT-008 (Camada Web Responsiva de Projeto, Direção e Suíte de Testes Locais)
 
 ## Decomposição em Itens de Trabalho
 
-| Código | Título Técnico | Status Inicial | Dependências |
+| Código | Título Técnico | Status Atual | Dependências |
 | --- | --- | --- | --- |
-| [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md) | Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1 | `PRONTO_PARA_EXECUCAO` | Nenhuma (sucede baseline consolidada na EV-001) |
-| [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md) | Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação | `CRIADO` | `IT-005` |
+| [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md) | Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1 | `CONCLUIDO` | Nenhuma (sucede baseline consolidada na EV-001) |
+| [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md) | Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação | `PRONTO_PARA_EXECUCAO` | `IT-005` (satisfeita) |
 | [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002 | `CRIADO` | `IT-006` |
 | [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md) | Camada Web Responsiva de Projetos, Visualização da Direção e Suíte Integrada | `CRIADO` | `IT-007` |
 

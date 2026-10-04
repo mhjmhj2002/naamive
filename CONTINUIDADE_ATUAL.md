@@ -6,13 +6,13 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Especialista em Planejamento da Realização**. O Plano de Realização da **`EV-002 — Direção do Projeto`** (pertencente ao módulo **`M-002 — Formação do Projeto`**) foi consolidado e seus quatro Itens de Trabalho técnicos foram materializados no repositório (`IT-005` a `IT-008`).
+O ciclo de vida da vertical Entrega de Valor e da vertical Item de Trabalho avançou com a atuação do **Engenheiro de Software**. O primeiro Item de Trabalho da **`EV-002 — Direção do Projeto`**, **`IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1`**, foi plenamente executado, testado e concluído (`CONCLUIDO`), emitindo o Resultado do Processo `EXECUCAO_CONCLUIDA`.
 
-Com a materialização dos Itens de Trabalho e a formalização do planejamento, a **`EV-002`** transicionou validamente de **`FORMADA`** para **`EM_REALIZACAO`**.
+Com a conclusão do `IT-005`, o esquema de dados relacional de Projetos (`projetos`, `etapas_formacao_projeto`, `auditorias_projeto` e `direcoes_projeto`) está materializado em `migrations/003_esquema_projetos.sql`, com a restrição de unicidade estrita 1:1 (`UNIQUE(necessidade_id)`) validada com 100% de sucesso na suíte de testes automatizados (`tests/it005-esquema-relacional-projeto.test.ts`).
 
-O primeiro Item de Trabalho da cadeia, **`IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1`**, encontra-se com status **`PRONTO_PARA_EXECUCAO`**, apto a ser assumido pelo Ator **Engenheiro de Software**. Os demais itens (`IT-006`, `IT-007` e `IT-008`) encontram-se em status **`CRIADO`**, aguardando a conclusão de suas respectivas dependências técnicas.
+Em decorrência da satisfação de suas dependências, o segundo Item de Trabalho da cadeia, **`IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação`**, transicionou validamente de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**, encontrando-se apto para execução pelo Engenheiro de Software.
 
-A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`) e com suíte de testes 100% verde.
+A `EV-001 — Compromisso da Necessidade` permanece como referência concluída (`CONCLUIDA`), homologada pelo Owner (`mhj`) e com suíte de testes 100% verde (34/34 testes passando no total da aplicação).
 
 ## Governança transversal e Débitos
 
@@ -73,18 +73,19 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
   - Parecer de Auditoria: `FORMACAO_SUFICIENTE` emitido pelo Auditor da Entrega de Valor
   - Registro principal: `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
   - Plano de Realização: `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-  - Situação: Planejamento concluído; Itens de Trabalho materializados; em realização técnica ativa.
+  - Situação: Em realização técnica ativa (1/4 itens de trabalho concluídos).
 
 ### Itens de Trabalho (EV-002)
 
 * **IT-005 — Esquema Relacional PostgreSQL do Projeto, Migrações e Integridade 1:1:**
-  - Status: **`PRONTO_PARA_EXECUCAO`**
+  - Status: **`CONCLUIDO`**
+  - Resultado do Processo: `EXECUCAO_CONCLUIDA`
   - Registro: `dados/itens-de-trabalho/IT-005/item-de-trabalho.md`
   - Dependências: Nenhuma
 * **IT-006 — Núcleo de Domínio de Projeto, Transições de Status e Etapas de Formação:**
-  - Status: `CRIADO`
+  - Status: **`PRONTO_PARA_EXECUCAO`**
   - Registro: `dados/itens-de-trabalho/IT-006/item-de-trabalho.md`
-  - Dependências: `IT-005`
+  - Dependências: `IT-005` (satisfeita)
 * **IT-007 — Repositório PostgreSQL, Serviço de Aplicação de Projeto e Handoff M-001/M-002:**
   - Status: `CRIADO`
   - Registro: `dados/itens-de-trabalho/IT-007/item-de-trabalho.md`
@@ -99,11 +100,11 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes ativos.
 * A `EV-002` está legitimamente em `EM_REALIZACAO`.
-* O `IT-005` está imediatamente apto para início de execução técnica.
+* O `IT-006` está imediatamente apto para início de execução técnica pelo Engenheiro de Software.
 
 ## Próxima ação legítima
 
-1. Atuar no papel de **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para assumir o **`IT-005`**, transicionando-o para `EM_EXECUCAO` e implementando as migrações/esquema relacional no PostgreSQL e suíte de testes correspondente.
+1. Atuar no papel de **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`) para assumir o **`IT-006`**, transicionando-o para `EM_EXECUCAO` e implementando o núcleo de domínio de Projeto em TypeScript (`src/domain/projeto/` ou equivalente), as etapas de formação, pareceres de auditoria e a suíte de testes unitários.
 
 ## Arquivos mínimos para continuar
 
@@ -112,6 +113,7 @@ A `EV-001 — Compromisso da Necessidade` permanece como referência concluída 
 * `CONTINUIDADE_ATUAL.md`
 * `dados/entregas-de-valor/EV-002/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-002/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-005/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-006/item-de-trabalho.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
-* `src/infrastructure/database/esquema-postgres.sql`
+* `migrations/003_esquema_projetos.sql`
+* `tests/it005-esquema-relacional-projeto.test.ts`

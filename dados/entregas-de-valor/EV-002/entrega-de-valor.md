@@ -162,8 +162,8 @@ Com a emissão de `FORMACAO_SUFICIENTE`, a Especificação da `EV-002` tornou-se
 * **Status atual:** `EM_REALIZACAO`
 * **Plano de Realização consolidado:** [Plano de Realização da EV-002](plano-de-realizacao.md)
 * **Itens de Trabalho materializados:**
-  - [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md): `PRONTO_PARA_EXECUCAO`
-  - [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md): `CRIADO`
+  - [`IT-005`](../../itens-de-trabalho/IT-005/item-de-trabalho.md): `CONCLUIDO`
+  - [`IT-006`](../../itens-de-trabalho/IT-006/item-de-trabalho.md): `PRONTO_PARA_EXECUCAO`
   - [`IT-007`](../../itens-de-trabalho/IT-007/item-de-trabalho.md): `CRIADO`
   - [`IT-008`](../../itens-de-trabalho/IT-008/item-de-trabalho.md): `CRIADO`
 
