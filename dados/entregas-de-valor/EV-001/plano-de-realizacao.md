@@ -39,7 +39,7 @@ IT-004 (Camada Web Responsiva, Rotas HTTP e Suíte de Testes Integrados Locais)
 | `IT-001` | Estrutura Base Node.js/TypeScript, Configuração e Esquema PostgreSQL | `CONCLUIDO` | Nenhuma |
 | `IT-002` | Núcleo de Domínio da Necessidade, Regras de Transição e Compromisso | `CONCLUIDO` | `IT-001` |
 | `IT-003` | Worker em Background Desacoplado, Autenticação e Portas de Integração | `CONCLUIDO` | `IT-002` |
-| `IT-004` | Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais | `PRONTO_PARA_EXECUCAO` | `IT-003` |
+| `IT-004` | Camada Web Responsiva, Adaptadores HTTP e Suíte de Testes Locais | `CONCLUIDO` | `IT-003` |
 
 ## Estratégia de Testes e Integração Local
 

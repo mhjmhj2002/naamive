@@ -10,4 +10,5 @@ export interface RepositorioNecessidade {
   obterPorId(id: string): Promise<Necessidade | null>;
   obterPorCodigo(codigo: string): Promise<Necessidade | null>;
   obterCompromisso(necessidadeId: string): Promise<CompromissoNecessidade | null>;
+  listarTodas(): Promise<Necessidade[]>;
 }

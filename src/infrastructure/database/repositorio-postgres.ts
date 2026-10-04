@@ -194,6 +194,17 @@ export class RepositorioNecessidadePostgres implements RepositorioNecessidade {
     };
   }
 
+  public async listarTodas(): Promise<Necessidade[]> {
+    const res = await this.conexao.executarConsulta(
+      "SELECT * FROM necessidade ORDER BY criado_em ASC"
+    );
+    const lista: Necessidade[] = [];
+    for (const row of res.rows) {
+      lista.push(await this.hidratarNecessidade(row));
+    }
+    return lista;
+  }
+
   private async hidratarNecessidade(row: any): Promise<Necessidade> {
     const nec = new Necessidade(
       {

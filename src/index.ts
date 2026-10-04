@@ -11,4 +11,7 @@ export * from "./domain/repositorio-necessidade.js";
 export * from "./infrastructure/adapters/autenticacao-owner.js";
 export * from "./infrastructure/adapters/integracao-modulos.js";
 export * from "./infrastructure/adapters/fila-tarefas.js";
+export * from "./infrastructure/database/repositorio-memoria.js";
 export * from "./worker/worker-segundo-plano.js";
+export * from "./web/templates.js";
+export * from "./web/servidor-web.js";

@@ -8,7 +8,7 @@
 | Código | `IT-004` |
 | Entrega de Valor proprietária | [EV-001 — Compromisso da Necessidade](../../entregas-de-valor/EV-001/entrega-de-valor.md) |
 | Módulo de proveniência | [M-001 — Condução da Necessidade](../../modulos/M-001/modulo.md) |
-| Status | `PRONTO_PARA_EXECUCAO` |
+| Status | `CONCLUIDO` |
 
 ## Definição Técnica
 
@@ -27,12 +27,22 @@
 
 ## Execução e Evidências
 
-* **Executor:** (Aguardando conclusão de IT-003)
-* **Artefatos produzidos / alterados:** N/A
-* **Resultado de testes locais:** N/A
-* **Conclusão técnica:** N/A
+* **Executor:** Ator Engenheiro de Software
+* **Artefatos produzidos / alterados:**
+  - `src/domain/repositorio-necessidade.ts`: Adicionado método `listarTodas()` na interface do repositório de domínio;
+  - `src/infrastructure/database/repositorio-postgres.ts`: Implementação do método `listarTodas()` com hidratação completa de histórico, resultados e compromissos;
+  - `src/infrastructure/database/repositorio-memoria.ts`: Implementação em memória (`RepositorioNecessidadeMemoria`) para testes isolados e suporte à camada web;
+  - `src/web/templates.ts`: Templates HTML responsivos (com Bootstrap 5 via CDN) para layout mestre, listagem de necessidades, formulário de cadastro e tela de detalhes (incluindo painel de governança por atores, painel de decisão exclusiva do Owner e exibição consolidada do Compromisso disponível para M-002);
+  - `src/web/servidor-web.ts`: Servidor HTTP nativo e adaptadores de rotas tratando `GET /`, `GET /nova`, `POST /necessidades`, `GET /necessidades/:id`, `POST /necessidades/:id/parecer-auditoria`, `POST /necessidades/:id/avancar-qualificacao`, `POST /necessidades/:id/recomendacao-qualificacao`, `POST /necessidades/:id/submeter-decisao`, `POST /necessidades/:id/decisao-owner` e API REST `GET /api/compromissos/:id`;
+  - `src/index.ts`: Exportação central dos módulos da camada web e repositório;
+  - `tests/it004-camada-web-responsiva.test.ts`: Suíte integrada de testes locais validando interface responsiva, autoridade estrita do Owner na decisão de compromisso, jornada ponta a ponta da EV-001 (com processamento assíncrono do worker e bootstrap de M-002) e verificação de não-regressão.
+* **Resultado de testes locais:**
+  - 31 de 31 testes executados com 100% de aprovação (`vitest run`);
+  - Verificação de tipos TypeScript estrita sem erros (`npm run typecheck` / `tsc --noEmit`);
+  - Compilação de distribuição de produção executada com sucesso (`npm run build` / `tsc`).
+* **Conclusão técnica:** Todos os 4 critérios técnicos de aceitação de IT-004 foram plenamente cumpridos e verificados.
 
 ## Resultado do Processo
 
-* **Resultado da Execução:** (Pendente)
-* **Data / Registro:** (Pendente)
+* **Resultado da Execução:** `EXECUCAO_CONCLUIDA`
+* **Data / Registro:** 2026-10-03 (Registro pelo Ator Engenheiro de Software)
