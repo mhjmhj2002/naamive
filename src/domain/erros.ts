@@ -36,3 +36,11 @@ export class AutenticacaoRequeridaErro extends ErroDominio {
     this.name = "AutenticacaoRequeridaErro";
   }
 }
+
+export class RecursoNaoEncontradoErro extends ErroDominio {
+  constructor(recurso: string, identificador: string) {
+    super(`${recurso} com identificador '${identificador}' não foi encontrado.`);
+    this.name = "RecursoNaoEncontradoErro";
+  }
+}
+

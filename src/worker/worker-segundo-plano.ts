@@ -6,6 +6,7 @@ import {
 } from "../infrastructure/adapters/integracao-modulos.js";
 import { RepositorioNecessidade } from "../domain/repositorio-necessidade.js";
 import { StatusNecessidade } from "../domain/tipos.js";
+import { ServicoAplicacaoCoordenacao } from "../application/servico-aplicacao-coordenacao.js";
 
 export type ManipuladorTarefa = (tarefa: TarefaTrabalho) => Promise<void>;
 
@@ -23,6 +24,7 @@ export class WorkerSegundoPlano {
   private repositorio: RepositorioNecessidade;
   private portaProjeto: PortaIntegracaoProjeto;
   private portaContexto: PortaIntegracaoContexto;
+  private servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined;
   private manipuladores: Map<string, ManipuladorTarefa> = new Map();
 
   private executando: boolean = false;
@@ -35,12 +37,14 @@ export class WorkerSegundoPlano {
     repositorio: RepositorioNecessidade,
     portaProjeto: PortaIntegracaoProjeto,
     portaContexto: PortaIntegracaoContexto,
-    config: ConfiguracaoWorker = {}
+    config: ConfiguracaoWorker = {},
+    servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined
   ) {
     this.fila = fila;
     this.repositorio = repositorio;
     this.portaProjeto = portaProjeto;
     this.portaContexto = portaContexto;
+    this.servicoCoordenacao = servicoCoordenacao;
     this.intervaloPollingMs = config.intervaloPollingMs ?? 100;
 
     this.registrarManipuladoresPadrao();
@@ -168,6 +172,25 @@ export class WorkerSegundoPlano {
         dados: payload.dados ?? {},
         timestamp: new Date(),
       });
+    });
+
+    // 3. Tarefa de reavaliação de elegibilidade e avanço de coordenação (EV-003)
+    this.registrarManipulador("REAVALIAR_COORDENACAO", async (tarefa) => {
+      const payload = tarefa.payload as { projetoId: string; trabalhoId?: string; sucesso?: boolean };
+      if (this.servicoCoordenacao && payload.projetoId) {
+        await this.servicoCoordenacao.avaliarElegibilidadeTrabalhos(payload.projetoId);
+        await this.portaContexto.registrarEventoRastreabilidade({
+          entidadeOrigem: "WorkerSegundoPlano",
+          idOrigem: payload.projetoId,
+          tipoEvento: "COORDENACAO_REAVALIADA",
+          dados: {
+            projetoId: payload.projetoId,
+            trabalhoId: payload.trabalhoId ?? null,
+            sucesso: payload.sucesso ?? null,
+          },
+          timestamp: new Date(),
+        });
+      }
     });
   }
 }

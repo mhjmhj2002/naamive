@@ -343,12 +343,12 @@ export class TrabalhoCoordenado {
     tokenCorrelacao: string,
     referenciasContexto: {
       projeto: string;
-      necessidade?: string;
-      modulo?: string;
-      entregaDeValor?: string;
-      documentosNormativos?: string[];
+      necessidade?: string | undefined;
+      modulo?: string | undefined;
+      entregaDeValor?: string | undefined;
+      documentosNormativos?: string[] | undefined;
     },
-    executorDesignado?: string | null
+    executorDesignado?: string | null | undefined
   ): HandoffCoordenacao {
     if (this._condicaoOperacional !== CondicaoOperacionalTrabalho.PREPARADO) {
       throw new TransicaoInvalidaErro(
