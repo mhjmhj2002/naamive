@@ -360,6 +360,8 @@ export async function iniciarSistema(): Promise<{
     repositorioContexto,
     servicoVerificacao,
     repositorioVerificacao,
+    workerSegundoPlano: worker,
+    despachanteAutonomo,
   });
 
   // 6. Inicia o servidor HTTP com resiliência a conflitos de portas

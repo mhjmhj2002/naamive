@@ -38,19 +38,16 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 * Intervenções do Owner constituem Decisões Humanas Materiais de autoridade máxima, com poder vinculante e imediato sobre a direção técnica.
 * Ator agêntico pode identificar e propor Débito, mas sua validade depende de revisão e decisão humana competente.
 
-### Débitos em Tratamento Prioritário
-* **[DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) — Ausência de Motor de Orquestração Autônoma de Agentes e Handoffs no Worker/Backend:**
-  - **Status:** `EM_TRATAMENTO_PRIORITARIO` (Fase 1 e Fase 2 Concluídas pelo Engenheiro de Software).
-  - **Descrição:** Falta de despacho automático de handoffs agênticos e dependência indevida de intervenção manual no chat/CLI a cada transição de Ator.
-  - **Origem / Competência de Tratamento:** Módulo `M-003 — Coordenação do Trabalho` / Infraestrutura do Worker e Orquestração.
-  - **Avanço Recente:** Implementação com sucesso da **Fase 1 (Domínio e Orquestração)** e **Fase 2 (Integração com WorkerSegundoPlano)**:
-    * Criação da porta pura `PortaDespachoAgente` (`src/domain/porta-despacho-agente.ts`);
-    * Criação do serviço orquestrador `DespachanteAutonomoAgentes` (`src/domain/despachante-autonomo-agentes.ts`) com garantia estrita de Human-in-the-Loop, impedindo autoatribuição ou autoaprovação de etapas do Owner e contendo em `AGUARDANDO_DECISAO_HUMANA`;
-    * Integração direta no `WorkerSegundoPlano` (`src/worker/worker-segundo-plano.ts`) com o manipulador `DESPACHAR_HANDOFF_AUTONOMO`, suporte dinâmico a modo autônomo (ativo/pausado) e telemetria causal no M-004 (`DESPACHO_AUTONOMO_PROCESSADO`);
-    * Suíte integrada executável (`tests/it021-despachante-autonomo-deb-tec-001.test.ts`) aprovada com 100% de sucesso;
-    * Totalidade da suíte do sistema verde: 21 arquivos de teste e 148 testes automatizados aprovados sem qualquer regressão (`npm run typecheck && npm test`).
-
 ### Débitos Resolvidos
+* **[DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) — Ausência de Motor de Orquestração Autônoma de Agentes e Handoffs no Worker/Backend:**
+  - **Status:** `RESOLVIDO` (Fases 1, 2, 3 e 4 integralmente concluídas pelo Engenheiro de Software).
+  - **Descrição:** Motor de orquestração autônoma de agentes, handoffs assíncronos e supervisão operacional plenamente implementados no worker e na camada web.
+  - **Solução Implementada:**
+    * **Fase 1 (Domínio e Orquestração):** Porta pura `PortaDespachoAgente` (`src/domain/porta-despacho-agente.ts`) e serviço `DespachanteAutonomoAgentes` (`src/domain/despachante-autonomo-agentes.ts`) com garantia estrita de Human-in-the-Loop, contendo etapas do Owner em `AGUARDANDO_DECISAO_HUMANA`.
+    * **Fase 2 (Integração com WorkerSegundoPlano):** Integração no `WorkerSegundoPlano` (`src/worker/worker-segundo-plano.ts`) com a tarefa `DESPACHAR_HANDOFF_AUTONOMO`, chave alternadora do modo autônomo (ativo/pausado) e telemetria causal no M-004 (`DESPACHO_AUTONOMO_PROCESSADO`).
+    * **Fase 3 (Camada Web de Supervisão em `/coordenacao`):** Barra de status e chave alternadora do modo autônomo, disparo sob demanda (`POST /coordenacao/executar-ciclo`), painel em tempo real de handoffs despachados e cartões de destaque de Gates Humanos (`painel-gate-humano`) com liberação soberana imediata do Owner (`mhj`).
+    * **Fase 4 (Suíte de Testes e Validação Integrada E2E):** Testes unitários e integrados em `tests/it021-despachante-autonomo-deb-tec-001.test.ts` e suíte E2E completa em `tests/it022-supervisao-web-ciclo-continuo-deb-tec-001.test.ts` (10 testes específicos, 100% aprovados).
+  - **Garantia de Qualidade Global:** `npm run typecheck && npm test`: 22 arquivos de teste e 153 testes automatizados aprovados (100% verdes).
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
   - **Status:** `RESOLVIDO`. Homologação obrigatória do Owner antes da transição para `CONCLUIDA` plenamente cumprida para `EV-001`, `EV-002`, `EV-003` e `EV-004`.
 
@@ -135,7 +132,7 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
-* O débito ativo [DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) possui natureza **não bloqueante**, não impedindo o avanço das atividades vigentes do ciclo de vida.
+* O débito técnico [DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) encontra-se **integralmente resolvido** (Fases 1 a 4 concluídas e validadas).
 * A EV-005 possui laudo técnico favorável independente (`EVOLUCAO_MATERIALIZADA`), estando pronta para decisão soberana de homologação pelo Owner.
 
 ## Próxima ação legítima

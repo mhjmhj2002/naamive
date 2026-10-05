@@ -1017,14 +1017,34 @@ export function obterClasseBadgeCondicaoOperacional(condicao: CondicaoOperaciona
   }
 }
 
+export interface InformacoesSupervisaoAutonoma {
+  modoAutonomoAtivo: boolean;
+  handoffsRecentes?: {
+    id: string;
+    tokenCorrelacao: string;
+    codigoTrabalho: string;
+    tituloTrabalho: string;
+    atorDestinatario: string;
+    skillDestinataria: string | null;
+    despachadoEm: Date;
+    retorno?: {
+      sucesso: boolean;
+      resultadoObservavel: string;
+      pendenciasOuBloqueios: string | null;
+      recebidoEm: Date;
+    } | null;
+  }[];
+}
+
 /**
- * Renderiza o painel principal de Coordenação do Trabalho (M-003 / EV-003).
+ * Renderiza o painel principal de Coordenação do Trabalho (M-003 / EV-003 / DEB-TEC-001).
  */
 export function renderizarPainelCoordenacao(
   visao: VisaoTrabalhosCoordenacao,
   projetos: Projeto[],
   projetoSelecionado?: Projeto | null,
-  feedback?: { tipo: "sucesso" | "erro"; mensagem: string }
+  feedback?: { tipo: "sucesso" | "erro"; mensagem: string },
+  supervisao?: InformacoesSupervisaoAutonoma
 ): string {
   let alertaFeedback = "";
   if (feedback) {
@@ -1201,11 +1221,102 @@ export function renderizarPainelCoordenacao(
       </div>
     </div>
 
+    <!-- Barra de Supervisão de Autonomia Agêntica (DEB-TEC-001) -->
+    <div class="card card-resumo border-0 mb-4 p-3 ${supervisao?.modoAutonomoAtivo ? "bg-light border-start border-success border-4" : "bg-light border-start border-secondary border-4"}">
+      <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div>
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <span class="fw-bold">🤖 Modo Autônomo de Agentes:</span>
+            ${
+              supervisao?.modoAutonomoAtivo
+                ? '<span class="badge bg-success" id="badge-modo-autonomo">ATIVO (CONTÍNUO)</span>'
+                : '<span class="badge bg-secondary" id="badge-modo-autonomo">PAUSADO (SUPERVISÃO MANUAL)</span>'
+            }
+          </div>
+          <p class="small text-muted mb-0">
+            ${
+              supervisao?.modoAutonomoAtivo
+                ? "O Worker do sistema realiza polling assíncrono, despacha handoffs para agentes elegíveis e respeita rigorosamente os pontos de contenção humana (Owner)."
+                : "Despacho autônomo suspenso. Os handoffs dependem de acionamento manual ou retomada da chave alternadora."
+            }
+          </p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+          <form method="POST" action="/coordenacao/modo-autonomo" class="d-inline">
+            <input type="hidden" name="projetoId" value="${escaparHtml(visao.projetoId)}">
+            <input type="hidden" name="ativo" value="${supervisao?.modoAutonomoAtivo ? "false" : "true"}">
+            <button type="submit" class="btn ${supervisao?.modoAutonomoAtivo ? "btn-outline-danger" : "btn-success"} btn-sm shadow-sm" id="btn-alternar-autonomo">
+              ${supervisao?.modoAutonomoAtivo ? "⏸️ Pausar Modo Autônomo" : "▶️ Ativar Modo Autônomo"}
+            </button>
+          </form>
+          ${
+            supervisao?.modoAutonomoAtivo
+              ? `
+            <form method="POST" action="/coordenacao/executar-ciclo" class="d-inline">
+              <input type="hidden" name="projetoId" value="${escaparHtml(visao.projetoId)}">
+              <button type="submit" class="btn btn-outline-primary btn-sm shadow-sm" id="btn-executar-ciclo-agora">
+                ⚡ Processar Ciclo Agora
+              </button>
+            </form>
+          `
+              : ""
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Se houver trabalhos aguardando decisão humana, exibe Gate Humano em Destaque -->
+    ${
+      visao.aguardandoDecisao.length > 0
+        ? `
+      <div class="card card-resumo border-warning mb-4 shadow-sm" style="border-width: 2px;" id="painel-gate-humano">
+        <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+          <span class="fw-bold">🛡️ Ponto de Interrupção Humana (Human-in-the-Loop) Requerido</span>
+          <span class="badge bg-dark">${visao.aguardandoDecisao.length} aguardando Owner</span>
+        </div>
+        <div class="card-body">
+          <p class="small text-muted mb-3">
+            O despachante autônomo está <strong>terminantemente proibido</strong> de autoatribuir ou autoaprovar etapas exclusivas do <code>Owner</code>. A liberação abaixo exige autenticação soberana ('mhj').
+          </p>
+          <div class="list-group list-group-flush mb-3">
+            ${visao.aguardandoDecisao
+              .map(
+                (trb) => `
+              <div class="list-group-item px-0 py-3 border-bottom">
+                <div class="row align-items-center">
+                  <div class="col-md-7">
+                    <span class="badge bg-dark me-2">${escaparHtml(trb.codigo)}</span>
+                    <strong class="text-primary">${escaparHtml(trb.titulo)}</strong>
+                    <div class="small text-danger mt-1">
+                      <strong>Motivo:</strong> ${escaparHtml(trb.motivoBloqueio || "Aguardando homologação ou decisão material soberana.")}
+                    </div>
+                  </div>
+                  <div class="col-md-5 mt-2 mt-md-0">
+                    <form method="POST" action="/coordenacao/trabalhos/${escaparHtml(trb.id)}/decisao-owner" class="d-flex gap-2">
+                      <input type="hidden" name="usuario" value="mhj">
+                      <input type="hidden" name="diretriz" value="Decisão soberana do Owner: liberado para continuidade da realização">
+                      <button type="submit" class="btn btn-warning btn-sm w-100 fw-bold shadow-sm" id="btn-liberar-gate-${escaparHtml(trb.codigo)}">
+                        👑 Liberar Gate Soberano (Owner: mhj)
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            `
+              )
+              .join("\n")}
+          </div>
+        </div>
+      </div>
+    `
+        : ""
+    }
+
     <!-- Destaque: Próximo Avanço Válido -->
     ${cardProximoAvanco}
 
     <!-- Tabela Geral de Trabalhos Coordenados -->
-    <div class="card card-resumo border-0 p-4">
+    <div class="card card-resumo border-0 p-4 mb-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h5 class="mb-0">Trabalhos Coordenados do Projeto</h5>
         <span class="badge bg-secondary">${todosTrabalhos.length} cadastrados</span>
@@ -1226,6 +1337,64 @@ export function renderizarPainelCoordenacao(
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- Painel de Handoffs Despachados e Rastreabilidade do Ciclo Autônomo -->
+    <div class="card card-resumo border-0 p-4" id="painel-handoffs-supervisao">
+      <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+        <div>
+          <h5 class="mb-0">🛰️ Painel de Handoffs e Despacho de Agentes</h5>
+          <small class="text-muted">Trilha de execução contínua, tokens de correlação e retornos dos Atores agênticos</small>
+        </div>
+        <span class="badge bg-info text-dark">${supervisao?.handoffsRecentes?.length || 0} registrados</span>
+      </div>
+      ${
+        supervisao?.handoffsRecentes && supervisao.handoffsRecentes.length > 0
+          ? `
+        <div class="table-responsive">
+          <table class="table table-sm table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 15%;">Token</th>
+                <th style="width: 15%;">Trabalho</th>
+                <th style="width: 25%;">Ator / Skill</th>
+                <th style="width: 20%;">Despachado em</th>
+                <th style="width: 15%;">Retorno</th>
+                <th style="width: 10%;" class="text-end">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${supervisao.handoffsRecentes
+                .map((h) => {
+                  const statusRetorno = h.retorno
+                    ? h.retorno.sucesso
+                      ? '<span class="badge bg-success">Sucesso</span>'
+                      : '<span class="badge bg-danger">Impedimento</span>'
+                    : '<span class="badge bg-warning text-dark">Em Execução</span>';
+
+                  return `
+                  <tr>
+                    <td><code class="text-primary font-monospace">${escaparHtml(h.tokenCorrelacao)}</code></td>
+                    <td><span class="fw-bold">${escaparHtml(h.codigoTrabalho)}</span></td>
+                    <td>
+                      <span class="badge bg-dark">${escaparHtml(h.atorDestinatario)}</span>
+                      ${h.skillDestinataria ? `<br><small class="text-muted"><code>${escaparHtml(h.skillDestinataria)}</code></small>` : ""}
+                    </td>
+                    <td class="small text-muted">${new Date(h.despachadoEm).toLocaleString("pt-BR")}</td>
+                    <td>${statusRetorno}</td>
+                    <td class="text-end">
+                      <a href="/coordenacao/handoffs/${escaparHtml(h.id)}" class="btn btn-outline-info btn-sm">Ver Pacote</a>
+                    </td>
+                  </tr>
+                `;
+                })
+                .join("\n")}
+            </tbody>
+          </table>
+        </div>
+      `
+          : '<div class="alert alert-light border mb-0 text-center text-muted py-3">Nenhum handoff despachado registrado até o momento.</div>'
+      }
     </div>
   `;
 

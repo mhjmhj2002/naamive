@@ -47,6 +47,9 @@ import {
   renderizarDetalhesVerificacao,
 } from "./templates.js";
 
+import { WorkerSegundoPlano } from "../worker/worker-segundo-plano.js";
+import { DespachanteAutonomoAgentes } from "../domain/despachante-autonomo-agentes.js";
+
 export interface DependenciasServidorWeb {
   repositorio: RepositorioNecessidade;
   autenticacaoOwner: PortaAutenticacaoOwner;
@@ -61,6 +64,8 @@ export interface DependenciasServidorWeb {
   repositorioContexto?: RepositorioContexto;
   servicoVerificacao?: ServicoVerificacao;
   repositorioVerificacao?: RepositorioVerificacao;
+  workerSegundoPlano?: WorkerSegundoPlano;
+  despachanteAutonomo?: DespachanteAutonomoAgentes;
 }
 
 /**
@@ -146,6 +151,8 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
     repositorioContexto,
     servicoVerificacao,
     repositorioVerificacao,
+    workerSegundoPlano,
+    despachanteAutonomo,
   } = deps;
 
   const server = http.createServer(async (req, res) => {
@@ -776,12 +783,123 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
         const feedbackTipo = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
         const feedback = feedbackMsg && feedbackTipo ? { tipo: feedbackTipo, mensagem: feedbackMsg } : undefined;
 
-        if (req.headers.accept?.includes("application/json")) {
-          return responderJson(res, 200, visao);
+        // Monta informações de supervisão autônoma e histórico de handoffs
+        let handoffsRecentes: any[] = [];
+        if (repositorioCoordenacao) {
+          const todos = await repositorioCoordenacao.listarPorProjetoId(projetoId);
+          for (const trb of todos) {
+            for (const h of trb.handoffs) {
+              handoffsRecentes.push({
+                id: h.id,
+                tokenCorrelacao: h.tokenCorrelacao,
+                codigoTrabalho: trb.codigo,
+                tituloTrabalho: trb.titulo,
+                atorDestinatario: h.atorDestinatario,
+                skillDestinataria: h.skillDestinataria,
+                despachadoEm: h.despachadoEm,
+                retorno: h.retorno
+                  ? {
+                      sucesso: h.retorno.sucesso,
+                      resultadoObservavel: h.retorno.resultadoObservavel,
+                      pendenciasOuBloqueios: h.retorno.pendenciasOuBloqueios,
+                      recebidoEm: h.retorno.recebidoEm,
+                    }
+                  : null,
+              });
+            }
+          }
+          // Ordena os handoffs mais recentes primeiro
+          handoffsRecentes.sort((a, b) => new Date(b.despachadoEm).getTime() - new Date(a.despachadoEm).getTime());
         }
 
-        const html = renderizarPainelCoordenacao(visao, projetos, projetoSelecionado, feedback);
+        const supervisao = {
+          modoAutonomoAtivo: workerSegundoPlano ? workerSegundoPlano.estaModoAutonomoAtivo : true,
+          handoffsRecentes,
+        };
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            ...visao,
+            supervisao,
+          });
+        }
+
+        const html = renderizarPainelCoordenacao(visao, projetos, projetoSelecionado, feedback, supervisao);
         return responderHtml(res, 200, html);
+      }
+
+      // 17.1. POST /coordenacao/modo-autonomo — Alternador de modo autônomo (Ativo / Pausado)
+      if (metodo === "POST" && pathname === "/coordenacao/modo-autonomo") {
+        const body = await extrairCorpoRequisicao(req);
+        const projetoId = body.projetoId ? String(body.projetoId).trim() : "";
+        const ativar = body.ativo === true || body.ativo === "true" || body.ativo === "1";
+
+        if (workerSegundoPlano) {
+          workerSegundoPlano.definirModoAutonomo(ativar);
+        }
+
+        await portaContexto.registrarEventoRastreabilidade({
+          entidadeOrigem: "WorkerSegundoPlano",
+          idOrigem: projetoId || "SISTEMA",
+          tipoEvento: "MODO_AUTONOMO_ALTERADO",
+          dados: {
+            novoEstado: ativar ? "ATIVO" : "PAUSADO",
+            alteradoEm: new Date().toISOString(),
+          },
+          timestamp: new Date(),
+        });
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            ok: true,
+            modoAutonomoAtivo: workerSegundoPlano ? workerSegundoPlano.estaModoAutonomoAtivo : ativar,
+          });
+        }
+
+        const msg = ativar
+          ? "Modo+Autônomo+ativado+com+sucesso!+Worker+executando+despacho+contínuo."
+          : "Modo+Autônomo+pausado.+O+sistema+está+em+modo+de+supervisão+manual.";
+        const paramProj = projetoId ? `projetoId=${encodeURIComponent(projetoId)}&` : "";
+        return redirecionar(res, `/coordenacao?${paramProj}tipo=sucesso&feedback=${msg}`);
+      }
+
+      // 17.2. POST /coordenacao/executar-ciclo — Disparo sob demanda do ciclo do despachante autônomo
+      if (metodo === "POST" && pathname === "/coordenacao/executar-ciclo") {
+        const body = await extrairCorpoRequisicao(req);
+        const projetoId = body.projetoId ? String(body.projetoId).trim() : "";
+
+        if (!projetoId) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "O identificador do projeto é obrigatório." });
+          }
+          return redirecionar(res, `/coordenacao?tipo=erro&feedback=Identificador+do+projeto+é+obrigatório.`);
+        }
+
+        try {
+          let resultadoCiclo: any = null;
+          if (workerSegundoPlano) {
+            resultadoCiclo = await workerSegundoPlano.executarCicloDespachoAutonomo(projetoId);
+          } else if (despachanteAutonomo) {
+            resultadoCiclo = await despachanteAutonomo.executarCicloAutonomo(projetoId);
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, {
+              ok: true,
+              resultadoCiclo,
+            });
+          }
+
+          const totalDespachados = resultadoCiclo?.despachosRealizados ?? 0;
+          const totalContencoes = resultadoCiclo?.contencoesHumanas?.length ?? 0;
+          const msg = `Ciclo+processado:+${totalDespachados}+despacho(s)+realizado(s),+${totalContencoes}+contenção(ões)+humana(s).`;
+          return redirecionar(res, `/coordenacao?projetoId=${encodeURIComponent(projetoId)}&tipo=sucesso&feedback=${msg}`);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 500, { erro: err.message });
+          }
+          return redirecionar(res, `/coordenacao?projetoId=${encodeURIComponent(projetoId)}&tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
       }
 
       // 18. GET /coordenacao/trabalhos/:id — Detalhes completos do Trabalho Coordenado
