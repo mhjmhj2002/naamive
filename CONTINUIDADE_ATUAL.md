@@ -38,11 +38,12 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 * Intervenções do Owner constituem Decisões Humanas Materiais de autoridade máxima, com poder vinculante e imediato sobre a direção técnica.
 * Ator agêntico pode identificar e propor Débito, mas sua validade depende de revisão e decisão humana competente.
 
-### Débitos Ativos
+### Débitos em Tratamento Prioritário
 * **[DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) — Ausência de Motor de Orquestração Autônoma de Agentes e Handoffs no Worker/Backend:**
-  - **Status:** `ATIVO` (Não bloqueante).
+  - **Status:** `EM_TRATAMENTO_PRIORITARIO` (Determinação Soberana do Owner).
   - **Descrição:** Falta de despacho automático de handoffs agênticos e dependência indevida de intervenção manual no chat/CLI a cada transição de Ator.
   - **Origem / Competência de Tratamento:** Módulo `M-003 — Coordenação do Trabalho` / Infraestrutura do Worker.
+  - **Avanço Recente:** Elaboração formal da proposta de arquitetura pelo Arquiteto de Software e Especialista em Planejamento da Realização, definindo o despachante autônomo no worker, a fila de handoffs transacional em PostgreSQL e os pontos mandatórios de interrupção humana (Human-in-the-Loop) preservando a autoridade soberana do Owner.
 
 ### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
