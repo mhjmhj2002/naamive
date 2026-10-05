@@ -21,6 +21,17 @@ import {
   TrilhaRastreabilidade,
   RelatorioConsistenciaContexto,
 } from "../application/servico-contexto.js";
+import {
+  ResultadoSoftware,
+  CriterioVerificavel,
+  EvidenciaVerificacao,
+  LaudoVerificacao,
+} from "../domain/verificacao.js";
+import {
+  MetodoObservacao,
+  ConclusaoVerificacao,
+} from "../domain/tipos-verificacao.js";
+import { LaudoVerificacaoAgregado } from "../domain/valores-verificacao.js";
 
 
 /**
@@ -151,11 +162,14 @@ export function layoutMestre(titulo: string, conteudo: string): string {
             <a class="nav-link" href="/rastreabilidade">Rastreabilidade</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link" href="/verificacao">Verificação</a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link" href="/nova">Nova Necessidade</a>
           </li>
         </ul>
         <span class="navbar-text text-light small">
-          EV-001, EV-002, EV-003 & EV-004 — Condução Autônoma do NAAMIVE
+          EV-001, EV-002, EV-003 & EV-004 | EV-005 — Condução Autônoma do NAAMIVE
         </span>
       </div>
     </div>
@@ -1962,4 +1976,461 @@ export function renderizarDetalhesRastreabilidade(dados: {
   return layoutMestre(`Rastreabilidade: ${trilha.codigoEntidade}`, conteudo);
 }
 
+/**
+ * Retorna classe badge do Bootstrap conforme a Conclusão Técnica de Verificação.
+ */
+export function obterClasseBadgeConclusao(conclusao: ConclusaoVerificacao | string): string {
+  switch (conclusao) {
+    case ConclusaoVerificacao.CRITERIO_DEMONSTRADO:
+      return "bg-success text-white";
+    case ConclusaoVerificacao.CRITERIO_NAO_DEMONSTRADO:
+      return "bg-danger text-white";
+    case ConclusaoVerificacao.EVIDENCIA_INSUFICIENTE:
+      return "bg-warning text-dark";
+    case ConclusaoVerificacao.DIVERGENCIA_ENCONTRADA:
+      return "bg-danger bg-opacity-75 text-white";
+    case ConclusaoVerificacao.VERIFICACAO_IMPOSSIVEL:
+      return "bg-secondary text-white";
+    default:
+      return "bg-secondary text-white";
+  }
+}
 
+/**
+ * Retorna classe badge do Bootstrap para o Método de Observação.
+ */
+export function obterClasseBadgeMetodo(metodo: MetodoObservacao | string): string {
+  switch (metodo) {
+    case MetodoObservacao.SUITE_AUTOMATIZADA:
+      return "bg-primary";
+    case MetodoObservacao.INSPECAO_HTTP:
+      return "bg-info text-dark";
+    case MetodoObservacao.CONFORMIDADE_ESQUEMA:
+      return "bg-dark text-white";
+    case MetodoObservacao.OPERACIONAL:
+      return "bg-secondary text-white";
+    default:
+      return "bg-light text-dark border";
+  }
+}
+
+/**
+ * Renderiza o painel principal de Verificação de Software (M-005 / EV-005).
+ */
+export function renderizarPainelVerificacao(dados: {
+  resultados: ResultadoSoftware[];
+  matrizes: Array<{
+    resultado: ResultadoSoftware;
+    laudoAgregado: LaudoVerificacaoAgregado;
+  }>;
+  feedback?: { tipo: "sucesso" | "erro"; mensagem: string } | undefined;
+}): string {
+  const alertaFeedback = dados.feedback ? `
+    <div class="alert alert-${dados.feedback.tipo === "sucesso" ? "success" : "danger"} alert-dismissible fade show mb-4">
+      ${escaparHtml(dados.feedback.mensagem)}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+  ` : "";
+
+  // Totais agregados
+  const totalResultados = dados.resultados.length;
+  let totalDemonstrados = 0;
+  let totalNaoDemonstrados = 0;
+  let totalInsuficientes = 0;
+  let totalDivergencias = 0;
+
+  for (const m of dados.matrizes) {
+    totalDemonstrados += m.laudoAgregado.demonstrados;
+    totalNaoDemonstrados += m.laudoAgregado.naoDemonstrados;
+    totalInsuficientes += m.laudoAgregado.insuficientes;
+    totalDivergencias += m.laudoAgregado.divergencias;
+  }
+
+  const linhasResultados = dados.matrizes.map(({ resultado, laudoAgregado }) => {
+    const badgeConclusao = `<span class="badge ${obterClasseBadgeConclusao(laudoAgregado.conclusaoGeral)} badge-status">${laudoAgregado.conclusaoGeral}</span>`;
+    return `
+      <tr>
+        <td>
+          <a href="/verificacao/${escaparHtml(resultado.id)}" class="fw-bold font-monospace text-decoration-none">
+            ${escaparHtml(resultado.codigoReferencia)}
+          </a>
+        </td>
+        <td>
+          <span class="badge bg-light text-dark border">${escaparHtml(resultado.moduloOrigem)}</span>
+        </td>
+        <td>
+          <span class="badge bg-secondary-subtle text-dark border">${escaparHtml(resultado.entregaValorCodigo)}</span>
+        </td>
+        <td><small class="text-muted font-monospace">${escaparHtml(resultado.versaoArtefato)}</small></td>
+        <td>${badgeConclusao}</td>
+        <td>
+          <span class="badge bg-success-subtle text-success border border-success me-1" title="Demonstrados">${laudoAgregado.demonstrados}</span>
+          <span class="badge bg-warning-subtle text-dark border border-warning me-1" title="Insuficientes">${laudoAgregado.insuficientes}</span>
+          ${laudoAgregado.divergencias > 0 ? `<span class="badge bg-danger-subtle text-danger border border-danger me-1" title="Divergências">${laudoAgregado.divergencias}</span>` : ""}
+          <span class="badge bg-light text-dark border" title="Total">${laudoAgregado.totalCriterios}</span>
+        </td>
+        <td><small class="text-muted">${new Date(resultado.registradoEm).toLocaleDateString("pt-BR")}</small></td>
+        <td>
+          <a href="/verificacao/${escaparHtml(resultado.id)}" class="btn btn-sm btn-outline-primary">Inspecionar Laudo</a>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  const conteudoVazio = `
+    <div class="alert alert-info py-4 text-center">
+      <h5>Nenhum Resultado de Software Registrado</h5>
+      <p class="mb-3">Resultados de software são registrados durante a entrega das realizações para confrontação estrita contra critérios verificáveis.</p>
+    </div>
+  `;
+
+  const conteudo = `
+    ${alertaFeedback}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h1 class="h3 mb-1">Verificação do Resultado de Software (M-005)</h1>
+        <p class="text-muted mb-0">Avaliação substantiva, matriz de conformidade técnica e confrontação estrita de critérios da EV-005</p>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/rastreabilidade" class="btn btn-outline-secondary btn-sm">Rastreabilidade &rarr;</a>
+      </div>
+    </div>
+
+    <!-- Indicadores Resumo -->
+    <div class="row g-3 mb-4">
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 bg-white">
+          <div class="text-muted small text-uppercase fw-bold">Resultados Registrados</div>
+          <div class="h3 mb-0 text-dark">${totalResultados}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 bg-white">
+          <div class="text-muted small text-uppercase fw-bold text-success">Critérios Demonstrados</div>
+          <div class="h3 mb-0 text-success">${totalDemonstrados}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 bg-white">
+          <div class="text-muted small text-uppercase fw-bold text-warning">Evidência Insuficiente</div>
+          <div class="h3 mb-0 text-warning">${totalInsuficientes}</div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card card-resumo border-0 p-3 bg-white">
+          <div class="text-muted small text-uppercase fw-bold text-danger">Divergências Encontradas</div>
+          <div class="h3 mb-0 text-danger">${totalDivergencias}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela de Resultados e Matrizes -->
+    <div class="card card-resumo border-0">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Matriz Consolidada de Conformidade Técnica</h5>
+        <span class="badge bg-light text-muted border">Confrontação Estrita</span>
+      </div>
+      ${totalResultados === 0 ? conteudoVazio : `
+        <div class="table-responsive">
+          <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+              <tr>
+                <th scope="col">Código Ref.</th>
+                <th scope="col">Módulo</th>
+                <th scope="col">Entrega de Valor</th>
+                <th scope="col">Versão</th>
+                <th scope="col">Conclusão Geral</th>
+                <th scope="col">Critérios (OK/Aviso/Total)</th>
+                <th scope="col">Registro</th>
+                <th scope="col" style="width: 140px;">Ação</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${linhasResultados}
+            </tbody>
+          </table>
+        </div>
+      `}
+    </div>
+  `;
+
+  return layoutMestre("Verificação do Resultado de Software", conteudo);
+}
+
+/**
+ * Renderiza os detalhes de um Resultado de Software e sua Matriz de Conformidade completa.
+ */
+export function renderizarDetalhesVerificacao(dados: {
+  resultado: ResultadoSoftware;
+  criterios: CriterioVerificavel[];
+  evidencias: EvidenciaVerificacao[];
+  laudos: LaudoVerificacao[];
+  laudoAgregado: LaudoVerificacaoAgregado;
+  feedback?: { tipo: "sucesso" | "erro"; mensagem: string } | undefined;
+}): string {
+  const { resultado, criterios, evidencias, laudos, laudoAgregado, feedback } = dados;
+
+  const alertaFeedback = feedback ? `
+    <div class="alert alert-${feedback.tipo === "sucesso" ? "success" : "danger"} alert-dismissible fade show mb-4">
+      ${escaparHtml(feedback.mensagem)}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fechar"></button>
+    </div>
+  ` : "";
+
+  const badgeConclusaoGeral = `<span class="badge ${obterClasseBadgeConclusao(laudoAgregado.conclusaoGeral)} fs-6">${laudoAgregado.conclusaoGeral}</span>`;
+
+  // Renderizar cartões para cada critério verificável
+  const cardsCriterios = criterios.map((criterio) => {
+    const laudo = laudos.find((l) => l.criterioId === criterio.id);
+    const evidenciasCriterio = evidencias.filter((e) => e.criterioId === criterio.id);
+
+    const conclusao = laudo?.conclusao || (
+      evidenciasCriterio.length === 0
+        ? ConclusaoVerificacao.EVIDENCIA_INSUFICIENTE
+        : (evidenciasCriterio.every((e) => e.sucesso)
+            ? ConclusaoVerificacao.CRITERIO_DEMONSTRADO
+            : ConclusaoVerificacao.CRITERIO_NAO_DEMONSTRADO)
+    );
+
+    const badgeCriterio = `<span class="badge ${obterClasseBadgeConclusao(conclusao)}">${conclusao}</span>`;
+    const badgeMetodo = `<span class="badge ${obterClasseBadgeMetodo(criterio.metodoObservacao)}">${criterio.metodoObservacao}</span>`;
+
+    const itensEvidencias = evidenciasCriterio.map((ev) => `
+      <div class="p-2 border rounded bg-light mb-2 small">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <span class="badge ${ev.sucesso ? "bg-success" : "bg-danger"}">${ev.sucesso ? "SUCESSO" : "FALHA"}</span>
+          <span class="text-muted font-monospace">${new Date(ev.coletadoEm).toLocaleString("pt-BR")}</span>
+        </div>
+        <div><strong>Procedimento:</strong> ${escaparHtml(ev.procedimentoExecutado)}</div>
+        <div><strong>Resultado Observado:</strong> ${escaparHtml(ev.resultadoObservado)}</div>
+        <div class="text-muted mt-1">Coletado por: ${escaparHtml(ev.coletadoPor)}</div>
+      </div>
+    `).join("");
+
+    return `
+      <div class="card card-resumo border-0 mb-3">
+        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+          <div>
+            <span class="badge bg-dark font-monospace me-2">${escaparHtml(criterio.codigo)}</span>
+            ${badgeMetodo}
+          </div>
+          <div>
+            ${badgeCriterio}
+          </div>
+        </div>
+        <div class="card-body pt-0">
+          <div class="mb-2">
+            <strong>Comportamento Esperado:</strong>
+            <p class="mb-1 text-secondary">${escaparHtml(criterio.descricaoComportamento)}</p>
+          </div>
+          <div class="row g-2 mb-2 small text-muted">
+            <div class="col-md-6">
+              <strong>Condição de Satisfação:</strong> ${escaparHtml(criterio.condicaoSatisfacao)}
+            </div>
+            <div class="col-md-6">
+              <strong>Origem Normativa:</strong> ${escaparHtml(criterio.origemNormativa)}
+            </div>
+            ${criterio.limitesOuTolerancias ? `
+              <div class="col-12">
+                <strong>Limites / Tolerâncias:</strong> ${escaparHtml(criterio.limitesOuTolerancias)}
+              </div>
+            ` : ""}
+          </div>
+
+          ${laudo ? `
+            <div class="p-2 mb-2 rounded bg-body-secondary small">
+              <strong>Fundamentação do Laudo:</strong>
+              <div class="text-dark">${escaparHtml(laudo.fundamentacaoTecnica)}</div>
+              ${laudo.divergenciasApontadas ? `
+                <div class="text-danger fw-bold mt-1">Divergências: ${escaparHtml(laudo.divergenciasApontadas)}</div>
+              ` : ""}
+              <div class="text-muted mt-1">Emitido por: ${escaparHtml(laudo.emitidoPor)}</div>
+            </div>
+          ` : ""}
+
+          <!-- Evidências Coletadas -->
+          <div class="mt-2">
+            <h6 class="fw-bold small text-muted text-uppercase mb-2">Evidências Registradas (${evidenciasCriterio.length})</h6>
+            ${evidenciasCriterio.length > 0 ? itensEvidencias : `
+              <p class="text-muted small mb-0 fst-italic">Nenhuma evidência empírica coletada para este critério.</p>
+            `}
+          </div>
+
+          <!-- Formulário para Registrar Evidência -->
+          <details class="mt-3">
+            <summary class="btn btn-sm btn-outline-secondary py-0">Adicionar Evidência Manual</summary>
+            <form action="/verificacao/${escaparHtml(resultado.id)}/evidencias" method="POST" class="p-3 border rounded mt-2 bg-light">
+              <input type="hidden" name="criterioId" value="${escaparHtml(criterio.id)}">
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Procedimento Executado *</label>
+                <input type="text" name="procedimentoExecutado" class="form-control form-control-sm" placeholder="ex: Execução de teste unitário" required>
+              </div>
+              <div class="mb-2">
+                <label class="form-label small fw-bold">Resultado Observado *</label>
+                <input type="text" name="resultadoObservado" class="form-control form-control-sm" placeholder="ex: Status HTTP 200 retornado" required>
+              </div>
+              <div class="row mb-2">
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Status da Evidência</label>
+                  <select name="sucesso" class="form-select form-select-sm">
+                    <option value="true" selected>Sucesso (Atendido)</option>
+                    <option value="false">Falha (Não Atendido)</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label small fw-bold">Coletado Por</label>
+                  <input type="text" name="coletadoPor" class="form-control form-control-sm" value="Engenheiro de Software" required>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-sm btn-primary">Registrar Evidência</button>
+            </form>
+          </details>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  const conteudo = `
+    ${alertaFeedback}
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="/verificacao">Verificação</a></li>
+            <li class="breadcrumb-item active" aria-current="page">${escaparHtml(resultado.codigoReferencia)}</li>
+          </ol>
+        </nav>
+        <h1 class="h3 mb-0">Laudo Técnico: <span class="font-monospace text-primary">${escaparHtml(resultado.codigoReferencia)}</span></h1>
+      </div>
+      <div class="d-flex gap-2">
+        <a href="/rastreabilidade/consulta?codigo=${escaparHtml(resultado.codigoReferencia)}" class="btn btn-outline-info btn-sm">Ver Rastreabilidade</a>
+        <a href="/verificacao" class="btn btn-outline-secondary btn-sm">&larr; Voltar à Lista</a>
+      </div>
+    </div>
+
+    <!-- Painel de Laudo Agregado e Conclusão -->
+    <div class="card card-resumo border-0 mb-4 p-4">
+      <div class="d-flex justify-content-between align-items-start border-bottom pb-3 mb-3">
+        <div>
+          <span class="badge bg-secondary me-2">Módulo: ${escaparHtml(resultado.moduloOrigem)}</span>
+          <span class="badge bg-primary-subtle text-primary border border-primary me-2">EV: ${escaparHtml(resultado.entregaValorCodigo)}</span>
+          <span class="badge bg-light text-dark border">Versão: ${escaparHtml(resultado.versaoArtefato)}</span>
+          <h4 class="mt-2 mb-1">${escaparHtml(resultado.descricao)}</h4>
+          <div class="small text-muted">Declarado por: <strong>${escaparHtml(resultado.declaradoPor)}</strong> em ${new Date(resultado.registradoEm).toLocaleString("pt-BR")}</div>
+        </div>
+        <div class="text-end">
+          <div class="small text-muted mb-1">Conclusão Técnica Agregada:</div>
+          ${badgeConclusaoGeral}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <h6 class="text-muted small text-uppercase fw-bold">Fundamentação Geral do Laudo</h6>
+        <p class="mb-0 bg-light p-3 rounded text-secondary">${escaparHtml(laudoAgregado.fundamentacaoGeral)}</p>
+      </div>
+
+      <div class="row g-2 text-center">
+        <div class="col">
+          <div class="p-2 border rounded bg-white">
+            <div class="small text-muted">Critérios</div>
+            <div class="fw-bold fs-5">${laudoAgregado.totalCriterios}</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="p-2 border rounded bg-white">
+            <div class="small text-success">Demonstrados</div>
+            <div class="fw-bold fs-5 text-success">${laudoAgregado.demonstrados}</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="p-2 border rounded bg-white">
+            <div class="small text-warning">Insuficientes</div>
+            <div class="fw-bold fs-5 text-warning">${laudoAgregado.insuficientes}</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="p-2 border rounded bg-white">
+            <div class="small text-danger">Não Demonstrados</div>
+            <div class="fw-bold fs-5 text-danger">${laudoAgregado.naoDemonstrados}</div>
+          </div>
+        </div>
+        <div class="col">
+          <div class="p-2 border rounded bg-white">
+            <div class="small text-danger">Divergências</div>
+            <div class="fw-bold fs-5 text-danger">${laudoAgregado.divergencias}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ações de Avaliação / Reavaliação -->
+      <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+        <form action="/verificacao/${escaparHtml(resultado.id)}/avaliar" method="POST" class="d-inline">
+          <button type="submit" class="btn btn-primary btn-sm px-3">
+            Executar Avaliação Estrita Agora
+          </button>
+        </form>
+        <form action="/verificacao/${escaparHtml(resultado.id)}/reavaliar-background" method="POST" class="d-inline">
+          <button type="submit" class="btn btn-outline-dark btn-sm">
+            Agendar Reavaliação no Worker
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista de Critérios Verificáveis -->
+    <div class="mb-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Critérios Verificáveis e Confrontação de Evidências (${criterios.length})</h5>
+        <details>
+          <summary class="btn btn-sm btn-outline-primary">+ Novo Critério</summary>
+          <form action="/verificacao/${escaparHtml(resultado.id)}/criterios" method="POST" class="p-3 border rounded mt-2 bg-white card-resumo">
+            <h6 class="fw-bold mb-3 small text-uppercase">Cadastrar Critério Verificável</h6>
+            <div class="row g-2 mb-2">
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Código *</label>
+                <input type="text" name="codigo" class="form-control form-control-sm" placeholder="ex: CRIT-001" required>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Método de Observação *</label>
+                <select name="metodoObservacao" class="form-select form-select-sm" required>
+                  <option value="SUITE_AUTOMATIZADA">SUITE_AUTOMATIZADA</option>
+                  <option value="INSPECAO_HTTP">INSPECAO_HTTP</option>
+                  <option value="CONFORMIDADE_ESQUEMA">CONFORMIDADE_ESQUEMA</option>
+                  <option value="OPERACIONAL">OPERACIONAL</option>
+                </select>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label small fw-bold">Origem Normativa *</label>
+                <input type="text" name="origemNormativa" class="form-control form-control-sm" placeholder="ex: EV-005 Critério 1" required>
+              </div>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Descrição do Comportamento Esperado *</label>
+              <textarea name="descricaoComportamento" class="form-control form-control-sm" rows="2" placeholder="O que o software deve demonstrar empiricamente?" required></textarea>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small fw-bold">Condição de Satisfação *</label>
+              <input type="text" name="condicaoSatisfacao" class="form-control form-control-sm" placeholder="ex: 100% dos testes devem passar" required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small">Limites ou Tolerâncias (Opcional)</label>
+              <input type="text" name="limitesOuTolerancias" class="form-control form-control-sm" placeholder="ex: Tempo de resposta menor que 500ms">
+            </div>
+            <button type="submit" class="btn btn-sm btn-primary">Cadastrar Critério</button>
+          </form>
+        </details>
+      </div>
+
+      ${criterios.length === 0 ? `
+        <div class="alert alert-info py-4 text-center">
+          <h6>Nenhum critério cadastrado para este resultado de software</h6>
+          <p class="mb-0">Cadastre critérios verificáveis para permitir a confrontação estrita de conformidade.</p>
+        </div>
+      ` : cardsCriterios}
+    </div>
+  `;
+
+  return layoutMestre(`Laudo: ${resultado.codigoReferencia}`, conteudo);
+}

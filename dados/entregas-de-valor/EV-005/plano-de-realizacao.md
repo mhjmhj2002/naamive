@@ -40,7 +40,7 @@ IT-020 (Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte 
 | [`IT-017`](../../itens-de-trabalho/IT-017/item-de-trabalho.md) | Esquema Relacional PostgreSQL de Verificação de Software e Migrações | `CONCLUIDO` | Nenhuma (sucede baseline consolidada na EV-004) |
 | [`IT-018`](../../itens-de-trabalho/IT-018/item-de-trabalho.md) | Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade | `CONCLUIDO` | `IT-017` |
 | [`IT-019`](../../itens-de-trabalho/IT-019/item-de-trabalho.md) | Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background | `CONCLUIDO` | `IT-018` |
-| [`IT-020`](../../itens-de-trabalho/IT-020/item-de-trabalho.md) | Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada | `PRONTO_PARA_EXECUCAO` | `IT-019` |
+| [`IT-020`](../../itens-de-trabalho/IT-020/item-de-trabalho.md) | Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada | `CONCLUIDO` | `IT-019` |
 
 ## Critérios de Aceitação e Testes
 

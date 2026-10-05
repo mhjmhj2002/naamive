@@ -341,6 +341,8 @@ export async function iniciarSistema(): Promise<{
     repositorioCoordenacao,
     servicoContexto,
     repositorioContexto,
+    servicoVerificacao,
+    repositorioVerificacao,
   });
 
   // 6. Inicia o servidor HTTP com resiliência a conflitos de portas

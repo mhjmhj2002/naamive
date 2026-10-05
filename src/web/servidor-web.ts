@@ -28,6 +28,9 @@ import { ServicoContexto } from "../application/servico-contexto.js";
 import {
   FinalidadeContexto,
 } from "../domain/tipos-contexto.js";
+import { RepositorioVerificacao } from "../domain/repositorio-verificacao.js";
+import { ServicoVerificacao } from "../application/servico-verificacao.js";
+import { MetodoObservacao } from "../domain/tipos-verificacao.js";
 import {
   escaparHtml,
   renderizarListaNecessidades,
@@ -40,6 +43,8 @@ import {
   renderizarDetalheHandoff,
   renderizarPainelRastreabilidade,
   renderizarDetalhesRastreabilidade,
+  renderizarPainelVerificacao,
+  renderizarDetalhesVerificacao,
 } from "./templates.js";
 
 export interface DependenciasServidorWeb {
@@ -54,6 +59,8 @@ export interface DependenciasServidorWeb {
   repositorioCoordenacao?: RepositorioCoordenacao;
   servicoContexto?: ServicoContexto;
   repositorioContexto?: RepositorioContexto;
+  servicoVerificacao?: ServicoVerificacao;
+  repositorioVerificacao?: RepositorioVerificacao;
 }
 
 /**
@@ -137,6 +144,8 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
     repositorioCoordenacao,
     servicoContexto,
     repositorioContexto,
+    servicoVerificacao,
+    repositorioVerificacao,
   } = deps;
 
   const server = http.createServer(async (req, res) => {
@@ -1234,6 +1243,346 @@ export function criarServidorWeb(deps: DependenciasServidorWeb): http.Server {
         });
 
         return responderHtml(res, 200, html);
+      }
+
+      // =========================================================================
+      // ROTAS DE VERIFICAÇÃO DO RESULTADO DE SOFTWARE (M-005 / EV-005 / IT-020)
+      // =========================================================================
+
+      // 27. GET /verificacao — Painel principal de Verificação e Matriz de Conformidade
+      if (metodo === "GET" && pathname === "/verificacao") {
+        if (!servicoVerificacao && !repositorioVerificacao) {
+          return responderHtml(res, 500, "<h1>500 — Módulo de Verificação não configurado no servidor.</h1>");
+        }
+
+        const resultados = repositorioVerificacao
+          ? await repositorioVerificacao.listarResultados()
+          : [];
+
+        const matrizes: Array<{
+          resultado: any;
+          laudoAgregado: any;
+        }> = [];
+
+        for (const r of resultados) {
+          if (servicoVerificacao) {
+            const matriz = await servicoVerificacao.obterMatrizConformidade(r.id);
+            matrizes.push({
+              resultado: r,
+              laudoAgregado: matriz.laudoAgregado,
+            });
+          } else {
+            // Em caso de apenas repositorio
+            matrizes.push({
+              resultado: r,
+              laudoAgregado: {
+                resultadoSoftwareId: r.id,
+                codigoReferencia: r.codigoReferencia,
+                conclusaoGeral: "EVIDENCIA_INSUFICIENTE",
+                fundamentacaoGeral: "Repositório isolado sem serviço de cálculo agregado.",
+                laudosPorCriterio: [],
+                totalCriterios: 0,
+                demonstrados: 0,
+                naoDemonstrados: 0,
+                insuficientes: 0,
+                divergencias: 0,
+                impossiveis: 0,
+                emitidoPor: "Sistema",
+                avaliadoEm: new Date(),
+              },
+            });
+          }
+        }
+
+        const feedbackMsg = url.searchParams.get("feedback");
+        const feedbackTipo = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
+        const feedback = feedbackMsg && feedbackTipo ? { tipo: feedbackTipo, mensagem: feedbackMsg } : undefined;
+
+        if (req.headers.accept?.includes("application/json")) {
+          return responderJson(res, 200, {
+            resultados,
+            matrizes,
+          });
+        }
+
+        const html = renderizarPainelVerificacao({
+          resultados,
+          matrizes,
+          feedback,
+        });
+
+        return responderHtml(res, 200, html);
+      }
+
+      // 28. POST /verificacao/resultados — Registro de Resultado de Software
+      if (metodo === "POST" && pathname === "/verificacao/resultados") {
+        if (!servicoVerificacao && !repositorioVerificacao) {
+          return responderHtml(res, 500, "<h1>500 — Módulo de Verificação não configurado.</h1>");
+        }
+
+        const body = await extrairCorpoRequisicao(req);
+        const {
+          codigoReferencia,
+          moduloOrigem,
+          entregaValorCodigo,
+          versaoArtefato,
+          descricao,
+          declaradoPor,
+        } = body;
+
+        if (!codigoReferencia || !moduloOrigem || !entregaValorCodigo || !versaoArtefato || !descricao) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "Todos os campos obrigatórios devem ser preenchidos." });
+          }
+          return redirecionar(res, "/verificacao?tipo=erro&feedback=Campos+obrigatórios+ausentes.");
+        }
+
+        try {
+          let resultadoCriado: any;
+          if (servicoVerificacao) {
+            resultadoCriado = await servicoVerificacao.registrarResultadoSoftware({
+              codigoReferencia: String(codigoReferencia).trim().toUpperCase(),
+              moduloOrigem: String(moduloOrigem).trim().toUpperCase(),
+              entregaValorCodigo: String(entregaValorCodigo).trim().toUpperCase(),
+              versaoArtefato: String(versaoArtefato).trim(),
+              descricao: String(descricao).trim(),
+              declaradoPor: String(declaradoPor || "Engenheiro de Software").trim(),
+            });
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 201, resultadoCriado);
+          }
+
+          return redirecionar(res, `/verificacao/${resultadoCriado.id}?tipo=sucesso&feedback=Resultado+de+software+registrado.`);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(res, `/verificacao?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 29. GET /verificacao/:id — Detalhe do laudo e matriz de conformidade técnica
+      const matchVerificacaoId = pathname.match(/^\/verificacao\/([a-zA-Z0-9_-]+)$/);
+      if (metodo === "GET" && matchVerificacaoId) {
+        const id = matchVerificacaoId[1];
+
+        try {
+          let matriz: any;
+          if (servicoVerificacao) {
+            matriz = await servicoVerificacao.obterMatrizConformidade(id);
+          } else if (repositorioVerificacao) {
+            const resultado = await repositorioVerificacao.obterResultadoPorId(id);
+            if (!resultado) {
+              return responderHtml(res, 404, "<h1>404 — Resultado de Software não encontrado</h1>");
+            }
+            const criterios = await repositorioVerificacao.listarCriteriosPorResultado(id);
+            const evidencias = await repositorioVerificacao.listarEvidenciasPorResultado(id);
+            const laudos = await repositorioVerificacao.listarLaudosPorResultado(id);
+            matriz = {
+              resultado,
+              criterios,
+              evidencias,
+              laudos,
+              laudoAgregado: {
+                resultadoSoftwareId: id,
+                codigoReferencia: resultado.codigoReferencia,
+                conclusaoGeral: "EVIDENCIA_INSUFICIENTE",
+                fundamentacaoGeral: "Laudo agregado emitido por consulta direta.",
+                laudosPorCriterio: [],
+                totalCriterios: criterios.length,
+                demonstrados: 0,
+                naoDemonstrados: 0,
+                insuficientes: criterios.length,
+                divergencias: 0,
+                impossiveis: 0,
+                emitidoPor: "Sistema",
+                avaliadoEm: new Date(),
+              },
+            };
+          } else {
+            return responderHtml(res, 500, "<h1>500 — Módulo de Verificação indisponível</h1>");
+          }
+
+          const feedbackMsg = url.searchParams.get("feedback");
+          const feedbackTipo = url.searchParams.get("tipo") as "sucesso" | "erro" | null;
+          const feedback = feedbackMsg && feedbackTipo ? { tipo: feedbackTipo, mensagem: feedbackMsg } : undefined;
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, matriz);
+          }
+
+          const html = renderizarDetalhesVerificacao({
+            ...matriz,
+            feedback,
+          });
+
+          return responderHtml(res, 200, html);
+        } catch (err: any) {
+          return responderHtml(res, 404, `<h1>404 — Não Encontrado</h1><p>${escaparHtml(err.message)}</p>`);
+        }
+      }
+
+      // 30. POST /verificacao/:id/criterios — Cadastro de critério verificável
+      const matchCriarCriterio = pathname.match(/^\/verificacao\/([a-zA-Z0-9_-]+)\/criterios$/);
+      if (metodo === "POST" && matchCriarCriterio) {
+        const id = matchCriarCriterio[1];
+        const body = await extrairCorpoRequisicao(req);
+
+        const {
+          codigo,
+          origemNormativa,
+          descricaoComportamento,
+          metodoObservacao,
+          condicaoSatisfacao,
+          limitesOuTolerancias,
+        } = body;
+
+        if (!codigo || !origemNormativa || !descricaoComportamento || !condicaoSatisfacao) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "Campos obrigatórios do critério ausentes." });
+          }
+          return redirecionar(res, `/verificacao/${id}?tipo=erro&feedback=Preencha+todos+os+campos+do+critério.`);
+        }
+
+        try {
+          let criterioCriado: any;
+          if (servicoVerificacao) {
+            criterioCriado = await servicoVerificacao.cadastrarCriterioVerificavel({
+              codigo: String(codigo).trim().toUpperCase(),
+              resultadoSoftwareId: id,
+              origemNormativa: String(origemNormativa).trim(),
+              descricaoComportamento: String(descricaoComportamento).trim(),
+              metodoObservacao: (metodoObservacao as MetodoObservacao) || MetodoObservacao.SUITE_AUTOMATIZADA,
+              condicaoSatisfacao: String(condicaoSatisfacao).trim(),
+              limitesOuTolerancias: limitesOuTolerancias ? String(limitesOuTolerancias).trim() : null,
+            });
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 201, criterioCriado);
+          }
+
+          return redirecionar(res, `/verificacao/${id}?tipo=sucesso&feedback=Critério+verificável+cadastrado+com+sucesso.`);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(res, `/verificacao/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 31. POST /verificacao/:id/evidencias — Coleta/Registro de evidência empírica
+      const matchCriarEvidencia = pathname.match(/^\/verificacao\/([a-zA-Z0-9_-]+)\/evidencias$/);
+      if (metodo === "POST" && matchCriarEvidencia) {
+        const id = matchCriarEvidencia[1];
+        const body = await extrairCorpoRequisicao(req);
+
+        const {
+          criterioId,
+          procedimentoExecutado,
+          resultadoObservado,
+          sucesso,
+          coletadoPor,
+          dadosDetalhados,
+        } = body;
+
+        if (!criterioId || !procedimentoExecutado || !resultadoObservado) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: "Critério, procedimento e resultado observado são obrigatórios." });
+          }
+          return redirecionar(res, `/verificacao/${id}?tipo=erro&feedback=Campos+obrigatórios+da+evidência+ausentes.`);
+        }
+
+        try {
+          const sucessoBool = sucesso === true || sucesso === "true" || sucesso === 1 || sucesso === "1";
+
+          let evidenciaCriada: any;
+          if (servicoVerificacao) {
+            evidenciaCriada = await servicoVerificacao.registrarEvidenciaVerificacao({
+              criterioId: String(criterioId).trim(),
+              procedimentoExecutado: String(procedimentoExecutado).trim(),
+              resultadoObservado: String(resultadoObservado).trim(),
+              sucesso: sucessoBool,
+              coletadoPor: String(coletadoPor || "Engenheiro de Software").trim(),
+              dadosDetalhados: typeof dadosDetalhados === "object" ? dadosDetalhados : undefined,
+            });
+          }
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 201, evidenciaCriada);
+          }
+
+          return redirecionar(res, `/verificacao/${id}?tipo=sucesso&feedback=Evidência+técnica+coletada+com+sucesso.`);
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(res, `/verificacao/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 32. POST /verificacao/:id/avaliar — Execução de confrontação estrita e emissão de laudo
+      const matchAvaliar = pathname.match(/^\/verificacao\/([a-zA-Z0-9_-]+)\/avaliar$/);
+      if (metodo === "POST" && matchAvaliar) {
+        const id = matchAvaliar[1];
+        const body = await extrairCorpoRequisicao(req);
+        const emitidoPor = body.emitidoPor || "Verificador da Entrega de Valor";
+
+        try {
+          if (!servicoVerificacao) {
+            return responderHtml(res, 500, "<h1>500 — ServicoVerificacao indisponível</h1>");
+          }
+
+          const resultadoAvaliacao = await servicoVerificacao.avaliarConformidadeResultado(id, emitidoPor);
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, resultadoAvaliacao);
+          }
+
+          return redirecionar(
+            res,
+            `/verificacao/${id}?tipo=sucesso&feedback=Conformidade+avaliada+com+sucesso!+Laudo+geral:+${resultadoAvaliacao.laudoAgregado.conclusaoGeral}`
+          );
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 400, { erro: err.message });
+          }
+          return redirecionar(res, `/verificacao/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
+      }
+
+      // 33. POST /verificacao/:id/reavaliar-background — Agendamento de reavaliação no worker
+      const matchReavaliarBg = pathname.match(/^\/verificacao\/([a-zA-Z0-9_-]+)\/reavaliar-background$/);
+      if (metodo === "POST" && matchReavaliarBg) {
+        const id = matchReavaliarBg[1];
+
+        try {
+          if (!servicoVerificacao) {
+            return responderHtml(res, 500, "<h1>500 — ServicoVerificacao indisponível</h1>");
+          }
+
+          const tarefaId = await servicoVerificacao.agendarReavaliacaoBackground(id);
+
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 200, {
+              ok: true,
+              tarefaId,
+              mensagem: "Reavaliação enfileirada no worker com sucesso.",
+            });
+          }
+
+          return redirecionar(
+            res,
+            `/verificacao/${id}?tipo=sucesso&feedback=Reavaliação+agendada+no+worker+de+segundo+plano.`
+          );
+        } catch (err: any) {
+          if (req.headers.accept?.includes("application/json")) {
+            return responderJson(res, 500, { erro: err.message });
+          }
+          return redirecionar(res, `/verificacao/${id}?tipo=erro&feedback=${encodeURIComponent(err.message)}`);
+        }
       }
 
       // Rota não encontrada
