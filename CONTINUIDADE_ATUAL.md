@@ -6,27 +6,30 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE realizou com êxito a **Integração da Realização da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md)** no âmbito de [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md), exercido pelo Ator agêntico **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`):
+O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de Valor da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md)** no âmbito de [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md), exercido com exclusividade pelo Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`):
 
-1. **Validação da Cadeia de Itens de Trabalho da EV-005:**
-   - Todos os quatro Itens de Trabalho previstos no [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) encontram-se no status **`CONCLUIDO`** com Resultado do Processo **`EXECUCAO_CONCLUIDA`**:
-     * [`IT-017`](dados/itens-de-trabalho/IT-017/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Esquema Relacional PostgreSQL de Verificação de Software e Migrações
-     * [`IT-018`](dados/itens-de-trabalho/IT-018/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade
-     * [`IT-019`](dados/itens-de-trabalho/IT-019/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background
-     * [`IT-020`](dados/itens-de-trabalho/IT-020/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada
+1. **Verificação Substantiva e Independente da EV-005:**
+   - Confrontação proporcional entre os objetivos de valor, beneficiários relevantes, Especificação Técnica da EV-005 e o software integrado operacional.
+   - Demonstração dos seis critérios verificáveis de aceitação:
+     * Recepção e persistência estruturada de resultados de software (`resultados_software`);
+     * Derivação e cadastro de critérios verificáveis objetivos vinculados a origens normativas (`criterios_verificaveis`);
+     * Coleta e registro auditável de evidências de observação com telemetria em `JSONB` (`evidencias_verificacao`);
+     * Motor de avaliação técnica com respeito estrito ao invariante de não presunção de conformidade (`CRITERIO_DEMONSTRADO`, `EVIDENCIA_INSUFICIENTE`, `DIVERGENCIA_ENCONTRADA`);
+     * Integração causal com M-004 e explicabilidade de ascendência até N-001;
+     * Interface web responsiva com Bootstrap 5 (`/verificacao` e `/verificacao/:id`), matriz de conformidade técnica e badges de conclusão.
 
 2. **Garantia de Qualidade e Integridade Global do Software:**
    - Execução de `npm run typecheck` (`tsc --noEmit`): aprovado com **0 erros** de tipagem TypeScript em modo estrito.
-   - Execução de `npm run build` (`tsc`): compilação limpa concluída com **100% de sucesso**, gerando a distribuição funcional em `dist/`.
-   - Execução da suíte completa integrada (`npm test`): **20 arquivos de teste e 143 testes automatizados aprovados (100% verdes)**, preservando a estabilidade e sem regressões nas entregas anteriores (`EV-001`, `EV-002`, `EV-003` e `EV-004`).
+   - Execução de `npm run build` (`tsc`): compilação limpa concluída com **100% de sucesso**, gerando distribuição em `dist/`.
+   - Execução da suíte completa integrada (`npm test`): **20 arquivos de teste e 143 testes automatizados aprovados (100% verdes)**, preservando a estabilidade e sem regressões nas entregas anteriores (`EV-001` a `EV-004`).
 
-3. **Emissão de Parecer Técnico e Resultado do Processo:**
-   - Emissão formal do Resultado do Processo **`REALIZACAO_INTEGRADA`** devidamente registrado no [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) e na [EV-005](dados/entregas-de-valor/EV-005/entrega-de-valor.md).
-   - O software integrado atende integralmente a todos os critérios de engenharia e está operacionalmente pronto para a avaliação substantiva de valor.
-   - Em conformidade com a regra de status e o ciclo de vida da Entrega de Valor, a EV-005 permanece no marco persistido **`EM_REALIZACAO`** até a conclusão da verificação técnica e homologação pelo Owner.
+3. **Emissão do Laudo Técnico e Resultado do Processo:**
+   - Emissão formal do Resultado do Processo **`EVOLUCAO_MATERIALIZADA`** devidamente registrado na [EV-005](dados/entregas-de-valor/EV-005/entrega-de-valor.md).
+   - Em conformidade com a regra de ciclo de vida e a governança transversal (`DEB-GOV-001`), o laudo positivo habilita o gateway de homologação soberana do Owner, mantendo a EV-005 no status transitório **`EM_REALIZACAO`** até a Decisão Humana Material expressa.
 
 4. **Handoff Oficial:**
-   - Handoff transferido formalmente para o Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`).
+   - Handoff transferido formalmente para o **Owner** (`mhj`) para a etapa obrigatória de **Homologação da Entrega de Valor** (`HOMOLOGADO_PELO_OWNER`).
+
 
 ## Governança transversal e Débitos
 
@@ -116,18 +119,19 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Integração da Realização 
   - Registro principal: [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-005/plano-de-realizacao.md](dados/entregas-de-valor/EV-005/plano-de-realizacao.md)
   - Itens de Trabalho: `IT-017` (`CONCLUIDO`), `IT-018` (`CONCLUIDO`), `IT-019` (`CONCLUIDO`), `IT-020` (`CONCLUIDO`)
-  - Resultado da Realização: **`REALIZACAO_INTEGRADA`** emitido pelo Integrador da Realização.
-  - Situação: Software integrado com sucesso, pronto para a Verificação da Entrega de Valor.
+  - Resultado da Realização: `REALIZACAO_INTEGRADA` emitido pelo Integrador da Realização.
+  - Laudo da Verificação Técnica: **`EVOLUCAO_MATERIALIZADA`** emitido pelo Verificador da Entrega de Valor em 2026-10-04.
+  - Situação: Verificação substantiva aprovada; aguardando homologação material do Owner para conclusão.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* O software integrado da EV-005 está disponível para atuação do Verificador da Entrega de Valor.
+* A EV-005 possui laudo técnico favorável independente (`EVOLUCAO_MATERIALIZADA`), estando pronta para decisão soberana de homologação pelo Owner.
 
 ## Próxima ação legítima
 
-1. Atuação do **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`): confrontar o software integrado e suas evidências operacionais frente aos critérios de valor da Especificação da EV-005 e emitir o Laudo Técnico de Verificação (`EVOLUCAO_MATERIALIZADA`).
+1. Atuação do **Owner** (`mhj`): realizar a etapa obrigatória de **Homologação da Entrega de Valor** da EV-005, emitindo a Decisão Material soberana (`HOMOLOGADO_PELO_OWNER`) para transição formal da `EV-005` para o status terminal **`CONCLUIDA`**.
 
 ## Arquivos mínimos para continuar
 
@@ -138,6 +142,7 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Integração da Realização 
 * `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-005/plano-de-realizacao.md`
-* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
+* `documentacao/entrega-de-valor/07_RESULTADOS_DO_PROCESSO_DA_ENTREGA_DE_VALOR.md`
+
 
 
