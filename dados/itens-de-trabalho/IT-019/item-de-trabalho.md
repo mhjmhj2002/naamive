@@ -8,7 +8,7 @@
 | Código | `IT-019` |
 | Entrega de Valor proprietária | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Módulo de proveniência | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `CRIADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 
@@ -25,3 +25,7 @@
 3. **Integração de Rastreabilidade com M-004:** Geração de vínculos causais entre o laudo técnico emitido e o registro de proveniência do resultado/evolução avaliada.
 4. **Worker em Background:** Execução periódica desacoplada sem bloqueio do loop de eventos Node.js.
 5. **Verificação Estrita:** Aprovação em `npm run typecheck`, `npm run build` e suíte de testes de integração de serviço e repositório.
+
+## Handoff do IT-018
+
+Com a conclusão do `IT-018` (`EXECUCAO_CONCLUIDA`) e a consolidação do núcleo de domínio de verificação (`ResultadoSoftware`, `CriterioVerificavel`, `EvidenciaVerificacao`, `LaudoVerificacao` e `MotorVerificacaoSoftware`), a dependência prévia do `IT-019` foi plenamente satisfeita. O item avança para **`PRONTO_PARA_EXECUCAO`** e fica disponível para atuação do **Engenheiro de Software** na implementação do repositório PostgreSQL, serviço de aplicação e rotina em background.

@@ -6,21 +6,23 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-017 — Esquema Relacional PostgreSQL de Verificação de Software e Migrações`** no âmbito da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md) ([M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)), exercido pelo **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`):
+O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-018 — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade`** no âmbito da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md) ([M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)), exercido pelo **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`):
 
-1. **Ciclo de Vida do IT-017:**
-   - O status do [IT-017](dados/itens-de-trabalho/IT-017/item-de-trabalho.md) transicionou de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO` e, após implementação e aprovação completa de todos os testes locais, para **`CONCLUIDO`**.
+1. **Ciclo de Vida do IT-018:**
+   - O status do [IT-018](dados/itens-de-trabalho/IT-018/item-de-trabalho.md) transicionou de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO` e, após implementação e aprovação completa de todos os testes unitários e de build, para **`CONCLUIDO`**.
    - Emissão do Resultado do Processo **`EXECUCAO_CONCLUIDA`** devidamente registrado em seu artefato oficial.
 2. **Implementação Técnica Realizada:**
-   - Criação da migração DDL PostgreSQL [migrations/007_esquema_verificacao_software.sql](migrations/007_esquema_verificacao_software.sql) contendo as tabelas `resultados_software`, `criterios_verificaveis`, `evidencias_verificacao` e `laudos_verificacao`.
-   - Implementação de constraints estritas de unicidade (`codigo_referencia`, par `resultado_software_id, criterio_id`), integridade referencial com `ON DELETE CASCADE`, constraints CHECK para métodos de observação (`SUITE_AUTOMATIZADA`, `INSPECAO_HTTP`, `CONFORMIDADE_ESQUEMA`, `OPERACIONAL`) e conclusões técnicas (`CRITERIO_DEMONSTRADO`, `CRITERIO_NAO_DEMONSTRADO`, `EVIDENCIA_INSUFICIENTE`, `VERIFICACAO_IMPOSSIVEL`, `DIVERGENCIA_ENCONTRADA`), colunas `JSONB` para telemetria/evidências e índices relacionais otimizados.
-   - Criação da suíte automatizada de testes de migração e esquema em [tests/it017-esquema-relacional-verificacao.test.ts](tests/it017-esquema-relacional-verificacao.test.ts) utilizando o emulador `pg-mem`.
-3. **Desbloqueio e Handoff para o IT-018:**
-   - Com a conclusão do IT-017, a dependência técnica de **`IT-018 — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade`** foi plenamente satisfeita.
-   - O [IT-018](dados/itens-de-trabalho/IT-018/item-de-trabalho.md) e o [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) foram atualizados, transicionando o IT-018 de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
+   - Criação dos tipos e enums de domínio em [src/domain/tipos-verificacao.ts](src/domain/tipos-verificacao.ts): `MetodoObservacao` (`SUITE_AUTOMATIZADA`, `INSPECAO_HTTP`, `CONFORMIDADE_ESQUEMA`, `OPERACIONAL`) e `ConclusaoVerificacao` (`CRITERIO_DEMONSTRADO`, `CRITERIO_NAO_DEMONSTRADO`, `EVIDENCIA_INSUFICIENTE`, `VERIFICACAO_IMPOSSIVEL`, `DIVERGENCIA_ENCONTRADA`).
+   - Criação das interfaces de dados e Value Objects em [src/domain/valores-verificacao.ts](src/domain/valores-verificacao.ts): `DadosCriacaoResultadoSoftware`, `DadosCriacaoCriterioVerificavel`, `DadosCriacaoEvidenciaVerificacao`, `DadosCriacaoLaudoVerificacao`, `ResumoLaudoCriterio` e `LaudoVerificacaoAgregado`.
+   - Implementação das entidades puras em [src/domain/verificacao.ts](src/domain/verificacao.ts): `ResultadoSoftware`, `CriterioVerificavel`, `EvidenciaVerificacao` e `LaudoVerificacao`, assegurando integridade invariante, congelamento imutável de telemetria/evidências utilizadas e anti-corrupção de dados.
+   - Implementação do serviço de domínio puro [src/domain/motor-verificacao.ts](src/domain/motor-verificacao.ts) (`MotorVerificacaoSoftware`): invariante nuclear de *Não Presunção de Conformidade* (critério sem evidência produz `EVIDENCIA_INSUFICIENTE`), detecção de conflitos empíricos gerando `DIVERGENCIA_ENCONTRADA`, comprovação positiva (`CRITERIO_DEMONSTRADO`) e consolidação do laudo técnico agregado com detalhamento explicável.
+   - Criação da suíte de testes unitários em [tests/it018-dominio-verificacao.test.ts](tests/it018-dominio-verificacao.test.ts) com 14 testes cobrindo todos os cenários e invariantes.
+3. **Desbloqueio e Handoff para o IT-019:**
+   - Com a conclusão do IT-018, a dependência técnica de **`IT-019 — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background`** foi plenamente satisfeita.
+   - O [IT-019](dados/itens-de-trabalho/IT-019/item-de-trabalho.md) e o [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) foram atualizados, transicionando o IT-019 de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
 4. **Garantia de Qualidade e Integridade Técnica:**
    - Execução bem-sucedida de `npm run typecheck`, `npm run build` e suíte de testes completa.
-   - **17 arquivos de teste e 112 testes automatizados verdes — 100% de sucesso sem regressões**.
+   - **18 arquivos de teste e 126 testes automatizados verdes — 100% de sucesso sem regressões**.
 
 ## Governança transversal e Débitos
 
@@ -109,20 +111,20 @@ O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-017 — Esq
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-005/plano-de-realizacao.md](dados/entregas-de-valor/EV-005/plano-de-realizacao.md)
-  - Item concluído: **`IT-017`** em **`CONCLUIDO`** (`EXECUCAO_CONCLUIDA`)
-  - Item ativo: **`IT-018`** em **`PRONTO_PARA_EXECUCAO`**
-  - Demais itens: `IT-019` (`CRIADO`), `IT-020` (`CRIADO`)
-  - Situação: Esquema relacional de verificação consolidado e primeiro item concluído com sucesso.
+  - Itens concluídos: **`IT-017`** (`CONCLUIDO`), **`IT-018`** (`CONCLUIDO`)
+  - Item ativo: **`IT-019`** em **`PRONTO_PARA_EXECUCAO`**
+  - Demais itens: `IT-020` (`CRIADO`)
+  - Situação: Núcleo de domínio de verificação e motor de avaliação de conformidade consolidados com 100% de testes verdes.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A EV-005 está em `EM_REALIZACAO` e o IT-018 está em `PRONTO_PARA_EXECUCAO`, pronto para implementação do núcleo de domínio.
+* A EV-005 está em `EM_REALIZACAO` e o IT-019 está em `PRONTO_PARA_EXECUCAO`, pronto para implementação do repositório PostgreSQL e serviço de aplicação.
 
 ## Próxima ação legítima
 
-1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): assumir o `IT-018` (transicionando para `EM_EXECUCAO`), implementar as entidades puras de domínio (`ResultadoSoftware`, `CriterioVerificavel`, `EvidenciaVerificacao`, `LaudoVerificacao`), os enums e o serviço `MotorVerificacaoSoftware` em `src/domain/verificacao/`, com suíte de testes unitários `tests/it018-dominio-verificacao.test.ts`.
+1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): assumir o `IT-019` (transicionando para `EM_EXECUCAO`), implementar o repositório relacional `RepositorioVerificacaoPostgres`, o serviço de aplicação `ServicoVerificacao`, amarração de vínculos causais de rastreabilidade com M-004 e as tarefas em background do worker em `src/worker/`.
 
 ## Arquivos mínimos para continuar
 
@@ -133,5 +135,5 @@ O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-017 — Esq
 * `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-005/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-018/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-019/item-de-trabalho.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
