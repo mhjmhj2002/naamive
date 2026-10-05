@@ -83,6 +83,8 @@ Manuais operacionais vivos do sistema executável e de sua infraestrutura:
 * [Débitos e Continuidade Progressiva](documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md)
 * [Débitos de Governança](documentacao/governanca/debitos/DEB-GOV-001.md)
   * [DEB-GOV-001 — Ausência de Homologação do Owner na Entrega de Valor](documentacao/governanca/debitos/DEB-GOV-001.md)
+* [Débitos Técnicos](documentacao/governanca/debitos/DEB-TEC-001.md)
+  * [DEB-TEC-001 — Ausência de Motor de Orquestração Autônoma de Agentes e Handoffs no Worker/Backend](documentacao/governanca/debitos/DEB-TEC-001.md)
 
 ### Atores
 
@@ -258,7 +260,8 @@ documentacao/
 ├── governanca/
 │   ├── 01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md
 │   └── debitos/
-│       └── DEB-GOV-001.md
+│       ├── DEB-GOV-001.md
+│       └── DEB-TEC-001.md
 ├── atores/
 │   └── 01_CONCEITO_DE_ATOR.md
 ├── necessidade/

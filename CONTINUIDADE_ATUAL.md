@@ -39,7 +39,10 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 * Ator agêntico pode identificar e propor Débito, mas sua validade depende de revisão e decisão humana competente.
 
 ### Débitos Ativos
-* Nenhum débito ativo no momento.
+* **[DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) — Ausência de Motor de Orquestração Autônoma de Agentes e Handoffs no Worker/Backend:**
+  - **Status:** `ATIVO` (Não bloqueante).
+  - **Descrição:** Falta de despacho automático de handoffs agênticos e dependência indevida de intervenção manual no chat/CLI a cada transição de Ator.
+  - **Origem / Competência de Tratamento:** Módulo `M-003 — Coordenação do Trabalho` / Infraestrutura do Worker.
 
 ### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
@@ -126,7 +129,7 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
-* Não há débitos ou impedimentos bloqueantes técnicos ativos.
+* O débito ativo [DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) possui natureza **não bloqueante**, não impedindo o avanço das atividades vigentes do ciclo de vida.
 * A EV-005 possui laudo técnico favorável independente (`EVOLUCAO_MATERIALIZADA`), estando pronta para decisão soberana de homologação pelo Owner.
 
 ## Próxima ação legítima
@@ -138,6 +141,8 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 * `AGENTS.md`
 * `README.md`
 * `CONTINUIDADE_ATUAL.md`
+* `documentacao/governanca/01_DEBITOS_E_CONTINUIDADE_PROGRESSIVA.md`
+* `documentacao/governanca/debitos/DEB-TEC-001.md`
 * `dados/modulos/M-005/modulo.md`
 * `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
