@@ -69,7 +69,7 @@ export class ResultadoSoftware {
   }
 
   static criar(
-    dados: Omit<DadosCriacaoResultadoSoftware, "id" | "registradoEm"> & { id?: string }
+    dados: Omit<DadosCriacaoResultadoSoftware, "id" | "registradoEm"> & { id?: string | undefined }
   ): ResultadoSoftware {
     return new ResultadoSoftware({
       id: dados.id ?? randomUUID(),
@@ -148,7 +148,7 @@ export class CriterioVerificavel {
   }
 
   static criar(
-    dados: Omit<DadosCriacaoCriterioVerificavel, "id" | "criadoEm"> & { id?: string }
+    dados: Omit<DadosCriacaoCriterioVerificavel, "id" | "criadoEm"> & { id?: string | undefined }
   ): CriterioVerificavel {
     return new CriterioVerificavel({
       id: dados.id ?? randomUUID(),
@@ -222,7 +222,7 @@ export class EvidenciaVerificacao {
   }
 
   static criar(
-    dados: Omit<DadosCriacaoEvidenciaVerificacao, "id" | "coletadoEm"> & { id?: string }
+    dados: Omit<DadosCriacaoEvidenciaVerificacao, "id" | "coletadoEm"> & { id?: string | undefined }
   ): EvidenciaVerificacao {
     return new EvidenciaVerificacao({
       id: dados.id ?? randomUUID(),
@@ -298,7 +298,7 @@ export class LaudoVerificacao {
   }
 
   static criar(
-    dados: Omit<DadosCriacaoLaudoVerificacao, "id" | "emitidoEm"> & { id?: string }
+    dados: Omit<DadosCriacaoLaudoVerificacao, "id" | "emitidoEm"> & { id?: string | undefined }
   ): LaudoVerificacao {
     return new LaudoVerificacao({
       id: dados.id ?? randomUUID(),

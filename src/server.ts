@@ -15,9 +15,13 @@ import { RepositorioCoordenacaoMemoria } from "./infrastructure/database/reposit
 import { RepositorioContexto } from "./domain/repositorio-contexto.js";
 import { RepositorioContextoPostgres } from "./infrastructure/database/repositorio-contexto-postgres.js";
 import { RepositorioContextoMemoria } from "./infrastructure/database/repositorio-contexto-memoria.js";
+import { RepositorioVerificacao } from "./domain/repositorio-verificacao.js";
+import { RepositorioVerificacaoPostgres } from "./infrastructure/database/repositorio-verificacao-postgres.js";
+import { RepositorioVerificacaoMemoria } from "./infrastructure/database/repositorio-verificacao-memoria.js";
 import { ServicoAplicacaoProjeto } from "./application/servico-aplicacao-projeto.js";
 import { ServicoAplicacaoCoordenacao } from "./application/servico-aplicacao-coordenacao.js";
 import { ServicoContexto } from "./application/servico-contexto.js";
+import { ServicoVerificacao } from "./application/servico-verificacao.js";
 import { AdaptadorAutenticacaoOwner } from "./infrastructure/adapters/autenticacao-owner.js";
 import {
   AdaptadorIntegracaoProjeto,
@@ -118,6 +122,7 @@ async function inicializarInfraestrutura(config: ReturnType<typeof carregarConfi
   repositorioProjeto: RepositorioProjeto;
   repositorioCoordenacao: RepositorioCoordenacao;
   repositorioContexto: RepositorioContexto;
+  repositorioVerificacao: RepositorioVerificacao;
   filaTarefas: FilaTarefas;
   tipoPersistencia: "postgres" | "pg-mem" | "memoria";
 }> {
@@ -138,8 +143,17 @@ async function inicializarInfraestrutura(config: ReturnType<typeof carregarConfi
       const repositorioProjeto = new RepositorioProjetoPostgres(conexao);
       const repositorioCoordenacao = new RepositorioCoordenacaoPostgres(conexao);
       const repositorioContexto = new RepositorioContextoPostgres(conexao);
+      const repositorioVerificacao = new RepositorioVerificacaoPostgres(conexao);
       const filaTarefas = new FilaTarefasPostgres(conexao);
-      return { repositorio, repositorioProjeto, repositorioCoordenacao, repositorioContexto, filaTarefas, tipoPersistencia: "postgres" };
+      return {
+        repositorio,
+        repositorioProjeto,
+        repositorioCoordenacao,
+        repositorioContexto,
+        repositorioVerificacao,
+        filaTarefas,
+        tipoPersistencia: "postgres",
+      };
     } catch (err: any) {
       console.warn(`[NAAMIVE Bootstrap] PostgreSQL externo indisponível (${err.message}). Utilizando emulador relacional pg-mem.`);
     }
@@ -183,16 +197,34 @@ async function inicializarInfraestrutura(config: ReturnType<typeof carregarConfi
     const repositorioProjeto = new RepositorioProjetoPostgres(conexaoMem);
     const repositorioCoordenacao = new RepositorioCoordenacaoPostgres(conexaoMem);
     const repositorioContexto = new RepositorioContextoPostgres(conexaoMem);
+    const repositorioVerificacao = new RepositorioVerificacaoPostgres(conexaoMem);
     const filaTarefas = new FilaTarefasPostgres(conexaoMem);
-    return { repositorio, repositorioProjeto, repositorioCoordenacao, repositorioContexto, filaTarefas, tipoPersistencia: "pg-mem" };
+    return {
+      repositorio,
+      repositorioProjeto,
+      repositorioCoordenacao,
+      repositorioContexto,
+      repositorioVerificacao,
+      filaTarefas,
+      tipoPersistencia: "pg-mem",
+    };
   } catch (err: any) {
     console.warn(`[NAAMIVE Bootstrap] Falha ao inicializar pg-mem (${err.message}). Utilizando repositório em memória nativo.`);
     const repositorio = new RepositorioNecessidadeMemoria();
     const repositorioProjeto = new RepositorioProjetoMemoria();
     const repositorioCoordenacao = new RepositorioCoordenacaoMemoria();
     const repositorioContexto = new RepositorioContextoMemoria();
+    const repositorioVerificacao = new RepositorioVerificacaoMemoria();
     const filaTarefas = new FilaTarefasMemoria();
-    return { repositorio, repositorioProjeto, repositorioCoordenacao, repositorioContexto, filaTarefas, tipoPersistencia: "memoria" };
+    return {
+      repositorio,
+      repositorioProjeto,
+      repositorioCoordenacao,
+      repositorioContexto,
+      repositorioVerificacao,
+      filaTarefas,
+      tipoPersistencia: "memoria",
+    };
   }
 }
 
@@ -255,6 +287,7 @@ export async function iniciarSistema(): Promise<{
     repositorioProjeto,
     repositorioCoordenacao,
     repositorioContexto,
+    repositorioVerificacao,
     filaTarefas,
     tipoPersistencia,
   } = await inicializarInfraestrutura(config);
@@ -263,7 +296,7 @@ export async function iniciarSistema(): Promise<{
   // 2. Semeia Necessidade N-001 canônica
   await semearDadosIniciais(repositorio);
 
-  // 3. Inicializa serviços de aplicação de projeto, coordenação e contexto, adaptadores e integrações
+  // 3. Inicializa serviços de aplicação de projeto, coordenação, contexto e verificação, adaptadores e integrações
   const servicoProjeto = new ServicoAplicacaoProjeto(repositorioProjeto, repositorio);
   const servicoCoordenacao = new ServicoAplicacaoCoordenacao(
     repositorioCoordenacao,
@@ -274,6 +307,12 @@ export async function iniciarSistema(): Promise<{
   const autenticacaoOwner = new AdaptadorAutenticacaoOwner(["mhj", "owner"]);
   const portaProjeto = new AdaptadorIntegracaoProjeto(servicoProjeto);
   const portaContexto = new AdaptadorIntegracaoContexto();
+  const servicoVerificacao = new ServicoVerificacao(
+    repositorioVerificacao,
+    undefined,
+    portaContexto,
+    filaTarefas
+  );
 
   // 4. Inicializa o Worker de background desacoplado
   const worker = new WorkerSegundoPlano(
@@ -283,7 +322,8 @@ export async function iniciarSistema(): Promise<{
     portaContexto,
     { intervaloPollingMs: 250 },
     servicoCoordenacao,
-    servicoContexto
+    servicoContexto,
+    servicoVerificacao
   );
   worker.iniciar();
   console.log("[NAAMIVE Bootstrap] Worker em background iniciado com sucesso.");

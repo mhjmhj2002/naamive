@@ -6,23 +6,25 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-018 — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade`** no âmbito da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md) ([M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)), exercido pelo **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`):
+O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-019 — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background`** no âmbito da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md) ([M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)), exercido pelo **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`):
 
-1. **Ciclo de Vida do IT-018:**
-   - O status do [IT-018](dados/itens-de-trabalho/IT-018/item-de-trabalho.md) transicionou de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO` e, após implementação e aprovação completa de todos os testes unitários e de build, para **`CONCLUIDO`**.
+1. **Ciclo de Vida do IT-019:**
+   - O status do [IT-019](dados/itens-de-trabalho/IT-019/item-de-trabalho.md) transicionou de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO` e, após implementação completa de persistência, serviço, worker assíncrono e aprovação total de testes locais e compilação, para **`CONCLUIDO`**.
    - Emissão do Resultado do Processo **`EXECUCAO_CONCLUIDA`** devidamente registrado em seu artefato oficial.
 2. **Implementação Técnica Realizada:**
-   - Criação dos tipos e enums de domínio em [src/domain/tipos-verificacao.ts](src/domain/tipos-verificacao.ts): `MetodoObservacao` (`SUITE_AUTOMATIZADA`, `INSPECAO_HTTP`, `CONFORMIDADE_ESQUEMA`, `OPERACIONAL`) e `ConclusaoVerificacao` (`CRITERIO_DEMONSTRADO`, `CRITERIO_NAO_DEMONSTRADO`, `EVIDENCIA_INSUFICIENTE`, `VERIFICACAO_IMPOSSIVEL`, `DIVERGENCIA_ENCONTRADA`).
-   - Criação das interfaces de dados e Value Objects em [src/domain/valores-verificacao.ts](src/domain/valores-verificacao.ts): `DadosCriacaoResultadoSoftware`, `DadosCriacaoCriterioVerificavel`, `DadosCriacaoEvidenciaVerificacao`, `DadosCriacaoLaudoVerificacao`, `ResumoLaudoCriterio` e `LaudoVerificacaoAgregado`.
-   - Implementação das entidades puras em [src/domain/verificacao.ts](src/domain/verificacao.ts): `ResultadoSoftware`, `CriterioVerificavel`, `EvidenciaVerificacao` e `LaudoVerificacao`, assegurando integridade invariante, congelamento imutável de telemetria/evidências utilizadas e anti-corrupção de dados.
-   - Implementação do serviço de domínio puro [src/domain/motor-verificacao.ts](src/domain/motor-verificacao.ts) (`MotorVerificacaoSoftware`): invariante nuclear de *Não Presunção de Conformidade* (critério sem evidência produz `EVIDENCIA_INSUFICIENTE`), detecção de conflitos empíricos gerando `DIVERGENCIA_ENCONTRADA`, comprovação positiva (`CRITERIO_DEMONSTRADO`) e consolidação do laudo técnico agregado com detalhamento explicável.
-   - Criação da suíte de testes unitários em [tests/it018-dominio-verificacao.test.ts](tests/it018-dominio-verificacao.test.ts) com 14 testes cobrindo todos os cenários e invariantes.
-3. **Desbloqueio e Handoff para o IT-019:**
-   - Com a conclusão do IT-018, a dependência técnica de **`IT-019 — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background`** foi plenamente satisfeita.
-   - O [IT-019](dados/itens-de-trabalho/IT-019/item-de-trabalho.md) e o [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) foram atualizados, transicionando o IT-019 de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
+   - Criação da interface de repositório puro no domínio em [src/domain/repositorio-verificacao.ts](src/domain/repositorio-verificacao.ts) (`RepositorioVerificacao`).
+   - Implementação do repositório relacional transacional [src/infrastructure/database/repositorio-verificacao-postgres.ts](src/infrastructure/database/repositorio-verificacao-postgres.ts) (`RepositorioVerificacaoPostgres`), com suporte a consultas parametrizadas, persistência JSONB, índices e integridade referencial ACID.
+   - Implementação do repositório de verificação em memória [src/infrastructure/database/repositorio-verificacao-memoria.ts](src/infrastructure/database/repositorio-verificacao-memoria.ts) (`RepositorioVerificacaoMemoria`) para execução rápida e testes.
+   - Implementação do serviço de aplicação [src/application/servico-verificacao.ts](src/application/servico-verificacao.ts) (`ServicoVerificacao`), orquestrando casos de uso de registro de resultados de software, cadastro de critérios, coleta de evidências, avaliação de conformidade individual/agregada e emissão de eventos de rastreabilidade para M-004.
+   - Integração da rotina periódica assíncrona no worker desacoplado [src/worker/worker-segundo-plano.ts](src/worker/worker-segundo-plano.ts) (`REAVALIAR_CONFORMIDADE_SOFTWARE`), reconciliando conformidade técnica sem bloqueio do loop de eventos.
+   - Atualização do bootstrap do sistema em [src/server.ts](src/server.ts) e dos exports públicos em [src/index.ts](src/index.ts).
+   - Criação da suíte de testes de integração em [tests/it019-servico-verificacao-postgres.test.ts](tests/it019-servico-verificacao-postgres.test.ts) com 8 testes cobrindo todos os critérios de aceitação.
+3. **Desbloqueio e Handoff para o IT-020:**
+   - Com a conclusão do IT-019, a dependência técnica de **`IT-020 — Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada`** foi plenamente satisfeita.
+   - O [IT-020](dados/itens-de-trabalho/IT-020/item-de-trabalho.md) e o [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) foram atualizados, transicionando o IT-020 de `CRIADO` para **`PRONTO_PARA_EXECUCAO`**.
 4. **Garantia de Qualidade e Integridade Técnica:**
    - Execução bem-sucedida de `npm run typecheck`, `npm run build` e suíte de testes completa.
-   - **18 arquivos de teste e 126 testes automatizados verdes — 100% de sucesso sem regressões**.
+   - **19 arquivos de teste e 138 testes automatizados verdes — 100% de sucesso sem regressões**.
 
 ## Governança transversal e Débitos
 
@@ -111,20 +113,19 @@ O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-018 — Nú
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-005/plano-de-realizacao.md](dados/entregas-de-valor/EV-005/plano-de-realizacao.md)
-  - Itens concluídos: **`IT-017`** (`CONCLUIDO`), **`IT-018`** (`CONCLUIDO`)
-  - Item ativo: **`IT-019`** em **`PRONTO_PARA_EXECUCAO`**
-  - Demais itens: `IT-020` (`CRIADO`)
-  - Situação: Núcleo de domínio de verificação e motor de avaliação de conformidade consolidados com 100% de testes verdes.
+  - Itens concluídos: **`IT-017`** (`CONCLUIDO`), **`IT-018`** (`CONCLUIDO`), **`IT-019`** (`CONCLUIDO`)
+  - Item ativo: **`IT-020`** em **`PRONTO_PARA_EXECUCAO`**
+  - Situação: Repositório PostgreSQL, serviço de aplicação e worker de verificação de software consolidados com 100% de testes verdes.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A EV-005 está em `EM_REALIZACAO` e o IT-019 está em `PRONTO_PARA_EXECUCAO`, pronto para implementação do repositório PostgreSQL e serviço de aplicação.
+* A EV-005 está em `EM_REALIZACAO` e o IT-020 está em `PRONTO_PARA_EXECUCAO`, pronto para implementação da camada web responsiva e suíte integrada.
 
 ## Próxima ação legítima
 
-1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): assumir o `IT-019` (transicionando para `EM_EXECUCAO`), implementar o repositório relacional `RepositorioVerificacaoPostgres`, o serviço de aplicação `ServicoVerificacao`, amarração de vínculos causais de rastreabilidade com M-004 e as tarefas em background do worker em `src/worker/`.
+1. Atuação do **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`): assumir o `IT-020` (transicionando para `EM_EXECUCAO`), implementar as rotas HTTP `/verificacao` e `/verificacao/:id`, templates HTML Bootstrap 5 com visualização da matriz de conformidade técnica, badges coloridas de laudo técnico fundamentado e suíte de testes ponta a ponta.
 
 ## Arquivos mínimos para continuar
 
@@ -135,5 +136,6 @@ O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-018 — Nú
 * `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-005/plano-de-realizacao.md`
-* `dados/itens-de-trabalho/IT-019/item-de-trabalho.md`
+* `dados/itens-de-trabalho/IT-020/item-de-trabalho.md`
 * `.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`
+

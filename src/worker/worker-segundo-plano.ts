@@ -8,6 +8,7 @@ import { RepositorioNecessidade } from "../domain/repositorio-necessidade.js";
 import { StatusNecessidade } from "../domain/tipos.js";
 import { ServicoAplicacaoCoordenacao } from "../application/servico-aplicacao-coordenacao.js";
 import { ServicoContexto } from "../application/servico-contexto.js";
+import { ServicoVerificacao } from "../application/servico-verificacao.js";
 
 export type ManipuladorTarefa = (tarefa: TarefaTrabalho) => Promise<void>;
 
@@ -27,6 +28,7 @@ export class WorkerSegundoPlano {
   private portaContexto: PortaIntegracaoContexto;
   private servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined;
   private servicoContexto?: ServicoContexto | undefined;
+  private servicoVerificacao?: ServicoVerificacao | undefined;
   private manipuladores: Map<string, ManipuladorTarefa> = new Map();
 
   private executando: boolean = false;
@@ -41,7 +43,8 @@ export class WorkerSegundoPlano {
     portaContexto: PortaIntegracaoContexto,
     config: ConfiguracaoWorker = {},
     servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined,
-    servicoContexto?: ServicoContexto | undefined
+    servicoContexto?: ServicoContexto | undefined,
+    servicoVerificacao?: ServicoVerificacao | undefined
   ) {
     this.fila = fila;
     this.repositorio = repositorio;
@@ -49,6 +52,7 @@ export class WorkerSegundoPlano {
     this.portaContexto = portaContexto;
     this.servicoCoordenacao = servicoCoordenacao;
     this.servicoContexto = servicoContexto;
+    this.servicoVerificacao = servicoVerificacao;
     this.intervaloPollingMs = config.intervaloPollingMs ?? 100;
 
     this.registrarManipuladoresPadrao();
@@ -212,6 +216,32 @@ export class WorkerSegundoPlano {
             lacunas: relatorio.lacunasDetectadas.length,
             contradicoes: relatorio.contradicoesDetectadas.length,
             auditadoEm: relatorio.auditadoEm,
+          },
+          timestamp: new Date(),
+        });
+      }
+    });
+
+    // 5. Tarefa de reavaliação periódica de conformidade técnica de software (EV-005 / IT-019)
+    this.registrarManipulador("REAVALIAR_CONFORMIDADE_SOFTWARE", async (tarefa) => {
+      const payload = tarefa.payload as { resultadoSoftwareId: string; emitidoPor?: string };
+      if (this.servicoVerificacao && payload.resultadoSoftwareId) {
+        const emissor = payload.emitidoPor ?? "WorkerSegundoPlano (Avaliação Assíncrona)";
+        const resultadoAvaliacao = await this.servicoVerificacao.avaliarConformidadeResultado(
+          payload.resultadoSoftwareId,
+          emissor
+        );
+        await this.portaContexto.registrarEventoRastreabilidade({
+          entidadeOrigem: "WorkerSegundoPlano",
+          idOrigem: payload.resultadoSoftwareId,
+          tipoEvento: "CONFORMIDADE_SOFTWARE_REAVALIADA",
+          dados: {
+            resultadoSoftwareId: payload.resultadoSoftwareId,
+            conclusaoGeral: resultadoAvaliacao.laudoAgregado.conclusaoGeral,
+            totalCriterios: resultadoAvaliacao.laudoAgregado.totalCriterios,
+            demonstrados: resultadoAvaliacao.laudoAgregado.demonstrados,
+            divergencias: resultadoAvaliacao.laudoAgregado.divergencias,
+            avaliadoEm: resultadoAvaliacao.laudoAgregado.avaliadoEm,
           },
           timestamp: new Date(),
         });

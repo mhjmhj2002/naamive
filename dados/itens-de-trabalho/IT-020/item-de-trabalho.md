@@ -8,7 +8,7 @@
 | Código | `IT-020` |
 | Entrega de Valor proprietária | [EV-005 — Avaliação e Verificação da Entrega de Valor](../../entregas-de-valor/EV-005/entrega-de-valor.md) |
 | Módulo de proveniência | [M-005 — Verificação do Resultado de Software](../../modulos/M-005/modulo.md) |
-| Status | `CRIADO` |
+| Status | `PRONTO_PARA_EXECUCAO` |
 
 ## Definição Técnica
 
@@ -24,3 +24,8 @@
 2. **Visualização da Matriz de Conformidade:** Exibição clara de resultados avaliados, total de critérios atendidos, critérios com evidência insuficiente e divergências apontadas.
 3. **Badges de Conclusão Técnica:** Destaque visual por cores para cada conclusão técnica (`CRITÉRIO_DEMONSTRADO` em verde, `CRITÉRIO_NÃO_DEMONSTRADO` em vermelho, `EVIDÊNCIA_INSUFICIENTE` em amarelo/aviso, etc.).
 4. **Suíte Completa End-to-End e Verificação Estrita:** Bateria de testes de ponta a ponta validando toda a jornada da EV-005 na web e confirmando aprovação total em `npm run typecheck`, `npm run build` e `npm test` sem regressões.
+
+## Handoff do IT-019
+
+Com a conclusão do `IT-019` (`EXECUCAO_CONCLUIDA`), a camada de persistência transacional (`RepositorioVerificacaoPostgres`), o serviço de aplicação (`ServicoVerificacao`) e a integração assíncrona com o worker foram consolidados. A dependência prévia do `IT-020` foi plenamente satisfeita. O item avança para **`PRONTO_PARA_EXECUCAO`** e fica disponível para atuação do **Engenheiro de Software** na construção da interface web responsiva e da suíte integrada de verificação.
+
