@@ -9,17 +9,23 @@ import { StatusNecessidade } from "../domain/tipos.js";
 import { ServicoAplicacaoCoordenacao } from "../application/servico-aplicacao-coordenacao.js";
 import { ServicoContexto } from "../application/servico-contexto.js";
 import { ServicoVerificacao } from "../application/servico-verificacao.js";
+import {
+  DespachanteAutonomoAgentes,
+  ResultadoCicloDespachoAutonomo,
+  ReferenciasContextoDespacho,
+} from "../domain/despachante-autonomo-agentes.js";
 
 export type ManipuladorTarefa = (tarefa: TarefaTrabalho) => Promise<void>;
 
 export interface ConfiguracaoWorker {
   intervaloPollingMs?: number;
   maxExecucoesPorCiclo?: number;
+  modoAutonomoAtivo?: boolean;
 }
 
 /**
  * Worker em background desacoplado do ciclo HTTP.
- * Executa tarefas assíncronas em loop contínuo, reconciliação de estado e eventos de integração.
+ * Executa tarefas assíncronas em loop contínuo, reconciliação de estado, despacho autônomo de agentes e eventos de integração.
  */
 export class WorkerSegundoPlano {
   private fila: FilaTarefas;
@@ -29,11 +35,13 @@ export class WorkerSegundoPlano {
   private servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined;
   private servicoContexto?: ServicoContexto | undefined;
   private servicoVerificacao?: ServicoVerificacao | undefined;
+  private despachanteAutonomo?: DespachanteAutonomoAgentes | undefined;
   private manipuladores: Map<string, ManipuladorTarefa> = new Map();
 
   private executando: boolean = false;
   private timer: NodeJS.Timeout | null = null;
   private intervaloPollingMs: number;
+  private modoAutonomoAtivo: boolean = true;
   private tarefasProcessadasContador: number = 0;
 
   constructor(
@@ -44,7 +52,8 @@ export class WorkerSegundoPlano {
     config: ConfiguracaoWorker = {},
     servicoCoordenacao?: ServicoAplicacaoCoordenacao | undefined,
     servicoContexto?: ServicoContexto | undefined,
-    servicoVerificacao?: ServicoVerificacao | undefined
+    servicoVerificacao?: ServicoVerificacao | undefined,
+    despachanteAutonomo?: DespachanteAutonomoAgentes | undefined
   ) {
     this.fila = fila;
     this.repositorio = repositorio;
@@ -53,7 +62,9 @@ export class WorkerSegundoPlano {
     this.servicoCoordenacao = servicoCoordenacao;
     this.servicoContexto = servicoContexto;
     this.servicoVerificacao = servicoVerificacao;
+    this.despachanteAutonomo = despachanteAutonomo;
     this.intervaloPollingMs = config.intervaloPollingMs ?? 100;
+    this.modoAutonomoAtivo = config.modoAutonomoAtivo ?? true;
 
     this.registrarManipuladoresPadrao();
   }
@@ -64,6 +75,27 @@ export class WorkerSegundoPlano {
 
   public get totalProcessado(): number {
     return this.tarefasProcessadasContador;
+  }
+
+  public get estaModoAutonomoAtivo(): boolean {
+    return this.modoAutonomoAtivo;
+  }
+
+  public definirModoAutonomo(ativo: boolean): void {
+    this.modoAutonomoAtivo = ativo;
+  }
+
+  /**
+   * Executa diretamente um ciclo do despachante autônomo de agentes, se configurado e ativo.
+   */
+  public async executarCicloDespachoAutonomo(
+    projetoId: string,
+    referenciasContexto?: ReferenciasContextoDespacho
+  ): Promise<ResultadoCicloDespachoAutonomo | null> {
+    if (!this.despachanteAutonomo || !this.modoAutonomoAtivo) {
+      return null;
+    }
+    return this.despachanteAutonomo.executarCicloAutonomo(projetoId, referenciasContexto);
   }
 
   /**
@@ -242,6 +274,34 @@ export class WorkerSegundoPlano {
             demonstrados: resultadoAvaliacao.laudoAgregado.demonstrados,
             divergencias: resultadoAvaliacao.laudoAgregado.divergencias,
             avaliadoEm: resultadoAvaliacao.laudoAgregado.avaliadoEm,
+          },
+          timestamp: new Date(),
+        });
+      }
+    });
+
+    // 6. Tarefa de despacho autônomo de agentes e handoffs (DEB-TEC-001)
+    this.registrarManipulador("DESPACHAR_HANDOFF_AUTONOMO", async (tarefa) => {
+      const payload = tarefa.payload as {
+        projetoId: string;
+        referenciasContexto?: ReferenciasContextoDespacho;
+      };
+      if (this.despachanteAutonomo && this.modoAutonomoAtivo && payload.projetoId) {
+        const resultadoDespacho = await this.despachanteAutonomo.executarCicloAutonomo(
+          payload.projetoId,
+          payload.referenciasContexto
+        );
+
+        await this.portaContexto.registrarEventoRastreabilidade({
+          entidadeOrigem: "WorkerSegundoPlano",
+          idOrigem: payload.projetoId,
+          tipoEvento: "DESPACHO_AUTONOMO_PROCESSADO",
+          dados: {
+            projetoId: payload.projetoId,
+            despachosRealizados: resultadoDespacho.despachosRealizados,
+            contencoesHumanas: resultadoDespacho.contencoesHumanas.length,
+            retornosProcessados: resultadoDespacho.retornosProcessados.length,
+            processadoEm: new Date().toISOString(),
           },
           timestamp: new Date(),
         });

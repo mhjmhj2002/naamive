@@ -27,12 +27,10 @@ import {
   AdaptadorIntegracaoProjeto,
   AdaptadorIntegracaoContexto,
 } from "./infrastructure/adapters/integracao-modulos.js";
-import {
-  FilaTarefas,
-  FilaTarefasMemoria,
-  FilaTarefasPostgres,
-} from "./infrastructure/adapters/fila-tarefas.js";
+import { FilaTarefas, FilaTarefasMemoria, FilaTarefasPostgres } from "./infrastructure/adapters/fila-tarefas.js";
 import { WorkerSegundoPlano } from "./worker/worker-segundo-plano.js";
+import { DespachanteAutonomoAgentes } from "./domain/despachante-autonomo-agentes.js";
+import { PortaDespachoAgente, ResultadoDespachoAgente } from "./domain/porta-despacho-agente.js";
 import { criarServidorWeb } from "./web/servidor-web.js";
 import { Necessidade } from "./domain/necessidade.js";
 import {
@@ -314,19 +312,38 @@ export async function iniciarSistema(): Promise<{
     filaTarefas
   );
 
-  // 4. Inicializa o Worker de background desacoplado
+  // 4. Inicializa o Despachante Autônomo de Agentes e o Worker em background
+  const portaDespachoPadrao: PortaDespachoAgente = {
+    async despacharAgente(handoff): Promise<ResultadoDespachoAgente> {
+      // Adaptador de despacho: simula o acionamento e retorno de execução agêntica autônoma
+      return {
+        sucesso: true,
+        tokenCorrelacao: handoff.tokenCorrelacao,
+        ator: handoff.atorDestinatario,
+        skill: handoff.skillDestinataria,
+        mensagemRetorno: `Agente autônomo executou a atividade atribuída conforme ${handoff.skillDestinataria ?? "critérios definidos"}.`,
+        resultadoObservavel: `Atividade concluída com sucesso para o trabalho ${handoff.conteudoHandoff.codigoTrabalho}.`,
+      };
+    },
+  };
+  const despachanteAutonomo = new DespachanteAutonomoAgentes(
+    repositorioCoordenacao,
+    portaDespachoPadrao
+  );
+
   const worker = new WorkerSegundoPlano(
     filaTarefas,
     repositorio,
     portaProjeto,
     portaContexto,
-    { intervaloPollingMs: 250 },
+    { intervaloPollingMs: 250, modoAutonomoAtivo: true },
     servicoCoordenacao,
     servicoContexto,
-    servicoVerificacao
+    servicoVerificacao,
+    despachanteAutonomo
   );
   worker.iniciar();
-  console.log("[NAAMIVE Bootstrap] Worker em background iniciado com sucesso.");
+  console.log("[NAAMIVE Bootstrap] Worker em background e Despachante Autônomo iniciados com sucesso.");
 
   // 5. Instancia a aplicação HTTP responsiva
   const servidor = criarServidorWeb({

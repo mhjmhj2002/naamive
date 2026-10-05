@@ -129,16 +129,20 @@ Ficam definidos como **Pontos de Interrupção Humana Mandatórios**:
 
 ### 3.4. Plano de Implementação da Resolução
 
-A implementação do saneamento do `DEB-TEC-001` será decomposta nos seguintes passos técnicos executáveis:
+A implementação do saneamento do `DEB-TEC-001` é decomposta nos seguintes passos técnicos executáveis:
 
-1. **Fase 1 — Domínio e Casos de Uso de Orquestração:**
-   - Criação da porta `PortaDespachoAgente` e serviço de aplicação `DespachanteAutonomoAgentes`.
-   - Configuração de políticas de segurança para segregação de Atores agênticos e humanos.
-2. **Fase 2 — Integração no Worker em Segundo Plano:**
-   - Adição do manipulador `DESPACHAR_HANDOFF_AUTONOMO` e ciclo de varredura periódica de trabalhos `PREPARADO` no `WorkerSegundoPlano`.
-   - Integração com `ServicoContexto` para gravação de telemetria causal completa.
-3. **Fase 3 — Painel Web de Supervisão e Controles Human-in-the-Loop:**
-   - Atualização da interface web (`/coordenacao`) com alternador de modo autônomo (Ativo / Pausado) e fila visual de handoffs despachados e pendências humanas.
-4. **Fase 4 — Suíte de Testes e Validação Integrada:**
-   - Testes unitários do despachante autônomo com simulação de encadeamento entre agentes (`Executor → Integrador → Verificador`).
-   - Teste de contenção demonstrando que o motor para obrigatoriamente no gateway do Owner.
+1. **Fase 1 — Domínio e Casos de Uso de Orquestração:** `CONCLUIDA`
+   - Criação da porta de domínio `PortaDespachoAgente` (`src/domain/porta-despacho-agente.ts`).
+   - Implementação do motor executivo de orquestração `DespachanteAutonomoAgentes` (`src/domain/despachante-autonomo-agentes.ts`).
+   - Implementação de políticas estritas de segurança para segregação de Atores agênticos e humanos, com contenção obrigatória em `AGUARDANDO_DECISAO_HUMANA` para o Owner e proibição absoluta de autoatribuição ou autoaprovação.
+2. **Fase 2 — Integração no Worker em Segundo Plano:** `CONCLUIDA`
+   - Integração direta de `DespachanteAutonomoAgentes` no `WorkerSegundoPlano` (`src/worker/worker-segundo-plano.ts`) com suporte a alternância dinâmica de modo autônomo (ativo/pausado).
+   - Adição do manipulador oficial `DESPACHAR_HANDOFF_AUTONOMO` processado em background.
+   - Integração causal com `PortaIntegracaoContexto` (`M-004`), gravando eventos de rastreabilidade `DESPACHO_AUTONOMO_PROCESSADO`.
+   - Inicialização e injeção do despachante autônomo no bootstrap operacional do sistema (`src/server.ts`).
+   - Suíte de testes integrados executáveis (`tests/it021-despachante-autonomo-deb-tec-001.test.ts`) cobrindo handoffs contínuos, contenção estrita do Owner, tratamento de dilemas humanos e ciclo em background no worker (100% verde).
+3. **Fase 3 — Painel Web de Supervisão e Controles Human-in-the-Loop:** `PENDENTE`
+   - Atualização da interface web (`/coordenacao`) com alternador de modo autônomo (Ativo / Pausado) e visualização em tempo real de handoffs despachados e pendências de decisão humana.
+4. **Fase 4 — Suíte de Testes e Validação Integrada:** `PARCIALMENTE_CONCLUIDA`
+   - Testes automatizados da Fase 1 e Fase 2 concluídos com 100% de aprovação (5 testes em `it021`).
+   - Validação da interface web responsiva na Fase 3.

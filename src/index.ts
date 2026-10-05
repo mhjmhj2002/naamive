@@ -16,6 +16,8 @@ export * from "./domain/tipos-coordenacao.js";
 export * from "./domain/valores-coordenacao.js";
 export * from "./domain/coordenacao.js";
 export * from "./domain/motor-coordenacao.js";
+export * from "./domain/porta-despacho-agente.js";
+export * from "./domain/despachante-autonomo-agentes.js";
 export * from "./infrastructure/adapters/autenticacao-owner.js";
 export * from "./infrastructure/adapters/integracao-modulos.js";
 export * from "./infrastructure/adapters/fila-tarefas.js";

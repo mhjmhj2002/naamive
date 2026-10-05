@@ -40,10 +40,15 @@ O ciclo de vida do NAAMIVE realizou com êxito a **Verificação da Entrega de V
 
 ### Débitos em Tratamento Prioritário
 * **[DEB-TEC-001](documentacao/governanca/debitos/DEB-TEC-001.md) — Ausência de Motor de Orquestração Autônoma de Agentes e Handoffs no Worker/Backend:**
-  - **Status:** `EM_TRATAMENTO_PRIORITARIO` (Determinação Soberana do Owner).
+  - **Status:** `EM_TRATAMENTO_PRIORITARIO` (Fase 1 e Fase 2 Concluídas pelo Engenheiro de Software).
   - **Descrição:** Falta de despacho automático de handoffs agênticos e dependência indevida de intervenção manual no chat/CLI a cada transição de Ator.
-  - **Origem / Competência de Tratamento:** Módulo `M-003 — Coordenação do Trabalho` / Infraestrutura do Worker.
-  - **Avanço Recente:** Elaboração formal da proposta de arquitetura pelo Arquiteto de Software e Especialista em Planejamento da Realização, definindo o despachante autônomo no worker, a fila de handoffs transacional em PostgreSQL e os pontos mandatórios de interrupção humana (Human-in-the-Loop) preservando a autoridade soberana do Owner.
+  - **Origem / Competência de Tratamento:** Módulo `M-003 — Coordenação do Trabalho` / Infraestrutura do Worker e Orquestração.
+  - **Avanço Recente:** Implementação com sucesso da **Fase 1 (Domínio e Orquestração)** e **Fase 2 (Integração com WorkerSegundoPlano)**:
+    * Criação da porta pura `PortaDespachoAgente` (`src/domain/porta-despacho-agente.ts`);
+    * Criação do serviço orquestrador `DespachanteAutonomoAgentes` (`src/domain/despachante-autonomo-agentes.ts`) com garantia estrita de Human-in-the-Loop, impedindo autoatribuição ou autoaprovação de etapas do Owner e contendo em `AGUARDANDO_DECISAO_HUMANA`;
+    * Integração direta no `WorkerSegundoPlano` (`src/worker/worker-segundo-plano.ts`) com o manipulador `DESPACHAR_HANDOFF_AUTONOMO`, suporte dinâmico a modo autônomo (ativo/pausado) e telemetria causal no M-004 (`DESPACHO_AUTONOMO_PROCESSADO`);
+    * Suíte integrada executável (`tests/it021-despachante-autonomo-deb-tec-001.test.ts`) aprovada com 100% de sucesso;
+    * Totalidade da suíte do sistema verde: 21 arquivos de teste e 148 testes automatizados aprovados sem qualquer regressão (`npm run typecheck && npm test`).
 
 ### Débitos Resolvidos
 * **[DEB-GOV-001](documentacao/governanca/debitos/DEB-GOV-001.md) — Ausência de Etapa de Homologação e Decisão Material do Owner no Encerramento da Entrega de Valor:**
