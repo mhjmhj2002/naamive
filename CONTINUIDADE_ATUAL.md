@@ -6,32 +6,27 @@ NAAMIVE
 
 ## Momento atual
 
-O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-020 — Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada`** no âmbito da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md) ([M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md)), exercido pelo **Engenheiro de Software** (`.agents/skills/item-de-trabalho/execucao-do-item-de-trabalho/SKILL.md`):
+O ciclo de vida do NAAMIVE realizou com êxito a **Integração da Realização da [EV-005 — Avaliação e Verificação da Entrega de Valor](dados/entregas-de-valor/EV-005/entrega-de-valor.md)** no âmbito de [M-005 — Verificação do Resultado de Software](dados/modulos/M-005/modulo.md), exercido pelo Ator agêntico **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`):
 
-1. **Ciclo de Vida do IT-020:**
-   - O status do [IT-020](dados/itens-de-trabalho/IT-020/item-de-trabalho.md) transicionou de `PRONTO_PARA_EXECUCAO` para `EM_EXECUCAO` e, após implementação completa da interface web responsiva, rotas HTTP/REST, templates Bootstrap 5 e validação de 100% de testes verdes sem regressões, para **`CONCLUIDO`**.
-   - Emissão do Resultado do Processo **`EXECUCAO_CONCLUIDA`** devidamente registrado em seu artefato oficial.
-2. **Implementação Técnica Realizada:**
-   - Adição de funções auxiliares e badges visuais por cores em [src/web/templates.ts](src/web/templates.ts): `obterClasseBadgeConclusao` (`CRITERIO_DEMONSTRADO` verde, `CRITERIO_NAO_DEMONSTRADO` vermelho, `EVIDENCIA_INSUFICIENTE` amarelo, `DIVERGENCIA_ENCONTRADA` vermelho/destaque, etc.) e `obterClasseBadgeMetodo`.
-   - Implementação do template responsivo `renderizarPainelVerificacao` em [src/web/templates.ts](src/web/templates.ts), consolidando métricas agregadas (resultados, critérios demonstrados, insuficientes, divergências), tabela de matriz de conformidade técnica e badges de status.
-   - Implementação do template `renderizarDetalhesVerificacao` em [src/web/templates.ts](src/web/templates.ts), exibindo laudo agregado detalhado, fundamentação explicável, cartões de critérios verificáveis, histórico de evidências empíricas coletadas e formulários para cadastro de critérios e adição de evidências manuais.
-   - Atualização do layout mestre e navbar global responsiva em [src/web/templates.ts](src/web/templates.ts) com link direto para `/verificacao`.
-   - Implementação dos endpoints HTTP e adaptadores REST/HTML em [src/web/servidor-web.ts](src/web/servidor-web.ts):
-     * `GET /verificacao`: painel geral e matriz agregada (suporte dual HTML e JSON);
-     * `POST /verificacao/resultados`: registro idempotente de resultados de software;
-     * `GET /verificacao/:id`: inspeção detalhada de laudo, critérios e evidências (HTML e JSON);
-     * `POST /verificacao/:id/criterios`: cadastro de critério verificável;
-     * `POST /verificacao/:id/evidencias`: coleta/registro de evidência empírica;
-     * `POST /verificacao/:id/avaliar`: confrontação estrita via `MotorVerificacaoSoftware`, persistência de laudos e evento de rastreabilidade causal em M-004;
-     * `POST /verificacao/:id/reavaliar-background`: enfileiramento assíncrono de reavaliação no worker de segundo plano.
-   - Atualização do bootstrap do sistema em [src/server.ts](src/server.ts), injetando `servicoVerificacao` e `repositorioVerificacao`.
-   - Criação da suíte de testes de integração e end-to-end em [tests/it020-camada-web-verificacao.test.ts](tests/it020-camada-web-verificacao.test.ts) com 5 testes cobrindo todos os critérios de aceitação.
-3. **Conclusão de Todos os Itens de Trabalho da EV-005:**
-   - Todos os quatro Itens de Trabalho da EV-005 foram concluídos com sucesso: `IT-017` (`CONCLUIDO`), `IT-018` (`CONCLUIDO`), `IT-019` (`CONCLUIDO`) e `IT-020` (`CONCLUIDO`).
-   - A EV-005 está pronta para integração da realização e encerramento do Plano de Realização.
-4. **Garantia de Qualidade e Integridade Técnica:**
-   - Execução bem-sucedida de `npm run typecheck`, `npm run build` e suíte de testes completa.
-   - **20 arquivos de teste e 143 testes automatizados verdes — 100% de sucesso sem regressões**.
+1. **Validação da Cadeia de Itens de Trabalho da EV-005:**
+   - Todos os quatro Itens de Trabalho previstos no [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) encontram-se no status **`CONCLUIDO`** com Resultado do Processo **`EXECUCAO_CONCLUIDA`**:
+     * [`IT-017`](dados/itens-de-trabalho/IT-017/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Esquema Relacional PostgreSQL de Verificação de Software e Migrações
+     * [`IT-018`](dados/itens-de-trabalho/IT-018/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade
+     * [`IT-019`](dados/itens-de-trabalho/IT-019/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background
+     * [`IT-020`](dados/itens-de-trabalho/IT-020/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`) — Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada
+
+2. **Garantia de Qualidade e Integridade Global do Software:**
+   - Execução de `npm run typecheck` (`tsc --noEmit`): aprovado com **0 erros** de tipagem TypeScript em modo estrito.
+   - Execução de `npm run build` (`tsc`): compilação limpa concluída com **100% de sucesso**, gerando a distribuição funcional em `dist/`.
+   - Execução da suíte completa integrada (`npm test`): **20 arquivos de teste e 143 testes automatizados aprovados (100% verdes)**, preservando a estabilidade e sem regressões nas entregas anteriores (`EV-001`, `EV-002`, `EV-003` e `EV-004`).
+
+3. **Emissão de Parecer Técnico e Resultado do Processo:**
+   - Emissão formal do Resultado do Processo **`REALIZACAO_INTEGRADA`** devidamente registrado no [Plano de Realização da EV-005](dados/entregas-de-valor/EV-005/plano-de-realizacao.md) e na [EV-005](dados/entregas-de-valor/EV-005/entrega-de-valor.md).
+   - O software integrado atende integralmente a todos os critérios de engenharia e está operacionalmente pronto para a avaliação substantiva de valor.
+   - Em conformidade com a regra de status e o ciclo de vida da Entrega de Valor, a EV-005 permanece no marco persistido **`EM_REALIZACAO`** até a conclusão da verificação técnica e homologação pelo Owner.
+
+4. **Handoff Oficial:**
+   - Handoff transferido formalmente para o Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`).
 
 ## Governança transversal e Débitos
 
@@ -120,18 +115,19 @@ O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-020 — Cam
   - Status atual: **`EM_REALIZACAO`**
   - Registro principal: [dados/entregas-de-valor/EV-005/entrega-de-valor.md](dados/entregas-de-valor/EV-005/entrega-de-valor.md)
   - Plano de Realização: [dados/entregas-de-valor/EV-005/plano-de-realizacao.md](dados/entregas-de-valor/EV-005/plano-de-realizacao.md)
-  - Itens concluídos: **`IT-017`** (`CONCLUIDO`), **`IT-018`** (`CONCLUIDO`), **`IT-019`** (`CONCLUIDO`), **`IT-020`** (`CONCLUIDO`)
-  - Situação: Todos os 4 Itens de Trabalho da EV-005 plenamente concluídos com 100% de testes verdes (143 testes).
+  - Itens de Trabalho: `IT-017` (`CONCLUIDO`), `IT-018` (`CONCLUIDO`), `IT-019` (`CONCLUIDO`), `IT-020` (`CONCLUIDO`)
+  - Resultado da Realização: **`REALIZACAO_INTEGRADA`** emitido pelo Integrador da Realização.
+  - Situação: Software integrado com sucesso, pronto para a Verificação da Entrega de Valor.
 
 ## Estado do bloqueio
 
 **DESBLOQUEADO:**
 * Não há débitos ou impedimentos bloqueantes técnicos ativos.
-* A EV-005 está pronta para integração agregada da realização técnica pelo Integrador da Realização.
+* O software integrado da EV-005 está disponível para atuação do Verificador da Entrega de Valor.
 
 ## Próxima ação legítima
 
-1. Atuação do **Integrador da Realização** (`.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`): realizar a integração agregada dos quatro Itens de Trabalho da EV-005 (`IT-017`, `IT-018`, `IT-019`, `IT-020`), emitir o parecer consolidado de realização, encerrar o Plano de Realização da EV-005 e emitir o Resultado do Processo `REALIZACAO_CONCLUIDA`.
+1. Atuação do **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`): confrontar o software integrado e suas evidências operacionais frente aos critérios de valor da Especificação da EV-005 e emitir o Laudo Técnico de Verificação (`EVOLUCAO_MATERIALIZADA`).
 
 ## Arquivos mínimos para continuar
 
@@ -142,5 +138,6 @@ O ciclo de vida do NAAMIVE realizou a **Execução Concluída do `IT-020 — Cam
 * `dados/modulos/M-005/mapa-de-entregas-de-valor.md`
 * `dados/entregas-de-valor/EV-005/entrega-de-valor.md`
 * `dados/entregas-de-valor/EV-005/plano-de-realizacao.md`
-* `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`
+* `.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`
+
 

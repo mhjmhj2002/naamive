@@ -225,3 +225,34 @@ Com a emissão de `FORMACAO_SUFICIENTE`, o marco de formação é validamente su
 
 Com a aprovação independente da formação técnica (`FORMACAO_SUFICIENTE`), a **EV-005** encontra-se em status **`FORMADA`**. O artefato e seu contexto são entregues formalmente ao **Especialista em Planejamento da Realização** (`.agents/skills/item-de-trabalho/planejamento-da-realizacao/SKILL.md`) para abertura e coordenação da realização dos Itens de Trabalho no monólito executável.
 
+## Realização
+
+* **Plano de Realização da Entrega de Valor:** [Plano de Realização da EV-005](plano-de-realizacao.md)
+* **Ator responsável pelo planejamento:** Especialista em Planejamento da Realização
+* **Decisão Material do Owner:** Node.js (TypeScript strict ESM) + PostgreSQL relacional com interface web responsiva (Bootstrap 5) e worker desacoplado em background (Baseline Essencial, custo R$ 0,00).
+* **Gatilho de Início da Realização:** Plano de Realização elaborado e aprovado com a materialização dos Itens de Trabalho `IT-017` a `IT-020`.
+* **Transição de Status:** `FORMADA` → `EM_REALIZACAO`
+* **Progresso da Realização:**
+  - Itens de Trabalho [`IT-017`](../../itens-de-trabalho/IT-017/item-de-trabalho.md), [`IT-018`](../../itens-de-trabalho/IT-018/item-de-trabalho.md), [`IT-019`](../../itens-de-trabalho/IT-019/item-de-trabalho.md) e [`IT-020`](../../itens-de-trabalho/IT-020/item-de-trabalho.md) concluídos com sucesso pelo Ator Engenheiro de Software (`EXECUCAO_CONCLUIDA`).
+  - Integração da Realização Técnica concluída com sucesso pelo Ator agêntico Integrador da Realização (`REALIZACAO_INTEGRADA`), com aprovação em `npm run typecheck`, `npm run build` e 100% de testes verdes (20 arquivos de teste e 143 testes automatizados aprovados sem regressões).
+* **Situação da Realização:** `REALIZACAO_INTEGRADA` alcançada e validada com suíte completa de testes locais e execução operacional comprovada.
+
+### Conclusão dos Itens de Trabalho e Integração Técnica
+
+Todos os quatro Itens de Trabalho da cadeia de realização da EV-005 foram executados e concluídos com sucesso:
+* [`IT-017 — Esquema Relacional PostgreSQL de Verificação de Software e Migrações`](../../itens-de-trabalho/IT-017/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`)
+* [`IT-018 — Núcleo de Domínio de Verificação de Software e Motor de Avaliação de Conformidade`](../../itens-de-trabalho/IT-018/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`)
+* [`IT-019 — Repositório PostgreSQL, Serviço de Aplicação de Verificação e Worker em Background`](../../itens-de-trabalho/IT-019/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`)
+* [`IT-020 — Camada Web Responsiva de Verificação, Matriz de Conformidade e Suíte Integrada`](../../itens-de-trabalho/IT-020/item-de-trabalho.md): `CONCLUIDO` (`EXECUCAO_CONCLUIDA`)
+
+O Ator agêntico **Integrador da Realização**, atuando sob a Skill `.agents/skills/item-de-trabalho/integracao-da-realizacao/SKILL.md`:
+1. Validou a tipagem estrita via `npm run typecheck` (0 diagnósticos);
+2. Validou a compilação global do sistema via `npm run build` (sucesso absoluto);
+3. Executou a suíte integrada completa de testes via `npm test` (**20/20 arquivos de teste aprovados e 143/143 testes verdes — 100% de sucesso**);
+4. Declarou a prontidão técnica global do software integrado e emitiu o Resultado do Processo **`REALIZACAO_INTEGRADA`** em 2026-10-04, devidamente registrado no [Plano de Realização](plano-de-realizacao.md).
+
+### Handoff para Verificação da Entrega de Valor
+
+A Entrega de Valor permanece no status **`EM_REALIZACAO`**. O software integrado da `EV-005` encontra-se operacionalmente disponível, e o **Integrador da Realização** formalizou o handoff oficial para o Ator agêntico **Verificador da Entrega de Valor** (`.agents/skills/entrega-de-valor/verificacao-da-entrega-de-valor/SKILL.md`), para que proceda à avaliação substantiva da realização frente aos critérios de valor, beneficiários relevantes e resultados observáveis prometidos na Especificação da EV-005.
+
+
